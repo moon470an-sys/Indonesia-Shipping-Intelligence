@@ -44,6 +44,8 @@ def _vessel_codes(m): return q.vessel_search_codes(m)
 @st.cache_data(ttl=1800)
 def _vessel_overview(m): return q.vessel_overview(m)
 @st.cache_data(ttl=1800)
+def _vessels_full(m): return q.vessels_full(m)
+@st.cache_data(ttl=1800)
 def _cargo_overview(m): return q.cargo_overview(m)
 @st.cache_data(ttl=1800)
 def _change_kpis(m): return q.change_kpis(m)
@@ -151,72 +153,206 @@ def page_overview():
         st.plotly_chart(fig, use_container_width=True)
 
 
+def _avg_pos(s: pd.Series) -> float:
+    s = pd.to_numeric(s, errors="coerce").dropna()
+    s = s[s > 0]
+    return float(s.mean()) if len(s) else 0.0
+
+
 def page_fleet():
-    st.title("🚢 Fleet")
-    st.caption(f"Snapshot: **{snapshot}**")
+    st.title("🚢 선박 데이터 대시보드")
 
-    v = _vessel_overview(snapshot)
+    df = _vessels_full(snapshot)
+    if df.empty:
+        st.info("선박 데이터 없음")
+        return
+
+    total_rows = len(df)
+
+    # ---- ranges from data ----
+    yrs = df["tahun_num"].dropna()
+    yr_min = int(yrs.min()) if not yrs.empty else 1900
+    yr_max = int(yrs.max()) if not yrs.empty else 2100
+
+    def _bounds(s: pd.Series, default_max: float):
+        s = pd.to_numeric(s, errors="coerce").dropna()
+        s = s[s >= 0]
+        if s.empty:
+            return 0.0, float(default_max)
+        return 0.0, float(max(s.max(), 1.0))
+
+    gt_lo, gt_hi = _bounds(df["gt"], 100000)
+    loa_lo, loa_hi = _bounds(df["loa"], 500)
+    w_lo, w_hi = _bounds(df["lebar"], 100)
+    d_lo, d_hi = _bounds(df["dalam"], 50)
+
+    # ---- reset support: bump a token so widgets re-init with defaults ----
+    rt = st.session_state.get("fleet_reset_token", 0)
+
+    # ---- filters ----
+    with st.expander("🔍 필터", expanded=True):
+        c1, c2, c3 = st.columns(3)
+
+        types_all = sorted([t for t in df["jenis_kapal"].dropna().unique().tolist() if t])
+        types_sel = c1.multiselect("Vessel Type", types_all, default=[],
+                                   key=f"ft_types_{rt}")
+        exclude = c1.checkbox("Exclude mode (선택 제외)", key=f"ft_excl_{rt}")
+        name_q = c1.text_input("선박명 검색", key=f"ft_name_{rt}")
+
+        yr_range = c2.slider("건조 연도", yr_min, yr_max, (yr_min, yr_max),
+                             key=f"ft_yr_{rt}")
+        gt_range = c2.slider("Gross Tonnage", gt_lo, gt_hi, (gt_lo, gt_hi),
+                             key=f"ft_gt_{rt}")
+
+        loa_range = c3.slider("LOA (m)", loa_lo, loa_hi, (loa_lo, loa_hi),
+                              key=f"ft_loa_{rt}")
+        w_range = c3.slider("Width (m)", w_lo, w_hi, (w_lo, w_hi),
+                            key=f"ft_w_{rt}")
+        d_range = c3.slider("Depth (m)", d_lo, d_hi, (d_lo, d_hi),
+                            key=f"ft_d_{rt}")
+
+        if st.button("🔄 필터 초기화", key="ft_reset"):
+            st.session_state["fleet_reset_token"] = rt + 1
+            st.rerun()
+
+    # ---- apply filters (NaN values pass through) ----
+    fdf = df
+    if types_sel:
+        mask = fdf["jenis_kapal"].isin(types_sel)
+        fdf = fdf[~mask] if exclude else fdf[mask]
+
+    def _between_or_na(s, lo, hi):
+        s = pd.to_numeric(s, errors="coerce")
+        return s.between(lo, hi) | s.isna()
+
+    fdf = fdf[_between_or_na(fdf["tahun_num"], yr_range[0], yr_range[1])]
+    fdf = fdf[_between_or_na(fdf["gt"], gt_range[0], gt_range[1])]
+    fdf = fdf[_between_or_na(fdf["loa"], loa_range[0], loa_range[1])]
+    fdf = fdf[_between_or_na(fdf["lebar"], w_range[0], w_range[1])]
+    fdf = fdf[_between_or_na(fdf["dalam"], d_range[0], d_range[1])]
+    if name_q:
+        fdf = fdf[fdf["nama_kapal"].fillna("").str.contains(name_q, case=False, na=False)]
+
+    active = sum([
+        bool(types_sel), name_q != "",
+        yr_range != (yr_min, yr_max), gt_range != (gt_lo, gt_hi),
+        loa_range != (loa_lo, loa_hi), w_range != (w_lo, w_hi),
+        d_range != (d_lo, d_hi),
+    ])
+    st.caption(f"vessels_snapshot · **{snapshot}** · {len(fdf):,} / {total_rows:,} rows · 필터 {active}")
+
+    # ---- KPI cards ----
     cols = st.columns(4)
-    kpi(cols[0], "선박 등록", v["total"])
-    kpi(cols[1], "검색 코드", f"{v['codes']}/56")
-    kpi(cols[2], "평균 GT", f"{v['avg_gt']:,.0f}")
-    kpi(cols[3], "최대 GT", f"{v['max_gt']:,.0f}")
+    kpi(cols[0], "선박 수", len(fdf))
+    kpi(cols[1], "고유 종류 수", int(fdf["jenis_kapal"].nunique()))
+    kpi(cols[2], "평균 GT", f"{_avg_pos(fdf['gt']):,.0f}")
+    avg_yr = fdf["tahun_num"].mean()
+    kpi(cols[3], "평균 건조연도", f"{avg_yr:.0f}" if pd.notna(avg_yr) else "-")
 
-    tab_dist, tab_owner, tab_search = st.tabs(["선종/연식 분포", "선사 Top", "선박 검색"])
+    # ---- dimension averages (zeros excluded) ----
+    st.markdown("##### 평균 제원 (0 제외)")
+    cols = st.columns(4)
+    kpi(cols[0], "GT 평균",       f"{_avg_pos(fdf['gt']):,.0f}")
+    kpi(cols[1], "LOA 평균 (m)",  f"{_avg_pos(fdf['loa']):,.1f}")
+    kpi(cols[2], "Width 평균 (m)", f"{_avg_pos(fdf['lebar']):,.1f}")
+    kpi(cols[3], "Depth 평균 (m)", f"{_avg_pos(fdf['dalam']):,.1f}")
 
-    with tab_dist:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**선종 Top 30**")
-            vt = _vessel_types(snapshot, 30)
-            if vt.empty:
-                st.info("선종 데이터 없음")
-            else:
-                fig = px.bar(vt.sort_values("count"), x="count", y="type",
-                             orientation="h", height=560,
-                             labels={"count": "척수", "type": "선종"})
-                fig.update_layout(margin=dict(t=20, b=20))
-                st.plotly_chart(fig, use_container_width=True)
-        with col2:
-            st.markdown("**연식 분포**")
-            va = _vessel_age(snapshot)
-            if va.empty:
-                st.info("연식 데이터 없음")
-            else:
-                fig = px.bar(va, x="tahun", y="count", height=300,
-                             labels={"tahun": "연식", "count": "척수"})
-                fig.update_layout(margin=dict(t=20, b=20))
-                st.plotly_chart(fig, use_container_width=True)
-            st.markdown("**GT 분포 (log scale)**")
-            gd = _gt_dist(snapshot)
-            if gd.empty:
-                st.info("GT 데이터 없음")
-            else:
-                fig = px.histogram(gd, x="gt", nbins=60, log_x=True, height=240)
-                fig.update_layout(margin=dict(t=20, b=20))
-                st.plotly_chart(fig, use_container_width=True)
+    st.markdown("---")
 
-    with tab_owner:
-        top = st.slider("Top N", 5, 100, 30, 5, key="owner_top")
-        ow = _vessel_owners(snapshot, top)
-        if ow.empty:
-            st.info("선사 데이터 없음")
+    # ---- charts grid ----
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("**건조 연도별 추이**")
+        yr_df = (fdf.dropna(subset=["tahun_num"])
+                    .assign(tahun=lambda x: x["tahun_num"].astype(int))
+                    .groupby("tahun").size().reset_index(name="count"))
+        if yr_df.empty:
+            st.info("연도 데이터 없음")
         else:
-            st.dataframe(ow, use_container_width=True, hide_index=True)
+            fig = px.area(yr_df, x="tahun", y="count", height=300, markers=True)
+            fig.update_traces(line_color="#1f77b4", fillcolor="rgba(31,119,180,0.25)")
+            fig.update_layout(margin=dict(t=10, b=10), xaxis_title="건조 연도", yaxis_title="척수")
+            st.plotly_chart(fig, use_container_width=True)
 
-    with tab_search:
-        col1, col2, col3 = st.columns([3, 1, 2])
-        search = col1.text_input("검색 (선명/콜사인/선사/IMO)")
-        codes = ["(전체)"] + _vessel_codes(snapshot)
-        sc = col2.selectbox("Code", codes)
-        sc = "" if sc == "(전체)" else sc
-        types_df = _vessel_types(snapshot, 200)
-        types = ["(전체)"] + types_df["type"].dropna().tolist()
-        jk = col3.selectbox("선종", types)
-        jk = "" if jk == "(전체)" else jk
-        df = q.vessels(snapshot, search=search, search_code=sc, jenis_kapal=jk, limit=2000)
-        st.caption(f"{len(df):,} rows (limit 2000)")
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.markdown("**Vessel Type TOP 15**")
+        vt = fdf["jenis_kapal"].dropna()
+        vt = vt[vt != ""].value_counts().head(15).reset_index()
+        vt.columns = ["type", "count"]
+        if vt.empty:
+            st.info("선종 데이터 없음")
+        else:
+            fig = px.bar(vt.sort_values("count"), x="count", y="type",
+                         orientation="h", height=420, color="count",
+                         color_continuous_scale="Blues")
+            fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
+                              xaxis_title="척수", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("**엔진 타입 분포**")
+        et = fdf["mesin_type"].dropna()
+        et = et[et != ""].value_counts().head(10).reset_index()
+        et.columns = ["type", "count"]
+        if et.empty:
+            st.info("엔진 타입 데이터 없음")
+        else:
+            fig = px.pie(et, names="type", values="count", height=320, hole=0.45)
+            fig.update_layout(margin=dict(t=10, b=10),
+                              legend=dict(font=dict(size=10)))
+            st.plotly_chart(fig, use_container_width=True)
+
+    with c2:
+        st.markdown("**엔진명 TOP 12**")
+        en = fdf["mesin"].dropna()
+        en = en[en != ""].value_counts().head(12).reset_index()
+        en.columns = ["engine", "count"]
+        if en.empty:
+            st.info("엔진명 데이터 없음")
+        else:
+            fig = px.bar(en.sort_values("count"), x="count", y="engine",
+                         orientation="h", height=320, color="count",
+                         color_continuous_scale="Greens")
+            fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
+                              xaxis_title="척수", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("**국적(Flag State) TOP 12**")
+        fl = fdf["bendera"].dropna()
+        fl = fl[fl != ""].value_counts().head(12).reset_index()
+        fl.columns = ["flag", "count"]
+        if fl.empty:
+            st.info("국적 데이터 없음")
+        else:
+            fig = px.bar(fl.sort_values("count"), x="count", y="flag",
+                         orientation="h", height=320, color="count",
+                         color_continuous_scale="Oranges")
+            fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
+                              xaxis_title="척수", yaxis_title="")
+            st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("**Gross Tonnage 분포** (log scale)")
+        gt_d = fdf[fdf["gt"] > 0]["gt"]
+        if gt_d.empty:
+            st.info("GT 데이터 없음")
+        else:
+            fig = px.histogram(gt_d, nbins=60, log_x=True, height=320,
+                               color_discrete_sequence=["#6c5ce7"])
+            fig.update_layout(margin=dict(t=10, b=10), showlegend=False,
+                              xaxis_title="GT (log)", yaxis_title="척수")
+            st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("---")
+    st.subheader("선박 목록")
+    display_cols = [
+        "search_code", "nama_kapal", "call_sign", "jenis_kapal", "jenis_detail",
+        "nama_pemilik", "bendera", "gt", "loa", "panjang", "lebar", "dalam",
+        "mesin", "mesin_type", "daya", "bahan_utama", "imo", "tahun",
+        "pelabuhan_pendaftaran", "vessel_key",
+    ]
+    display_cols = [c for c in display_cols if c in fdf.columns]
+    table = fdf[display_cols].sort_values("gt", ascending=False, na_position="last").head(2000)
+    st.caption(f"표시 {len(table):,} rows (최대 2,000)")
+    st.dataframe(table, use_container_width=True, hide_index=True)
 
 
 def page_cargo():

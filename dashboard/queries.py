@@ -140,6 +140,51 @@ def vessels(snapshot_month: str, search: str = "", search_code: str = "",
         return pd.read_sql(text(sql), conn, params=params)
 
 
+def vessels_full(snapshot_month: str) -> pd.DataFrame:
+    """Full vessel snapshot with selected fields parsed out of raw_data JSON.
+
+    Used by the Fleet page to drive client-side filters and charts. Cached at
+    the Streamlit layer because parsing JSON for ~100k rows is non-trivial.
+    """
+    sql = text(
+        "SELECT search_code, vessel_key, nama_kapal, eks_nama_kapal, call_sign, "
+        "       jenis_kapal, nama_pemilik, gt, isi_bersih, panjang, lebar, dalam, "
+        "       length_of_all, imo, tahun, raw_data "
+        "FROM vessels_snapshot WHERE snapshot_month = :m"
+    )
+    with engine.connect() as conn:
+        df = pd.read_sql(sql, conn, params={"m": snapshot_month})
+
+    def _get(d: dict, *keys):
+        for k in keys:
+            v = d.get(k)
+            if v not in (None, ""):
+                return v
+        return None
+
+    def _parse(s):
+        if not s:
+            return {}
+        try:
+            return json.loads(s)
+        except Exception:
+            return {}
+
+    parsed = df["raw_data"].map(_parse)
+    df["mesin"] = parsed.map(lambda d: _get(d, "Mesin"))
+    df["mesin_type"] = parsed.map(lambda d: _get(d, "MesinType"))
+    df["bendera"] = parsed.map(lambda d: _get(d, "BenderaAsal"))
+    df["jenis_detail"] = parsed.map(lambda d: _get(d, "JenisDetailKet"))
+    df["bahan_utama"] = parsed.map(lambda d: _get(d, "BahanUtamaKapal"))
+    df["kategori_kapal"] = parsed.map(lambda d: _get(d, "kategoriKapal"))
+    df["daya"] = parsed.map(lambda d: _get(d, "Daya"))
+    df["pelabuhan_pendaftaran"] = parsed.map(lambda d: _get(d, "PelabuhanPendaftaran"))
+    df["tahun_num"] = pd.to_numeric(df["tahun"], errors="coerce")
+    df["loa"] = df["length_of_all"].where(df["length_of_all"].notna() & (df["length_of_all"] > 0),
+                                          df["panjang"])
+    return df.drop(columns=["raw_data"])
+
+
 def vessel_search_codes(snapshot_month: str) -> list[str]:
     sql = text(
         "SELECT search_code, COUNT(*) AS n FROM vessels_snapshot "
