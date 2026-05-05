@@ -45,54 +45,110 @@
 
     <!-- Fleet -->
     <section id="tab-fleet" class="tab-panel hidden">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-fleet"></div>
+      <!-- Filter panel -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-3">
+          <h2 class="font-semibold">🔍 필터</h2>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-500" id="fleet-filter-summary">필터 0</span>
+            <button id="fleet-reset" class="text-xs px-2 py-1 rounded bg-slate-200 hover:bg-slate-300">필터 초기화</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="space-y-2">
+            <div>
+              <label class="text-xs text-slate-500 block">Vessel Type</label>
+              <select id="ft-types" multiple size="6" class="border rounded px-2 py-1 w-full text-sm"></select>
+            </div>
+            <label class="text-xs flex items-center gap-1">
+              <input id="ft-exclude" type="checkbox" /> Exclude mode (선택 제외)
+            </label>
+            <div>
+              <label class="text-xs text-slate-500 block">선박명 검색</label>
+              <input id="ft-name" class="border rounded px-2 py-1 w-full text-sm" placeholder="이름·콜사인·선사·IMO" />
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs text-slate-500"><span>건조 연도</span><span id="ft-yr-val">—</span></div>
+              <div class="flex gap-2"><input id="ft-yr-lo" type="number" class="border rounded px-2 py-1 w-full text-sm" /><input id="ft-yr-hi" type="number" class="border rounded px-2 py-1 w-full text-sm" /></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs text-slate-500"><span>Gross Tonnage</span><span id="ft-gt-val">—</span></div>
+              <div class="flex gap-2"><input id="ft-gt-lo" type="number" class="border rounded px-2 py-1 w-full text-sm" /><input id="ft-gt-hi" type="number" class="border rounded px-2 py-1 w-full text-sm" /></div>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs text-slate-500"><span>LOA (m)</span><span id="ft-loa-val">—</span></div>
+              <div class="flex gap-2"><input id="ft-loa-lo" type="number" step="0.1" class="border rounded px-2 py-1 w-full text-sm" /><input id="ft-loa-hi" type="number" step="0.1" class="border rounded px-2 py-1 w-full text-sm" /></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs text-slate-500"><span>Width (m)</span><span id="ft-w-val">—</span></div>
+              <div class="flex gap-2"><input id="ft-w-lo" type="number" step="0.1" class="border rounded px-2 py-1 w-full text-sm" /><input id="ft-w-hi" type="number" step="0.1" class="border rounded px-2 py-1 w-full text-sm" /></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs text-slate-500"><span>Depth (m)</span><span id="ft-d-val">—</span></div>
+              <div class="flex gap-2"><input id="ft-d-lo" type="number" step="0.1" class="border rounded px-2 py-1 w-full text-sm" /><input id="ft-d-hi" type="number" step="0.1" class="border rounded px-2 py-1 w-full text-sm" /></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3" id="kpi-fleet"></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-fleet-dim"></div>
+
+      <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">선종 Top 30</h2>
-          <div id="chart-types" style="height:520px"></div>
+          <h2 class="font-semibold mb-2">건조 연도별 추이</h2>
+          <div id="chart-build-trend" style="height:300px"></div>
         </div>
-        <div class="space-y-4">
-          <div class="bg-white rounded-xl shadow p-4">
-            <h2 class="font-semibold mb-2">연식 분포</h2>
-            <div id="chart-ages" style="height:240px"></div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-4">
-            <h2 class="font-semibold mb-2">GT 분포 (log buckets)</h2>
-            <div id="chart-gt" style="height:240px"></div>
-          </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Vessel Type TOP 15</h2>
+          <div id="chart-types" style="height:420px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">엔진 타입 분포</h2>
+          <div id="chart-engine-types" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">엔진명 TOP 12</h2>
+          <div id="chart-engines" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">국적 (Flag State) TOP 12</h2>
+          <div id="chart-flags" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Gross Tonnage 분포 (log)</h2>
+          <div id="chart-gt" style="height:340px"></div>
         </div>
       </div>
-      <div class="bg-white rounded-xl shadow p-4 mb-6">
-        <h2 class="font-semibold mb-2">선사 Top 50</h2>
-        <div id="chart-owners" style="height:560px"></div>
-      </div>
+
+      <!-- Vessel list table -->
       <div class="bg-white rounded-xl shadow p-4">
-        <div class="flex flex-wrap gap-2 items-end mb-2">
-          <div class="grow min-w-[16rem]">
-            <label class="text-xs text-slate-500 block">검색 (선명/콜사인/선사/IMO)</label>
-            <input id="vessels-q" class="border rounded px-2 py-1 w-full" />
-          </div>
-          <div>
-            <label class="text-xs text-slate-500 block">선종</label>
-            <select id="vessels-type" class="border rounded px-2 py-1"><option value="">(전체)</option></select>
-          </div>
-          <div>
-            <label class="text-xs text-slate-500 block">코드</label>
-            <select id="vessels-code" class="border rounded px-2 py-1"><option value="">(전체)</option></select>
-          </div>
+        <div class="flex items-baseline justify-between mb-2">
+          <h2 class="font-semibold">선박 목록</h2>
           <div class="text-xs text-slate-500" id="vessels-count">로딩…</div>
         </div>
         <div class="overflow-auto max-h-[60vh] border rounded">
           <table class="min-w-full text-xs" id="vessels-tbl">
             <thead class="bg-slate-100 sticky top-0">
               <tr class="text-left">
-                <th data-k="0" class="px-2 py-1 cursor-pointer">key</th>
                 <th data-k="1" class="px-2 py-1 cursor-pointer">code</th>
                 <th data-k="2" class="px-2 py-1 cursor-pointer">name</th>
                 <th data-k="3" class="px-2 py-1 cursor-pointer">call sign</th>
                 <th data-k="4" class="px-2 py-1 cursor-pointer">type</th>
                 <th data-k="5" class="px-2 py-1 cursor-pointer">owner</th>
+                <th data-k="11" class="px-2 py-1 cursor-pointer">flag</th>
                 <th data-k="6" class="px-2 py-1 cursor-pointer text-right">GT</th>
+                <th data-k="12" class="px-2 py-1 cursor-pointer text-right">LOA</th>
+                <th data-k="13" class="px-2 py-1 cursor-pointer text-right">W</th>
+                <th data-k="14" class="px-2 py-1 cursor-pointer text-right">D</th>
+                <th data-k="9" class="px-2 py-1 cursor-pointer">engine</th>
+                <th data-k="10" class="px-2 py-1 cursor-pointer">eng. type</th>
                 <th data-k="7" class="px-2 py-1 cursor-pointer">year</th>
                 <th data-k="8" class="px-2 py-1 cursor-pointer">IMO</th>
               </tr>

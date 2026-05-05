@@ -163,15 +163,36 @@ def fleet_payload(month: str) -> dict:
 
 
 def vessels_search_payload(month: str) -> dict:
-    """Compact list for client-side filter/search. Keep <15 MB raw → ~3 MB gzip."""
+    """Compact list for client-side filter/search. Includes engine/flag/dimensions
+    parsed from raw_data so the Fleet dashboard can recompute every chart and KPI
+    purely from this payload as filters change.
+    """
     with engine.connect() as conn:
         rows = conn.execute(text(
             "SELECT vessel_key, search_code, nama_kapal, call_sign, jenis_kapal, "
-            "       nama_pemilik, gt, tahun, imo "
+            "       nama_pemilik, gt, tahun, imo, length_of_all, panjang, lebar, dalam, raw_data "
             "FROM vessels_snapshot WHERE snapshot_month=:m"
         ), {"m": month}).fetchall()
+
+    def _round1(x):
+        if x is None:
+            return None
+        try:
+            return round(float(x), 1)
+        except (TypeError, ValueError):
+            return None
+
     items = []
-    for vk, sc, nm, cs, jk, ow, gt, th, imo in rows:
+    for vk, sc, nm, cs, jk, ow, gt, th, imo, loa, panj, leb, dal, raw in rows:
+        try:
+            d = json.loads(raw) if raw else {}
+        except Exception:
+            d = {}
+        eng = d.get("Mesin") or ""
+        etp = d.get("MesinType") or ""
+        flg = d.get("BenderaAsal") or ""
+        loa_val = float(loa) if loa not in (None, "") and float(loa) > 0 else (
+            float(panj) if panj not in (None, "") and float(panj) > 0 else None)
         items.append([
             vk or "",
             sc or "",
@@ -179,13 +200,22 @@ def vessels_search_payload(month: str) -> dict:
             cs or "",
             jk or "",
             ow or "",
-            float(gt) if gt is not None else None,
+            _round1(gt),
             th or "",
             imo or "",
+            eng,
+            etp,
+            flg,
+            _round1(loa_val),
+            _round1(leb),
+            _round1(dal),
         ])
     return {
         "snapshot_month": month,
-        "schema": ["key", "code", "name", "call_sign", "type", "owner", "gt", "year", "imo"],
+        "schema": ["key", "code", "name", "call_sign", "type", "owner",
+                   "gt", "year", "imo",
+                   "engine", "engine_type", "flag",
+                   "loa", "width", "depth"],
         "items": items,
     }
 
