@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Project artifacts
+data/shipping_bi.db
+data/shipping_bi.db-journal
+data/shipping_bi.db-wal
+data/shipping_bi.db-shm
+data/raw/
+logs/
+reports/
+RESULT_SUMMARY.md
+RESUME_SUMMARY.md
+FAILURE_REPORT.md
+
+# Local config
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store

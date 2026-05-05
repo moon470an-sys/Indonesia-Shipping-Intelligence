@@ -1,0 +1,336 @@
+"""Single CLI entrypoint — Phase 0..5 orchestration."""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import threading
+import time
+import traceback
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from sqlalchemy import select, func
+
+from backend.config import (
+    LOG_DIR, PROJECT_ROOT, REPORT_DIR, build_logger, current_snapshot_month, now_kst,
+)
+from backend.db.database import init_db, session_scope, engine
+from backend.db.models import (
+    CargoSnapshot, IngestionRun, Port, VesselSnapshot,
+)
+
+log = build_logger("main")
+
+
+# ------------------------- helpers -------------------------
+
+def _record_run(month: str, task: str, status: str,
+                started: datetime, finished: datetime,
+                total: int, succeeded: int, failed: int, notes: dict) -> None:
+    with session_scope() as s:
+        s.add(IngestionRun(
+            run_month=month,
+            task=task,
+            started_at=started,
+            finished_at=finished,
+            status=status,
+            total_targets=total,
+            succeeded=succeeded,
+            failed=failed,
+            notes=json.dumps(notes, ensure_ascii=False, default=str)[:65000],
+        ))
+
+
+def _progress_writer(state: dict, stop_evt: threading.Event):
+    path = LOG_DIR / "progress.log"
+    while not stop_evt.is_set():
+        try:
+            with path.open("a", encoding="utf-8") as f:
+                f.write(f"{datetime.utcnow().isoformat()} {json.dumps(state, default=str)}\n")
+        except Exception:
+            pass
+        stop_evt.wait(1800)  # 30 min
+
+
+# ------------------------- phases -------------------------
+
+def phase_sample() -> bool:
+    """Phase 1 — sample tests with 3 retries."""
+    from backend.tests import test_inaportnet_sample, test_kapal_sample
+    for attempt in range(1, 4):
+        log.info("Sample attempt %d/3", attempt)
+        ok_fleet = False
+        ok_cargo = False
+        try:
+            ok_fleet = test_kapal_sample.run_sample()
+        except Exception:
+            log.exception("Fleet sample crashed")
+        try:
+            ok_cargo = test_inaportnet_sample.run_sample()
+        except Exception:
+            log.exception("Cargo sample crashed")
+        if ok_fleet and ok_cargo:
+            return True
+        if attempt < 3:
+            log.warning("Sample failed (fleet=%s cargo=%s); waiting 60s", ok_fleet, ok_cargo)
+            time.sleep(60)
+    return False
+
+
+def phase_fleet(snapshot_month: str) -> dict:
+    from backend.scrapers.kapal_scraper import scrape_all
+    started = datetime.utcnow()
+    summary = scrape_all(snapshot_month=snapshot_month)
+    finished = datetime.utcnow()
+    status = "success" if summary["failed"] == 0 else "partial"
+    _record_run(snapshot_month, "fleet", status, started, finished,
+                summary["total_codes"], summary["succeeded"], summary["failed"], summary)
+    return summary
+
+
+def phase_cargo(snapshot_month: str) -> dict:
+    from backend.scrapers.inaportnet_scraper import scrape_all, seed_ports
+    started = datetime.utcnow()
+    seed_ports()
+    state = {"phase": "cargo", "stage": "running", "ts": started.isoformat()}
+    stop_evt = threading.Event()
+    t = threading.Thread(target=_progress_writer, args=(state, stop_evt), daemon=True)
+    t.start()
+    summary = scrape_all(snapshot_month=snapshot_month)
+    stop_evt.set()
+    finished = datetime.utcnow()
+    status = "success" if summary["failed"] == 0 else "partial"
+    _record_run(snapshot_month, "cargo", status, started, finished,
+                summary["total_targets"], summary["succeeded"], summary["failed"], summary)
+    return summary
+
+
+def phase_diff(snapshot_month: str) -> dict:
+    from backend.diff.cargo_diff import diff_month as cargo_diff
+    from backend.diff.vessel_diff import diff_month as vessel_diff
+    started = datetime.utcnow()
+    v = vessel_diff(snapshot_month)
+    c = cargo_diff(snapshot_month)
+    finished = datetime.utcnow()
+    _record_run(snapshot_month, "diff", "success", started, finished,
+                v["added"] + v["removed"] + v["modified"] + c["added_keys"] + c["revised_keys"],
+                0, 0, {"vessel": v, "cargo": c})
+    return {"vessel": v, "cargo": c}
+
+
+def phase_report(snapshot_month: str) -> dict:
+    from backend.reports.change_report import build_reports
+    started = datetime.utcnow()
+    out = build_reports(snapshot_month)
+    finished = datetime.utcnow()
+    _record_run(snapshot_month, "report", "success", started, finished,
+                0, 0, 0, out)
+    return out
+
+
+def write_summary(month: str, started: datetime, finished: datetime,
+                  fleet: dict, cargo: dict, diffs: dict, report: dict) -> Path:
+    elapsed = finished - started
+    hrs, rem = divmod(int(elapsed.total_seconds()), 3600)
+    mins = rem // 60
+    v_kpis = report.get("vessel_kpis", {})
+    c_kpis = report.get("cargo_kpis", {})
+    text = f"""# 인도네시아 해운 BI — 실행 결과 ({month})
+
+## 실행 시간
+- 시작: {started.strftime('%Y-%m-%d %H:%M:%S')} UTC
+- 종료: {finished.strftime('%Y-%m-%d %H:%M:%S')} UTC
+- 소요: {hrs}h {mins}m
+
+## 데이터 적재
+- 선복량: {fleet['total_codes']} 코드 / {fleet['total_records']}척 (snapshot {month})
+- 물동량: {cargo['ports']}항구 × {cargo['months']}개월 × {cargo['kinds']} kind = {cargo['total_targets']} 작업 / {cargo['succeeded']} 성공 / {cargo['empty']} 빈응답 / {cargo['failed']} 실패
+
+## 변경 탐지 (snapshot {month})
+- 선박 ADDED: {v_kpis.get('added', diffs['vessel']['added'])}
+- 선박 REMOVED: {v_kpis.get('removed', diffs['vessel']['removed'])}
+- 선박 MODIFIED: {v_kpis.get('modified', diffs['vessel']['modified'])} (소유주 {v_kpis.get('mod_owner',0)}, GT {v_kpis.get('mod_gt',0)}, 선명 {v_kpis.get('mod_name',0)}, 선종 {v_kpis.get('mod_type',0)})
+- 물동량 REVISED 셀: {c_kpis.get('revised_cells', diffs['cargo']['revised_cells'])} (REVISED 키 {diffs['cargo']['revised_keys']}, ADDED {diffs['cargo']['added_keys']}, REMOVED {diffs['cargo']['removed_keys']})
+- baseline 여부: vessel={diffs['vessel']['is_baseline']}, cargo={diffs['cargo']['is_baseline']}
+
+## 실패 항목
+- 선복량 실패 코드: {fleet.get('failed_codes', [])}
+- 물동량 실패 (상위 10개): {cargo.get('failed_targets', [])[:10]}
+
+## 다음 단계
+- HTML 리포트: {report['html']}
+- Excel: {report['xlsx']}
+- 스케줄러: 매월 1일 03:00 KST (`python -m backend.scheduler`)
+"""
+    out = PROJECT_ROOT / "RESULT_SUMMARY.md"
+    out.write_text(text, encoding="utf-8")
+    return out
+
+
+def write_failure_report(stage: str, exc: Exception | None, started: datetime,
+                         finished: datetime, extra: dict | None = None) -> Path:
+    text = f"""# 인도네시아 해운 BI — 실행 실패
+
+- 단계: {stage}
+- 시작: {started.strftime('%Y-%m-%d %H:%M:%S')} UTC
+- 종료: {finished.strftime('%Y-%m-%d %H:%M:%S')} UTC
+- 예외: {repr(exc) if exc else '(none)'}
+
+## traceback
+
+```
+{traceback.format_exc() if exc else '(none)'}
+```
+
+## 추가 정보
+
+```json
+{json.dumps(extra or {}, indent=2, ensure_ascii=False, default=str)}
+```
+"""
+    out = PROJECT_ROOT / "FAILURE_REPORT.md"
+    out.write_text(text, encoding="utf-8")
+    log.error("Failure report written to %s", out)
+    return out
+
+
+# ------------------------- monthly orchestrator -------------------------
+
+def run_monthly_auto(skip_sample: bool = False, resume: bool = False,
+                     fleet: bool = True, cargo: bool = True) -> int:
+    init_db()
+    started = datetime.utcnow()
+    month = current_snapshot_month()
+    log.info("=== Monthly run starting (snapshot=%s) ===", month)
+
+    if not skip_sample:
+        if not phase_sample():
+            finished = datetime.utcnow()
+            write_failure_report("sample", None, started, finished,
+                                 {"reason": "sample failed 3 times"})
+            return 2
+
+    fleet_summary = {"total_codes": 0, "total_records": 0, "succeeded": 0,
+                     "failed": 0, "failed_codes": []}
+    cargo_summary = {"ports": 0, "months": 0, "kinds": 0, "total_targets": 0,
+                     "succeeded": 0, "empty": 0, "failed": 0, "failed_targets": []}
+    try:
+        if fleet:
+            if resume and _has_recent_fleet(month):
+                log.info("Resume: skipping fleet phase (already has data for %s)", month)
+                fleet_summary = _existing_fleet_summary(month)
+            else:
+                fleet_summary = phase_fleet(month)
+        if cargo:
+            cargo_summary = phase_cargo(month)
+        diffs = phase_diff(month)
+        report = phase_report(month)
+    except Exception as exc:
+        finished = datetime.utcnow()
+        write_failure_report("ingest/diff/report", exc, started, finished,
+                             {"fleet": fleet_summary, "cargo": cargo_summary})
+        log.exception("Monthly run aborted")
+        return 3
+
+    finished = datetime.utcnow()
+    write_summary(month, started, finished, fleet_summary, cargo_summary, diffs, report)
+    log.info("=== Monthly run done in %s ===", finished - started)
+    return 0
+
+
+def _has_recent_fleet(month: str) -> bool:
+    with session_scope() as s:
+        n = s.execute(
+            select(func.count(VesselSnapshot.id))
+            .where(VesselSnapshot.snapshot_month == month)
+        ).scalar_one()
+    return n > 1000
+
+
+def _existing_fleet_summary(month: str) -> dict:
+    with session_scope() as s:
+        codes = s.execute(
+            select(func.count(func.distinct(VesselSnapshot.search_code)))
+            .where(VesselSnapshot.snapshot_month == month)
+        ).scalar_one()
+        records = s.execute(
+            select(func.count(VesselSnapshot.id))
+            .where(VesselSnapshot.snapshot_month == month)
+        ).scalar_one()
+    return {"total_codes": codes, "total_records": records, "succeeded": codes,
+            "failed": 0, "failed_codes": []}
+
+
+def cmd_status() -> int:
+    init_db()
+    with session_scope() as s:
+        v_count = s.execute(select(func.count(VesselSnapshot.id))).scalar_one()
+        c_count = s.execute(select(func.count(CargoSnapshot.id))).scalar_one()
+        port_count = s.execute(select(func.count(Port.kode_pelabuhan))).scalar_one()
+        runs = s.query(IngestionRun).order_by(IngestionRun.id.desc()).limit(10).all()
+    print(f"vessels_snapshot: {v_count} rows")
+    print(f"cargo_snapshot:   {c_count} rows")
+    print(f"ports:            {port_count}")
+    print("recent ingestion_runs:")
+    for r in runs:
+        print(f"  #{r.id} {r.run_month} {r.task} {r.status} ({r.started_at} → {r.finished_at})")
+    return 0
+
+
+# ------------------------- CLI -------------------------
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="backend.main")
+    parser.add_argument("command", choices=[
+        "test-fleet", "test-cargo", "run-fleet", "run-cargo", "run-all",
+        "diff", "changes", "report", "monthly", "status", "schedule",
+    ])
+    parser.add_argument("--month")
+    parser.add_argument("--auto", action="store_true")
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--html", action="store_true")
+    args = parser.parse_args()
+
+    init_db()
+
+    if args.command == "test-fleet":
+        from backend.tests.test_kapal_sample import run_sample
+        return 0 if run_sample() else 1
+    if args.command == "test-cargo":
+        from backend.tests.test_inaportnet_sample import run_sample
+        return 0 if run_sample() else 1
+    if args.command == "run-fleet":
+        month = args.month or current_snapshot_month()
+        phase_fleet(month)
+        return 0
+    if args.command == "run-cargo":
+        month = args.month or current_snapshot_month()
+        phase_cargo(month)
+        return 0
+    if args.command == "run-all":
+        month = args.month or current_snapshot_month()
+        phase_fleet(month)
+        phase_cargo(month)
+        return 0
+    if args.command in ("diff", "changes"):
+        month = args.month or current_snapshot_month()
+        phase_diff(month)
+        return 0
+    if args.command == "report":
+        month = args.month or current_snapshot_month()
+        phase_report(month)
+        return 0
+    if args.command == "monthly":
+        return run_monthly_auto(resume=args.resume)
+    if args.command == "status":
+        return cmd_status()
+    if args.command == "schedule":
+        from backend.scheduler import main as sched_main
+        sched_main()
+        return 0
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

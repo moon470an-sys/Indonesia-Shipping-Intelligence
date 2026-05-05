@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Indonesia Shipping Intelligence</title>
+  <meta name="description" content="Indonesia vessel registry + cargo monitoring dashboard" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <link rel="stylesheet" href="./css/site.css" />
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <header class="bg-slate-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">🚢 Indonesia Shipping Intelligence</h1>
+        <p class="text-xs text-slate-400" id="meta-line">snapshot loading…</p>
+      </div>
+      <nav class="flex gap-1 text-sm">
+        <button data-tab="overview" class="tab px-3 py-1.5 rounded bg-slate-700">📊 Overview</button>
+        <button data-tab="fleet"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">🚢 Fleet</button>
+        <button data-tab="cargo"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">📦 Cargo</button>
+        <button data-tab="changes"  class="tab px-3 py-1.5 rounded hover:bg-slate-700">🔄 Changes</button>
+        <button data-tab="about"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">ℹ️ About</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Overview -->
+    <section id="tab-overview" class="tab-panel">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-overview"></div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8" id="kpi-changes"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">월별 LK3 행수 (data month)</h2>
+          <div id="chart-monthly" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Top 항구 (총 LK3 행수)</h2>
+          <div id="chart-top-ports" style="height:340px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Fleet -->
+    <section id="tab-fleet" class="tab-panel hidden">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-fleet"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">선종 Top 30</h2>
+          <div id="chart-types" style="height:520px"></div>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-white rounded-xl shadow p-4">
+            <h2 class="font-semibold mb-2">연식 분포</h2>
+            <div id="chart-ages" style="height:240px"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4">
+            <h2 class="font-semibold mb-2">GT 분포 (log buckets)</h2>
+            <div id="chart-gt" style="height:240px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4 mb-6">
+        <h2 class="font-semibold mb-2">선사 Top 50</h2>
+        <div id="chart-owners" style="height:560px"></div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex flex-wrap gap-2 items-end mb-2">
+          <div class="grow min-w-[16rem]">
+            <label class="text-xs text-slate-500 block">검색 (선명/콜사인/선사/IMO)</label>
+            <input id="vessels-q" class="border rounded px-2 py-1 w-full" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block">선종</label>
+            <select id="vessels-type" class="border rounded px-2 py-1"><option value="">(전체)</option></select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block">코드</label>
+            <select id="vessels-code" class="border rounded px-2 py-1"><option value="">(전체)</option></select>
+          </div>
+          <div class="text-xs text-slate-500" id="vessels-count">로딩…</div>
+        </div>
+        <div class="overflow-auto max-h-[60vh] border rounded">
+          <table class="min-w-full text-xs" id="vessels-tbl">
+            <thead class="bg-slate-100 sticky top-0">
+              <tr class="text-left">
+                <th data-k="0" class="px-2 py-1 cursor-pointer">key</th>
+                <th data-k="1" class="px-2 py-1 cursor-pointer">code</th>
+                <th data-k="2" class="px-2 py-1 cursor-pointer">name</th>
+                <th data-k="3" class="px-2 py-1 cursor-pointer">call sign</th>
+                <th data-k="4" class="px-2 py-1 cursor-pointer">type</th>
+                <th data-k="5" class="px-2 py-1 cursor-pointer">owner</th>
+                <th data-k="6" class="px-2 py-1 cursor-pointer text-right">GT</th>
+                <th data-k="7" class="px-2 py-1 cursor-pointer">year</th>
+                <th data-k="8" class="px-2 py-1 cursor-pointer">IMO</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cargo -->
+    <section id="tab-cargo" class="tab-panel hidden">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-cargo"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Top 항구 (kind 별)</h2>
+          <div id="chart-cargo-top" style="height:380px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="flex justify-between items-baseline mb-2">
+            <h2 class="font-semibold">port × period 히트맵</h2>
+            <div>
+              <label class="text-xs text-slate-500">kind</label>
+              <select id="cargo-kind" class="border rounded px-2 py-1 text-sm">
+                <option value="dn">국내 (dn)</option>
+                <option value="ln">국제 (ln)</option>
+              </select>
+            </div>
+          </div>
+          <div id="chart-heatmap" style="height:560px"></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <h2 class="font-semibold mb-2">결측 (port × period × kind) 키</h2>
+        <p class="text-xs text-slate-500 mb-2" id="cargo-gap-summary"></p>
+        <div class="overflow-auto max-h-[40vh] border rounded">
+          <table class="min-w-full text-xs" id="gap-tbl">
+            <thead class="bg-slate-100 sticky top-0">
+              <tr class="text-left">
+                <th class="px-2 py-1">port</th>
+                <th class="px-2 py-1">name</th>
+                <th class="px-2 py-1">period</th>
+                <th class="px-2 py-1">kind</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Changes -->
+    <section id="tab-changes" class="tab-panel hidden">
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" id="kpi-changes2"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">선박 변경 — 필드별 MODIFIED 셀 수</h2>
+          <div id="chart-vessel-fields" style="height:300px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">물동량 변경 — type 별 키 수</h2>
+          <div id="chart-cargo-types" style="height:300px"></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex flex-wrap gap-2 items-end mb-2">
+          <div>
+            <label class="text-xs text-slate-500 block">type</label>
+            <select id="vc-type" class="border rounded px-2 py-1">
+              <option value="">ALL</option><option>ADDED</option><option>REMOVED</option><option>MODIFIED</option>
+            </select>
+          </div>
+          <div class="grow min-w-[14rem]">
+            <label class="text-xs text-slate-500 block">검색</label>
+            <input id="vc-q" class="border rounded px-2 py-1 w-full" />
+          </div>
+          <div class="text-xs text-slate-500" id="vc-count"></div>
+        </div>
+        <div class="overflow-auto max-h-[40vh] border rounded">
+          <table class="min-w-full text-xs" id="vc-tbl">
+            <thead class="bg-slate-100 sticky top-0"><tr class="text-left">
+              <th class="px-2 py-1">type</th><th class="px-2 py-1">vessel_key</th>
+              <th class="px-2 py-1">field</th><th class="px-2 py-1">old</th><th class="px-2 py-1">new</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">선박 변경 (최대 5,000행 샘플)</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-4">
+        <div class="flex flex-wrap gap-2 items-end mb-2">
+          <div>
+            <label class="text-xs text-slate-500 block">type</label>
+            <select id="cc-type" class="border rounded px-2 py-1">
+              <option value="">ALL</option><option>ADDED</option><option>REMOVED</option><option>REVISED</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block">kind</label>
+            <select id="cc-kind" class="border rounded px-2 py-1">
+              <option value="">ALL</option><option>dn</option><option>ln</option>
+            </select>
+          </div>
+          <div class="grow min-w-[14rem]">
+            <label class="text-xs text-slate-500 block">검색</label>
+            <input id="cc-q" class="border rounded px-2 py-1 w-full" />
+          </div>
+          <div class="text-xs text-slate-500" id="cc-count"></div>
+        </div>
+        <div class="overflow-auto max-h-[40vh] border rounded">
+          <table class="min-w-full text-xs" id="cc-tbl">
+            <thead class="bg-slate-100 sticky top-0"><tr class="text-left">
+              <th class="px-2 py-1">type</th><th class="px-2 py-1">port</th>
+              <th class="px-2 py-1">year</th><th class="px-2 py-1">month</th><th class="px-2 py-1">kind</th>
+              <th class="px-2 py-1">field</th><th class="px-2 py-1">old</th><th class="px-2 py-1">new</th>
+              <th class="px-2 py-1 text-right">Δ</th><th class="px-2 py-1 text-right">Δ %</th>
+            </tr></thead><tbody></tbody>
+          </table>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">물동량 변경 (최대 5,000행 샘플, |Δ %| 내림차순)</p>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="tab-about" class="tab-panel hidden">
+      <div class="bg-white rounded-xl shadow p-6 max-w-3xl mx-auto prose prose-sm">
+        <h2 class="text-lg font-bold mb-2">Indonesia Shipping Intelligence</h2>
+        <p>인도네시아 해사청(<a href="https://kapal.dephub.go.id" target="_blank" class="text-blue-600">kapal.dephub.go.id</a>)의 선박 등록 데이터와 Inaportnet (<a href="https://monitoring-inaportnet.dephub.go.id" target="_blank" class="text-blue-600">monitoring-inaportnet.dephub.go.id</a>)의 LK3 물동량 데이터를 매월 자동 수집하여 변경 사항을 추적합니다.</p>
+        <h3 class="font-semibold mt-4 mb-1">데이터 출처</h3>
+        <ul class="list-disc ml-5 text-sm">
+          <li>선복량: 56개 선종 코드 × 전체 페이지</li>
+          <li>물동량: 모든 항구 × 직전 24개월 × 국내(dn)/국제(ln)</li>
+        </ul>
+        <h3 class="font-semibold mt-4 mb-1">Pipeline</h3>
+        <p class="text-sm">Python (requests + pandas + SQLAlchemy) → SQLite → 정적 JSON 추출 → GitHub Pages.</p>
+        <p class="text-sm">코드: <a href="https://github.com/moon470an-sys/Indonesia-Shipping-Intelligence" class="text-blue-600">github.com/moon470an-sys/Indonesia-Shipping-Intelligence</a></p>
+        <p class="text-xs text-slate-400 mt-4" id="about-meta"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 py-6">
+    Generated <span id="generated-at">…</span> · Static build, no server.
+  </footer>
+
+  <script src="./js/app.js" type="module"></script>
+</body>
+</html>
