@@ -234,13 +234,18 @@ def cargo_payload(month: str) -> dict:
     """
     import collections
 
-    # JSON paths for the (BONGKAR/MUAT, FIELD) keys
-    P_J_B = "$.\"('BONGKAR', 'JENIS')\""
-    P_T_B = "$.\"('BONGKAR', 'TON')\""
-    P_K_B = "$.\"('BONGKAR', 'KOMODITI')\""
-    P_J_M = "$.\"('MUAT', 'JENIS')\""
-    P_T_M = "$.\"('MUAT', 'TON')\""
-    P_K_M = "$.\"('MUAT', 'KOMODITI')\""
+    # JSON paths for the (BONGKAR/MUAT, FIELD) keys. The literal key contains
+    # single quotes (Python tuple repr), so we double them to embed inside a
+    # SQL string literal: 'foo''bar' → foo'bar.
+    def _sql_path(key: str) -> str:
+        return ('$."' + key + '"').replace("'", "''")
+
+    P_J_B = _sql_path("('BONGKAR', 'JENIS')")
+    P_T_B = _sql_path("('BONGKAR', 'TON')")
+    P_K_B = _sql_path("('BONGKAR', 'KOMODITI')")
+    P_J_M = _sql_path("('MUAT', 'JENIS')")
+    P_T_M = _sql_path("('MUAT', 'TON')")
+    P_K_M = _sql_path("('MUAT', 'KOMODITI')")
 
     def _ton_expr(path: str) -> str:
         return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
