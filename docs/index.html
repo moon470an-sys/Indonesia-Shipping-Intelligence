@@ -57,8 +57,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="space-y-2">
             <div>
-              <label class="text-xs text-slate-500 block">Vessel Type</label>
-              <select id="ft-types" multiple size="6" class="border rounded px-2 py-1 w-full text-sm"></select>
+              <label class="text-xs text-slate-500 block">Vessel Type <span class="text-slate-400">(Ctrl/Shift+클릭으로 다중선택)</span></label>
+              <select id="ft-types" multiple size="8" class="border rounded px-2 py-1 w-full text-sm"></select>
             </div>
             <label class="text-xs flex items-center gap-1">
               <input id="ft-exclude" type="checkbox" /> Exclude mode (선택 제외)
@@ -96,32 +96,19 @@
       </div>
 
       <!-- KPI cards -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3" id="kpi-fleet"></div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-fleet-dim"></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-fleet"></div>
 
       <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow p-4">
           <h2 class="font-semibold mb-2">건조 연도별 추이</h2>
-          <div id="chart-build-trend" style="height:300px"></div>
+          <div id="chart-build-trend" style="height:340px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <h2 class="font-semibold mb-2">Vessel Type TOP 15</h2>
           <div id="chart-types" style="height:420px"></div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">엔진 타입 분포</h2>
-          <div id="chart-engine-types" style="height:340px"></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">엔진명 TOP 12</h2>
-          <div id="chart-engines" style="height:340px"></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">국적 (Flag State) TOP 12</h2>
-          <div id="chart-flags" style="height:340px"></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
           <h2 class="font-semibold mb-2">Gross Tonnage 분포 (log)</h2>
           <div id="chart-gt" style="height:340px"></div>
         </div>

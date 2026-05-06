@@ -191,6 +191,10 @@ def vessels_search_payload(month: str) -> dict:
         eng = d.get("Mesin") or ""
         etp = d.get("MesinType") or ""
         flg = d.get("BenderaAsal") or ""
+        # JenisKapal is a numeric code like "1.7.13"; JenisDetailKet has the
+        # human-readable English category ("Tug Boat", "Bulk Carrier", ...).
+        # Show the human label and fall back to the code only when missing.
+        type_label = (d.get("JenisDetailKet") or jk or "").strip()
         loa_val = float(loa) if loa not in (None, "") and float(loa) > 0 else (
             float(panj) if panj not in (None, "") and float(panj) > 0 else None)
         items.append([
@@ -198,7 +202,7 @@ def vessels_search_payload(month: str) -> dict:
             sc or "",
             nm or "",
             cs or "",
-            jk or "",
+            type_label,
             ow or "",
             _round1(gt),
             th or "",

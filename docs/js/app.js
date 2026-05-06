@@ -253,14 +253,9 @@ function renderFleet() {
   renderKpis("kpi-fleet", [
     { label: "선박 수", value: fmt(rows.length), sub: `전체 ${fmt(total)}` },
     { label: "고유 종류 수", value: fmt(types.size) },
-    { label: "평균 GT", value: fmt0(avgPos(rows, FCOL.GT)) },
+    { label: "GT 평균 (>0)", value: fmt0(avgPos(rows, FCOL.GT)),
+      sub: `LOA ${fmt1(avgPos(rows, FCOL.LOA))}m · W ${fmt1(avgPos(rows, FCOL.WIDTH))}m · D ${fmt1(avgPos(rows, FCOL.DEPTH))}m` },
     { label: "평균 건조연도", value: yrN ? (yrSum / yrN).toFixed(0) : "—" },
-  ]);
-  renderKpis("kpi-fleet-dim", [
-    { label: "GT 평균 (>0)", value: fmt0(avgPos(rows, FCOL.GT)) },
-    { label: "LOA 평균 (m)", value: fmt1(avgPos(rows, FCOL.LOA)) },
-    { label: "Width 평균 (m)", value: fmt1(avgPos(rows, FCOL.WIDTH)) },
-    { label: "Depth 평균 (m)", value: fmt1(avgPos(rows, FCOL.DEPTH)) },
   ]);
 
   // Build year trend
@@ -285,30 +280,6 @@ function renderFleet() {
     type: "bar", orientation: "h",
     marker: { color: t15.map(t => t[1]), colorscale: "Blues" },
   }], { margin: { t: 10, l: 200, r: 10, b: 30 } }, { displayModeBar: false, responsive: true });
-
-  // Engine type donut
-  const et = topN(rows, FCOL.ETYPE, 10);
-  Plotly.newPlot("chart-engine-types", [{
-    labels: et.map(t => t[0]), values: et.map(t => t[1]),
-    type: "pie", hole: 0.45, textinfo: "label+percent", textposition: "outside",
-  }], { margin: { t: 10, l: 10, r: 10, b: 10 }, showlegend: false },
-  { displayModeBar: false, responsive: true });
-
-  // Engine names TOP 12
-  const en = topN(rows, FCOL.ENGINE, 12).reverse();
-  Plotly.newPlot("chart-engines", [{
-    x: en.map(t => t[1]), y: en.map(t => t[0]),
-    type: "bar", orientation: "h",
-    marker: { color: en.map(t => t[1]), colorscale: "Greens" },
-  }], { margin: { t: 10, l: 160, r: 10, b: 30 } }, { displayModeBar: false, responsive: true });
-
-  // Flag TOP 12
-  const fl = topN(rows, FCOL.FLAG, 12).reverse();
-  Plotly.newPlot("chart-flags", [{
-    x: fl.map(t => t[1]), y: fl.map(t => t[0]),
-    type: "bar", orientation: "h",
-    marker: { color: fl.map(t => t[1]), colorscale: "Oranges" },
-  }], { margin: { t: 10, l: 140, r: 10, b: 30 } }, { displayModeBar: false, responsive: true });
 
   // GT histogram (log-bins)
   const bins = [0, 100, 500, 1000, 5000, 10000, 50000, 100000, 1_000_000];
