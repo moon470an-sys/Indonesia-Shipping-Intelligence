@@ -236,6 +236,121 @@
         </div>
       </div>
 
+      <!-- 🛢️ Tanker Focus — operator-perspective views from tanker_focus.json -->
+      <div class="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-xl p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <div>
+            <h2 class="font-semibold text-violet-900">🛢️ Tanker Focus</h2>
+            <p class="text-xs text-violet-700" id="tk-summary">탱커 운영 관점 인사이트 (subclass · 거점 항구 · 코모디티 · 선대)</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-xs text-violet-700">kind</label>
+            <select id="tk-kind" class="border rounded px-2 py-1 text-sm">
+              <option value="all">전체 (dn+ln)</option>
+              <option value="dn">국내 (dn)</option>
+              <option value="ln">국제 (ln)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tanker subclass KPI strip -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3" id="kpi-tanker"></div>
+
+        <!-- Subclass detail table -->
+        <div class="bg-white rounded shadow-sm p-3 mb-3">
+          <h3 class="font-semibold text-sm mb-1">Subclass 상세 (ton + calls + 평균 ton/call)</h3>
+          <div class="overflow-auto max-h-[40vh] border rounded">
+            <table class="min-w-full text-xs" id="tk-sub-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th class="px-2 py-1">subclass</th>
+                  <th class="px-2 py-1 text-right">Bongkar (ton)</th>
+                  <th class="px-2 py-1 text-right">Muat (ton)</th>
+                  <th class="px-2 py-1 text-right">Total (ton)</th>
+                  <th class="px-2 py-1 text-right">Calls</th>
+                  <th class="px-2 py-1 text-right">평균 ton/call</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+          <div class="bg-white rounded shadow-sm p-3">
+            <h3 class="font-semibold text-sm mb-1">Subclass 월별 추이</h3>
+            <div id="chart-tk-subclass-monthly" style="height:320px"></div>
+          </div>
+          <div class="bg-white rounded shadow-sm p-3">
+            <h3 class="font-semibold text-sm mb-1">항구별 Bongkar/Muat 균형</h3>
+            <p class="text-xs text-slate-500 mb-1">x = Bongkar(하역, 양하), y = Muat(선적, 적재). 우측 = 양하 거점, 위 = 적재 거점</p>
+            <div id="chart-tk-port-balance" style="height:320px"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+          <div class="bg-white rounded shadow-sm p-3">
+            <h3 class="font-semibold text-sm mb-1">Top 양하 항구 (Bongkar) — 탱커 한정</h3>
+            <div id="chart-tk-top-bongkar" style="height:340px"></div>
+          </div>
+          <div class="bg-white rounded shadow-sm p-3">
+            <h3 class="font-semibold text-sm mb-1">Top 적재 항구 (Muat) — 탱커 한정</h3>
+            <div id="chart-tk-top-muat" style="height:340px"></div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded shadow-sm p-3 mb-3">
+          <h3 class="font-semibold text-sm mb-1">항구 × Subclass 히트맵 (Top 20 항구)</h3>
+          <p class="text-xs text-slate-500 mb-1">어느 항구가 어떤 액체화물 subclass를 처리하는지</p>
+          <div id="chart-tk-port-subclass-heatmap" style="height:480px"></div>
+        </div>
+
+        <div class="bg-white rounded shadow-sm p-3 mb-3">
+          <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
+            <h3 class="font-semibold text-sm">Top 탱커 코모디티 (Top 50)</h3>
+            <input id="tk-kom-q" class="border rounded px-2 py-1 text-xs" placeholder="품목명 검색" />
+          </div>
+          <div class="overflow-auto max-h-[50vh] border rounded">
+            <table class="min-w-full text-xs" id="tk-kom-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th data-k="komoditi" class="px-2 py-1 cursor-pointer">komoditi</th>
+                  <th data-k="subclass" class="px-2 py-1 cursor-pointer">subclass</th>
+                  <th data-k="ton_bongkar" class="px-2 py-1 cursor-pointer text-right">Bongkar</th>
+                  <th data-k="ton_muat" class="px-2 py-1 cursor-pointer text-right">Muat</th>
+                  <th data-k="ton_total" class="px-2 py-1 cursor-pointer text-right">Total</th>
+                  <th data-k="calls" class="px-2 py-1 cursor-pointer text-right">Calls</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded shadow-sm p-3">
+          <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
+            <h3 class="font-semibold text-sm">탱커 선대 보유 Top Owners</h3>
+            <input id="tk-own-q" class="border rounded px-2 py-1 text-xs" placeholder="선사 검색" />
+          </div>
+          <p class="text-xs text-slate-500 mb-1">vessels_snapshot 기준 (등록 owner 명, 출처: kapal.dephub.go.id)</p>
+          <div class="overflow-auto max-h-[50vh] border rounded">
+            <table class="min-w-full text-xs" id="tk-own-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th data-k="owner" class="px-2 py-1 cursor-pointer">owner</th>
+                  <th data-k="tanker_count" class="px-2 py-1 cursor-pointer text-right">Tankers</th>
+                  <th data-k="sum_gt" class="px-2 py-1 cursor-pointer text-right">Sum GT</th>
+                  <th data-k="avg_gt" class="px-2 py-1 cursor-pointer text-right">Avg GT</th>
+                  <th data-k="max_gt" class="px-2 py-1 cursor-pointer text-right">Max GT</th>
+                  <th class="px-2 py-1">subclass mix</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="bg-white rounded-xl shadow p-4">
           <h2 class="font-semibold mb-2">화물 종류별 톤수 TOP 15</h2>

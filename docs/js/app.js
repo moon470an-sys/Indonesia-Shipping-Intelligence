@@ -16,6 +16,7 @@ const state = {
   kpi: null,
   taxonomy: null,
   sectorMonthly: null,
+  tanker: null,
   financials: null,
   loaded: new Set(),
   vesselsRows: [],
@@ -744,6 +745,9 @@ function renderCargo() {
 
   // By Vessel Sector / Class / Tanker subclass — lit by cargo_sector_monthly.json
   renderCargoSectorViews();
+
+  // 🛢️ Tanker Focus — lit by tanker_focus.json
+  renderTankerFocus();
 }
 
 function _filterRowsByKind(rows, kind) {
@@ -804,6 +808,263 @@ function renderCargoSectorViews() {
     hovertemplate: "%{x}<br>%{y:,.0f} ton<extra></extra>",
   }], { margin: { t: 10, l: 60, r: 10, b: 50 }, yaxis: { title: "ton" } },
   { displayModeBar: false, responsive: true });
+}
+
+// ---------- Tanker Focus (Cargo tab section) ----------
+const tkState = {
+  kind: "all",
+  komSort: { col: "ton_total", dir: -1 },
+  ownSort: { col: "sum_gt", dir: -1 },
+  initialized: false,
+};
+
+const TANKER_SUBCLASS_PALETTE = {
+  "Crude Oil":             "#1e3a8a",
+  "Product":               "#0ea5e9",
+  "Chemical":              "#7c3aed",
+  "LPG":                   "#f59e0b",
+  "LNG":                   "#06b6d4",
+  "FAME / Vegetable Oil":  "#16a34a",
+  "Water":                 "#94a3b8",
+  "UNKNOWN":               "#6b7280",
+};
+
+function tkPickKind(row, base, kind) {
+  if (kind === "all") return (row[`${base}_dn`] || 0) + (row[`${base}_ln`] || 0);
+  return row[`${base}_${kind}`] || 0;
+}
+
+function renderTankerFocus() {
+  const t = state.tanker;
+  if (!t || t.empty) {
+    // Hide the whole panel when there's no data (e.g. older deployments).
+    const banner = document.getElementById("tk-summary");
+    if (banner) banner.textContent = "tanker_focus.json 미로드 (이전 빌드 데이터)";
+    return;
+  }
+
+  if (!tkState.initialized) {
+    tkState.initialized = true;
+    document.getElementById("tk-kind").addEventListener("change", (e) => {
+      tkState.kind = e.target.value; renderTankerFocus();
+    });
+    document.getElementById("tk-kom-q").addEventListener("input", renderTankerKomTable);
+    document.getElementById("tk-own-q").addEventListener("input", renderTankerOwnerTable);
+    document.querySelectorAll("#tk-kom-tbl thead th").forEach(th => {
+      th.addEventListener("click", () => {
+        const k = th.dataset.k; if (!k) return;
+        tkState.komSort.dir = (tkState.komSort.col === k) ? -tkState.komSort.dir : -1;
+        tkState.komSort.col = k;
+        renderTankerKomTable();
+      });
+    });
+    document.querySelectorAll("#tk-own-tbl thead th").forEach(th => {
+      th.addEventListener("click", () => {
+        const k = th.dataset.k; if (!k) return;
+        tkState.ownSort.dir = (tkState.ownSort.col === k) ? -tkState.ownSort.dir : -1;
+        tkState.ownSort.col = k;
+        renderTankerOwnerTable();
+      });
+    });
+  }
+
+  const kind = tkState.kind;
+
+  // 1) KPI strip + subclass detail table
+  const subRows = (t.by_subclass || []).map(r => {
+    const ton_b = tkPickKind(r, "ton_bongkar", kind);
+    const ton_m = tkPickKind(r, "ton_muat", kind);
+    const calls = (kind === "all") ? r.calls_total
+                : (kind === "dn" ? r.calls_dn : r.calls_ln);
+    const ton = ton_b + ton_m;
+    return {
+      subclass: r.subclass,
+      ton_bongkar: ton_b, ton_muat: ton_m, ton_total: ton,
+      calls,
+      avg_ton_per_call: calls ? ton / calls : 0,
+    };
+  }).sort((a, b) => b.ton_total - a.ton_total);
+
+  const totTon = subRows.reduce((s, r) => s + r.ton_total, 0);
+  const totCalls = subRows.reduce((s, r) => s + r.calls, 0);
+  const totBongkar = subRows.reduce((s, r) => s + r.ton_bongkar, 0);
+  const topSub = subRows[0] || { subclass: "—", ton_total: 0 };
+  const bShare = totTon ? (totBongkar / totTon * 100) : null;
+  renderKpis("kpi-tanker", [
+    { label: "탱커 총 톤수", value: fmt0(totTon),
+      sub: `${fmt(totCalls)} calls / 평균 ${fmt0(totCalls ? totTon / totCalls : 0)} ton/call` },
+    { label: "최대 Subclass", value: topSub.subclass,
+      sub: totTon ? `${(topSub.ton_total / totTon * 100).toFixed(1)}%` : "—" },
+    { label: "Bongkar 비중", value: bShare == null ? "—" : `${bShare.toFixed(1)}%`,
+      sub: `Muat ${(100 - bShare).toFixed(1)}%` },
+    { label: "탱커 선대 (등록)", value: fmt(t.fleet_owners
+        ? t.fleet_owners.reduce((s, o) => s + o.tanker_count, 0) : 0),
+      sub: `${fmt(t.fleet_owners ? t.fleet_owners.length : 0)} owners (top 50)` },
+  ]);
+
+  const fmtN = (v) => v == null ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  document.querySelector("#tk-sub-tbl tbody").innerHTML = subRows.map(r => `<tr>
+    <td class="px-2 py-1" style="border-left:3px solid ${TANKER_SUBCLASS_PALETTE[r.subclass] || '#6b7280'}">${r.subclass}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.ton_bongkar)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.ton_muat)}</td>
+    <td class="px-2 py-1 text-right font-semibold">${fmtN(r.ton_total)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.calls)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.avg_ton_per_call)}</td>
+  </tr>`).join("");
+
+  // 2) Subclass monthly trend
+  const monthly = (t.monthly_subclass || []).filter(r => kind === "all" || r.kind === kind);
+  const periods = Array.from(new Set(monthly.map(r => r.period))).sort();
+  const subs = Array.from(new Set(monthly.map(r => r.subclass)));
+  const monthlyTraces = subs.map(s => ({
+    x: periods,
+    y: periods.map(p => {
+      let sum = 0;
+      for (const r of monthly) {
+        if (r.subclass === s && r.period === p) sum += r.ton_total;
+      }
+      return sum;
+    }),
+    name: s, type: "scatter", mode: "lines+markers",
+    line: { color: TANKER_SUBCLASS_PALETTE[s] || "#6b7280" },
+  }));
+  Plotly.newPlot("chart-tk-subclass-monthly", monthlyTraces,
+    { margin: { t: 10, l: 60, r: 10, b: 60 }, xaxis: { tickangle: -40 },
+      yaxis: { title: "ton" }, legend: { orientation: "h", y: -0.25 } },
+    { displayModeBar: false, responsive: true });
+
+  // 3) Port balance scatter (top 40 ports by total)
+  const portRows = (t.port_balance || []).filter(r => kind === "all" || r.kind === kind);
+  // Aggregate over kinds when "all"
+  const portAgg = {};
+  for (const r of portRows) {
+    const key = r.port;
+    if (!portAgg[key]) portAgg[key] = { port: r.port, name: r.name, b: 0, m: 0, calls: 0 };
+    portAgg[key].b += r.ton_bongkar;
+    portAgg[key].m += r.ton_muat;
+    portAgg[key].calls += r.calls;
+  }
+  const portList = Object.values(portAgg)
+    .filter(p => p.b + p.m > 0)
+    .sort((a, b) => (b.b + b.m) - (a.b + a.m))
+    .slice(0, 40);
+  Plotly.newPlot("chart-tk-port-balance", [{
+    x: portList.map(p => p.b),
+    y: portList.map(p => p.m),
+    text: portList.map(p => p.port),
+    mode: "markers+text", textposition: "top center", textfont: { size: 9 },
+    marker: {
+      size: portList.map(p => Math.max(6, Math.sqrt((p.b + p.m) / 1000))),
+      color: portList.map(p => p.b > p.m ? "#0ea5e9" : "#f97316"),
+      opacity: 0.7, line: { color: "#0f172a", width: 1 },
+    },
+    customdata: portList.map(p => [p.name, p.b + p.m, p.calls]),
+    hovertemplate: "<b>%{text}</b> %{customdata[0]}<br>Bongkar %{x:,.0f} / Muat %{y:,.0f}<br>Total %{customdata[1]:,.0f} ton (%{customdata[2]:,} calls)<extra></extra>",
+  }], {
+    margin: { t: 10, l: 70, r: 10, b: 50 },
+    xaxis: { title: "Bongkar (양하·하역) ton", type: "log" },
+    yaxis: { title: "Muat (적재·선적) ton", type: "log" },
+  }, { displayModeBar: false, responsive: true });
+
+  // 4) Top Bongkar / Muat ports — bar charts
+  const topB = portList.slice().sort((a, b) => b.b - a.b).slice(0, 15).reverse();
+  const topM = portList.slice().sort((a, b) => b.m - a.m).slice(0, 15).reverse();
+  Plotly.newPlot("chart-tk-top-bongkar", [{
+    y: topB.map(p => `${p.port}${p.name ? " " + p.name.slice(0, 12) : ""}`),
+    x: topB.map(p => p.b), type: "bar", orientation: "h",
+    marker: { color: "#0ea5e9" },
+    hovertemplate: "%{y}<br>Bongkar %{x:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 170, r: 10, b: 30 }, xaxis: { title: "ton" } },
+  { displayModeBar: false, responsive: true });
+  Plotly.newPlot("chart-tk-top-muat", [{
+    y: topM.map(p => `${p.port}${p.name ? " " + p.name.slice(0, 12) : ""}`),
+    x: topM.map(p => p.m), type: "bar", orientation: "h",
+    marker: { color: "#f97316" },
+    hovertemplate: "%{y}<br>Muat %{x:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 170, r: 10, b: 30 }, xaxis: { title: "ton" } },
+  { displayModeBar: false, responsive: true });
+
+  // 5) Port × Subclass heatmap (top 20 ports)
+  const psRows = (t.port_subclass_rows || []).filter(r => kind === "all" || r.kind === kind);
+  const portTotalsForMap = {};
+  for (const r of psRows) {
+    portTotalsForMap[r.port] = (portTotalsForMap[r.port] || 0) + r.ton_total;
+  }
+  const top20Ports = Object.entries(portTotalsForMap)
+    .sort((a, b) => b[1] - a[1]).slice(0, 20).map(p => p[0]);
+  const subList = Array.from(new Set(psRows.map(r => r.subclass)));
+  const portNames = {};
+  for (const r of (t.port_balance || [])) portNames[r.port] = r.name;
+  const yLabels = top20Ports.map(p => `${p}${portNames[p] ? " " + portNames[p].slice(0, 14) : ""}`);
+  const z = top20Ports.map(p => subList.map(s => {
+    let sum = 0;
+    for (const r of psRows) {
+      if (r.port === p && r.subclass === s) sum += r.ton_total;
+    }
+    return sum;
+  }));
+  Plotly.newPlot("chart-tk-port-subclass-heatmap", [{
+    z, x: subList, y: yLabels, type: "heatmap",
+    colorscale: "Purples", hoverongaps: false,
+    hovertemplate: "%{y}<br>%{x}<br>%{z:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 200, r: 10, b: 60 }, xaxis: { tickangle: -20 } },
+  { displayModeBar: false, responsive: true });
+
+  // 6) Komoditi + 7) Owners — feed cached lists, then render tables
+  tkState.komRows = (t.komoditi_top || []).slice();
+  tkState.ownerRows = (t.fleet_owners || []).slice();
+  renderTankerKomTable();
+  renderTankerOwnerTable();
+
+  document.getElementById("tk-summary").textContent =
+    `${subRows.length} subclass · ${portList.length} 항구 · ${(t.komoditi_top || []).length} komoditi · ${(t.fleet_owners || []).length} owners (kind: ${kind})`;
+}
+
+function renderTankerKomTable() {
+  const rows = tkState.komRows || [];
+  const q = (document.getElementById("tk-kom-q").value || "").toLowerCase().trim();
+  const filtered = q ? rows.filter(r => (r.komoditi || "").toLowerCase().includes(q)) : rows;
+  const { col, dir } = tkState.komSort;
+  const sorted = filtered.slice(0, 50).sort((a, b) => {
+    const x = a[col], y = b[col];
+    if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+    return String(x || "").localeCompare(String(y || "")) * dir;
+  });
+  const fmtN = (v) => v == null ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  document.querySelector("#tk-kom-tbl tbody").innerHTML = sorted.map(r => `<tr>
+    <td class="px-2 py-1">${r.komoditi}</td>
+    <td class="px-2 py-1" style="color:${TANKER_SUBCLASS_PALETTE[r.subclass] || '#6b7280'}">${r.subclass}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.ton_bongkar)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.ton_muat)}</td>
+    <td class="px-2 py-1 text-right font-semibold">${fmtN(r.ton_total)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.calls)}</td>
+  </tr>`).join("");
+}
+
+function renderTankerOwnerTable() {
+  const rows = tkState.ownerRows || [];
+  const q = (document.getElementById("tk-own-q").value || "").toLowerCase().trim();
+  const filtered = q ? rows.filter(r => (r.owner || "").toLowerCase().includes(q)) : rows;
+  const { col, dir } = tkState.ownSort;
+  const sorted = filtered.slice().sort((a, b) => {
+    const x = a[col], y = b[col];
+    if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+    return String(x || "").localeCompare(String(y || "")) * dir;
+  });
+  const fmtN = (v) => v == null ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const subBadge = (mix) => Object.entries(mix || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([s, n]) => `<span class="inline-block px-1 mr-1 rounded text-white text-[10px]" style="background:${TANKER_SUBCLASS_PALETTE[s] || '#6b7280'}">${s}·${n}</span>`)
+    .join("");
+  document.querySelector("#tk-own-tbl tbody").innerHTML = sorted.map(r => `<tr>
+    <td class="px-2 py-1">${r.owner}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.tanker_count)}</td>
+    <td class="px-2 py-1 text-right font-semibold">${fmtN(r.sum_gt)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.avg_gt)}</td>
+    <td class="px-2 py-1 text-right">${fmtN(r.max_gt)}</td>
+    <td class="px-2 py-1">${subBadge(r.subclass_counts)}</td>
+  </tr>`).join("");
 }
 
 // ---------- Trends tab ----------
@@ -1376,6 +1637,10 @@ async function ensureLoaded(tab) {
       if (!state.sectorMonthly) {
         try { state.sectorMonthly = await loadJson("cargo_sector_monthly.json"); }
         catch (e) { state.sectorMonthly = null; }
+      }
+      if (!state.tanker) {
+        try { state.tanker = await loadJson("tanker_focus.json"); }
+        catch (e) { state.tanker = null; }
       }
       renderCargo();
       state.loaded.add("cargo");

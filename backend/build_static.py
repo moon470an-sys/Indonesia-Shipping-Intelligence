@@ -810,6 +810,299 @@ def kpi_summary_payload(month: str, change_month: str | None) -> dict:
     }
 
 
+def tanker_focus_payload(month: str) -> dict:
+    """Tanker-operator focused aggregations.
+
+    Drills into the tanker subset of LK3 rows and produces views that
+    matter for a tanker company:
+
+      * by_subclass: ton + calls + avg ton/call per (subclass, kind)
+      * monthly_subclass: per (period, kind, subclass) ton+calls
+      * port_subclass: per (port, kind, subclass) ton+calls -- supports the
+        port balance scatter and port-x-subclass heatmap
+      * port_balance: per (port, kind) total tanker ton_b/ton_m -- for the
+        bongkar/muat asymmetry view (loading vs discharge hubs)
+      * komoditi_subclass: per (komoditi, subclass, kind) ton split into
+        bongkar vs muat -- top tanker liquids
+      * fleet_owners: top owners of tanker vessels from vessels_snapshot
+
+    Filtering to tanker happens in Python because classify_vessel_type is
+    rule-based; the SQL groups by raw JENIS_KAPAL and we fold non-tanker
+    labels out before re-aggregating.
+    """
+    import collections
+
+    from backend.taxonomy import (
+        classify_tanker_subclass, classify_vessel_type,
+        CLS_TANKER, SECTOR_CARGO,
+    )
+
+    def _sql_path(key: str) -> str:
+        return ('$."' + key + '"').replace("'", "''")
+
+    P_J_LK3 = _sql_path("('JENIS KAPAL', 'JENIS KAPAL')")
+    P_T_B = _sql_path("('BONGKAR', 'TON')")
+    P_T_M = _sql_path("('MUAT', 'TON')")
+    P_K_B = _sql_path("('BONGKAR', 'KOMODITI')")
+    P_K_M = _sql_path("('MUAT', 'KOMODITI')")
+
+    def _ton_expr(path: str) -> str:
+        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+
+    def _is_tanker(jk: str) -> bool:
+        sector, vclass = classify_vessel_type(jk)
+        return sector == SECTOR_CARGO and vclass == CLS_TANKER
+
+    with engine.connect() as conn:
+        # Distinct tanker JENIS_KAPAL labels in this snapshot. Computing once
+        # lets us narrow later queries with an IN (...) and keep memory tight.
+        log.info("tanker: distinct labels")
+        all_labels = [r[0] for r in conn.execute(text(
+            f"SELECT DISTINCT json_extract(raw_row, '{P_J_LK3}') "
+            "FROM cargo_snapshot WHERE snapshot_month=:m"
+        ), {"m": month}).fetchall() if r[0]]
+        tanker_labels = [l for l in all_labels if _is_tanker(l)]
+        if not tanker_labels:
+            log.warning("tanker: no tanker labels found in snapshot %s", month)
+            return {"snapshot_month": month, "schema_version": 1, "empty": True}
+
+        # Bind tanker labels for IN clauses
+        tk_ph = ",".join(f":t{i}" for i in range(len(tanker_labels)))
+        tk_params = {f"t{i}": l for i, l in enumerate(tanker_labels)}
+        tk_params["m"] = month
+
+        # 1) Monthly tanker subclass — port-agnostic ton + calls per
+        # (period, kind, JENIS_KAPAL); we fold to subclass in Python.
+        log.info("tanker: monthly by JENIS_KAPAL")
+        monthly = collections.defaultdict(
+            lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls": 0})
+        for yr, mo, kind, jk, tb, tm, n in conn.execute(text(
+            f"SELECT data_year, data_month, kind, "
+            f"       json_extract(raw_row, '{P_J_LK3}'), "
+            f"       SUM({_ton_expr(P_T_B)}), SUM({_ton_expr(P_T_M)}), COUNT(*) "
+            f"FROM cargo_snapshot WHERE snapshot_month=:m "
+            f"  AND json_extract(raw_row, '{P_J_LK3}') IN ({tk_ph}) "
+            f"GROUP BY 1,2,3,4"
+        ), tk_params).fetchall():
+            sub = classify_tanker_subclass(jk)
+            period = f"{int(yr)}-{int(mo):02d}"
+            key = (period, kind, sub)
+            monthly[key]["ton_b"] += float(tb or 0)
+            monthly[key]["ton_m"] += float(tm or 0)
+            monthly[key]["calls"] += int(n or 0)
+
+        # 2) Port × kind × JENIS_KAPAL → fold to (port, kind, subclass)
+        log.info("tanker: port x JENIS_KAPAL")
+        port_sub = collections.defaultdict(
+            lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls": 0})
+        for port, kind, jk, tb, tm, n in conn.execute(text(
+            f"SELECT cs.kode_pelabuhan, cs.kind, "
+            f"       json_extract(cs.raw_row, '{P_J_LK3}'), "
+            f"       SUM({_ton_expr(P_T_B)}), SUM({_ton_expr(P_T_M)}), COUNT(*) "
+            f"FROM cargo_snapshot cs WHERE cs.snapshot_month=:m "
+            f"  AND json_extract(cs.raw_row, '{P_J_LK3}') IN ({tk_ph}) "
+            f"GROUP BY 1,2,3"
+        ), tk_params).fetchall():
+            sub = classify_tanker_subclass(jk)
+            key = (port, kind, sub)
+            port_sub[key]["ton_b"] += float(tb or 0)
+            port_sub[key]["ton_m"] += float(tm or 0)
+            port_sub[key]["calls"] += int(n or 0)
+
+        # 3) Komoditi (BONGKAR + MUAT separately so we keep direction)
+        log.info("tanker: komoditi BONGKAR")
+        kom_sub = collections.defaultdict(
+            lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls_b": 0, "calls_m": 0})
+        for jk, kind, kom, t, n in conn.execute(text(
+            f"SELECT json_extract(raw_row, '{P_J_LK3}'), kind, "
+            f"       json_extract(raw_row, '{P_K_B}'), "
+            f"       SUM({_ton_expr(P_T_B)}), COUNT(*) "
+            f"FROM cargo_snapshot WHERE snapshot_month=:m "
+            f"  AND json_extract(raw_row, '{P_J_LK3}') IN ({tk_ph}) "
+            f"  AND {_ton_expr(P_T_B)} > 0 "
+            f"GROUP BY 1,2,3"
+        ), tk_params).fetchall():
+            if not kom or str(kom).strip() in ("", "-"):
+                continue
+            sub = classify_tanker_subclass(jk)
+            key = (str(kom).strip(), sub, kind)
+            kom_sub[key]["ton_b"] += float(t or 0)
+            kom_sub[key]["calls_b"] += int(n or 0)
+        log.info("tanker: komoditi MUAT")
+        for jk, kind, kom, t, n in conn.execute(text(
+            f"SELECT json_extract(raw_row, '{P_J_LK3}'), kind, "
+            f"       json_extract(raw_row, '{P_K_M}'), "
+            f"       SUM({_ton_expr(P_T_M)}), COUNT(*) "
+            f"FROM cargo_snapshot WHERE snapshot_month=:m "
+            f"  AND json_extract(raw_row, '{P_J_LK3}') IN ({tk_ph}) "
+            f"  AND {_ton_expr(P_T_M)} > 0 "
+            f"GROUP BY 1,2,3"
+        ), tk_params).fetchall():
+            if not kom or str(kom).strip() in ("", "-"):
+                continue
+            sub = classify_tanker_subclass(jk)
+            key = (str(kom).strip(), sub, kind)
+            kom_sub[key]["ton_m"] += float(t or 0)
+            kom_sub[key]["calls_m"] += int(n or 0)
+
+        # 4) Tanker fleet owners (vessels_snapshot)
+        log.info("tanker: fleet owners")
+        owner_rows = []
+        for ow, jdk, n, sum_gt, max_gt in conn.execute(text(
+            "SELECT nama_pemilik, "
+            "       json_extract(raw_data, '$.JenisDetailKet') AS jdk, "
+            "       COUNT(*), SUM(gt), MAX(gt) "
+            "FROM vessels_snapshot WHERE snapshot_month=:m "
+            "  AND nama_pemilik IS NOT NULL AND nama_pemilik != '' "
+            "GROUP BY nama_pemilik, jdk"
+        ), {"m": month}).fetchall():
+            owner_rows.append((ow, jdk, int(n), float(sum_gt or 0), float(max_gt or 0)))
+
+    # Fold owner_rows to tanker-only
+    owner_tanker = collections.defaultdict(
+        lambda: {"count": 0, "sum_gt": 0.0, "max_gt": 0.0,
+                 "subclass_counts": collections.Counter()})
+    for ow, jdk, n, sum_gt, max_gt in owner_rows:
+        sector, vclass = classify_vessel_type(jdk)
+        if sector != SECTOR_CARGO or vclass != CLS_TANKER:
+            continue
+        sub = classify_tanker_subclass(jdk)
+        owner_tanker[ow]["count"] += n
+        owner_tanker[ow]["sum_gt"] += sum_gt
+        owner_tanker[ow]["max_gt"] = max(owner_tanker[ow]["max_gt"], max_gt)
+        owner_tanker[ow]["subclass_counts"][sub] += n
+
+    # Build outputs ----------------------------------------------------------
+    # by_subclass — flatten across kinds (sum dn+ln)
+    by_sub_agg = collections.defaultdict(
+        lambda: {"dn": {"ton_b": 0.0, "ton_m": 0.0, "calls": 0},
+                 "ln": {"ton_b": 0.0, "ton_m": 0.0, "calls": 0}})
+    for (period, kind, sub), v in monthly.items():
+        if kind not in ("dn", "ln"):
+            continue
+        by_sub_agg[sub][kind]["ton_b"] += v["ton_b"]
+        by_sub_agg[sub][kind]["ton_m"] += v["ton_m"]
+        by_sub_agg[sub][kind]["calls"] += v["calls"]
+    by_subclass = []
+    for sub, splits in by_sub_agg.items():
+        ton_b_total = splits["dn"]["ton_b"] + splits["ln"]["ton_b"]
+        ton_m_total = splits["dn"]["ton_m"] + splits["ln"]["ton_m"]
+        calls_total = splits["dn"]["calls"] + splits["ln"]["calls"]
+        ton_total = ton_b_total + ton_m_total
+        avg_per_call = (ton_total / calls_total) if calls_total else 0
+        by_subclass.append({
+            "subclass": sub,
+            "ton_bongkar_dn": round(splits["dn"]["ton_b"], 1),
+            "ton_bongkar_ln": round(splits["ln"]["ton_b"], 1),
+            "ton_muat_dn":    round(splits["dn"]["ton_m"], 1),
+            "ton_muat_ln":    round(splits["ln"]["ton_m"], 1),
+            "ton_total":      round(ton_total, 1),
+            "calls_dn": int(splits["dn"]["calls"]),
+            "calls_ln": int(splits["ln"]["calls"]),
+            "calls_total": calls_total,
+            "avg_ton_per_call": round(avg_per_call, 1),
+        })
+    by_subclass.sort(key=lambda r: -r["ton_total"])
+
+    monthly_subclass = [
+        {"period": p, "kind": k, "subclass": s,
+         "ton_bongkar": round(v["ton_b"], 1),
+         "ton_muat":    round(v["ton_m"], 1),
+         "ton_total":   round(v["ton_b"] + v["ton_m"], 1),
+         "calls":       int(v["calls"])}
+        for (p, k, s), v in sorted(monthly.items())
+    ]
+
+    # Port aggregations: per (port, kind) total + per (port, subclass) ton
+    port_balance_agg = collections.defaultdict(
+        lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls": 0})
+    port_subclass_rows = []
+    for (port, kind, sub), v in port_sub.items():
+        port_balance_agg[(port, kind)]["ton_b"] += v["ton_b"]
+        port_balance_agg[(port, kind)]["ton_m"] += v["ton_m"]
+        port_balance_agg[(port, kind)]["calls"] += v["calls"]
+        port_subclass_rows.append({
+            "port": port, "kind": kind, "subclass": sub,
+            "ton_bongkar": round(v["ton_b"], 1),
+            "ton_muat":    round(v["ton_m"], 1),
+            "ton_total":   round(v["ton_b"] + v["ton_m"], 1),
+            "calls":       int(v["calls"]),
+        })
+
+    # Look up port names from the existing helper SQL
+    name_map: dict[str, str] = {}
+    with engine.connect() as conn:
+        for k, n in conn.execute(text(
+            "SELECT kode_pelabuhan, nama_pelabuhan FROM ports"
+        )).fetchall():
+            if n:
+                name_map[k] = n
+
+    port_balance = []
+    for (port, kind), v in port_balance_agg.items():
+        ton_total = v["ton_b"] + v["ton_m"]
+        bongkar_ratio = (v["ton_b"] / ton_total) if ton_total else 0.0
+        port_balance.append({
+            "port": port,
+            "name": name_map.get(port, ""),
+            "kind": kind,
+            "ton_bongkar": round(v["ton_b"], 1),
+            "ton_muat":    round(v["ton_m"], 1),
+            "ton_total":   round(ton_total, 1),
+            "calls":       int(v["calls"]),
+            "bongkar_share_pct": round(bongkar_ratio * 100.0, 2),
+        })
+    port_balance.sort(key=lambda r: -r["ton_total"])
+
+    # Komoditi: top 200 by total ton across BONGKAR+MUAT, all kinds
+    kom_agg = collections.defaultdict(
+        lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls_b": 0, "calls_m": 0,
+                 "subclass": ""})
+    for (kom, sub, kind), v in kom_sub.items():
+        # Collapse kinds: store per (kom, sub)
+        bucket = kom_agg[(kom, sub)]
+        bucket["ton_b"] += v["ton_b"]
+        bucket["ton_m"] += v["ton_m"]
+        bucket["calls_b"] += v["calls_b"]
+        bucket["calls_m"] += v["calls_m"]
+        bucket["subclass"] = sub
+    kom_rows = []
+    for (kom, sub), v in kom_agg.items():
+        kom_rows.append({
+            "komoditi": kom,
+            "subclass": sub,
+            "ton_bongkar": round(v["ton_b"], 1),
+            "ton_muat":    round(v["ton_m"], 1),
+            "ton_total":   round(v["ton_b"] + v["ton_m"], 1),
+            "calls":       int(v["calls_b"] + v["calls_m"]),
+        })
+    kom_rows.sort(key=lambda r: -r["ton_total"])
+    kom_rows = kom_rows[:200]
+
+    fleet_owners = []
+    for ow, v in sorted(owner_tanker.items(), key=lambda kv: -kv[1]["sum_gt"])[:50]:
+        sub_breakdown = dict(v["subclass_counts"])
+        fleet_owners.append({
+            "owner": ow,
+            "tanker_count": int(v["count"]),
+            "sum_gt": round(v["sum_gt"], 0),
+            "max_gt": round(v["max_gt"], 0),
+            "avg_gt": round(v["sum_gt"] / v["count"], 0) if v["count"] else 0,
+            "subclass_counts": sub_breakdown,
+        })
+
+    return {
+        "snapshot_month": month,
+        "schema_version": 1,
+        "by_subclass": by_subclass,
+        "monthly_subclass": monthly_subclass,
+        "port_subclass_rows": port_subclass_rows,
+        "port_balance": port_balance,
+        "komoditi_top": kom_rows,
+        "fleet_owners": fleet_owners,
+    }
+
+
 def companies_financials_payload() -> dict:
     """Read data/companies_financials.yml and emit a chart-ready JSON.
 
@@ -906,6 +1199,7 @@ def main() -> int:
         "sector_taxonomy.json": sector_taxonomy_payload(),
         "cargo_sector_monthly.json": cargo_sector_monthly_payload(month),
         "kpi_summary.json": kpi_summary_payload(month, change_month),
+        "tanker_focus.json": tanker_focus_payload(month),
         "companies_financials.json": companies_financials_payload(),
     }
     sizes: dict[str, int] = {}
