@@ -96,9 +96,21 @@ function renderOverview() {
 // Column indexes mirror docs/data/vessels_search.json schema:
 //   0 key  1 code  2 name  3 call_sign  4 type  5 owner  6 gt  7 year  8 imo
 //   9 engine  10 engine_type  11 flag  12 loa  13 width  14 depth
+//   15 sector  16 vessel_class
 const FCOL = { KEY: 0, CODE: 1, NAME: 2, CALL: 3, TYPE: 4, OWNER: 5, GT: 6,
                YEAR: 7, IMO: 8, ENGINE: 9, ETYPE: 10, FLAG: 11,
-               LOA: 12, WIDTH: 13, DEPTH: 14 };
+               LOA: 12, WIDTH: 13, DEPTH: 14, SECTOR: 15, CLASS: 16 };
+
+// Stable sector palette mirrors backend.taxonomy.SECTOR_PALETTE so charts
+// stay color-consistent across tabs.
+const SECTOR_PALETTE = {
+  PASSENGER: "#0d9488",
+  CARGO: "#1e3a8a",
+  FISHING: "#d97706",
+  OFFSHORE_SUPPORT: "#475569",
+  NON_COMMERCIAL: "#6b7280",
+  UNMAPPED: "#dc2626",
+};
 
 const fleetState = {
   bounds: null,        // {yr:[lo,hi], gt, loa, w, d}
@@ -147,6 +159,34 @@ function setBounds() {
     opt.value = t; opt.textContent = `${t} (${n.toLocaleString()})`;
     sel.appendChild(opt);
   });
+
+  // sector multiselect
+  const sectorCounts = {};
+  for (const r of rows) {
+    const s = r[FCOL.SECTOR]; if (!s) continue;
+    sectorCounts[s] = (sectorCounts[s] || 0) + 1;
+  }
+  const sselFleet = document.getElementById("ft-sectors");
+  sselFleet.innerHTML = "";
+  Object.entries(sectorCounts).sort((a, b) => b[1] - a[1]).forEach(([s, n]) => {
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = `${s} (${n.toLocaleString()})`;
+    sselFleet.appendChild(opt);
+  });
+
+  // vessel_class multiselect
+  const classCounts = {};
+  for (const r of rows) {
+    const c = r[FCOL.CLASS]; if (!c) continue;
+    classCounts[c] = (classCounts[c] || 0) + 1;
+  }
+  const cselFleet = document.getElementById("ft-classes");
+  cselFleet.innerHTML = "";
+  Object.entries(classCounts).sort((a, b) => b[1] - a[1]).forEach(([c, n]) => {
+    const opt = document.createElement("option");
+    opt.value = c; opt.textContent = `${c} (${n.toLocaleString()})`;
+    cselFleet.appendChild(opt);
+  });
 }
 
 function setRange(prefix, [lo, hi]) {
@@ -165,6 +205,8 @@ function readRange(prefix, fallback) {
 function applyFleetFilters() {
   const b = fleetState.bounds;
   const types = Array.from(document.getElementById("ft-types").selectedOptions).map(o => o.value);
+  const sectors = Array.from(document.getElementById("ft-sectors").selectedOptions).map(o => o.value);
+  const classes = Array.from(document.getElementById("ft-classes").selectedOptions).map(o => o.value);
   const exclude = document.getElementById("ft-exclude").checked;
   const name = (document.getElementById("ft-name").value || "").toLowerCase().trim();
   const yr = readRange("ft-yr", b.yr);
@@ -178,8 +220,15 @@ function applyFleetFilters() {
     const n = parseInt(v, 10); return isNaN(n) || (n >= yr[0] && n <= yr[1]);
   };
   const typeSet = new Set(types);
+  const sectorSet = new Set(sectors);
+  const classSet = new Set(classes);
   const matchType = types.length === 0 ? () => true
     : (exclude ? r => !typeSet.has(r[FCOL.TYPE]) : r => typeSet.has(r[FCOL.TYPE]));
+  // Sector/class follow exclude mode too — keeps the filter UX consistent.
+  const matchSector = sectors.length === 0 ? () => true
+    : (exclude ? r => !sectorSet.has(r[FCOL.SECTOR]) : r => sectorSet.has(r[FCOL.SECTOR]));
+  const matchClass = classes.length === 0 ? () => true
+    : (exclude ? r => !classSet.has(r[FCOL.CLASS]) : r => classSet.has(r[FCOL.CLASS]));
   const matchName = name === "" ? () => true : r =>
     (r[FCOL.NAME] || "").toLowerCase().includes(name)
     || (r[FCOL.CALL] || "").toLowerCase().includes(name)
@@ -189,6 +238,8 @@ function applyFleetFilters() {
   const out = [];
   for (const r of state.vesselsRows) {
     if (!matchType(r)) continue;
+    if (!matchSector(r)) continue;
+    if (!matchClass(r)) continue;
     if (!yrInRange(r[FCOL.YEAR])) continue;
     if (!inRange(r[FCOL.GT], gt)) continue;
     if (!inRange(r[FCOL.LOA], loa)) continue;
@@ -202,6 +253,8 @@ function applyFleetFilters() {
   // active filter count
   const active = [
     types.length > 0,
+    sectors.length > 0,
+    classes.length > 0,
     name !== "",
     yr[0] !== b.yr[0] || yr[1] !== b.yr[1],
     gt[0] !== b.gt[0] || gt[1] !== b.gt[1],
@@ -244,19 +297,53 @@ function renderFleet() {
 
   // KPIs
   const types = new Set();
+  const sectors = new Set();
   let yrSum = 0, yrN = 0;
   for (const r of rows) {
     if (r[FCOL.TYPE]) types.add(r[FCOL.TYPE]);
+    if (r[FCOL.SECTOR]) sectors.add(r[FCOL.SECTOR]);
     const y = parseInt(r[FCOL.YEAR], 10);
     if (!isNaN(y) && y > 1700 && y < 2100) { yrSum += y; yrN++; }
   }
   renderKpis("kpi-fleet", [
     { label: "선박 수", value: fmt(rows.length), sub: `전체 ${fmt(total)}` },
-    { label: "고유 종류 수", value: fmt(types.size) },
+    { label: "Sector / Class", value: `${sectors.size} / ${types.size}`,
+      sub: `raw types: ${types.size}` },
     { label: "GT 평균 (>0)", value: fmt0(avgPos(rows, FCOL.GT)),
       sub: `LOA ${fmt1(avgPos(rows, FCOL.LOA))}m · W ${fmt1(avgPos(rows, FCOL.WIDTH))}m · D ${fmt1(avgPos(rows, FCOL.DEPTH))}m` },
     { label: "평균 건조연도", value: yrN ? (yrSum / yrN).toFixed(0) : "—" },
   ]);
+
+  // By Sector — donut, palette-keyed
+  const sectorCounts = topN(rows, FCOL.SECTOR, 10);
+  Plotly.newPlot("chart-by-sector", [{
+    labels: sectorCounts.map(s => s[0]), values: sectorCounts.map(s => s[1]),
+    type: "pie", hole: 0.45,
+    marker: { colors: sectorCounts.map(s => SECTOR_PALETTE[s[0]] || "#6b7280") },
+    textinfo: "label+percent", textposition: "outside",
+    hovertemplate: "%{label}<br>%{value:,} (%{percent})<extra></extra>",
+  }], { margin: { t: 10, l: 10, r: 10, b: 10 }, showlegend: false },
+  { displayModeBar: false, responsive: true });
+
+  // By Vessel Class — horizontal bar, sorted desc, color follows sector
+  const classBySector = {};
+  for (const r of rows) {
+    const c = r[FCOL.CLASS]; if (!c) continue;
+    const s = r[FCOL.SECTOR] || "UNMAPPED";
+    if (!classBySector[c]) classBySector[c] = { count: 0, sector: s };
+    classBySector[c].count++;
+  }
+  const classRows = Object.entries(classBySector)
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([c, v]) => ({ class: c, count: v.count, sector: v.sector }));
+  Plotly.newPlot("chart-by-class", [{
+    y: classRows.map(c => c.class).reverse(),
+    x: classRows.map(c => c.count).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: classRows.map(c => SECTOR_PALETTE[c.sector] || "#6b7280").reverse() },
+    hovertemplate: "%{y}<br>%{x:,} 척<extra></extra>",
+  }], { margin: { t: 10, l: 150, r: 10, b: 30 } },
+  { displayModeBar: false, responsive: true });
 
   // Build year trend
   const yrCounts = {};
@@ -317,8 +404,15 @@ function renderVesselsTable() {
   const td = (v, right) => `<td class="px-2 py-1${right ? " text-right" : ""}">${v == null || v === "" ? "" : v}</td>`;
   const num = (v) => v == null || v === "" ? "" : Number(v).toLocaleString();
   const num1 = (v) => v == null || v === "" ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  const sectorBadge = (s) => {
+    if (!s) return "";
+    const c = SECTOR_PALETTE[s] || "#6b7280";
+    return `<span class="inline-block px-1.5 rounded text-white" style="background:${c}">${s}</span>`;
+  };
   tbody.innerHTML = sorted.slice(0, 2000).map(r => `<tr>
-    ${td(r[FCOL.CODE])}${td(r[FCOL.NAME])}${td(r[FCOL.CALL])}${td(r[FCOL.TYPE])}${td(r[FCOL.OWNER])}${td(r[FCOL.FLAG])}
+    ${td(r[FCOL.CODE])}${td(r[FCOL.NAME])}${td(r[FCOL.CALL])}
+    ${td(sectorBadge(r[FCOL.SECTOR]))}${td(r[FCOL.CLASS])}
+    ${td(r[FCOL.TYPE])}${td(r[FCOL.OWNER])}${td(r[FCOL.FLAG])}
     ${td(num(r[FCOL.GT]), true)}${td(num1(r[FCOL.LOA]), true)}${td(num1(r[FCOL.WIDTH]), true)}${td(num1(r[FCOL.DEPTH]), true)}
     ${td(r[FCOL.YEAR])}${td(r[FCOL.IMO])}
   </tr>`).join("");
@@ -329,7 +423,7 @@ function bindFleetControls() {
   fleetState.initialized = true;
 
   const refresh = () => { applyFleetFilters(); renderFleet(); };
-  ["ft-types", "ft-exclude", "ft-name",
+  ["ft-types", "ft-sectors", "ft-classes", "ft-exclude", "ft-name",
    "ft-yr-lo", "ft-yr-hi", "ft-gt-lo", "ft-gt-hi",
    "ft-loa-lo", "ft-loa-hi", "ft-w-lo", "ft-w-hi", "ft-d-lo", "ft-d-hi",
   ].forEach(id => {
@@ -340,8 +434,11 @@ function bindFleetControls() {
     }
   });
   document.getElementById("fleet-reset").addEventListener("click", () => {
-    document.getElementById("ft-types").selectedIndex = -1;
-    Array.from(document.getElementById("ft-types").options).forEach(o => o.selected = false);
+    ["ft-types", "ft-sectors", "ft-classes"].forEach(id => {
+      const el = document.getElementById(id);
+      el.selectedIndex = -1;
+      Array.from(el.options).forEach(o => o.selected = false);
+    });
     document.getElementById("ft-exclude").checked = false;
     document.getElementById("ft-name").value = "";
     setRange("ft-yr", fleetState.bounds.yr);

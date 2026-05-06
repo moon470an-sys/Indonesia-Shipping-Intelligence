@@ -57,8 +57,16 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="space-y-2">
             <div>
-              <label class="text-xs text-slate-500 block">Vessel Type <span class="text-slate-400">(Ctrl/Shift+클릭으로 다중선택)</span></label>
-              <select id="ft-types" multiple size="8" class="border rounded px-2 py-1 w-full text-sm"></select>
+              <label class="text-xs text-slate-500 block">Sector <span class="text-slate-400">(Ctrl/Shift+클릭)</span></label>
+              <select id="ft-sectors" multiple size="5" class="border rounded px-2 py-1 w-full text-sm"></select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block">Vessel Class</label>
+              <select id="ft-classes" multiple size="5" class="border rounded px-2 py-1 w-full text-sm"></select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block">Vessel Type (raw label)</label>
+              <select id="ft-types" multiple size="6" class="border rounded px-2 py-1 w-full text-sm"></select>
             </div>
             <label class="text-xs flex items-center gap-1">
               <input id="ft-exclude" type="checkbox" /> Exclude mode (선택 제외)
@@ -101,11 +109,19 @@
       <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">By Sector (선박 수)</h2>
+          <div id="chart-by-sector" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">By Vessel Class</h2>
+          <div id="chart-by-class" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
           <h2 class="font-semibold mb-2">건조 연도별 추이</h2>
           <div id="chart-build-trend" style="height:340px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">Vessel Type TOP 15</h2>
+          <h2 class="font-semibold mb-2">Vessel Type TOP 15 (raw label)</h2>
           <div id="chart-types" style="height:420px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
@@ -127,6 +143,8 @@
                 <th data-k="1" class="px-2 py-1 cursor-pointer">code</th>
                 <th data-k="2" class="px-2 py-1 cursor-pointer">name</th>
                 <th data-k="3" class="px-2 py-1 cursor-pointer">call sign</th>
+                <th data-k="15" class="px-2 py-1 cursor-pointer">sector</th>
+                <th data-k="16" class="px-2 py-1 cursor-pointer">class</th>
                 <th data-k="4" class="px-2 py-1 cursor-pointer">type</th>
                 <th data-k="5" class="px-2 py-1 cursor-pointer">owner</th>
                 <th data-k="11" class="px-2 py-1 cursor-pointer">flag</th>
