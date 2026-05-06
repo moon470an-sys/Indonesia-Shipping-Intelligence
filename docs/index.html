@@ -20,6 +20,7 @@
         <button data-tab="overview" class="tab px-3 py-1.5 rounded bg-slate-700">📊 Overview</button>
         <button data-tab="fleet"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">🚢 Fleet</button>
         <button data-tab="cargo"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">📦 Cargo</button>
+        <button data-tab="trends"   class="tab px-3 py-1.5 rounded hover:bg-slate-700">📈 Trends</button>
         <button data-tab="changes"  class="tab px-3 py-1.5 rounded hover:bg-slate-700">🔄 Changes</button>
         <button data-tab="about"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">ℹ️ About</button>
       </nav>
@@ -29,6 +30,29 @@
   <main class="max-w-7xl mx-auto px-4 py-6">
     <!-- Overview -->
     <section id="tab-overview" class="tab-panel">
+      <!-- Hero KPI strip (kpi_summary.json) -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4" id="kpi-hero"></div>
+
+      <!-- Top sectors donut (latest data month) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-1">Sector 점유율 (최근 데이터 월)</h2>
+          <p class="text-xs text-slate-500 mb-1" id="overview-sector-sub">ton 기준 / calls 토글</p>
+          <div class="flex justify-end mb-1">
+            <select id="overview-sector-metric" class="border rounded px-2 py-1 text-xs">
+              <option value="pct_calls">by calls (운항 수)</option>
+              <option value="pct_ton">by ton (톤수)</option>
+            </select>
+          </div>
+          <div id="chart-overview-sector" style="height:280px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <h2 class="font-semibold mb-2">월별 ton 추이 (전 sector 합)</h2>
+          <div id="chart-overview-monthly-ton" style="height:280px"></div>
+        </div>
+      </div>
+
+      <!-- Existing Overview KPIs + charts -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-overview"></div>
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8" id="kpi-changes"></div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -193,6 +217,24 @@
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-cargo"></div>
 
+      <!-- By Vessel Sector — uses cargo_sector_monthly.json -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">선박 Sector별 톤수</h2>
+          <p class="text-xs text-slate-500 mb-1">Bongkar + Muat (선택 기간 합계)</p>
+          <div id="chart-cargo-by-sector" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">선박 Class별 톤수 (Cargo sector 한정)</h2>
+          <p class="text-xs text-slate-500 mb-1">Container / Bulk / Tanker / General / Other</p>
+          <div id="chart-cargo-by-class" style="height:340px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <h2 class="font-semibold mb-2">Tanker Subclass 톤수 (Crude / Product / Chemical / LPG / LNG / FAME)</h2>
+          <div id="chart-cargo-tanker" style="height:300px"></div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="bg-white rounded-xl shadow p-4">
           <h2 class="font-semibold mb-2">화물 종류별 톤수 TOP 15</h2>
@@ -304,6 +346,44 @@
             </table>
           </div>
         </details>
+      </div>
+    </section>
+
+    <!-- Trends -->
+    <section id="tab-trends" class="tab-panel hidden">
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <div>
+            <h2 class="font-semibold">월별 ton 추이 by Sector</h2>
+            <p class="text-xs text-slate-500">Bongkar + Muat 누적 / sector 별 stacked area</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-xs text-slate-500">kind</label>
+            <select id="tr-kind" class="border rounded px-2 py-1 text-sm">
+              <option value="all">전체 (dn+ln)</option>
+              <option value="dn">국내 (dn)</option>
+              <option value="ln">국제 (ln)</option>
+            </select>
+            <label class="text-xs text-slate-500 ml-2">표시</label>
+            <select id="tr-mode" class="border rounded px-2 py-1 text-sm">
+              <option value="abs">절대값 (ton)</option>
+              <option value="mom">MoM% (전월 대비)</option>
+            </select>
+          </div>
+        </div>
+        <div id="chart-trends-sector-stack" style="height:420px"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">선박 Class별 월 추이</h2>
+          <p class="text-xs text-slate-500 mb-1">Cargo sector 클래스별 ton 추이</p>
+          <div id="chart-trends-class" style="height:380px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Sector별 calls (운항 수) 추이</h2>
+          <div id="chart-trends-calls" style="height:380px"></div>
+        </div>
       </div>
     </section>
 

@@ -13,6 +13,9 @@ const state = {
   vessels: null,
   cargo: null,
   changes: null,
+  kpi: null,
+  taxonomy: null,
+  sectorMonthly: null,
   loaded: new Set(),
   vesselsRows: [],
   vesselsSort: { col: 6, dir: -1 },
@@ -43,6 +46,63 @@ function renderKpis(elId, items) {
 }
 
 // ---------- Overview ----------
+function pctSign(p) {
+  if (p == null) return "—";
+  const s = p > 0 ? "+" : "";
+  return `${s}${p.toFixed(1)}%`;
+}
+
+function renderHeroKpis() {
+  const k = state.kpi;
+  if (!k) return;
+  const baseline = k.is_baseline;
+  const vc = k.vessel_changes || {};
+  const items = [
+    { label: "총 선박 등록", value: fmt(k.fleet_total),
+      sub: baseline ? "(baseline 스냅샷)"
+                    : `이번 달 +${fmt(vc.added || 0)} / -${fmt(vc.removed || 0)} / ${fmt(vc.modified_cells || 0)} 변경` },
+    { label: `최근 ton (${k.latest_period || '—'})`, value: fmt0(k.latest_ton),
+      sub: k.latest_period_is_partial_data_dropped ? "* 직전 월의 부분 데이터 제외" : "ton 합계" },
+    { label: "MoM (전월 대비)", value: pctSign(k.mom_pct),
+      sub: "Bongkar + Muat" },
+    { label: "YoY (전년 동월 대비)", value: pctSign(k.yoy_pct), sub: "Bongkar + Muat" },
+  ];
+  renderKpis("kpi-hero", items);
+
+  // Sector donut (latest period). Default: by calls.
+  const sel = document.getElementById("overview-sector-metric");
+  const drawSector = () => {
+    const metric = sel.value || "pct_calls";
+    const ts = (k.top_sectors || []).slice().sort((a, b) => (b[metric] - a[metric]));
+    Plotly.newPlot("chart-overview-sector", [{
+      labels: ts.map(t => t.sector), values: ts.map(t => t[metric]),
+      type: "pie", hole: 0.5,
+      marker: { colors: ts.map(t => SECTOR_PALETTE[t.sector] || "#6b7280") },
+      textinfo: "label+percent", textposition: "outside",
+      hovertemplate: metric === "pct_calls"
+        ? "%{label}<br>%{value:.2f}%<br>calls %{customdata:,}<extra></extra>"
+        : "%{label}<br>%{value:.2f}%<br>ton %{customdata:,}<extra></extra>",
+      customdata: ts.map(t => metric === "pct_calls" ? t.calls : t.ton),
+    }], { margin: { t: 10, l: 10, r: 10, b: 10 }, showlegend: false },
+    { displayModeBar: false, responsive: true });
+  };
+  if (sel && !sel.dataset.bound) {
+    sel.dataset.bound = "1";
+    sel.addEventListener("change", drawSector);
+  }
+  drawSector();
+
+  // Monthly ton trend (single series; per-sector breakdown is in Trends tab)
+  const ms = k.monthly_series || [];
+  Plotly.newPlot("chart-overview-monthly-ton", [{
+    x: ms.map(r => r.period), y: ms.map(r => r.ton),
+    type: "scatter", mode: "lines+markers", fill: "tozeroy",
+    line: { color: "#1e3a8a" }, marker: { size: 5 },
+    hovertemplate: "%{x}<br>%{y:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 60, r: 10, b: 40 }, xaxis: { tickangle: -40 }, yaxis: { title: "ton" } },
+  { displayModeBar: false, responsive: true });
+}
+
 function renderOverview() {
   const o = state.overview;
   const k = state.changes;
@@ -51,6 +111,8 @@ function renderOverview() {
   document.getElementById("generated-at").textContent = state.meta.generated_at || "—";
   document.getElementById("about-meta").textContent =
     `Snapshots: ${state.meta.vessel_months.length} (vessel) / ${state.meta.cargo_months.length} (cargo) — generated ${state.meta.generated_at}`;
+
+  renderHeroKpis();
 
   renderKpis("kpi-overview", [
     { label: "선박 등록", value: fmt(o.vessel_total), sub: `${o.vessel_codes}/56 코드` },
@@ -678,6 +740,164 @@ function renderCargo() {
 
   renderHeatmap();
   renderCargoGaps();
+
+  // By Vessel Sector / Class / Tanker subclass — lit by cargo_sector_monthly.json
+  renderCargoSectorViews();
+}
+
+function _filterRowsByKind(rows, kind) {
+  return kind === "all" ? rows : rows.filter(r => r.kind === kind);
+}
+
+function renderCargoSectorViews() {
+  const sm = state.sectorMonthly;
+  if (!sm) return;
+  const kind = cgState.kind;
+  const flow = cgState.flow;
+
+  const tonOf = (r) => flow === "both" ? r.ton_total
+                    : (flow === "bongkar" ? r.ton_bongkar : r.ton_muat);
+
+  // 1) By Vessel Sector — donut over selected kind+flow
+  const sectorTotals = {};
+  for (const r of _filterRowsByKind(sm.rows, kind)) {
+    sectorTotals[r.sector] = (sectorTotals[r.sector] || 0) + tonOf(r);
+  }
+  const sectorList = Object.entries(sectorTotals).sort((a, b) => b[1] - a[1]);
+  Plotly.newPlot("chart-cargo-by-sector", [{
+    labels: sectorList.map(s => s[0]), values: sectorList.map(s => s[1]),
+    type: "pie", hole: 0.45,
+    marker: { colors: sectorList.map(s => SECTOR_PALETTE[s[0]] || "#6b7280") },
+    textinfo: "label+percent", textposition: "outside",
+    hovertemplate: "%{label}<br>%{value:,.0f} ton (%{percent})<extra></extra>",
+  }], { margin: { t: 10, l: 10, r: 10, b: 10 }, showlegend: false },
+  { displayModeBar: false, responsive: true });
+
+  // 2) By Vessel Class — bar (Cargo sector only, since other sectors don't haul much ton)
+  const classTotals = {};
+  for (const r of _filterRowsByKind(sm.rows, kind)) {
+    if (r.sector !== "CARGO") continue;
+    classTotals[r.vessel_class] = (classTotals[r.vessel_class] || 0) + tonOf(r);
+  }
+  const classList = Object.entries(classTotals).sort((a, b) => b[1] - a[1]);
+  Plotly.newPlot("chart-cargo-by-class", [{
+    y: classList.map(c => c[0]).reverse(),
+    x: classList.map(c => c[1]).reverse(),
+    type: "bar", orientation: "h",
+    marker: { color: "#1e3a8a" },
+    hovertemplate: "%{y}<br>%{x:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 130, r: 10, b: 30 } },
+  { displayModeBar: false, responsive: true });
+
+  // 3) Tanker subclass breakdown
+  const tankerTotals = {};
+  const tRows = _filterRowsByKind(sm.tanker_subclass_rows || [], kind);
+  for (const r of tRows) {
+    tankerTotals[r.subclass] = (tankerTotals[r.subclass] || 0) + tonOf(r);
+  }
+  const tList = Object.entries(tankerTotals).sort((a, b) => b[1] - a[1]);
+  Plotly.newPlot("chart-cargo-tanker", [{
+    x: tList.map(t => t[0]), y: tList.map(t => t[1]),
+    type: "bar",
+    marker: { color: "#7c3aed" },
+    hovertemplate: "%{x}<br>%{y:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 60, r: 10, b: 50 }, yaxis: { title: "ton" } },
+  { displayModeBar: false, responsive: true });
+}
+
+// ---------- Trends tab ----------
+const trState = { kind: "all", mode: "abs", initialized: false };
+
+function renderTrends() {
+  const sm = state.sectorMonthly;
+  if (!sm) return;
+
+  if (!trState.initialized) {
+    trState.initialized = true;
+    document.getElementById("tr-kind").addEventListener("change", (e) => {
+      trState.kind = e.target.value; renderTrends();
+    });
+    document.getElementById("tr-mode").addEventListener("change", (e) => {
+      trState.mode = e.target.value; renderTrends();
+    });
+  }
+
+  const kind = trState.kind;
+  const mode = trState.mode;
+  const rows = _filterRowsByKind(sm.rows, kind);
+  const periods = Array.from(new Set(rows.map(r => r.period))).sort();
+
+  // 1) Sector stacked area, optionally MoM%
+  const sectorList = Array.from(new Set(rows.map(r => r.sector)));
+  const sectorSeries = {};
+  for (const s of sectorList) {
+    sectorSeries[s] = periods.map(p => {
+      let sum = 0;
+      for (const r of rows) {
+        if (r.sector === s && r.period === p) sum += r.ton_total;
+      }
+      return sum;
+    });
+  }
+  let traces;
+  if (mode === "mom") {
+    traces = sectorList.map(s => {
+      const y = sectorSeries[s].map((v, i, a) =>
+        i === 0 || a[i - 1] === 0 ? null : ((v - a[i - 1]) / a[i - 1] * 100));
+      return {
+        x: periods, y, name: s, type: "scatter", mode: "lines+markers",
+        line: { color: SECTOR_PALETTE[s] || "#6b7280" },
+      };
+    });
+  } else {
+    traces = sectorList.map(s => ({
+      x: periods, y: sectorSeries[s], name: s,
+      type: "scatter", stackgroup: "one", mode: "none",
+      fillcolor: SECTOR_PALETTE[s] || "#6b7280",
+    }));
+  }
+  Plotly.newPlot("chart-trends-sector-stack", traces,
+    { margin: { t: 10, l: 60, r: 10, b: 60 }, xaxis: { tickangle: -40 },
+      yaxis: { title: mode === "mom" ? "%" : "ton" },
+      legend: { orientation: "h", y: -0.2 } },
+    { displayModeBar: false, responsive: true });
+
+  // 2) Per-class trend (Cargo sector only, lines)
+  const cargoRows = rows.filter(r => r.sector === "CARGO");
+  const classList = Array.from(new Set(cargoRows.map(r => r.vessel_class)));
+  const classTraces = classList.map(cls => ({
+    x: periods,
+    y: periods.map(p => {
+      let sum = 0;
+      for (const r of cargoRows) {
+        if (r.vessel_class === cls && r.period === p) sum += r.ton_total;
+      }
+      return sum;
+    }),
+    name: cls, type: "scatter", mode: "lines+markers",
+  }));
+  Plotly.newPlot("chart-trends-class", classTraces,
+    { margin: { t: 10, l: 60, r: 10, b: 60 }, xaxis: { tickangle: -40 },
+      yaxis: { title: "ton" }, legend: { orientation: "h", y: -0.25 } },
+    { displayModeBar: false, responsive: true });
+
+  // 3) Sector calls trend (volume of vessel calls across months)
+  const callsTraces = sectorList.map(s => ({
+    x: periods,
+    y: periods.map(p => {
+      let sum = 0;
+      for (const r of rows) {
+        if (r.sector === s && r.period === p) sum += r.calls;
+      }
+      return sum;
+    }),
+    name: s, type: "scatter", mode: "lines+markers",
+    line: { color: SECTOR_PALETTE[s] || "#6b7280" },
+  }));
+  Plotly.newPlot("chart-trends-calls", callsTraces,
+    { margin: { t: 10, l: 60, r: 10, b: 60 }, xaxis: { tickangle: -40 },
+      yaxis: { title: "calls" }, legend: { orientation: "h", y: -0.25 } },
+    { displayModeBar: false, responsive: true });
 }
 
 function renderPortTable() {
@@ -876,8 +1096,19 @@ async function ensureLoaded(tab) {
     }
     if (tab === "cargo" && !state.loaded.has("cargo")) {
       if (!state.cargo) state.cargo = await loadJson("cargo.json");
+      if (!state.sectorMonthly) {
+        try { state.sectorMonthly = await loadJson("cargo_sector_monthly.json"); }
+        catch (e) { state.sectorMonthly = null; }
+      }
       renderCargo();
       state.loaded.add("cargo");
+    }
+    if (tab === "trends" && !state.loaded.has("trends")) {
+      if (!state.sectorMonthly) {
+        state.sectorMonthly = await loadJson("cargo_sector_monthly.json");
+      }
+      renderTrends();
+      state.loaded.add("trends");
     }
     if (tab === "changes" && !state.loaded.has("changes")) {
       if (!state.changes) state.changes = await loadJson("changes.json");
@@ -895,6 +1126,10 @@ async function boot() {
   state.overview = await loadJson("overview.json");
   // changes might or might not exist; load eagerly so overview KPIs work
   try { state.changes = await loadJson("changes.json"); } catch (e) { state.changes = null; }
+  // kpi_summary + taxonomy are post-PR2 additions; degrade gracefully
+  // when older deployments don't have them yet.
+  try { state.kpi = await loadJson("kpi_summary.json"); } catch (e) { state.kpi = null; }
+  try { state.taxonomy = await loadJson("sector_taxonomy.json"); } catch (e) { state.taxonomy = null; }
   renderOverview();
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
   showTab("overview");
