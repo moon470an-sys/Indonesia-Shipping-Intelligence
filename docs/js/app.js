@@ -362,37 +362,158 @@ function bindFleetControls() {
 }
 
 // ---------- Cargo ----------
+// Per-kind helpers. Payload schema_version 2 stores _dn/_ln splits on every
+// row, so the client can recompute aggregates when the user changes the
+// kind filter (all = dn+ln, dn = 국내 only, ln = 국제 only).
+const cgState = {
+  kind: "all",       // all | dn | ln
+  flow: "both",      // both | bongkar | muat
+  portSort: { col: "ton_total", dir: -1 },
+  komSort: { col: "ton", dir: -1 },
+  initialized: false,
+};
+
+function pickK(row, base, kind) {
+  // Sum dn+ln for "all"; else pick the requested kind. Returns 0 for missing.
+  if (kind === "all") return (row[`${base}_dn`] || 0) + (row[`${base}_ln`] || 0);
+  return row[`${base}_${kind}`] || 0;
+}
+
+function jenisRow(j, kind, flow) {
+  const b = pickK(j, "ton_bongkar", kind);
+  const m = pickK(j, "ton_muat", kind);
+  return {
+    jenis: j.jenis,
+    ton_bongkar: b,
+    ton_muat: m,
+    ton_total: (flow === "both") ? (b + m) : (flow === "bongkar" ? b : m),
+    calls: pickK(j, "calls", kind),
+  };
+}
+
+function portRow(p, kind, flow) {
+  const b = pickK(p, "ton_bongkar", kind);
+  const m = pickK(p, "ton_muat", kind);
+  return {
+    port: p.port,
+    name: p.name || "",
+    ton_bongkar: b,
+    ton_muat: m,
+    ton_total: (flow === "both") ? (b + m) : (flow === "bongkar" ? b : m),
+    calls: pickK(p, "calls", kind),
+  };
+}
+
+function komRow(k, kind) {
+  const ton = (kind === "all") ? (k.ton_dn + k.ton_ln) : (kind === "dn" ? k.ton_dn : k.ton_ln);
+  return { komoditi: k.komoditi, ton };
+}
+
+function monthlyRow(m, kind, flow) {
+  const b = pickK(m, "ton_bongkar", kind);
+  const mu = pickK(m, "ton_muat", kind);
+  return {
+    period: m.period,
+    ton_bongkar: b,
+    ton_muat: mu,
+    ton_total: b + mu,
+    calls: pickK(m, "calls", kind),
+  };
+}
+
+function matrixForKind(mat, kind) {
+  // Sum element-wise for "all", else pick the requested kind.
+  if (!mat || !mat.ton_dn || !mat.ton_ln) return [];
+  if (kind === "dn") return mat.ton_dn;
+  if (kind === "ln") return mat.ton_ln;
+  return mat.ton_dn.map((row, i) => row.map((v, j) => (v || 0) + (mat.ton_ln[i][j] || 0)));
+}
+
 function renderCargo() {
+  // First-time setup: bind filter controls and table sort handlers.
+  if (!cgState.initialized) {
+    cgState.initialized = true;
+    document.getElementById("cg-kind").addEventListener("change", (e) => {
+      cgState.kind = e.target.value; renderCargo();
+    });
+    document.getElementById("cg-flow").addEventListener("change", (e) => {
+      cgState.flow = e.target.value; renderCargo();
+    });
+    document.getElementById("cg-port-q").addEventListener("input", renderPortTable);
+    document.getElementById("cg-kom-q").addEventListener("input", renderKomTable);
+    document.querySelectorAll("#cg-port-tbl thead th").forEach(th => {
+      th.addEventListener("click", () => {
+        const k = th.dataset.k;
+        cgState.portSort.dir = (cgState.portSort.col === k) ? -cgState.portSort.dir : -1;
+        cgState.portSort.col = k;
+        renderPortTable();
+      });
+    });
+    document.querySelectorAll("#cg-kom-tbl thead th").forEach(th => {
+      th.addEventListener("click", () => {
+        const k = th.dataset.k;
+        cgState.komSort.dir = (cgState.komSort.col === k) ? -cgState.komSort.dir : -1;
+        cgState.komSort.col = k;
+        renderKomTable();
+      });
+    });
+    document.getElementById("cargo-kind").addEventListener("change", renderHeatmap);
+  }
+
   const c = state.cargo;
   const o = state.overview;
   const t = c.totals || {};
+  const kind = cgState.kind;
+  const flow = cgState.flow;
 
+  // Filter summary
+  const kindLabel = { all: "전체", dn: "국내(dn)", ln: "국제(ln)" }[kind];
+  const flowLabel = { both: "Bongkar+Muat", bongkar: "Bongkar", muat: "Muat" }[flow];
+  document.getElementById("cg-filter-summary").textContent = `${kindLabel} · ${flowLabel}`;
+
+  // KPIs (recomputed from totals/per-kind splits)
+  const totBongkar = (kind === "all") ? (t.ton_bongkar_dn + t.ton_bongkar_ln)
+                   : (kind === "dn" ? t.ton_bongkar_dn : t.ton_bongkar_ln);
+  const totMuat = (kind === "all") ? (t.ton_muat_dn + t.ton_muat_ln)
+                : (kind === "dn" ? t.ton_muat_dn : t.ton_muat_ln);
+  const totCalls = (kind === "all") ? (t.calls_dn + t.calls_ln)
+                 : (kind === "dn" ? t.calls_dn : t.calls_ln);
+  const ratio = (totBongkar + totMuat) > 0
+    ? (totBongkar / (totBongkar + totMuat) * 100).toFixed(1) : "—";
   renderKpis("kpi-cargo", [
-    { label: "LK3 행수 (vessel calls)", value: fmt(t.calls || o.cargo_rows),
+    { label: "LK3 행수 (vessel calls)", value: fmt(totCalls),
       sub: `${fmt(t.ports || o.cargo_ports)} 항구` },
-    { label: "Bongkar 총톤수 (하역)", value: fmt0(t.ton_bongkar || 0), sub: "ton" },
-    { label: "Muat 총톤수 (선적)", value: fmt0(t.ton_muat || 0), sub: "ton" },
+    { label: "Bongkar 총톤수 (하역)", value: fmt0(totBongkar), sub: `${ratio}% of total` },
+    { label: "Muat 총톤수 (선적)", value: fmt0(totMuat), sub: `${(100 - parseFloat(ratio)).toFixed(1)}% of total` },
     { label: "(port,year,month,kind) 키 커버리지",
       value: `${(o.cargo_keys / o.cargo_keys_theoretical * 100).toFixed(1)}%`,
       sub: `${fmt(o.cargo_keys)} / ${fmt(o.cargo_keys_theoretical)}` },
   ]);
 
-  // 1) Cargo type (jenis) TOP 15 — horizontal bar with bongkar+muat split
-  const j15 = (c.jenis_top || []).slice(0, 15);
-  const j15r = j15.slice().reverse();
-  Plotly.newPlot("chart-cargo-jenis", [
-    { y: j15r.map(j => j.jenis), x: j15r.map(j => j.ton_bongkar),
-      name: "Bongkar (하역)", type: "bar", orientation: "h",
-      marker: { color: "#0ea5e9" } },
-    { y: j15r.map(j => j.jenis), x: j15r.map(j => j.ton_muat),
-      name: "Muat (선적)", type: "bar", orientation: "h",
-      marker: { color: "#f97316" } },
-  ], { barmode: "stack", margin: { t: 10, l: 200, r: 10, b: 30 },
-       xaxis: { title: "ton" }, legend: { orientation: "h", y: -0.1 } },
-  { displayModeBar: false, responsive: true });
+  // 1) Cargo type (jenis) — re-rank per filter
+  const jenis = (c.jenis_top || []).map(j => jenisRow(j, kind, flow))
+    .sort((a, b) => b.ton_total - a.ton_total).slice(0, 15);
+  const jenisR = jenis.slice().reverse();
+  const jenisTraces = [];
+  if (flow !== "muat") jenisTraces.push({
+    y: jenisR.map(j => j.jenis), x: jenisR.map(j => j.ton_bongkar),
+    name: "Bongkar (하역)", type: "bar", orientation: "h",
+    marker: { color: "#0ea5e9" },
+  });
+  if (flow !== "bongkar") jenisTraces.push({
+    y: jenisR.map(j => j.jenis), x: jenisR.map(j => j.ton_muat),
+    name: "Muat (선적)", type: "bar", orientation: "h",
+    marker: { color: "#f97316" },
+  });
+  Plotly.newPlot("chart-cargo-jenis", jenisTraces,
+    { barmode: "stack", margin: { t: 10, l: 200, r: 10, b: 30 },
+      xaxis: { title: "ton" }, legend: { orientation: "h", y: -0.1 } },
+    { displayModeBar: false, responsive: true });
 
-  // 2) Komoditi TOP 20 — horizontal bar
-  const k20 = (c.komoditi_top || []).slice(0, 20).reverse();
+  // 2) Komoditi TOP 20 — re-rank per kind (flow not applicable; komoditi has no bongkar/muat split)
+  const komAll = (c.komoditi_top || []).map(k => komRow(k, kind))
+    .sort((a, b) => b.ton - a.ton);
+  const k20 = komAll.slice(0, 20).reverse();
   Plotly.newPlot("chart-cargo-komoditi", [{
     y: k20.map(k => k.komoditi), x: k20.map(k => k.ton),
     type: "bar", orientation: "h",
@@ -401,48 +522,110 @@ function renderCargo() {
   }], { margin: { t: 10, l: 240, r: 10, b: 30 }, xaxis: { title: "ton" } },
   { displayModeBar: false, responsive: true });
 
-  // 3) Top ports by ton (vertical stacked bongkar/muat)
-  const p20 = (c.port_top || []).slice(0, 20);
+  // 3) Top ports — re-rank per filter
+  const portsAll = (c.port_top || []).map(p => portRow(p, kind, flow))
+    .sort((a, b) => b.ton_total - a.ton_total);
+  const p20 = portsAll.slice(0, 20);
   const labels = p20.map(p => p.name ? `${p.port} ${p.name.slice(0, 14)}` : p.port);
-  Plotly.newPlot("chart-cargo-ports", [
-    { x: labels, y: p20.map(p => p.ton_bongkar), name: "Bongkar", type: "bar",
-      marker: { color: "#0ea5e9" } },
-    { x: labels, y: p20.map(p => p.ton_muat), name: "Muat", type: "bar",
-      marker: { color: "#f97316" } },
-  ], { barmode: "stack", margin: { t: 10, l: 60, r: 10, b: 110 },
-       xaxis: { tickangle: -50, automargin: true }, yaxis: { title: "ton" },
-       legend: { orientation: "h", y: -0.25 } },
-  { displayModeBar: false, responsive: true });
+  const portTraces = [];
+  if (flow !== "muat") portTraces.push({
+    x: labels, y: p20.map(p => p.ton_bongkar), name: "Bongkar", type: "bar",
+    marker: { color: "#0ea5e9" },
+  });
+  if (flow !== "bongkar") portTraces.push({
+    x: labels, y: p20.map(p => p.ton_muat), name: "Muat", type: "bar",
+    marker: { color: "#f97316" },
+  });
+  Plotly.newPlot("chart-cargo-ports", portTraces,
+    { barmode: "stack", margin: { t: 10, l: 60, r: 10, b: 110 },
+      xaxis: { tickangle: -50, automargin: true }, yaxis: { title: "ton" },
+      legend: { orientation: "h", y: -0.25 } },
+    { displayModeBar: false, responsive: true });
 
-  // 4) Monthly bongkar/muat trend (line chart)
-  const mt = c.monthly_ton || [];
-  Plotly.newPlot("chart-cargo-monthly", [
-    { x: mt.map(m => m.period), y: mt.map(m => m.ton_bongkar),
-      name: "Bongkar", type: "scatter", mode: "lines+markers",
-      line: { color: "#0ea5e9" } },
-    { x: mt.map(m => m.period), y: mt.map(m => m.ton_muat),
-      name: "Muat", type: "scatter", mode: "lines+markers",
-      line: { color: "#f97316" } },
-  ], { margin: { t: 10, l: 60, r: 10, b: 60 },
-       xaxis: { tickangle: -40 }, yaxis: { title: "ton" },
-       legend: { orientation: "h", y: -0.2 } },
-  { displayModeBar: false, responsive: true });
+  // 4) Monthly trend
+  const mt = (c.monthly_ton || []).map(m => monthlyRow(m, kind, flow));
+  const monthlyTraces = [];
+  if (flow !== "muat") monthlyTraces.push({
+    x: mt.map(m => m.period), y: mt.map(m => m.ton_bongkar),
+    name: "Bongkar", type: "scatter", mode: "lines+markers",
+    line: { color: "#0ea5e9" },
+  });
+  if (flow !== "bongkar") monthlyTraces.push({
+    x: mt.map(m => m.period), y: mt.map(m => m.ton_muat),
+    name: "Muat", type: "scatter", mode: "lines+markers",
+    line: { color: "#f97316" },
+  });
+  Plotly.newPlot("chart-cargo-monthly", monthlyTraces,
+    { margin: { t: 10, l: 60, r: 10, b: 60 },
+      xaxis: { tickangle: -40 }, yaxis: { title: "ton" },
+      legend: { orientation: "h", y: -0.2 } },
+    { displayModeBar: false, responsive: true });
 
   // 5) Port × jenis heatmap
-  const mat = c.port_jenis_matrix || { ports: [], jenis: [], ton: [], port_names: [] };
-  const portLabels = mat.ports.map((p, i) =>
-    mat.port_names[i] ? `${p} ${mat.port_names[i].slice(0, 16)}` : p);
+  const mat = c.port_jenis_matrix || {};
+  const z = matrixForKind(mat, kind);
+  const portLabels = (mat.ports || []).map((p, i) =>
+    mat.port_names && mat.port_names[i] ? `${p} ${mat.port_names[i].slice(0, 16)}` : p);
   Plotly.newPlot("chart-cargo-matrix", [{
-    z: mat.ton, x: mat.jenis, y: portLabels, type: "heatmap",
+    z, x: mat.jenis || [], y: portLabels, type: "heatmap",
     colorscale: "Blues", hoverongaps: false,
     hovertemplate: "%{y}<br>%{x}<br>%{z:,.0f} ton<extra></extra>",
   }], { margin: { t: 10, l: 220, r: 10, b: 110 }, xaxis: { tickangle: -30 } },
   { displayModeBar: false, responsive: true });
 
-  // Existing port × period heatmap (collapsed)
+  // Cache filtered base lists for tables, then render
+  cgState.portsAll = portsAll;
+  cgState.komAll = komAll;
+  renderPortTable();
+  renderKomTable();
+
   renderHeatmap();
-  document.getElementById("cargo-kind").addEventListener("change", renderHeatmap);
   renderCargoGaps();
+}
+
+function renderPortTable() {
+  const rows = cgState.portsAll || [];
+  const q = (document.getElementById("cg-port-q").value || "").toLowerCase().trim();
+  const filtered = q ? rows.filter(r =>
+    (r.port || "").toLowerCase().includes(q) || (r.name || "").toLowerCase().includes(q)) : rows;
+  const { col, dir } = cgState.portSort;
+  const sorted = filtered.slice().sort((a, b) => {
+    const x = a[col], y = b[col];
+    if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+    return String(x).localeCompare(String(y)) * dir;
+  });
+  document.getElementById("cg-port-count").textContent =
+    `${filtered.length.toLocaleString()} / ${rows.length.toLocaleString()} 항구`;
+  const tbody = document.querySelector("#cg-port-tbl tbody");
+  const num = (v) => v == null ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  tbody.innerHTML = sorted.slice(0, 1000).map(r => `<tr>
+    <td class="px-2 py-1 font-mono">${r.port}</td>
+    <td class="px-2 py-1">${r.name || ""}</td>
+    <td class="px-2 py-1 text-right">${num(r.ton_bongkar)}</td>
+    <td class="px-2 py-1 text-right">${num(r.ton_muat)}</td>
+    <td class="px-2 py-1 text-right font-semibold">${num(r.ton_total)}</td>
+    <td class="px-2 py-1 text-right">${num(r.calls)}</td>
+  </tr>`).join("");
+}
+
+function renderKomTable() {
+  const rows = cgState.komAll || [];
+  const q = (document.getElementById("cg-kom-q").value || "").toLowerCase().trim();
+  const filtered = q ? rows.filter(r => (r.komoditi || "").toLowerCase().includes(q)) : rows;
+  const { col, dir } = cgState.komSort;
+  const sorted = filtered.slice().sort((a, b) => {
+    const x = a[col], y = b[col];
+    if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+    return String(x).localeCompare(String(y)) * dir;
+  });
+  document.getElementById("cg-kom-count").textContent =
+    `${filtered.length.toLocaleString()} / ${rows.length.toLocaleString()} 품목`;
+  const tbody = document.querySelector("#cg-kom-tbl tbody");
+  const num = (v) => v == null ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  tbody.innerHTML = sorted.slice(0, 500).map(r => `<tr>
+    <td class="px-2 py-1">${r.komoditi}</td>
+    <td class="px-2 py-1 text-right">${num(r.ton)}</td>
+  </tr>`).join("");
 }
 
 function renderHeatmap() {

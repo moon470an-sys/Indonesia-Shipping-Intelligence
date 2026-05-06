@@ -146,12 +146,39 @@
 
     <!-- Cargo -->
     <section id="tab-cargo" class="tab-panel hidden">
+      <!-- Filter bar -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-2">
+          <h2 class="font-semibold">🔍 필터</h2>
+          <span class="text-xs text-slate-500" id="cg-filter-summary"></span>
+        </div>
+        <div class="flex flex-wrap items-end gap-4">
+          <div>
+            <label class="text-xs text-slate-500 block">화물 구분 (kind)</label>
+            <select id="cg-kind" class="border rounded px-2 py-1 text-sm">
+              <option value="all">전체 (dn + ln)</option>
+              <option value="dn">국내 (dn)</option>
+              <option value="ln">국제 (ln)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block">표시 행</label>
+            <select id="cg-flow" class="border rounded px-2 py-1 text-sm">
+              <option value="both">Bongkar + Muat</option>
+              <option value="bongkar">Bongkar (하역)</option>
+              <option value="muat">Muat (선적)</option>
+            </select>
+          </div>
+          <p class="text-xs text-slate-500 ml-auto">필터는 모든 차트·KPI·테이블에 즉시 반영됩니다.</p>
+        </div>
+      </div>
+
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-cargo"></div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="bg-white rounded-xl shadow p-4">
           <h2 class="font-semibold mb-2">화물 종류별 톤수 TOP 15</h2>
-          <p class="text-xs text-slate-500 mb-1">Bongkar(하역) + Muat(선적) 합계</p>
+          <p class="text-xs text-slate-500 mb-1">Bongkar(하역) + Muat(선적) 누적</p>
           <div id="chart-cargo-jenis" style="height:440px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
@@ -174,6 +201,54 @@
           <h2 class="font-semibold mb-2">항구 × 화물 종류 히트맵</h2>
           <p class="text-xs text-slate-500 mb-1">Top 15 항구 × Top 10 화물 종류 (톤)</p>
           <div id="chart-cargo-matrix" style="height:520px"></div>
+        </div>
+      </div>
+
+      <!-- Port detail table (all 260 ports) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <h2 class="font-semibold">항구별 톤수 상세</h2>
+          <div class="flex items-center gap-3">
+            <input id="cg-port-q" class="border rounded px-2 py-1 text-sm" placeholder="port code · 항구명" />
+            <span class="text-xs text-slate-500" id="cg-port-count">로딩…</span>
+          </div>
+        </div>
+        <div class="overflow-auto max-h-[60vh] border rounded">
+          <table class="min-w-full text-xs" id="cg-port-tbl">
+            <thead class="bg-slate-100 sticky top-0">
+              <tr class="text-left">
+                <th data-k="port" class="px-2 py-1 cursor-pointer">port</th>
+                <th data-k="name" class="px-2 py-1 cursor-pointer">name</th>
+                <th data-k="ton_bongkar" class="px-2 py-1 cursor-pointer text-right">Bongkar (ton)</th>
+                <th data-k="ton_muat" class="px-2 py-1 cursor-pointer text-right">Muat (ton)</th>
+                <th data-k="ton_total" class="px-2 py-1 cursor-pointer text-right">Total (ton)</th>
+                <th data-k="calls" class="px-2 py-1 cursor-pointer text-right">Calls</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Komoditi detail table (top 200) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <h2 class="font-semibold">화물 품목 상세 <span class="text-xs text-slate-400">(Top 200)</span></h2>
+          <div class="flex items-center gap-3">
+            <input id="cg-kom-q" class="border rounded px-2 py-1 text-sm" placeholder="품목명" />
+            <span class="text-xs text-slate-500" id="cg-kom-count">로딩…</span>
+          </div>
+        </div>
+        <div class="overflow-auto max-h-[60vh] border rounded">
+          <table class="min-w-full text-xs" id="cg-kom-tbl">
+            <thead class="bg-slate-100 sticky top-0">
+              <tr class="text-left">
+                <th data-k="komoditi" class="px-2 py-1 cursor-pointer">komoditi</th>
+                <th data-k="ton" class="px-2 py-1 cursor-pointer text-right">ton</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
       </div>
 
