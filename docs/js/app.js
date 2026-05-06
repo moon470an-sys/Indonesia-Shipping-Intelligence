@@ -16,6 +16,7 @@ const state = {
   kpi: null,
   taxonomy: null,
   sectorMonthly: null,
+  financials: null,
   loaded: new Set(),
   vesselsRows: [],
   vesselsSort: { col: 6, dir: -1 },
@@ -1209,6 +1210,143 @@ function renderSectorDelta() {
     `${sectors.length} sector × ${periods.length} 월 (${kind === "all" ? "전체" : kind})`;
 }
 
+// ---------- Financials ----------
+const fnState = { year: null, sortBy: "revenue", initialized: false };
+
+function renderFinancials() {
+  const f = state.financials;
+  const container = document.getElementById("kpi-financials");
+  if (!f || !f.companies || !f.companies.length) {
+    container.innerHTML = `<div class="col-span-full text-center text-slate-400 py-12">
+      재무 데이터를 로드하지 못했습니다 (companies_financials.json 미존재).
+    </div>`;
+    return;
+  }
+
+  // Disclaimer banner
+  const meta = f.metadata || {};
+  const allPlaceholder = f.companies.every(c => c.data_quality === "estimated_placeholder");
+  if (meta.source || allPlaceholder) {
+    const banner = document.getElementById("fn-banner");
+    const bannerTxt = document.getElementById("fn-banner-text");
+    banner.classList.remove("hidden");
+    bannerTxt.textContent =
+      ` ${meta.source || ""} (last updated ${meta.last_updated || "—"})`
+      + (allPlaceholder ? " — 모든 수치는 placeholder로, 외부 사용 전 IDX 사업보고서로 검증 필요." : "");
+  }
+
+  // First-time setup: populate year dropdown + bind listeners
+  if (!fnState.initialized) {
+    fnState.initialized = true;
+    const years = Array.from(new Set(f.rows.map(r => r.year))).sort();
+    const yrSel = document.getElementById("fn-year");
+    yrSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+    yrSel.value = years[years.length - 1];
+    fnState.year = yrSel.value;
+    yrSel.addEventListener("change", (e) => { fnState.year = e.target.value; renderFinancials(); });
+    document.getElementById("fn-sortby").addEventListener("change", (e) => {
+      fnState.sortBy = e.target.value; renderFinancials();
+    });
+  }
+
+  const yr = fnState.year;
+  const sortBy = fnState.sortBy;
+  const yrRows = f.rows.filter(r => r.year === yr);
+
+  // KPI strip — industry totals for the selected year
+  const sumOf = (k) => yrRows.reduce((s, r) => s + (r[k] || 0), 0);
+  const totRev = sumOf("revenue");
+  const totNi = sumOf("net_income");
+  const totFleetGt = sumOf("fleet_gt");
+  const margin = totRev ? (totNi / totRev * 100) : null;
+  renderKpis("kpi-financials", [
+    { label: `합산 매출 (${yr})`, value: fmt0(totRev), sub: "IDR billion" },
+    { label: "합산 순이익", value: fmt0(totNi),
+      sub: margin == null ? "—" : `평균 마진 ${margin.toFixed(1)}%` },
+    { label: "합산 선대 GT", value: fmt0(totFleetGt), sub: "kGT (1,000 GT)" },
+    { label: "수록 기업 수", value: fmt(yrRows.length),
+      sub: f.companies.length === yrRows.length
+            ? `전체 ${f.companies.length}개사` : `${f.companies.length}개사 중` },
+  ]);
+
+  // Revenue trend — multi-line, all companies, all years
+  const tickerColors = {};
+  const palette = ["#1e3a8a", "#0d9488", "#d97706", "#6d28d9", "#dc2626",
+                   "#0ea5e9", "#16a34a", "#db2777", "#475569"];
+  f.companies.forEach((c, i) => { tickerColors[c.ticker] = palette[i % palette.length]; });
+  const allYears = Array.from(new Set(f.rows.map(r => r.year))).sort();
+  const revTraces = f.companies.map(c => {
+    const byYear = {};
+    for (const r of f.rows) {
+      if (r.ticker === c.ticker) byYear[r.year] = r.revenue;
+    }
+    return {
+      x: allYears, y: allYears.map(y => byYear[y] ?? null),
+      name: c.ticker, type: "scatter", mode: "lines+markers",
+      line: { color: tickerColors[c.ticker] },
+      hovertemplate: `<b>${c.ticker}</b><br>${c.name_short}<br>%{x}: %{y:,} bn IDR<extra></extra>`,
+    };
+  });
+  Plotly.newPlot("chart-fn-revenue", revTraces,
+    { margin: { t: 10, l: 60, r: 10, b: 50 }, yaxis: { title: "Revenue (IDR bn)" },
+      legend: { orientation: "h", y: -0.18 } },
+    { displayModeBar: false, responsive: true });
+
+  // Margin vs leverage scatter for selected year
+  Plotly.newPlot("chart-fn-scatter", [{
+    x: yrRows.map(r => r.net_margin),
+    y: yrRows.map(r => r.debt_to_assets),
+    text: yrRows.map(r => r.ticker),
+    mode: "markers+text", textposition: "top center",
+    marker: {
+      size: yrRows.map(r => Math.max(8, Math.sqrt((r.revenue || 0) / 30))),
+      color: yrRows.map(r => tickerColors[r.ticker] || "#475569"),
+      opacity: 0.75, line: { color: "#0f172a", width: 1 },
+    },
+    hovertemplate: "<b>%{text}</b><br>net margin %{x:.1f}%<br>debt/assets %{y:.1f}%<extra></extra>",
+  }], {
+    margin: { t: 10, l: 60, r: 10, b: 50 },
+    xaxis: { title: "Net margin (%)", zeroline: true },
+    yaxis: { title: "Debt / Assets (%)", zeroline: false },
+  }, { displayModeBar: false, responsive: true });
+
+  // Comparison table
+  document.getElementById("fn-table-year").textContent = `(${yr} 기준)`;
+  const sorted = yrRows.slice().sort((a, b) => {
+    const x = a[sortBy], y = b[sortBy];
+    if (x == null) return 1; if (y == null) return -1;
+    return y - x;  // desc by default for all numeric metrics
+  });
+  // Map ticker → company name + focus
+  const byTicker = {};
+  for (const c of f.companies) byTicker[c.ticker] = c;
+  const num0 = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const num1 = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 });
+  const pct1 = (v) => v == null ? "—" : `${Number(v).toFixed(1)}%`;
+  const niCell = (v) => {
+    if (v == null) return `<td class="px-2 py-1 text-right">—</td>`;
+    const cls = v < 0 ? "text-red-600 font-semibold" : "";
+    return `<td class="px-2 py-1 text-right ${cls}">${num0(v)}</td>`;
+  };
+  document.querySelector("#fn-tbl tbody").innerHTML = sorted.map(r => {
+    const c = byTicker[r.ticker] || {};
+    return `<tr>
+      <td class="px-2 py-1 font-mono">${r.ticker}</td>
+      <td class="px-2 py-1">${c.name_short || ""}</td>
+      <td class="px-2 py-1 text-slate-500">${(c.sector_focus || []).join(" · ")}</td>
+      <td class="px-2 py-1 text-right">${num0(r.revenue)}</td>
+      ${niCell(r.net_income)}
+      <td class="px-2 py-1 text-right">${pct1(r.net_margin)}</td>
+      <td class="px-2 py-1 text-right">${num0(r.total_assets)}</td>
+      <td class="px-2 py-1 text-right">${pct1(r.debt_to_assets)}</td>
+      <td class="px-2 py-1 text-right">${pct1(r.roa)}</td>
+      <td class="px-2 py-1 text-right">${num0(r.capex)}</td>
+      <td class="px-2 py-1 text-right">${num0(r.fleet_gt)}</td>
+      <td class="px-2 py-1 text-right">${num0(r.fleet_count)}</td>
+    </tr>`;
+  }).join("");
+}
+
 // ---------- Tabs ----------
 function showTab(name) {
   document.querySelectorAll(".tab").forEach(t => {
@@ -1248,6 +1386,14 @@ async function ensureLoaded(tab) {
       }
       renderTrends();
       state.loaded.add("trends");
+    }
+    if (tab === "financials" && !state.loaded.has("financials")) {
+      if (!state.financials) {
+        try { state.financials = await loadJson("companies_financials.json"); }
+        catch (e) { state.financials = null; }
+      }
+      renderFinancials();
+      state.loaded.add("financials");
     }
     if (tab === "changes" && !state.loaded.has("changes")) {
       if (!state.changes) state.changes = await loadJson("changes.json");

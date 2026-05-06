@@ -810,6 +810,83 @@ def kpi_summary_payload(month: str, change_month: str | None) -> dict:
     }
 
 
+def companies_financials_payload() -> dict:
+    """Read data/companies_financials.yml and emit a chart-ready JSON.
+
+    The YAML lives outside the snapshot pipeline because it's hand-curated
+    -- IDX annual reports are released yearly, so we don't try to scrape
+    them. The payload is denormalized to a flat list of {ticker, year,
+    metric...} rows so the frontend can pivot client-side without
+    re-implementing a YAML parser.
+
+    Computed columns added per (company, year):
+      net_margin     = net_income / revenue
+      debt_to_assets = total_debt / total_assets
+      roa            = net_income / total_assets
+    """
+    import yaml
+
+    src = PROJECT_ROOT / "data" / "companies_financials.yml"
+    if not src.exists():
+        log.warning("companies_financials.yml not found at %s -- emitting empty payload",
+                    src)
+        return {"metadata": {}, "companies": [], "rows": []}
+
+    with src.open("r", encoding="utf-8") as f:
+        doc = yaml.safe_load(f)
+
+    metadata = doc.get("metadata", {}) or {}
+    companies_in = doc.get("companies", []) or []
+
+    companies_out = []
+    rows = []
+    for c in companies_in:
+        ticker = c.get("ticker") or "?"
+        years = sorted((c.get("financials") or {}).keys())
+        latest_year = years[-1] if years else None
+        latest = (c.get("financials") or {}).get(latest_year, {}) if latest_year else {}
+        companies_out.append({
+            "ticker": ticker,
+            "name": c.get("name") or "",
+            "name_short": c.get("name_short") or c.get("name") or ticker,
+            "ipo_year": c.get("ipo_year"),
+            "sector_focus": c.get("sector_focus") or [],
+            "homepage": c.get("homepage") or "",
+            "data_quality": c.get("data_quality") or "unknown",
+            "years": years,
+            "latest_year": latest_year,
+            "latest": latest,
+        })
+        for y in years:
+            f_ = (c.get("financials") or {}).get(y) or {}
+            rev = f_.get("revenue")
+            ni = f_.get("net_income")
+            ta = f_.get("total_assets")
+            td = f_.get("total_debt")
+            row = {
+                "ticker": ticker,
+                "name_short": c.get("name_short") or c.get("name") or ticker,
+                "year": y,
+                "revenue": rev,
+                "net_income": ni,
+                "total_assets": ta,
+                "total_debt": td,
+                "capex": f_.get("capex"),
+                "fleet_count": f_.get("fleet_count"),
+                "fleet_gt": f_.get("fleet_gt"),
+                "net_margin": (ni / rev * 100.0) if (rev and ni is not None) else None,
+                "debt_to_assets": (td / ta * 100.0) if (ta and td is not None) else None,
+                "roa": (ni / ta * 100.0) if (ta and ni is not None) else None,
+            }
+            rows.append(row)
+
+    return {
+        "metadata": metadata,
+        "companies": companies_out,
+        "rows": rows,
+    }
+
+
 def main() -> int:
     log.info("=== Build static site bundle ===")
     meta = snapshot_months_meta()
@@ -829,6 +906,7 @@ def main() -> int:
         "sector_taxonomy.json": sector_taxonomy_payload(),
         "cargo_sector_monthly.json": cargo_sector_monthly_payload(month),
         "kpi_summary.json": kpi_summary_payload(month, change_month),
+        "companies_financials.json": companies_financials_payload(),
     }
     sizes: dict[str, int] = {}
     for name, payload in pieces.items():
