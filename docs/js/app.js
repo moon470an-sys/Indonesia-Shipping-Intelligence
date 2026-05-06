@@ -320,7 +320,7 @@ function renderVesselsTable() {
   tbody.innerHTML = sorted.slice(0, 2000).map(r => `<tr>
     ${td(r[FCOL.CODE])}${td(r[FCOL.NAME])}${td(r[FCOL.CALL])}${td(r[FCOL.TYPE])}${td(r[FCOL.OWNER])}${td(r[FCOL.FLAG])}
     ${td(num(r[FCOL.GT]), true)}${td(num1(r[FCOL.LOA]), true)}${td(num1(r[FCOL.WIDTH]), true)}${td(num1(r[FCOL.DEPTH]), true)}
-    ${td(r[FCOL.ENGINE])}${td(r[FCOL.ETYPE])}${td(r[FCOL.YEAR])}${td(r[FCOL.IMO])}
+    ${td(r[FCOL.YEAR])}${td(r[FCOL.IMO])}
   </tr>`).join("");
 }
 
