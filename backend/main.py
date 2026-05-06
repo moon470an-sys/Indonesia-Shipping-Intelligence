@@ -1,4 +1,4 @@
-"""Single CLI entrypoint — Phase 0..5 orchestration."""
+"""Single CLI entrypoint - Phase 0..5 orchestration."""
 from __future__ import annotations
 
 import argparse
@@ -56,7 +56,7 @@ def _progress_writer(state: dict, stop_evt: threading.Event):
 # ------------------------- phases -------------------------
 
 def phase_sample() -> bool:
-    """Phase 1 — sample tests with 3 retries."""
+    """Phase 1 - sample tests with 3 retries."""
     from backend.tests import test_inaportnet_sample, test_kapal_sample
     for attempt in range(1, 4):
         log.info("Sample attempt %d/3", attempt)
@@ -136,7 +136,7 @@ def write_summary(month: str, started: datetime, finished: datetime,
     mins = rem // 60
     v_kpis = report.get("vessel_kpis", {})
     c_kpis = report.get("cargo_kpis", {})
-    text = f"""# 인도네시아 해운 BI — 실행 결과 ({month})
+    text = f"""# 인도네시아 해운 BI - 실행 결과 ({month})
 
 ## 실행 시간
 - 시작: {started.strftime('%Y-%m-%d %H:%M:%S')} UTC
@@ -170,7 +170,7 @@ def write_summary(month: str, started: datetime, finished: datetime,
 
 def write_failure_report(stage: str, exc: Exception | None, started: datetime,
                          finished: datetime, extra: dict | None = None) -> Path:
-    text = f"""# 인도네시아 해운 BI — 실행 실패
+    text = f"""# 인도네시아 해운 BI - 실행 실패
 
 - 단계: {stage}
 - 시작: {started.strftime('%Y-%m-%d %H:%M:%S')} UTC
@@ -262,6 +262,111 @@ def _existing_fleet_summary(month: str) -> dict:
             "failed": 0, "failed_codes": []}
 
 
+def cmd_audit_taxonomy(month: str | None = None,
+                       coverage_threshold: float = 0.95) -> int:
+    """Audit the vessel-type taxonomy against current DB content.
+
+    Reports coverage on both label sources:
+      * vessels_snapshot.raw_data.JenisDetailKet (vessel registry)
+      * cargo_snapshot.raw_row['JENIS KAPAL'] (LK3 logs)
+
+    And komoditi → vessel_class fallback coverage on:
+      * cargo_snapshot.raw_row['BONGKAR/MUAT', 'KOMODITI']
+
+    Returns exit code 1 if any source's coverage is below the threshold.
+    """
+    from sqlalchemy import text
+
+    from backend.taxonomy import coverage as vessel_coverage, SECTOR_UNMAPPED
+    from backend.cargo_classification import coverage_komoditi
+
+    # Force UTF-8 stdout on Windows so non-ASCII output (Korean labels,
+    # em-dashes) doesn't blow up the cp949 default codec.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+    except (AttributeError, OSError):
+        pass
+
+    init_db()
+    with engine.connect() as conn:
+        m_v = month or conn.execute(text(
+            "SELECT MAX(snapshot_month) FROM vessels_snapshot"
+        )).scalar()
+        m_c = month or conn.execute(text(
+            "SELECT MAX(snapshot_month) FROM cargo_snapshot"
+        )).scalar()
+        if not m_v or not m_c:
+            print("No snapshots found in DB.")
+            return 1
+
+        print(f"=== Vessel taxonomy audit (snapshot {m_v} / {m_c}) ===\n")
+
+        # Vessel registry side (JenisDetailKet)
+        v_rows = conn.execute(text(
+            "SELECT json_extract(raw_data, '$.JenisDetailKet') AS lbl, COUNT(*) AS n "
+            "FROM vessels_snapshot WHERE snapshot_month=:m GROUP BY lbl"
+        ), {"m": m_v}).fetchall()
+        v_cov = vessel_coverage((lbl, n) for (lbl, n) in v_rows)
+
+        print(f"[1] vessels_snapshot.JenisDetailKet - total {int(v_cov['total']):,} 척")
+        for s, w in sorted(v_cov["by_sector"].items(), key=lambda kv: -kv[1]):
+            print(f"    {s:<18} {int(w):>8,}  ({w/v_cov['total']*100:5.1f}%)")
+        print(f"    UNMAPPED 비중: {v_cov['unmapped_pct']:.2f}%")
+        if v_cov["unmapped_tail"]:
+            print("    [UNMAPPED tail - top 20]")
+            for lbl, w in v_cov["unmapped_tail"][:20]:
+                print(f"      {int(w):>6,}  {lbl}")
+
+        # LK3 side (JENIS KAPAL)
+        lk3_rows = conn.execute(text(
+            "SELECT json_extract(raw_row, '$.\"(''JENIS KAPAL'', ''JENIS KAPAL'')\"') AS lbl, "
+            "       COUNT(*) AS n "
+            "FROM cargo_snapshot WHERE snapshot_month=:m GROUP BY lbl"
+        ), {"m": m_c}).fetchall()
+        l_cov = vessel_coverage((lbl, n) for (lbl, n) in lk3_rows)
+
+        print(f"\n[2] cargo_snapshot.JENIS_KAPAL - total {int(l_cov['total']):,} LK3 행")
+        for s, w in sorted(l_cov["by_sector"].items(), key=lambda kv: -kv[1]):
+            print(f"    {s:<18} {int(w):>10,}  ({w/l_cov['total']*100:5.1f}%)")
+        print(f"    UNMAPPED 비중: {l_cov['unmapped_pct']:.2f}%")
+        if l_cov["unmapped_tail"]:
+            print("    [UNMAPPED tail - top 20]")
+            for lbl, w in l_cov["unmapped_tail"][:20]:
+                print(f"      {int(w):>8,}  {lbl}")
+
+        # Komoditi fallback coverage (ton-weighted, BONGKAR + MUAT combined)
+        kom_rows = conn.execute(text(
+            "SELECT k, SUM(t) AS ton FROM ("
+            "  SELECT json_extract(raw_row, '$.\"(''BONGKAR'', ''KOMODITI'')\"') AS k, "
+            "         COALESCE(CAST(NULLIF(json_extract(raw_row, "
+            "                  '$.\"(''BONGKAR'', ''TON'')\"'), '-') AS REAL), 0) AS t "
+            "  FROM cargo_snapshot WHERE snapshot_month=:m "
+            "  UNION ALL "
+            "  SELECT json_extract(raw_row, '$.\"(''MUAT'', ''KOMODITI'')\"'), "
+            "         COALESCE(CAST(NULLIF(json_extract(raw_row, "
+            "                  '$.\"(''MUAT'', ''TON'')\"'), '-') AS REAL), 0) "
+            "  FROM cargo_snapshot WHERE snapshot_month=:m "
+            ") WHERE k IS NOT NULL AND k != '' AND k != '-' AND t > 0 "
+            "GROUP BY k"
+        ), {"m": m_c}).fetchall()
+        k_cov = coverage_komoditi((k, t) for (k, t) in kom_rows)
+
+        print(f"\n[3] komoditi → vessel_class fallback - total {k_cov['total_ton']:,.0f} ton")
+        for c, w in sorted(k_cov["by_class_ton"].items(), key=lambda kv: -kv[1]):
+            print(f"    {c:<18} {w:>16,.0f}  ({w/k_cov['total_ton']*100:5.1f}%)")
+        print(f"    OTHER 비중: {k_cov['other_pct']:.2f}%")
+        if k_cov["other_tail"]:
+            print("    [OTHER tail - top 20]")
+            for lbl, w in k_cov["other_tail"][:20]:
+                print(f"      {w:>14,.0f}  {lbl}")
+
+    # Exit code reflects the worst coverage of the two vessel-type sources.
+    worst = max(v_cov["unmapped_pct"], l_cov["unmapped_pct"]) / 100.0
+    threshold = 1.0 - coverage_threshold
+    print(f"\nWorst UNMAPPED ratio: {worst*100:.2f}%  (threshold ≤ {threshold*100:.0f}%)")
+    return 0 if worst <= threshold else 1
+
+
 def cmd_status() -> int:
     init_db()
     with session_scope() as s:
@@ -285,6 +390,7 @@ def main() -> int:
     parser.add_argument("command", choices=[
         "test-fleet", "test-cargo", "run-fleet", "run-cargo", "run-all",
         "diff", "changes", "report", "monthly", "status", "schedule",
+        "audit-taxonomy",
     ])
     parser.add_argument("--month")
     parser.add_argument("--auto", action="store_true")
@@ -323,6 +429,8 @@ def main() -> int:
         return 0
     if args.command == "monthly":
         return run_monthly_auto(resume=args.resume)
+    if args.command == "audit-taxonomy":
+        return cmd_audit_taxonomy(month=args.month)
     if args.command == "status":
         return cmd_status()
     if args.command == "schedule":
