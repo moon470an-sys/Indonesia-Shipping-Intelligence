@@ -225,7 +225,28 @@ def vessels_search_payload(month: str) -> dict:
 
 
 def cargo_payload(month: str) -> dict:
+    """LK3 vessel-call aggregations for the Cargo dashboard.
+
+    Uses SQLite json_extract + GROUP BY against the raw_row JSON. The
+    pandas multi-level headers were serialised as "('LEVEL1', 'LEVEL2')",
+    so the JSON paths quote that literal key. Avoids loading 2.4M raw
+    rows into Python memory.
+    """
+    import collections
+
+    # JSON paths for the (BONGKAR/MUAT, FIELD) keys
+    P_J_B = "$.\"('BONGKAR', 'JENIS')\""
+    P_T_B = "$.\"('BONGKAR', 'TON')\""
+    P_K_B = "$.\"('BONGKAR', 'KOMODITI')\""
+    P_J_M = "$.\"('MUAT', 'JENIS')\""
+    P_T_M = "$.\"('MUAT', 'TON')\""
+    P_K_M = "$.\"('MUAT', 'KOMODITI')\""
+
+    def _ton_expr(path: str) -> str:
+        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+
     with engine.connect() as conn:
+        log.info("cargo: port_traffic")
         port_traffic = conn.execute(text(
             "SELECT cs.kode_pelabuhan, p.nama_pelabuhan, cs.kind, "
             "       cs.data_year, cs.data_month, COUNT(*) "
@@ -234,21 +255,165 @@ def cargo_payload(month: str) -> dict:
             "GROUP BY cs.kode_pelabuhan, p.nama_pelabuhan, cs.kind, cs.data_year, cs.data_month"
         ), {"m": month}).fetchall()
 
+        log.info("cargo: jenis BONGKAR group")
+        jenis_b_ton = collections.Counter()
+        jenis_b_calls = collections.Counter()
+        for j, n, t in conn.execute(text(
+            f"SELECT json_extract(raw_row, '{P_J_B}') AS j, COUNT(*), SUM({_ton_expr(P_T_B)}) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m GROUP BY j"
+        ), {"m": month}):
+            if j is None or str(j).strip() in ("", "-"):
+                continue
+            jenis_b_ton[str(j).strip()] += float(t or 0)
+            jenis_b_calls[str(j).strip()] += int(n)
+
+        log.info("cargo: jenis MUAT group")
+        jenis_m_ton = collections.Counter()
+        jenis_m_calls = collections.Counter()
+        for j, n, t in conn.execute(text(
+            f"SELECT json_extract(raw_row, '{P_J_M}') AS j, COUNT(*), SUM({_ton_expr(P_T_M)}) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m GROUP BY j"
+        ), {"m": month}):
+            if j is None or str(j).strip() in ("", "-"):
+                continue
+            jenis_m_ton[str(j).strip()] += float(t or 0)
+            jenis_m_calls[str(j).strip()] += int(n)
+
+        log.info("cargo: komoditi group (BONGKAR + MUAT)")
+        komoditi_ton = collections.Counter()
+        for k, t in conn.execute(text(
+            f"SELECT k, SUM(t) FROM ("
+            f"  SELECT json_extract(raw_row, '{P_K_B}') AS k, {_ton_expr(P_T_B)} AS t "
+            f"  FROM cargo_snapshot WHERE snapshot_month=:m "
+            f"  UNION ALL "
+            f"  SELECT json_extract(raw_row, '{P_K_M}') AS k, {_ton_expr(P_T_M)} AS t "
+            f"  FROM cargo_snapshot WHERE snapshot_month=:m "
+            f") WHERE k IS NOT NULL AND k != '' AND k != '-' AND t > 0 "
+            f"GROUP BY k ORDER BY 2 DESC LIMIT 50"
+        ), {"m": month}):
+            komoditi_ton[str(k)] = float(t or 0)
+
+        log.info("cargo: per-port totals")
+        port_ton_b = collections.Counter()
+        port_ton_m = collections.Counter()
+        port_calls = collections.Counter()
+        for p, tb, tm, n in conn.execute(text(
+            f"SELECT kode_pelabuhan, SUM({_ton_expr(P_T_B)}), SUM({_ton_expr(P_T_M)}), COUNT(*) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m GROUP BY kode_pelabuhan"
+        ), {"m": month}):
+            port_ton_b[p] = float(tb or 0)
+            port_ton_m[p] = float(tm or 0)
+            port_calls[p] = int(n)
+
+        log.info("cargo: monthly trend")
+        monthly: dict[str, dict] = {}
+        for yr, mo, tb, tm, n in conn.execute(text(
+            f"SELECT data_year, data_month, SUM({_ton_expr(P_T_B)}), SUM({_ton_expr(P_T_M)}), COUNT(*) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m "
+            "GROUP BY data_year, data_month ORDER BY 1, 2"
+        ), {"m": month}):
+            period = f"{int(yr)}-{int(mo):02d}"
+            monthly[period] = {"b": float(tb or 0), "m": float(tm or 0), "calls": int(n)}
+
+        # Need top ports for the matrix; compute now from per-port totals
+        port_total_ton_pre = {p: port_ton_b.get(p, 0) + port_ton_m.get(p, 0) for p in port_calls}
+        top_ports_for_matrix = [p for p, _ in sorted(port_total_ton_pre.items(), key=lambda x: -x[1])[:15]]
+
+        log.info("cargo: port x jenis matrix")
+        port_jenis_ton: dict[str, collections.Counter] = collections.defaultdict(collections.Counter)
+        if top_ports_for_matrix:
+            placeholders = ",".join(f":p{i}" for i in range(len(top_ports_for_matrix)))
+            params = {f"p{i}": p for i, p in enumerate(top_ports_for_matrix)}
+            params["m"] = month
+            rows_ = conn.execute(text(
+                f"SELECT port, j, SUM(t) FROM ("
+                f"  SELECT kode_pelabuhan AS port, json_extract(raw_row, '{P_J_B}') AS j, {_ton_expr(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=:m AND kode_pelabuhan IN ({placeholders}) "
+                f"  UNION ALL "
+                f"  SELECT kode_pelabuhan, json_extract(raw_row, '{P_J_M}'), {_ton_expr(P_T_M)} "
+                f"  FROM cargo_snapshot WHERE snapshot_month=:m AND kode_pelabuhan IN ({placeholders}) "
+                f") WHERE j IS NOT NULL AND j != '' AND j != '-' GROUP BY port, j"
+            ), params).fetchall()
+            for p, j, t in rows_:
+                port_jenis_ton[p][str(j).strip()] = float(t or 0)
+
+        # build a unified jenis_calls
+        jenis_calls = collections.Counter()
+        for j, n in jenis_b_calls.items(): jenis_calls[j] += n
+        for j, n in jenis_m_calls.items(): jenis_calls[j] += n
+
     rows = []
     name_map: dict[str, str] = {}
-    for port, nama, kind, y, m, n in port_traffic:
+    for port, nama, kind, y, m_, n in port_traffic:
         rows.append({
             "port": port,
             "kind": kind,
-            "period": f"{int(y)}-{int(m):02d}",
+            "period": f"{int(y)}-{int(m_):02d}",
             "rows": int(n),
         })
         if nama:
             name_map[port] = nama
+
+    all_jenis = collections.Counter()
+    for j, t in jenis_b_ton.items(): all_jenis[j] += t
+    for j, t in jenis_m_ton.items(): all_jenis[j] += t
+    top_jenis = all_jenis.most_common(20)
+
+    top_komoditi = komoditi_ton.most_common(25)
+
+    port_total_ton = {p: port_ton_b.get(p, 0) + port_ton_m.get(p, 0) for p in port_calls}
+    top_ports = sorted(port_total_ton.items(), key=lambda x: -x[1])[:25]
+
+    matrix_ports = [p for p, _ in top_ports[:15]]
+    matrix_jenis = [j for j, _ in top_jenis[:10]]
+    matrix = [
+        [round(port_jenis_ton.get(p, {}).get(j, 0), 1) for j in matrix_jenis]
+        for p in matrix_ports
+    ]
+
+    monthly_sorted = sorted(monthly.items())
+
     return {
         "snapshot_month": month,
         "ports": name_map,
         "traffic": rows,
+        "jenis_top": [
+            {"jenis": j, "ton_total": round(all_jenis[j], 1),
+             "ton_bongkar": round(jenis_b_ton.get(j, 0), 1),
+             "ton_muat": round(jenis_m_ton.get(j, 0), 1),
+             "calls": int(jenis_calls.get(j, 0))}
+            for j, _ in top_jenis
+        ],
+        "komoditi_top": [
+            {"komoditi": k, "ton": round(t, 1)} for k, t in top_komoditi
+        ],
+        "port_top": [
+            {"port": p, "name": name_map.get(p, ""),
+             "ton_bongkar": round(port_ton_b.get(p, 0), 1),
+             "ton_muat": round(port_ton_m.get(p, 0), 1),
+             "ton_total": round(t, 1),
+             "calls": int(port_calls.get(p, 0))}
+            for p, t in top_ports
+        ],
+        "monthly_ton": [
+            {"period": p,
+             "ton_bongkar": round(v["b"], 1),
+             "ton_muat": round(v["m"], 1),
+             "calls": int(v["calls"])}
+            for p, v in monthly_sorted
+        ],
+        "port_jenis_matrix": {
+            "ports": matrix_ports,
+            "port_names": [name_map.get(p, "") for p in matrix_ports],
+            "jenis": matrix_jenis,
+            "ton": matrix,
+        },
+        "totals": {
+            "ton_bongkar": round(sum(port_ton_b.values()), 1),
+            "ton_muat": round(sum(port_ton_m.values()), 1),
+            "calls": int(sum(port_calls.values())),
+            "ports": len(port_calls),
+        },
     }
 
 

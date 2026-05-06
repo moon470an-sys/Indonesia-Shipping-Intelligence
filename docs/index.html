@@ -147,41 +147,70 @@
     <!-- Cargo -->
     <section id="tab-cargo" class="tab-panel hidden">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-cargo"></div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">Top 항구 (kind 별)</h2>
-          <div id="chart-cargo-top" style="height:380px"></div>
+          <h2 class="font-semibold mb-2">화물 종류별 톤수 TOP 15</h2>
+          <p class="text-xs text-slate-500 mb-1">Bongkar(하역) + Muat(선적) 합계</p>
+          <div id="chart-cargo-jenis" style="height:440px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="flex justify-between items-baseline mb-2">
-            <h2 class="font-semibold">port × period 히트맵</h2>
-            <div>
+          <h2 class="font-semibold mb-2">화물 품목 TOP 20</h2>
+          <p class="text-xs text-slate-500 mb-1">Komoditi 기준 톤수</p>
+          <div id="chart-cargo-komoditi" style="height:440px"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">주요 항구 톤수 TOP 20</h2>
+          <p class="text-xs text-slate-500 mb-1">Bongkar / Muat 누적</p>
+          <div id="chart-cargo-ports" style="height:380px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">월별 화물 톤수 추이</h2>
+          <div id="chart-cargo-monthly" style="height:380px"></div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <h2 class="font-semibold mb-2">항구 × 화물 종류 히트맵</h2>
+          <p class="text-xs text-slate-500 mb-1">Top 15 항구 × Top 10 화물 종류 (톤)</p>
+          <div id="chart-cargo-matrix" style="height:520px"></div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <details>
+          <summary class="font-semibold cursor-pointer">port × period 행수 히트맵 (LK3 raw row 기반)</summary>
+          <div class="mt-3">
+            <div class="flex justify-end items-center mb-2 gap-2">
               <label class="text-xs text-slate-500">kind</label>
               <select id="cargo-kind" class="border rounded px-2 py-1 text-sm">
                 <option value="dn">국내 (dn)</option>
                 <option value="ln">국제 (ln)</option>
               </select>
             </div>
+            <div id="chart-heatmap" style="height:560px"></div>
           </div>
-          <div id="chart-heatmap" style="height:560px"></div>
-        </div>
+        </details>
       </div>
+
       <div class="bg-white rounded-xl shadow p-4">
-        <h2 class="font-semibold mb-2">결측 (port × period × kind) 키</h2>
-        <p class="text-xs text-slate-500 mb-2" id="cargo-gap-summary"></p>
-        <div class="overflow-auto max-h-[40vh] border rounded">
-          <table class="min-w-full text-xs" id="gap-tbl">
-            <thead class="bg-slate-100 sticky top-0">
-              <tr class="text-left">
-                <th class="px-2 py-1">port</th>
-                <th class="px-2 py-1">name</th>
-                <th class="px-2 py-1">period</th>
-                <th class="px-2 py-1">kind</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <details>
+          <summary class="font-semibold cursor-pointer">결측 (port × period × kind) 키</summary>
+          <p class="text-xs text-slate-500 mb-2 mt-3" id="cargo-gap-summary"></p>
+          <div class="overflow-auto max-h-[40vh] border rounded">
+            <table class="min-w-full text-xs" id="gap-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th class="px-2 py-1">port</th>
+                  <th class="px-2 py-1">name</th>
+                  <th class="px-2 py-1">period</th>
+                  <th class="px-2 py-1">kind</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
       </div>
     </section>
 

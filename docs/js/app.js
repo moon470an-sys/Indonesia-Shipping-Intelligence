@@ -365,32 +365,83 @@ function bindFleetControls() {
 function renderCargo() {
   const c = state.cargo;
   const o = state.overview;
+  const t = c.totals || {};
+
   renderKpis("kpi-cargo", [
-    { label: "물동량 행", value: fmt(o.cargo_rows) },
-    { label: "항구", value: fmt(o.cargo_ports) },
-    { label: "(port,year,month,kind) 키", value: `${fmt(o.cargo_keys)} / ${fmt(o.cargo_keys_theoretical)}` },
-    { label: "커버리지", value: `${(o.cargo_keys / o.cargo_keys_theoretical * 100).toFixed(1)}%` },
+    { label: "LK3 행수 (vessel calls)", value: fmt(t.calls || o.cargo_rows),
+      sub: `${fmt(t.ports || o.cargo_ports)} 항구` },
+    { label: "Bongkar 총톤수 (하역)", value: fmt0(t.ton_bongkar || 0), sub: "ton" },
+    { label: "Muat 총톤수 (선적)", value: fmt0(t.ton_muat || 0), sub: "ton" },
+    { label: "(port,year,month,kind) 키 커버리지",
+      value: `${(o.cargo_keys / o.cargo_keys_theoretical * 100).toFixed(1)}%`,
+      sub: `${fmt(o.cargo_keys)} / ${fmt(o.cargo_keys_theoretical)}` },
   ]);
 
-  // top ports stacked dn/ln
-  const portTotals = {};
-  c.traffic.forEach(t => {
-    if (!portTotals[t.port]) portTotals[t.port] = { dn: 0, ln: 0 };
-    portTotals[t.port][t.kind] += t.rows;
-  });
-  const tops = Object.entries(portTotals)
-    .map(([p, v]) => ({ port: p, dn: v.dn, ln: v.ln, total: v.dn + v.ln }))
-    .sort((a, b) => b.total - a.total).slice(0, 25);
-  Plotly.newPlot("chart-cargo-top", [
-    { x: tops.map(t => t.port), y: tops.map(t => t.dn), name: "dn", type: "bar", marker: { color: "#0ea5e9" } },
-    { x: tops.map(t => t.port), y: tops.map(t => t.ln), name: "ln", type: "bar", marker: { color: "#f97316" } },
-  ], { barmode: "stack", margin: { t: 10, l: 50, r: 10, b: 90 }, xaxis: { tickangle: -45 } },
+  // 1) Cargo type (jenis) TOP 15 — horizontal bar with bongkar+muat split
+  const j15 = (c.jenis_top || []).slice(0, 15);
+  const j15r = j15.slice().reverse();
+  Plotly.newPlot("chart-cargo-jenis", [
+    { y: j15r.map(j => j.jenis), x: j15r.map(j => j.ton_bongkar),
+      name: "Bongkar (하역)", type: "bar", orientation: "h",
+      marker: { color: "#0ea5e9" } },
+    { y: j15r.map(j => j.jenis), x: j15r.map(j => j.ton_muat),
+      name: "Muat (선적)", type: "bar", orientation: "h",
+      marker: { color: "#f97316" } },
+  ], { barmode: "stack", margin: { t: 10, l: 200, r: 10, b: 30 },
+       xaxis: { title: "ton" }, legend: { orientation: "h", y: -0.1 } },
   { displayModeBar: false, responsive: true });
 
+  // 2) Komoditi TOP 20 — horizontal bar
+  const k20 = (c.komoditi_top || []).slice(0, 20).reverse();
+  Plotly.newPlot("chart-cargo-komoditi", [{
+    y: k20.map(k => k.komoditi), x: k20.map(k => k.ton),
+    type: "bar", orientation: "h",
+    marker: { color: k20.map(k => k.ton), colorscale: "Viridis" },
+    hovertemplate: "%{y}<br>%{x:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 240, r: 10, b: 30 }, xaxis: { title: "ton" } },
+  { displayModeBar: false, responsive: true });
+
+  // 3) Top ports by ton (vertical stacked bongkar/muat)
+  const p20 = (c.port_top || []).slice(0, 20);
+  const labels = p20.map(p => p.name ? `${p.port} ${p.name.slice(0, 14)}` : p.port);
+  Plotly.newPlot("chart-cargo-ports", [
+    { x: labels, y: p20.map(p => p.ton_bongkar), name: "Bongkar", type: "bar",
+      marker: { color: "#0ea5e9" } },
+    { x: labels, y: p20.map(p => p.ton_muat), name: "Muat", type: "bar",
+      marker: { color: "#f97316" } },
+  ], { barmode: "stack", margin: { t: 10, l: 60, r: 10, b: 110 },
+       xaxis: { tickangle: -50, automargin: true }, yaxis: { title: "ton" },
+       legend: { orientation: "h", y: -0.25 } },
+  { displayModeBar: false, responsive: true });
+
+  // 4) Monthly bongkar/muat trend (line chart)
+  const mt = c.monthly_ton || [];
+  Plotly.newPlot("chart-cargo-monthly", [
+    { x: mt.map(m => m.period), y: mt.map(m => m.ton_bongkar),
+      name: "Bongkar", type: "scatter", mode: "lines+markers",
+      line: { color: "#0ea5e9" } },
+    { x: mt.map(m => m.period), y: mt.map(m => m.ton_muat),
+      name: "Muat", type: "scatter", mode: "lines+markers",
+      line: { color: "#f97316" } },
+  ], { margin: { t: 10, l: 60, r: 10, b: 60 },
+       xaxis: { tickangle: -40 }, yaxis: { title: "ton" },
+       legend: { orientation: "h", y: -0.2 } },
+  { displayModeBar: false, responsive: true });
+
+  // 5) Port × jenis heatmap
+  const mat = c.port_jenis_matrix || { ports: [], jenis: [], ton: [], port_names: [] };
+  const portLabels = mat.ports.map((p, i) =>
+    mat.port_names[i] ? `${p} ${mat.port_names[i].slice(0, 16)}` : p);
+  Plotly.newPlot("chart-cargo-matrix", [{
+    z: mat.ton, x: mat.jenis, y: portLabels, type: "heatmap",
+    colorscale: "Blues", hoverongaps: false,
+    hovertemplate: "%{y}<br>%{x}<br>%{z:,.0f} ton<extra></extra>",
+  }], { margin: { t: 10, l: 220, r: 10, b: 110 }, xaxis: { tickangle: -30 } },
+  { displayModeBar: false, responsive: true });
+
+  // Existing port × period heatmap (collapsed)
   renderHeatmap();
-
   document.getElementById("cargo-kind").addEventListener("change", renderHeatmap);
-
   renderCargoGaps();
 }
 
