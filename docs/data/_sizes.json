@@ -2,7 +2,10 @@
   "meta.json": 141,
   "overview.json": 5217,
   "fleet.json": 12969,
-  "vessels_search.json": 13212334,
+  "vessels_search.json": 15666588,
   "cargo.json": 590382,
-  "changes.json": 7603879
+  "changes.json": 7603879,
+  "sector_taxonomy.json": 776,
+  "cargo_sector_monthly.json": 126690,
+  "kpi_summary.json": 1461
 }

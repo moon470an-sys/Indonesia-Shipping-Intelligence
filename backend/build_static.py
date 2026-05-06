@@ -166,7 +166,13 @@ def vessels_search_payload(month: str) -> dict:
     """Compact list for client-side filter/search. Includes engine/flag/dimensions
     parsed from raw_data so the Fleet dashboard can recompute every chart and KPI
     purely from this payload as filters change.
+
+    Schema columns 15..16 (sector, vessel_class) come from
+    ``backend.taxonomy`` and let the Fleet tab group by sector without
+    reclassifying client-side.
     """
+    from backend.taxonomy import classify_vessel_type
+
     with engine.connect() as conn:
         rows = conn.execute(text(
             "SELECT vessel_key, search_code, nama_kapal, call_sign, jenis_kapal, "
@@ -195,6 +201,7 @@ def vessels_search_payload(month: str) -> dict:
         # human-readable English category ("Tug Boat", "Bulk Carrier", ...).
         # Show the human label and fall back to the code only when missing.
         type_label = (d.get("JenisDetailKet") or jk or "").strip()
+        sector, vessel_class = classify_vessel_type(type_label)
         loa_val = float(loa) if loa not in (None, "") and float(loa) > 0 else (
             float(panj) if panj not in (None, "") and float(panj) > 0 else None)
         items.append([
@@ -213,13 +220,16 @@ def vessels_search_payload(month: str) -> dict:
             _round1(loa_val),
             _round1(leb),
             _round1(dal),
+            sector,
+            vessel_class,
         ])
     return {
         "snapshot_month": month,
         "schema": ["key", "code", "name", "call_sign", "type", "owner",
                    "gt", "year", "imo",
                    "engine", "engine_type", "flag",
-                   "loa", "width", "depth"],
+                   "loa", "width", "depth",
+                   "sector", "vessel_class"],
         "items": items,
     }
 
@@ -532,6 +542,274 @@ def changes_payload(month: str) -> dict:
     }
 
 
+def sector_taxonomy_payload() -> dict:
+    """Static taxonomy payload: canonical sector/class lists + colors.
+
+    Frontend uses this to keep palette consistent across charts and to
+    populate filter dropdowns without recomputing.
+    """
+    from backend.taxonomy import (
+        ALL_CLASSES, ALL_SECTORS,
+        CLS_BULK, CLS_CONTAINER, CLS_FERRY, CLS_FISHING, CLS_GENERAL,
+        CLS_NONCOMM, CLS_OTHER_CARGO, CLS_PASSENGER_SHIP, CLS_TANKER,
+        CLS_TUG_OSV, CLS_DREDGER_SPECIAL, SECTOR_CARGO, SECTOR_FISHING,
+        SECTOR_NONCOMM, SECTOR_OFFSHORE, SECTOR_PASSENGER, SECTOR_PALETTE,
+    )
+    sector_to_classes = {
+        SECTOR_PASSENGER: [CLS_PASSENGER_SHIP, CLS_FERRY],
+        SECTOR_CARGO:     [CLS_CONTAINER, CLS_BULK, CLS_TANKER, CLS_GENERAL, CLS_OTHER_CARGO],
+        SECTOR_FISHING:   [CLS_FISHING],
+        SECTOR_OFFSHORE:  [CLS_TUG_OSV, CLS_DREDGER_SPECIAL],
+        SECTOR_NONCOMM:   [CLS_NONCOMM],
+    }
+    return {
+        "sectors": list(ALL_SECTORS),
+        "classes": list(ALL_CLASSES),
+        "sector_to_classes": sector_to_classes,
+        "palette": SECTOR_PALETTE,
+        "tanker_subclasses": [
+            "Crude Oil", "Product", "Chemical", "LPG", "LNG",
+            "FAME / Vegetable Oil", "Water", "UNKNOWN",
+        ],
+    }
+
+
+def cargo_sector_monthly_payload(month: str) -> dict:
+    """Per-(period, kind, sector, vessel_class) ton/calls aggregations.
+
+    Pulls aggregated rows grouped by LK3 JENIS KAPAL label, then folds
+    them into the canonical (sector, vessel_class) buckets in Python.
+    Only ~2-3k aggregated rows leave SQLite, so memory is fine.
+    """
+    import collections
+
+    from backend.taxonomy import classify_vessel_type, classify_tanker_subclass
+
+    def _sql_path(key: str) -> str:
+        return ('$."' + key + '"').replace("'", "''")
+
+    P_J_LK3 = _sql_path("('JENIS KAPAL', 'JENIS KAPAL')")
+    P_T_B = _sql_path("('BONGKAR', 'TON')")
+    P_T_M = _sql_path("('MUAT', 'TON')")
+    P_K_B = _sql_path("('BONGKAR', 'KOMODITI')")
+    P_K_M = _sql_path("('MUAT', 'KOMODITI')")
+
+    def _ton_expr(path: str) -> str:
+        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+
+    with engine.connect() as conn:
+        log.info("sector: by (period, kind, JENIS_KAPAL)")
+        rows = conn.execute(text(
+            f"SELECT data_year, data_month, kind, "
+            f"       json_extract(raw_row, '{P_J_LK3}') AS jk, "
+            f"       SUM({_ton_expr(P_T_B)}), SUM({_ton_expr(P_T_M)}), COUNT(*) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m "
+            "GROUP BY data_year, data_month, kind, jk"
+        ), {"m": month}).fetchall()
+
+        log.info("sector: by tanker subclass (period, kind, JENIS_KAPAL)")
+        # Tanker subclass detail uses the same JENIS_KAPAL column — no
+        # extra groupings needed because subclass is also derived from
+        # the label. We re-use the rows above.
+        pass
+
+    # Aggregate into (period, kind, sector, vessel_class) buckets.
+    bucket: dict = collections.defaultdict(
+        lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls": 0}
+    )
+    tanker_bucket: dict = collections.defaultdict(
+        lambda: {"ton_b": 0.0, "ton_m": 0.0, "calls": 0}
+    )
+    for yr, mo, kind, jk, tb, tm, n in rows:
+        sector, vclass = classify_vessel_type(jk)
+        period = f"{int(yr)}-{int(mo):02d}"
+        key = (period, kind, sector, vclass)
+        bucket[key]["ton_b"] += float(tb or 0)
+        bucket[key]["ton_m"] += float(tm or 0)
+        bucket[key]["calls"] += int(n or 0)
+        # If this label maps to Tanker, bucket the tanker subclass too.
+        if vclass == "Tanker":
+            sub = classify_tanker_subclass(jk)
+            sub_key = (period, kind, sub)
+            tanker_bucket[sub_key]["ton_b"] += float(tb or 0)
+            tanker_bucket[sub_key]["ton_m"] += float(tm or 0)
+            tanker_bucket[sub_key]["calls"] += int(n or 0)
+
+    sector_rows = [
+        {
+            "period": p, "kind": k, "sector": s, "vessel_class": vc,
+            "ton_bongkar": round(v["ton_b"], 1),
+            "ton_muat":    round(v["ton_m"], 1),
+            "ton_total":   round(v["ton_b"] + v["ton_m"], 1),
+            "calls": v["calls"],
+        }
+        for (p, k, s, vc), v in sorted(bucket.items())
+    ]
+    tanker_rows = [
+        {
+            "period": p, "kind": k, "subclass": s,
+            "ton_bongkar": round(v["ton_b"], 1),
+            "ton_muat":    round(v["ton_m"], 1),
+            "ton_total":   round(v["ton_b"] + v["ton_m"], 1),
+            "calls": v["calls"],
+        }
+        for (p, k, s), v in sorted(tanker_bucket.items())
+    ]
+    return {
+        "snapshot_month": month,
+        "schema_version": 1,
+        "rows": sector_rows,
+        "tanker_subclass_rows": tanker_rows,
+    }
+
+
+def kpi_summary_payload(month: str, change_month: str | None) -> dict:
+    """Headline KPIs for the Overview hero strip.
+
+    Includes:
+      * total fleet (latest snapshot)
+      * vessels added/removed in change_month
+      * total cargo ton in latest data month + MoM% + YoY%
+      * top-3 sector ton share (latest data month)
+
+    All values are pre-aggregated so the Overview tab can render the
+    KPIs without further joins. MoM = vs previous data month, YoY = vs
+    same data month one year ago, both within the latest snapshot.
+    """
+    from backend.taxonomy import classify_vessel_type
+
+    def _sql_path(key: str) -> str:
+        return ('$."' + key + '"').replace("'", "''")
+
+    P_J_LK3 = _sql_path("('JENIS KAPAL', 'JENIS KAPAL')")
+    P_T_B = _sql_path("('BONGKAR', 'TON')")
+    P_T_M = _sql_path("('MUAT', 'TON')")
+
+    def _ton_expr(path: str) -> str:
+        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+
+    with engine.connect() as conn:
+        fleet_total = conn.execute(text(
+            "SELECT COUNT(*) FROM vessels_snapshot WHERE snapshot_month=:m"
+        ), {"m": month}).scalar() or 0
+
+        added = removed = modified = 0
+        if change_month:
+            for ct, n in conn.execute(text(
+                "SELECT change_type, COUNT(*) FROM vessels_changes "
+                "WHERE change_month=:m GROUP BY change_type"
+            ), {"m": change_month}).fetchall():
+                if ct == "ADDED":
+                    added = int(n)
+                elif ct == "REMOVED":
+                    removed = int(n)
+                elif ct == "MODIFIED":
+                    modified = int(n)
+        # Baseline = the only snapshot is the current one, so every vessel
+        # appears as ADDED. The dashboard hides ADDED counts in baseline mode.
+        is_baseline = (added == fleet_total and removed == 0 and modified == 0
+                       and fleet_total > 0)
+
+        # Monthly ton series (sums across kinds and sectors). Use the
+        # latest cargo snapshot since periods come from inside the most
+        # recent monthly run.
+        monthly = conn.execute(text(
+            f"SELECT data_year, data_month, "
+            f"       SUM({_ton_expr(P_T_B)} + {_ton_expr(P_T_M)}) AS ton "
+            "FROM cargo_snapshot WHERE snapshot_month=:m "
+            "GROUP BY data_year, data_month ORDER BY 1, 2"
+        ), {"m": month}).fetchall()
+        monthly_series = [
+            {"period": f"{int(y)}-{int(m_):02d}", "ton": float(t or 0)}
+            for (y, m_, t) in monthly
+        ]
+
+        # Latest fully-loaded data month — Inaportnet's most-recent period
+        # is often partial (we scrape mid-month), so the trailing entry
+        # may have only a fraction of a normal month's ton. Treat any
+        # trailing period with < 50% of the prior period as partial and
+        # step back. ``is_partial_latest`` flags this for the dashboard
+        # so it can label the KPI ("최근 완성 월 vs 직전 월" wording).
+        latest_idx = -1
+        is_partial_latest = False
+        if len(monthly_series) >= 2:
+            last_ton = monthly_series[-1]["ton"]
+            prev_ton_ = monthly_series[-2]["ton"]
+            if last_ton > 0 and (prev_ton_ == 0 or last_ton >= 0.5 * prev_ton_):
+                latest_idx = len(monthly_series) - 1
+            else:
+                latest_idx = len(monthly_series) - 2
+                is_partial_latest = True
+        elif len(monthly_series) == 1 and monthly_series[0]["ton"] > 0:
+            latest_idx = 0
+        latest_ton = monthly_series[latest_idx]["ton"] if latest_idx >= 0 else 0
+        latest_period = monthly_series[latest_idx]["period"] if latest_idx >= 0 else None
+        prev_ton = monthly_series[latest_idx - 1]["ton"] if latest_idx > 0 else 0
+        mom_pct = ((latest_ton - prev_ton) / prev_ton * 100.0) if prev_ton else None
+        yoy_pct = None
+        if latest_period:
+            ly_period = f"{int(latest_period[:4]) - 1}-{latest_period[5:7]}"
+            ly_row = next((r for r in monthly_series if r["period"] == ly_period), None)
+            if ly_row and ly_row["ton"]:
+                yoy_pct = (latest_ton - ly_row["ton"]) / ly_row["ton"] * 100.0
+
+        # Top sectors — latest period only. Both ton and calls metrics are
+        # surfaced because ton heavily favors bulk cargo (passenger/fishing
+        # vessels carry few tons), while calls tracks operational activity.
+        sector_rows = []
+        if latest_period:
+            ly = int(latest_period[:4])
+            lm = int(latest_period[5:7])
+            for jk, tb, tm, n in conn.execute(text(
+                f"SELECT json_extract(raw_row, '{P_J_LK3}'), "
+                f"       SUM({_ton_expr(P_T_B)}), SUM({_ton_expr(P_T_M)}), COUNT(*) "
+                "FROM cargo_snapshot WHERE snapshot_month=:m "
+                "  AND data_year=:y AND data_month=:mo "
+                "GROUP BY 1"
+            ), {"m": month, "y": ly, "mo": lm}).fetchall():
+                sector, _ = classify_vessel_type(jk)
+                sector_rows.append((sector, float(tb or 0) + float(tm or 0), int(n)))
+
+        sector_ton: dict[str, float] = {}
+        sector_calls: dict[str, int] = {}
+        for s, t, n in sector_rows:
+            sector_ton[s] = sector_ton.get(s, 0.0) + t
+            sector_calls[s] = sector_calls.get(s, 0) + n
+        total_ton = sum(sector_ton.values()) or 1.0
+        total_calls = sum(sector_calls.values()) or 1
+        # Sort by ton; the dashboard can re-sort client-side if needed.
+        sector_keys = sorted(set(sector_ton) | set(sector_calls),
+                             key=lambda s: -sector_ton.get(s, 0))
+
+    return {
+        "snapshot_month": month,
+        "change_month": change_month,
+        "fleet_total": int(fleet_total),
+        "is_baseline": is_baseline,
+        "vessel_changes": {
+            "added": added, "removed": removed, "modified_cells": modified,
+        },
+        "latest_period": latest_period,
+        "latest_period_is_partial_data_dropped": is_partial_latest,
+        "latest_ton": round(latest_ton, 1),
+        "mom_pct": round(mom_pct, 2) if mom_pct is not None else None,
+        "yoy_pct": round(yoy_pct, 2) if yoy_pct is not None else None,
+        "monthly_series": [
+            {"period": r["period"], "ton": round(r["ton"], 1)} for r in monthly_series
+        ],
+        "top_sectors": [
+            {
+                "sector": s,
+                "ton": round(sector_ton.get(s, 0), 1),
+                "pct_ton": round(sector_ton.get(s, 0) / total_ton * 100.0, 2),
+                "calls": sector_calls.get(s, 0),
+                "pct_calls": round(sector_calls.get(s, 0) / total_calls * 100.0, 2),
+            }
+            for s in sector_keys
+        ],
+    }
+
+
 def main() -> int:
     log.info("=== Build static site bundle ===")
     meta = snapshot_months_meta()
@@ -548,6 +826,9 @@ def main() -> int:
         "vessels_search.json": vessels_search_payload(month),
         "cargo.json": cargo_payload(month),
         "changes.json": changes_payload(change_month),
+        "sector_taxonomy.json": sector_taxonomy_payload(),
+        "cargo_sector_monthly.json": cargo_sector_monthly_payload(month),
+        "kpi_summary.json": kpi_summary_payload(month, change_month),
     }
     sizes: dict[str, int] = {}
     for name, payload in pieces.items():
