@@ -389,6 +389,70 @@
 
     <!-- Changes -->
     <section id="tab-changes" class="tab-panel hidden">
+      <!-- Sector Delta -->
+      <div class="bg-white rounded-xl shadow p-4 mb-6">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <div>
+            <h2 class="font-semibold">Sector Delta</h2>
+            <p class="text-xs text-slate-500" id="sd-summary">로딩…</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="text-xs text-slate-500">kind</label>
+            <select id="sd-kind" class="border rounded px-2 py-1 text-sm">
+              <option value="all">전체 (dn+ln)</option>
+              <option value="dn">국내 (dn)</option>
+              <option value="ln">국제 (ln)</option>
+            </select>
+            <label class="text-xs text-slate-500 ml-2">|Δ| 임계값</label>
+            <input id="sd-threshold" type="number" step="1" min="0" max="200" value="15"
+                   class="border rounded px-2 py-1 text-sm w-20" />
+            <span class="text-xs text-slate-500">%</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mb-2">월별 MoM% — 행: sector, 열: 월. 빨강=감소, 파랑=증가.</p>
+        <div id="chart-sd-heatmap" style="height:280px"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Top Movers (최근 월, |Δ| 기준 상위 20)</h2>
+          <div class="overflow-auto max-h-[60vh] border rounded">
+            <table class="min-w-full text-xs" id="sd-movers-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th class="px-2 py-1">sector</th>
+                  <th class="px-2 py-1">class</th>
+                  <th class="px-2 py-1 text-right">prev (ton)</th>
+                  <th class="px-2 py-1 text-right">latest (ton)</th>
+                  <th class="px-2 py-1 text-right">Δ ton</th>
+                  <th class="px-2 py-1 text-right">MoM%</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <h2 class="font-semibold mb-2">Alerts (임계값 초과)</h2>
+          <p class="text-xs text-slate-500 mb-1" id="sd-alerts-sub">…</p>
+          <div class="overflow-auto max-h-[60vh] border rounded">
+            <table class="min-w-full text-xs" id="sd-alerts-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th class="px-2 py-1">sector</th>
+                  <th class="px-2 py-1">class</th>
+                  <th class="px-2 py-1">period</th>
+                  <th class="px-2 py-1 text-right">prev (ton)</th>
+                  <th class="px-2 py-1 text-right">curr (ton)</th>
+                  <th class="px-2 py-1 text-right">MoM%</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6" id="kpi-changes2"></div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <div class="bg-white rounded-xl shadow p-4">

@@ -1070,6 +1070,145 @@ function renderCcTable() {
   </tr>`).join("");
 }
 
+// ---------- Sector Delta (Changes tab) ----------
+const sdState = { kind: "all", threshold: 15, initialized: false };
+
+function renderSectorDelta() {
+  const sm = state.sectorMonthly;
+  if (!sm) {
+    document.getElementById("sd-summary").textContent =
+      "cargo_sector_monthly.json 미로드 (이전 빌드 데이터)";
+    return;
+  }
+
+  if (!sdState.initialized) {
+    sdState.initialized = true;
+    document.getElementById("sd-kind").addEventListener("change", (e) => {
+      sdState.kind = e.target.value; renderSectorDelta();
+    });
+    document.getElementById("sd-threshold").addEventListener("change", (e) => {
+      const v = parseFloat(e.target.value);
+      sdState.threshold = isNaN(v) ? 15 : v;
+      renderSectorDelta();
+    });
+  }
+
+  const kind = sdState.kind;
+  const rows = kind === "all" ? sm.rows : sm.rows.filter(r => r.kind === kind);
+
+  // Build (sector, period) → ton matrix.
+  const sectors = Array.from(new Set(rows.map(r => r.sector)));
+  const periods = Array.from(new Set(rows.map(r => r.period))).sort();
+  const tonGrid = {};   // sector -> {period -> ton}
+  for (const s of sectors) tonGrid[s] = {};
+  for (const r of rows) {
+    tonGrid[r.sector][r.period] = (tonGrid[r.sector][r.period] || 0) + r.ton_total;
+  }
+
+  // MoM% per (sector, period).
+  const momGrid = sectors.map(s => periods.map((p, i) => {
+    if (i === 0) return null;
+    const prev = tonGrid[s][periods[i - 1]] || 0;
+    const curr = tonGrid[s][p] || 0;
+    if (!prev) return null;
+    return (curr - prev) / prev * 100;
+  }));
+
+  Plotly.newPlot("chart-sd-heatmap", [{
+    z: momGrid, x: periods, y: sectors, type: "heatmap",
+    colorscale: [[0, "#dc2626"], [0.5, "#f1f5f9"], [1, "#1e3a8a"]],
+    zmid: 0, hoverongaps: false,
+    hovertemplate: "%{y}<br>%{x}<br>MoM %{z:.1f}%<extra></extra>",
+  }], { margin: { t: 10, l: 140, r: 10, b: 60 }, xaxis: { tickangle: -40 } },
+  { displayModeBar: false, responsive: true });
+
+  // Top Movers — for the latest period vs the previous one, by absolute Δ ton.
+  // Compute (sector, vessel_class) granularity for movers.
+  if (periods.length < 2) {
+    document.querySelector("#sd-movers-tbl tbody").innerHTML =
+      `<tr><td colspan="6" class="text-center text-slate-400 py-2">period가 부족합니다.</td></tr>`;
+    document.querySelector("#sd-alerts-tbl tbody").innerHTML =
+      `<tr><td colspan="6" class="text-center text-slate-400 py-2">period가 부족합니다.</td></tr>`;
+    return;
+  }
+  const latest = periods[periods.length - 1];
+  const prev = periods[periods.length - 2];
+  const cellGrid = {}; // key "sector|class" -> {prev, curr}
+  for (const r of rows) {
+    const k = `${r.sector}|${r.vessel_class}`;
+    if (!cellGrid[k]) cellGrid[k] = { sector: r.sector, vc: r.vessel_class, prev: 0, curr: 0 };
+    if (r.period === prev) cellGrid[k].prev += r.ton_total;
+    else if (r.period === latest) cellGrid[k].curr += r.ton_total;
+  }
+  const movers = Object.values(cellGrid)
+    .map(c => ({
+      ...c,
+      delta: c.curr - c.prev,
+      momPct: c.prev ? (c.curr - c.prev) / c.prev * 100 : (c.curr ? Infinity : null),
+    }))
+    .filter(c => c.momPct !== null && (c.prev > 0 || c.curr > 0))
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 20);
+
+  const num = (v) => v == null ? "" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const pct = (v) => v == null ? "" : (Number.isFinite(v) ? `${v >= 0 ? "+" : ""}${v.toFixed(1)}%` : "+∞");
+  const cellColor = (v) => {
+    if (v == null || !Number.isFinite(v)) return "";
+    if (v > sdState.threshold) return "background:#dbeafe";
+    if (v < -sdState.threshold) return "background:#fee2e2";
+    return "";
+  };
+  document.querySelector("#sd-movers-tbl tbody").innerHTML = movers.map(m => `<tr>
+    <td class="px-2 py-1">${m.sector}</td>
+    <td class="px-2 py-1">${m.vc}</td>
+    <td class="px-2 py-1 text-right">${num(m.prev)}</td>
+    <td class="px-2 py-1 text-right">${num(m.curr)}</td>
+    <td class="px-2 py-1 text-right ${m.delta < 0 ? 'text-red-600' : 'text-blue-700'}">${num(m.delta)}</td>
+    <td class="px-2 py-1 text-right" style="${cellColor(m.momPct)}">${pct(m.momPct)}</td>
+  </tr>`).join("");
+
+  // Alerts — every (sector, class, period) with |MoM%| > threshold across all
+  // periods (not just the latest). Sorted by abs MoM desc.
+  const alertRows = [];
+  for (const r of rows) {
+    const k = `${r.sector}|${r.vessel_class}`;
+    // need previous period's value in the same kind
+  }
+  // To compute alerts cleanly, build a (sector, class) -> period -> ton index.
+  const idx = {};
+  for (const r of rows) {
+    const k = `${r.sector}|${r.vessel_class}`;
+    if (!idx[k]) idx[k] = { sector: r.sector, vc: r.vessel_class, byPeriod: {} };
+    idx[k].byPeriod[r.period] = (idx[k].byPeriod[r.period] || 0) + r.ton_total;
+  }
+  for (const cell of Object.values(idx)) {
+    for (let i = 1; i < periods.length; i++) {
+      const p = periods[i], pp = periods[i - 1];
+      const cur = cell.byPeriod[p] || 0;
+      const pre = cell.byPeriod[pp] || 0;
+      if (!pre) continue;
+      const m = (cur - pre) / pre * 100;
+      if (Math.abs(m) > sdState.threshold) {
+        alertRows.push({ sector: cell.sector, vc: cell.vc, period: p, prev: pre, curr: cur, momPct: m });
+      }
+    }
+  }
+  alertRows.sort((a, b) => Math.abs(b.momPct) - Math.abs(a.momPct));
+  document.getElementById("sd-alerts-sub").textContent =
+    `${alertRows.length.toLocaleString()} 건 (|Δ| > ${sdState.threshold}%, ${rows.length.toLocaleString()}개 셀 검사)`;
+  document.querySelector("#sd-alerts-tbl tbody").innerHTML = alertRows.slice(0, 500).map(a => `<tr>
+    <td class="px-2 py-1">${a.sector}</td>
+    <td class="px-2 py-1">${a.vc}</td>
+    <td class="px-2 py-1">${a.period}</td>
+    <td class="px-2 py-1 text-right">${num(a.prev)}</td>
+    <td class="px-2 py-1 text-right">${num(a.curr)}</td>
+    <td class="px-2 py-1 text-right ${a.momPct < 0 ? 'text-red-600' : 'text-blue-700'}">${pct(a.momPct)}</td>
+  </tr>`).join("");
+
+  document.getElementById("sd-summary").textContent =
+    `${sectors.length} sector × ${periods.length} 월 (${kind === "all" ? "전체" : kind})`;
+}
+
 // ---------- Tabs ----------
 function showTab(name) {
   document.querySelectorAll(".tab").forEach(t => {
@@ -1112,7 +1251,12 @@ async function ensureLoaded(tab) {
     }
     if (tab === "changes" && !state.loaded.has("changes")) {
       if (!state.changes) state.changes = await loadJson("changes.json");
+      if (!state.sectorMonthly) {
+        try { state.sectorMonthly = await loadJson("cargo_sector_monthly.json"); }
+        catch (e) { state.sectorMonthly = null; }
+      }
       renderChanges();
+      renderSectorDelta();
       state.loaded.add("changes");
     }
   } catch (e) {
