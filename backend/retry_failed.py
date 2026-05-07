@@ -39,10 +39,18 @@ def main() -> int:
         log.info("Retry fleet summary: %s",
                  {k: v for k, v in summary.items() if k != "details"})
 
-    # rerun diff + report so they reflect the retried data
+    # rerun validate + diff + report so they reflect the retried data
+    from backend.data_quality.fleet_validator import validate_snapshot
     from backend.diff.cargo_diff import diff_month as cargo_diff
     from backend.diff.vessel_diff import diff_month as vessel_diff
     from backend.reports.change_report import build_reports
+
+    try:
+        vres = validate_snapshot(month, dry_run=False)
+        log.info("Retry validate: scanned=%d affected=%d fixes=%d",
+                 vres["rows_scanned"], vres["rows_affected"], vres["fixes_total"])
+    except Exception:
+        log.exception("Retry validation failed (continuing)")
 
     v = vessel_diff(month)
     c = cargo_diff(month)

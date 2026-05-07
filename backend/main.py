@@ -106,6 +106,72 @@ def phase_cargo(snapshot_month: str) -> dict:
     return summary
 
 
+def phase_validate(snapshot_month: str) -> dict:
+    """Re-validate fleet dimensions/tonnage and correct upstream decimal typos.
+
+    Runs after the fleet scrape so the diff phase sees corrected values, and
+    so the dashboard never displays the raw outliers. Exceptions are caught
+    and recorded as a 'partial' run — a validator failure must not block the
+    rest of the monthly pipeline.
+    """
+    from backend.data_quality.fleet_validator import validate_snapshot
+    started = datetime.utcnow()
+    try:
+        result = validate_snapshot(snapshot_month, dry_run=False)
+        finished = datetime.utcnow()
+        notes = {k: v for k, v in result.items() if k != "fixes"}
+        notes["sample_fixes"] = [
+            {"vessel_key": f.vessel_key, "field": f.field,
+             "original": f.original, "corrected": f.corrected, "rule": f.rule}
+            for f in result["fixes"][:50]
+        ]
+        _record_run(snapshot_month, "validate", "success", started, finished,
+                    result["rows_scanned"], result["rows_affected"],
+                    0, notes)
+        log.info("Validator: scanned=%d affected=%d fixes=%d",
+                 result["rows_scanned"], result["rows_affected"], result["fixes_total"])
+        return notes
+    except Exception as exc:
+        finished = datetime.utcnow()
+        _record_run(snapshot_month, "validate", "failed", started, finished,
+                    0, 0, 1, {"error": repr(exc)})
+        log.exception("Fleet validation failed (continuing pipeline)")
+        return {"error": repr(exc)}
+
+
+def phase_validate_cargo(snapshot_month: str) -> dict:
+    """Re-validate cargo (LK3) tonnage / cargo amounts after the cargo scrape.
+
+    Mirrors phase_validate but for cargo_snapshot.raw_row. Decimal-shift
+    typos in the upstream LK3 export inflate port-level totals by
+    millions of tonnes when left in place. Same defensive contract as the
+    fleet validator: failures are logged and the pipeline continues.
+    """
+    from backend.data_quality.cargo_validator import validate_snapshot
+    started = datetime.utcnow()
+    try:
+        result = validate_snapshot(snapshot_month, dry_run=False)
+        finished = datetime.utcnow()
+        notes = {k: v for k, v in result.items() if k != "fixes"}
+        notes["sample_fixes"] = [
+            {"row_id": f.row_id, "field": f.field,
+             "original": f.original, "corrected": f.corrected, "rule": f.rule}
+            for f in result["fixes"][:50]
+        ]
+        _record_run(snapshot_month, "validate_cargo", "success", started, finished,
+                    result["suspects"], result["rows_affected"], 0, notes)
+        log.info("Cargo validator: suspects=%d affected=%d fixes=%d (%.1fs)",
+                 result["suspects"], result["rows_affected"],
+                 result["fixes_total"], result["elapsed_s"])
+        return notes
+    except Exception as exc:
+        finished = datetime.utcnow()
+        _record_run(snapshot_month, "validate_cargo", "failed", started, finished,
+                    0, 0, 1, {"error": repr(exc)})
+        log.exception("Cargo validation failed (continuing pipeline)")
+        return {"error": repr(exc)}
+
+
 def phase_diff(snapshot_month: str) -> dict:
     from backend.diff.cargo_diff import diff_month as cargo_diff
     from backend.diff.vessel_diff import diff_month as vessel_diff
@@ -198,7 +264,8 @@ def write_failure_report(stage: str, exc: Exception | None, started: datetime,
 # ------------------------- monthly orchestrator -------------------------
 
 def run_monthly_auto(skip_sample: bool = False, resume: bool = False,
-                     fleet: bool = True, cargo: bool = True) -> int:
+                     fleet: bool = True, cargo: bool = True,
+                     validate: bool = True) -> int:
     init_db()
     started = datetime.utcnow()
     month = current_snapshot_month()
@@ -222,8 +289,12 @@ def run_monthly_auto(skip_sample: bool = False, resume: bool = False,
                 fleet_summary = _existing_fleet_summary(month)
             else:
                 fleet_summary = phase_fleet(month)
+        if validate:
+            phase_validate(month)
         if cargo:
             cargo_summary = phase_cargo(month)
+        if validate:
+            phase_validate_cargo(month)
         diffs = phase_diff(month)
         report = phase_report(month)
     except Exception as exc:
@@ -390,12 +461,14 @@ def main() -> int:
     parser.add_argument("command", choices=[
         "test-fleet", "test-cargo", "run-fleet", "run-cargo", "run-all",
         "diff", "changes", "report", "monthly", "status", "schedule",
-        "audit-taxonomy",
+        "audit-taxonomy", "validate-fleet", "validate-cargo",
     ])
     parser.add_argument("--month")
     parser.add_argument("--auto", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--html", action="store_true")
+    parser.add_argument("--no-validate", action="store_true",
+                        help="monthly: skip the fleet re-validation phase")
     args = parser.parse_args()
 
     init_db()
@@ -428,7 +501,15 @@ def main() -> int:
         phase_report(month)
         return 0
     if args.command == "monthly":
-        return run_monthly_auto(resume=args.resume)
+        return run_monthly_auto(resume=args.resume, validate=not args.no_validate)
+    if args.command == "validate-fleet":
+        month = args.month or current_snapshot_month()
+        phase_validate(month)
+        return 0
+    if args.command == "validate-cargo":
+        month = args.month or current_snapshot_month()
+        phase_validate_cargo(month)
+        return 0
     if args.command == "audit-taxonomy":
         return cmd_audit_taxonomy(month=args.month)
     if args.command == "status":
