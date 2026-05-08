@@ -557,6 +557,205 @@ _PORT_COORDS: dict[str, tuple[float, float]] = {
 }
 
 
+# Freeform LK3 origin/destination text → (lat, lon). Names that don't appear
+# in `ports.nama_pelabuhan` (special terminals, jetties, foreign ports). Set
+# to None for known foreign hubs so the lookup can mark them "international".
+_PORT_NAME_ALIASES: dict[str, tuple[float, float] | None] = {
+    # ---------- Foreign hubs (off-map; tagged "international") ----------
+    "SINGAPORE":          None,
+    "PORT KLANG":         None,
+    "PASIR GUDANG":       None,
+    "JOHOR":              None,
+    "TANJUNG PELEPAS":    None,
+    "TANJONG BIN":        None,
+    "MALAYSIA":           None,
+    "MELAKA":             None,
+    "PENGERANG":          None,
+    "MAP TA PHUT":        None,
+    "SRIRACHA":           None,
+    "KAOHSIUNG":          None,
+    "HONG KONG":          None,
+    "ZHOUSHAN":           None,
+    "ZHOUSHAN PT":        None,
+    "XIUYU":              None,
+    "XIUYU PT":           None,
+    "YEOSU":              None,
+    "BUSAN":              None,
+    "MUHAMMAD BIN QASIM": None,
+    "CHATTOGRAM":         None,
+    "CHITTAGONG":         None,
+    "OFFSHORE FUJAIRAH":  None,
+    "FUJAIRAH":           None,
+    "RAS TANURA":         None,
+    "PORT LOUIS":         None,
+    "FREEPORT":           None,
+    "HOUSTON":            None,
+    "NEDERLAND":          None,
+    "ROTTERDAM":          None,
+    "BAA":                None,
+    "SOYO":               None,
+    "RAS LAFFAN":         None,
+    "DAMPIER":            None,
+    "HALDIA":             None,
+    "SOHAR":              None,
+    "RUWAIS":             None,
+    "RUWAIS PORT":        None,
+    "DAVAO":              None,
+    "GIRASSOL":           None,
+    "DOHA":               None,
+    "JEBEL ALI":           None,
+    # ---------- Indonesian terminals not in ports.nama_pelabuhan ----------
+    "MARUNDA":            (-6.10, 106.96),
+    "MUARA BARU":         (-6.10, 106.81),
+    "TANJUNG SEKONG":     (-5.98, 106.05),
+    "TANJUNG GEREM":      (-5.95, 106.05),
+    "MERAK":              (-5.93, 106.00),
+    "CILEGON":            (-5.98, 106.05),
+    "ANYER":              (-6.06, 105.93),
+    "KABIL":              (1.06, 104.10),
+    "WAYAME":             (-3.62, 128.13),
+    "BLANG LANCANG":      (5.18, 97.15),
+    "PLAJU":              (-3.00, 104.78),
+    "TUBAN":              (-6.90, 112.05),
+    "TUBAN TUKS PERTAMINA": (-6.90, 112.05),
+    "BALONGAN":           (-6.32, 108.39),
+    "BALONGAN TERMINAL":  (-6.32, 108.39),
+    "AMPENAN":            (-8.57, 116.08),
+    "TUA PEJAT":          (-2.07, 99.59),
+    "BOOM BARU":          (-2.99, 104.76),
+    "TELUK KABUNG":       (-1.05, 100.41),
+    "TELUK SEMANGKA":     (-5.85, 104.65),
+    "TELUK JAKARTA":      (-6.10, 106.88),
+    "BAU-BAU":            (-5.47, 122.62),
+    "MALINAU":            (3.59, 116.65),
+    "TANJUNG MANGGIS":    (-8.57, 115.55),
+    "TELUK BAYUR":        (-1.00, 100.37),
+    "TANJUNG WANGI":      (-8.21, 114.37),
+    "JAKARTA":            (-6.12, 106.88),
+    "TG. PRIOK":          (-6.10, 106.88),
+    "PRIOK":              (-6.10, 106.88),
+    "SEMARANG":           (-6.96, 110.42),
+    "SURABAYA":           (-7.20, 112.74),
+    "SEMAMPIR":           (-7.20, 112.74),
+    "PADANG":             (-1.00, 100.37),
+    "MEDAN":              (3.78, 98.69),
+    "LHOKSEUMAWE":        (5.18, 97.15),
+    "BANGKA":             (-2.10, 106.13),
+    "PANGKAL BALAM":      (-2.10, 106.13),
+    "TANJUNG REDEP":      (2.15, 117.50),
+    "KAMPUNG BARU":       (-1.27, 116.83),
+    "BANJARMASIN":        (-3.32, 114.59),
+    "KOTABARU":           (-3.30, 116.20),
+    "KALBUT":             (-7.74, 113.86),
+    "KALBUT SITUBONDO":   (-7.74, 113.86),
+    "TARAHAN":            (-5.55, 105.36),
+    "TARJUN":             (-3.65, 116.04),
+    "CINTA":              (-5.95, 106.20),  # offshore Java Sea
+    "ARJUNA":             (-5.95, 107.50),  # offshore Java Sea
+    "SUNGAI PAKNING":     (1.39, 102.13),
+    "KENDAWANGAN":        (-2.55, 110.21),
+    "MEKAR PUTIH":        (-8.59, 116.43),
+    "MOROWALI":           (-2.85, 121.85),
+    "LAWE-LAWE":          (-1.13, 116.92),
+    "PATIMBAN":           (-6.31, 107.91),
+    "TANAH GROGOT":       (-1.91, 116.20),
+    "JABUNG TERMINAL":    (-1.10, 104.30),
+    "JABUNG":             (-1.10, 104.30),
+    "TANJUNG BARA":       (-0.42, 117.55),
+    "BUKIT TUA":          (-6.27, 113.20),  # offshore East Java
+    "POLEKO":             (-3.97, 122.52),  # Kendari area
+    "PT. TIMAH":          (-2.10, 106.13),
+    "SENIPAH":            (-0.95, 117.00),  # Senipah Oil Terminal
+    "PULANG PISAU":       (-2.74, 114.07),
+    "SAMPIT":             (-2.54, 112.94),
+    "BATULICIN":          (-3.30, 116.20),
+    "MUARA SATUI":        (-3.85, 115.50),
+    "BUNGUS":             (-1.05, 100.41),
+    "TANJUNG BUTON":      (1.07, 102.30),
+}
+
+
+# Terminal/operator keywords that, when found mid-string, signal the rest is
+# a corporate suffix and should be stripped. Order matters: longest-first so
+# "TUKS PT" doesn't truncate to "TUKS".
+_TERMINAL_KW_TAILS = (
+    "TUKS PT", "TUKS PERTAMINA", "TUKS",
+    "TERSUS PT", "TERSUS PERTAMINA", "TERSUS",
+    "STS PERTAMINA", "STS PT", "STS",
+    "PT. PERTAMINA", "PT PERTAMINA", "PERTAMINA",
+    "TERMINAL KHUSUS", "TERMINAL", "JV",
+)
+
+
+def _normalize_port_name(s) -> str | None:
+    """Strip LK3 suffixes from freeform port name, return uppercase clean.
+
+    Examples:
+      "BALIKPAPAN/TUKS PT. PERTAMINA" → "BALIKPAPAN"
+      "TANJUNG SEKONG, JV"            → "TANJUNG SEKONG"
+      "MAKASSAR (BARRU)"              → "MAKASSAR"
+      "TUBAN TUKS PERTAMINA"          → "TUBAN"
+      "PANJANG/TUKS PERTAMINA"        → "PANJANG"
+    """
+    if s is None or (isinstance(s, float) and pd.isna(s)):
+        return None
+    t = str(s).upper().strip()
+    if not t:
+        return None
+    # Strip parenthetical / slash / comma suffixes
+    t = t.split("(", 1)[0].strip()
+    t = t.split("/", 1)[0].strip()
+    t = t.split(",", 1)[0].strip()
+    # Strip terminal-keyword tails ("TUKS ...", "PERTAMINA ...", etc.)
+    for kw in _TERMINAL_KW_TAILS:
+        idx = t.find(" " + kw)
+        if idx > 0:
+            t = t[:idx].strip()
+    return t if len(t) >= 3 else None
+
+
+@st.cache_data(ttl=3600)
+def _port_name_to_coords() -> tuple[dict[str, tuple[float, float]], set[str]]:
+    """Build a name (uppercase, stripped) → (lat, lon) lookup.
+
+    Returns (coord_map, foreign_set). Foreign set holds normalized names of
+    known foreign hubs so callers can tag international flows separately.
+    """
+    out: dict[str, tuple[float, float]] = {}
+    foreign: set[str] = set()
+    try:
+        ports = q.ports()
+    except Exception:
+        ports = pd.DataFrame()
+    for r in ports.itertuples(index=False):
+        coord = _PORT_COORDS.get(getattr(r, "kode_pelabuhan", None))
+        nm = getattr(r, "nama_pelabuhan", None)
+        if coord and nm:
+            key = _normalize_port_name(nm)
+            if key:
+                out[key] = coord
+    for k, v in _PORT_NAME_ALIASES.items():
+        if v is None:
+            foreign.add(k)
+        else:
+            out[k] = v
+    return out, foreign
+
+
+def _resolve_port_coord(
+    name, coord_map: dict[str, tuple[float, float]], foreign: set[str]
+) -> tuple[tuple[float, float] | None, str]:
+    """Return ((lat, lon) or None, status) where status ∈ {ok, foreign, unknown, empty}."""
+    key = _normalize_port_name(name)
+    if not key:
+        return None, "empty"
+    if key in coord_map:
+        return coord_map[key], "ok"
+    if key in foreign:
+        return None, "foreign"
+    return None, "unknown"
+
+
 _UTIL_PALETTE = {
     "Idle (<25%)":       "#dc2626",
     "Light (25–50%)":    "#f59e0b",
@@ -1968,6 +2167,288 @@ def _render_sankey(od_top: pd.DataFrame, ton_col: str = "총_톤") -> None:
     )
 
 
+def _tanker_cargo_flow_map(df: pd.DataFrame) -> None:
+    """🗺️ Indonesia map of tanker cargo flows.
+
+    Origin → destination pairs are aggregated from the LK3 ``BERANGKAT.KE``
+    and ``TIBA.DARI`` fields, mapped to coordinates, then drawn as great-arc
+    flow lines coloured by commodity bucket. Port bubbles size by total ton
+    routed through the port.
+
+    Vessel list panel below the map surfaces the actual ships that loaded /
+    unloaded the selected commodity bucket — ranked by 24mo total ton.
+    """
+    st.subheader("🗺️ 탱커 화물 흐름 지도 (Origin → Destination)")
+    st.caption(
+        "벤치마크: jang1117.github.io/shipping_volume — "
+        "버블 크기 = 항구별 24mo 총 톤, 선 두께 ∝ 항로 톤, 색상 = 화물 카테고리. "
+        "외국 항구 (SINGAPORE 등)는 지도 밖 — 별도 KPI에 합산."
+    )
+
+    coord_map, foreign_set = _port_name_to_coords()
+
+    # ---- Build long-form (origin, destination, kom, ton) stream ----
+    b = df[["origin", "destination", "kapal", "operator", "jenis_kapal",
+            "bongkar_kom", "bongkar_ton", "gt", "dwt"]].rename(
+        columns={"bongkar_kom": "kom", "bongkar_ton": "ton"})
+    b["direction"] = "BONGKAR"
+    m = df[["origin", "destination", "kapal", "operator", "jenis_kapal",
+            "muat_kom", "muat_ton", "gt", "dwt"]].rename(
+        columns={"muat_kom": "kom", "muat_ton": "ton"})
+    m["direction"] = "MUAT"
+    long = pd.concat([b, m], ignore_index=True)
+    long["ton"] = pd.to_numeric(long["ton"], errors="coerce").fillna(0)
+    long = long[long["ton"] > 0].copy()
+    long["bucket"] = long["kom"].map(_classify_kom_for_palette)
+
+    # ---- Filter controls ----
+    fc1, fc2, fc3 = st.columns([2, 2, 1])
+    with fc1:
+        all_buckets = (long.groupby("bucket")["ton"].sum()
+                            .sort_values(ascending=False).index.tolist())
+        # default: top 6 buckets so user immediately sees something dense
+        default_buckets = all_buckets[:6]
+        sel_buckets = st.multiselect(
+            "화물 카테고리", all_buckets, default=default_buckets,
+            help="선택한 카테고리만 흐름선으로 표시. 비워두면 모든 카테고리 표시.",
+            key="tk_map_buckets",
+        )
+        if not sel_buckets:
+            sel_buckets = all_buckets
+    with fc2:
+        dir_pick = st.radio(
+            "방향",
+            ["전체", "BONGKAR (양하)", "MUAT (적재)"],
+            horizontal=True, key="tk_map_dir",
+        )
+    with fc3:
+        top_n_lanes = st.slider(
+            "Top N 항로", 10, 200, 60, step=10, key="tk_map_topn",
+            help="가독성을 위해 상위 N개 항로만 표시 (시각적 노이즈 컷)",
+        )
+
+    f = long[long["bucket"].isin(sel_buckets)].copy()
+    if dir_pick.startswith("BONGKAR"):
+        f = f[f["direction"] == "BONGKAR"]
+    elif dir_pick.startswith("MUAT"):
+        f = f[f["direction"] == "MUAT"]
+    if f.empty:
+        st.info("필터 조건에 해당하는 화물 흐름이 없습니다.")
+        return
+
+    # ---- Resolve coordinates ----
+    f["o_norm"] = f["origin"].map(_normalize_port_name)
+    f["d_norm"] = f["destination"].map(_normalize_port_name)
+    f["o_coord"] = f["o_norm"].map(lambda k: coord_map.get(k))
+    f["d_coord"] = f["d_norm"].map(lambda k: coord_map.get(k))
+    f["o_foreign"] = f["o_norm"].isin(foreign_set)
+    f["d_foreign"] = f["d_norm"].isin(foreign_set)
+
+    # Total ton broken into mappable / international / unknown
+    total_ton = float(f["ton"].sum())
+    intl_ton = float(f.loc[f["o_foreign"] | f["d_foreign"], "ton"].sum())
+    plottable = f.dropna(subset=["o_coord", "d_coord"]).copy()
+    plottable = plottable[~(plottable["o_foreign"] | plottable["d_foreign"])]
+    plot_ton = float(plottable["ton"].sum())
+    unknown_ton = total_ton - intl_ton - plot_ton
+
+    cN = st.columns(4)
+    kpi(cN[0], "필터 톤 합", fmt.fmt_ton(total_ton),
+        help="현재 필터 (카테고리 + 방향) 하 전체 톤 합")
+    kpi(cN[1], "지도 표시 톤", fmt.fmt_ton(plot_ton),
+        help="origin/destination 양쪽 좌표 매핑된 항로의 톤 합")
+    kpi(cN[2], "국제 항해 톤",
+        fmt.fmt_ton(intl_ton),
+        help="origin 또는 destination이 외국 (SINGAPORE 등)인 항해 — 지도 밖")
+    kpi(cN[3], "미매핑 톤",
+        fmt.fmt_ton(unknown_ton),
+        help="origin/destination 텍스트가 좌표 사전에 없음 (소규모 항구·터미널)")
+
+    if plottable.empty:
+        st.info("좌표 매핑 가능한 항로가 없습니다.")
+        return
+
+    # ---- Aggregate OD pairs by bucket ----
+    plottable["lat_o"] = plottable["o_coord"].map(lambda c: c[0])
+    plottable["lon_o"] = plottable["o_coord"].map(lambda c: c[1])
+    plottable["lat_d"] = plottable["d_coord"].map(lambda c: c[0])
+    plottable["lon_d"] = plottable["d_coord"].map(lambda c: c[1])
+
+    od_bucket = (plottable.groupby(
+                    ["o_norm", "d_norm", "lat_o", "lon_o", "lat_d", "lon_d", "bucket"])
+                          .agg(ton=("ton", "sum"), n_calls=("ton", "size"),
+                               n_vessels=("kapal", "nunique"))
+                          .reset_index())
+    od_bucket = od_bucket[od_bucket["o_norm"] != od_bucket["d_norm"]]  # exclude self-loops on map
+    if od_bucket.empty:
+        st.info("Origin ≠ Destination 항로가 없습니다 (모두 self-loop).")
+        return
+    od_bucket = od_bucket.sort_values("ton", ascending=False).head(top_n_lanes)
+
+    # Per-port aggregate (bubble sizing)
+    port_ton = pd.concat([
+        plottable[["o_norm", "lat_o", "lon_o", "ton"]].rename(
+            columns={"o_norm": "port", "lat_o": "lat", "lon_o": "lon"}),
+        plottable[["d_norm", "lat_d", "lon_d", "ton"]].rename(
+            columns={"d_norm": "port", "lat_d": "lat", "lon_d": "lon"}),
+    ], ignore_index=True)
+    port_agg = (port_ton.groupby(["port", "lat", "lon"])["ton"].sum()
+                          .reset_index().sort_values("ton", ascending=False))
+
+    # ---- Build figure ----
+    max_ton = float(od_bucket["ton"].max())
+    fig = go.Figure()
+
+    # 1) Flow lines per bucket trace (so legend toggles work cleanly)
+    for bucket, sub in od_bucket.groupby("bucket"):
+        color = _KOM_BUCKET_PALETTE.get(bucket, "#64748b")
+        # One trace per OD lane so we can vary line width by ton
+        # Plotly can't vary width along one trace, so issue per-lane sub-traces
+        # but group by bucket via legendgroup to keep legend tidy.
+        first = True
+        for r in sub.itertuples(index=False):
+            width = 1.0 + 8.0 * (r.ton / max_ton) ** 0.5
+            fig.add_trace(go.Scattergeo(
+                lon=[r.lon_o, r.lon_d],
+                lat=[r.lat_o, r.lat_d],
+                mode="lines",
+                line=dict(width=width, color=color),
+                opacity=0.75,
+                hoverinfo="text",
+                text=(f"<b>{bucket}</b><br>{r.o_norm} → {r.d_norm}<br>"
+                      f"{fmt.fmt_compact(r.ton, 1)}t · {r.n_vessels}척 · "
+                      f"{int(r.n_calls)}회"),
+                name=bucket,
+                legendgroup=bucket,
+                showlegend=first,
+            ))
+            first = False
+
+    # 2) Port bubbles on top
+    fig.add_trace(go.Scattergeo(
+        lon=port_agg["lon"], lat=port_agg["lat"],
+        mode="markers",
+        marker=dict(
+            size=(port_agg["ton"] / port_agg["ton"].max() * 26 + 4),
+            color="#0f172a", opacity=0.85,
+            line=dict(width=0.5, color="#ffffff"),
+        ),
+        text=port_agg.apply(
+            lambda r: f"<b>{r['port']}</b><br>{fmt.fmt_compact(r['ton'], 1)}t",
+            axis=1),
+        hoverinfo="text",
+        name="항구 (총 톤)",
+        showlegend=True,
+    ))
+
+    fig.update_layout(
+        height=620, margin=dict(t=10, b=10, l=10, r=10),
+        legend=dict(
+            orientation="h", y=-0.05, x=0,
+            bgcolor="rgba(255,255,255,0.85)", bordercolor="#e2e8f0",
+            borderwidth=1, font=dict(size=11),
+        ),
+        geo=dict(
+            scope="asia",
+            projection_type="natural earth",
+            showcountries=True, showcoastlines=True, showland=True,
+            showocean=True, oceancolor="#f1f5f9",
+            landcolor="#fefefe", countrycolor="#cbd5e1",
+            coastlinecolor="#94a3b8",
+            lataxis=dict(range=[-12, 8]),
+            lonaxis=dict(range=[94, 142]),
+        ),
+    )
+    st.plotly_chart(fig, width="stretch")
+
+    # ---- Lane table (the actual numbers behind the map) ----
+    with st.expander(f"📋 항로 테이블 — Top {len(od_bucket)} (현재 필터)"):
+        lane_show = (od_bucket[["o_norm", "d_norm", "bucket",
+                                 "ton", "n_calls", "n_vessels"]]
+                       .rename(columns={"o_norm": "출발", "d_norm": "도착",
+                                        "bucket": "카테고리", "ton": "총_톤",
+                                        "n_calls": "항해수", "n_vessels": "선박수"}))
+        theme.dataframe(lane_show)
+        _csv_button(lane_show,
+                    f"tanker_flow_map_lanes_{snapshot}.csv",
+                    label="📥 항로 CSV", key="tk_map_lanes_dl")
+
+    # ============================================================
+    # Vessel list panel — ships that loaded the selected cargo
+    # ============================================================
+    st.markdown("---")
+    st.subheader("🛳️ 해당 화물을 실은 선박 리스트")
+    st.caption(
+        "현재 카테고리/방향 필터에 해당하는 LK3 화물 행을 선박 단위로 집계. "
+        "총 톤·항해 수·주요 항로(가장 빈번한 OD)가 표시됩니다."
+    )
+
+    # Use full filtered set (not just top-N OD) so vessel ranking reflects total activity.
+    vsel = f.copy()
+    vsel = vsel.dropna(subset=["kapal"])
+    if vsel.empty:
+        st.info("선택한 카테고리에 해당하는 선박이 없습니다.")
+        return
+
+    # Per-vessel aggregate
+    def _top_route(s: pd.Series) -> str:
+        if s.empty:
+            return "-"
+        top = s.value_counts().head(1)
+        if top.empty:
+            return "-"
+        return f"{top.index[0]} ({int(top.iloc[0])}회)"
+
+    vsel["route_label"] = (vsel["origin"].fillna("?").astype(str)
+                           + " → "
+                           + vsel["destination"].fillna("?").astype(str))
+    v_agg = (vsel.groupby("kapal")
+                  .agg(총_톤=("ton", "sum"),
+                       항해수=("ton", "size"),
+                       운영사=("operator",
+                              lambda s: s.dropna().mode().iloc[0]
+                              if not s.dropna().empty else "-"),
+                       jenis_kapal=("jenis_kapal",
+                              lambda s: s.dropna().mode().iloc[0]
+                              if not s.dropna().empty else "-"),
+                       gt=("gt",
+                              lambda s: pd.to_numeric(s, errors="coerce").max()),
+                       dwt=("dwt",
+                              lambda s: pd.to_numeric(s, errors="coerce").max()),
+                       카테고리=("bucket",
+                              lambda s: s.value_counts().index[0]
+                              if not s.empty else "-"),
+                       주요_항로=("route_label", _top_route))
+                  .reset_index()
+                  .sort_values("총_톤", ascending=False))
+    v_agg["총_톤"] = v_agg["총_톤"].round(0)
+    v_agg["gt"] = pd.to_numeric(v_agg["gt"], errors="coerce").round(0)
+    v_agg["dwt"] = pd.to_numeric(v_agg["dwt"], errors="coerce").round(0)
+
+    cV = st.columns(4)
+    kpi(cV[0], "선박 수", fmt.fmt_int(len(v_agg)),
+        help="현재 필터 하의 고유 KAPAL 수")
+    kpi(cV[1], "Top 1 톤", fmt.fmt_ton(float(v_agg.iloc[0]["총_톤"])),
+        help=f"최다 운송 선박: {v_agg.iloc[0]['kapal']}")
+    kpi(cV[2], "운영사 수", fmt.fmt_int(int(v_agg["운영사"].nunique())),
+        help="이 카테고리에 진입한 운영사 수")
+    kpi(cV[3], "평균 항해/척",
+        f"{v_agg['항해수'].mean():.1f}",
+        help="선박당 평균 항해 (LK3 행) 수")
+
+    show_top_n = st.slider(
+        "선박 Top N", 10, min(200, len(v_agg)),
+        min(50, len(v_agg)), step=10, key="tk_map_vessel_topn",
+    )
+    cols_show = ["kapal", "운영사", "jenis_kapal", "카테고리",
+                 "gt", "dwt", "총_톤", "항해수", "주요_항로"]
+    cols_show = [c for c in cols_show if c in v_agg.columns]
+    theme.dataframe(v_agg[cols_show].head(show_top_n))
+    _csv_button(v_agg[cols_show],
+                f"tanker_flow_map_vessels_{snapshot}.csv",
+                label="📥 선박 리스트 CSV", key="tk_map_vessels_dl")
+
+
 def _tanker_flow_view():
     with st.spinner("탱커 화물 흐름 데이터 불러오는 중 (최초 1회 수십 초 소요)…"):
         df = _tanker_cargo_flows(snapshot)
@@ -2000,6 +2481,12 @@ def _tanker_flow_view():
         "BONGKAR = 양하(unload), MUAT = 적재(load). "
         "동일 항해는 한쪽 또는 양쪽에 톤이 기록될 수 있음."
     )
+
+    st.markdown("---")
+
+    # ---- Cargo flow map (top of view, replaces text-only Sankey as the
+    #      first visual the user sees) ----
+    _tanker_cargo_flow_map(df)
 
     st.markdown("---")
 
