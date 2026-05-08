@@ -20,6 +20,7 @@ import streamlit as st
 
 from dashboard import queries as q
 from dashboard import format as fmt
+from dashboard import theme
 
 st.set_page_config(
     page_title="Indonesia Shipping BI",
@@ -27,6 +28,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Inject Pretendard font + design tokens. Plotly "sti" template is registered
+# at theme-module import time, so every chart picks it up automatically.
+theme.apply()
 
 
 # ------------------------- caching -------------------------
@@ -186,19 +191,22 @@ def _csv_button(df: pd.DataFrame, filename: str,
 
 
 # ------------------------- helpers -------------------------
-def kpi(col, label, value, delta=None, fmt_tpl="{:,}", help=None):
+def kpi(col, label, value, delta=None, fmt_tpl="{:,}", help=None,
+        delta_color="off"):
     """Render a KPI tile.
 
-    Backwards-compatible: existing callers pass either a pre-formatted string
-    or a number. `fmt_tpl` is applied only to raw int/float values (mirrors
-    the old `fmt` argument behaviour). `help` adds a Korean tooltip the user
-    sees on the (?) icon.
+    `delta` accepts either a signed number (then `delta_color="normal"` shows
+    green/red arrows) or a descriptive string (then `delta_color="off"`
+    suppresses the auto-coloring — the default, since most deltas in this
+    dashboard are sub-labels, not signed metrics).
+
+    `help` adds a Korean tooltip on the (?) icon.
     """
     if isinstance(value, (int, float)):
         v = fmt_tpl.format(value)
     else:
         v = str(value)
-    col.metric(label, v, delta=delta, help=help)
+    col.metric(label, v, delta=delta, help=help, delta_color=delta_color)
 
 
 # ------------------------- pages -------------------------
@@ -211,12 +219,15 @@ def page_overview():
     c = _cargo_overview(snapshot)
     k = _change_kpis(change_month)
 
-    st.subheader("적재 현황")
+    theme.hero_strip(
+        "📦 적재 현황",
+        f"{snapshot} 스냅샷 기준 — 선박 등기, 항구, LK3 물동량 적재 상태",
+    )
     cols = st.columns(4)
-    kpi(cols[0], "선박 등록", v["total"])
-    kpi(cols[1], "검색 코드", f"{v['codes']}/56")
-    kpi(cols[2], "항구", c["ports"])
-    kpi(cols[3], "물동량 행", c["rows"])
+    kpi(cols[0], "선박 등록", v["total"], help="vessels_snapshot.row_count — 56개 검색코드 합산")
+    kpi(cols[1], "검색 코드", f"{v['codes']}/56", help="실제로 데이터가 들어온 검색코드 수")
+    kpi(cols[2], "항구", c["ports"], help="LK3에서 등장한 고유 항구 수 (origin+destination)")
+    kpi(cols[3], "물동량 행", c["rows"], help="cargo_snapshot.row_count — 24mo 누적")
 
     st.subheader(f"{change_month} 변경 탐지 KPI")
     cols = st.columns(6)
@@ -390,7 +401,7 @@ def page_fleet():
         else:
             fig = px.bar(vt.sort_values("count"), x="count", y="type",
                          orientation="h", height=420, color="count",
-                         color_continuous_scale="Blues")
+                         color_continuous_scale=theme.SCALES["blue"])
             fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
                               xaxis_title="척수", yaxis_title="")
             st.plotly_chart(fig, width="stretch")
@@ -402,9 +413,12 @@ def page_fleet():
         if et.empty:
             st.info("엔진 타입 데이터 없음")
         else:
-            fig = px.pie(et, names="type", values="count", height=320, hole=0.45)
+            fig = px.pie(et, names="type", values="count", height=320, hole=0.5)
+            fig.update_traces(textinfo="percent+label", textposition="outside")
             fig.update_layout(margin=dict(t=10, b=10),
                               legend=dict(font=dict(size=10)))
+            theme.donut_center(fig, fmt.fmt_int(int(et["count"].sum())),
+                               "엔진 타입")
             st.plotly_chart(fig, width="stretch")
 
     with c2:
@@ -417,7 +431,7 @@ def page_fleet():
         else:
             fig = px.bar(en.sort_values("count"), x="count", y="engine",
                          orientation="h", height=320, color="count",
-                         color_continuous_scale="Greens")
+                         color_continuous_scale=theme.SCALES["green"])
             fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
                               xaxis_title="척수", yaxis_title="")
             st.plotly_chart(fig, width="stretch")
@@ -431,7 +445,7 @@ def page_fleet():
         else:
             fig = px.bar(fl.sort_values("count"), x="count", y="flag",
                          orientation="h", height=320, color="count",
-                         color_continuous_scale="Oranges")
+                         color_continuous_scale=theme.SCALES["amber"])
             fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
                               xaxis_title="척수", yaxis_title="")
             st.plotly_chart(fig, width="stretch")
@@ -458,7 +472,7 @@ def page_fleet():
     display_cols = [c for c in display_cols if c in fdf.columns]
     table = fdf[display_cols].sort_values("gt", ascending=False, na_position="last").head(2000)
     st.caption(f"표시 {len(table):,} rows (최대 2,000)")
-    st.dataframe(table, width="stretch", hide_index=True)
+    theme.dataframe(table)
 
 
 # ------------------------- Tanker Focus page -------------------------
@@ -600,11 +614,13 @@ def _fleet_utilization_view(sub_sel: str = "전체") -> None:
         status_dist.columns = ["status", "count"]
         fig = px.pie(status_dist, names="status", values="count",
                      color="status", color_discrete_map=_UTIL_PALETTE,
-                     hole=0.45,
+                     hole=0.5,
                      category_orders={"status": list(_UTIL_PALETTE.keys())})
-        fig.update_traces(textinfo="percent+label")
+        fig.update_traces(textinfo="percent+label", textposition="outside")
         fig.update_layout(height=320, margin=dict(t=10, b=10),
                           legend=dict(font=dict(size=10)))
+        theme.donut_center(fig, fmt.fmt_int(int(status_dist["count"].sum())),
+                           "분석 선박")
         st.plotly_chart(fig, width="stretch")
     with cB:
         fig = px.histogram(u, x="util_pct", nbins=24,
@@ -631,7 +647,7 @@ def _fleet_utilization_view(sub_sel: str = "전체") -> None:
                      "bendera", "gt", "tahun", "age",
                      "months_active", "total_ton", "util_pct"]
         cols_show = [c for c in cols_show if c in idle.columns]
-        st.dataframe(idle[cols_show], width="stretch", hide_index=True)
+        theme.dataframe(idle[cols_show])
         _csv_button(u[cols_show + ["status"]] if all(c in u.columns for c in cols_show)
                     else u, f"vessel_utilization_{snapshot}.csv",
                     label="📥 가동률 전체 CSV", key="tk_dl_util")
@@ -645,7 +661,7 @@ def _fleet_utilization_view(sub_sel: str = "전체") -> None:
         pivot = pivot.reindex(columns=[s for s in _UTIL_PALETTE.keys()
                                           if s in pivot.columns])
         fig = px.imshow(pivot, text_auto=True, aspect="auto",
-                        color_continuous_scale="Blues",
+                        color_continuous_scale=theme.SCALES["blue"],
                         labels=dict(color="척수"))
         fig.update_layout(height=300, margin=dict(t=20, b=10))
         st.plotly_chart(fig, width="stretch")
@@ -760,7 +776,7 @@ def _age_activity_correlation_view(sub_sel: str = "전체") -> None:
         if not bucket_means.empty:
             fig = px.bar(bucket_means, x="age_bucket", y="avg_months",
                          color="avg_months",
-                         color_continuous_scale="RdYlGn",
+                         color_continuous_scale=theme.SCALES["diverging"],
                          color_continuous_midpoint=12,
                          hover_data=["n", "avg_util"],
                          labels={"age_bucket": "선령 (년)",
@@ -770,7 +786,7 @@ def _age_activity_correlation_view(sub_sel: str = "전체") -> None:
             st.plotly_chart(fig, width="stretch")
             bucket_means["avg_util"] = bucket_means["avg_util"].round(1)
             bucket_means["avg_months"] = bucket_means["avg_months"].round(1)
-            st.dataframe(bucket_means, width="stretch", hide_index=True)
+            theme.dataframe(bucket_means)
 
 
 def _fleet_aging_buckets_view(fdf: pd.DataFrame, cur_yr: int) -> None:
@@ -852,7 +868,7 @@ def _fleet_aging_buckets_view(fdf: pd.DataFrame, cur_yr: int) -> None:
     grp_show["평균_GT"] = grp_show["평균_GT"].round(0)
     grp_show["대체가_B_USD"] = (grp_show["대체가_USD"] / 1e9).round(2)
     grp_show = grp_show.drop(columns="대체가_USD")
-    st.dataframe(grp_show, width="stretch", hide_index=True)
+    theme.dataframe(grp_show)
     _csv_button(grp_show, f"tanker_aging_buckets_{snapshot}.csv",
                 key="tk_dl_aging")
 
@@ -869,7 +885,7 @@ def _fleet_aging_buckets_view(fdf: pd.DataFrame, cur_yr: int) -> None:
         if not pivot.empty:
             fig = px.imshow(pivot.round(2), text_auto=".2f",
                             aspect="auto",
-                            color_continuous_scale="OrRd",
+                            color_continuous_scale=theme.SCALES["red"],
                             labels=dict(color="B USD"))
             fig.update_layout(height=340, margin=dict(t=20, b=10))
             st.plotly_chart(fig, width="stretch")
@@ -1347,7 +1363,10 @@ def _tanker_thesis_card():
                        f"운영자로는 {fmt.fmt_compact(chartered['op_ton'])}t")
 
     # ---- render the card ----
-    st.markdown("### 🎯 투자 요지 (Auto-summary)")
+    theme.hero_strip(
+        "🎯 투자 요지 (Auto-summary)",
+        "5개 시그널 — 매 스냅샷에서 자동 산출. 세부 로직은 각 KPI의 ❓ 툴팁",
+    )
     cols = st.columns(5)
     kpi(cols[0], "🏢 시장 지배 운영사",
         (top_op_name[:18] + "…") if len(top_op_name) > 18 else top_op_name,
@@ -1367,10 +1386,7 @@ def _tanker_thesis_card():
         charter_label, delta=charter_sub,
         help="등기 선대는 큰데 LK3에서 PERUSAHAAN으로 거의 등장 안 하는 owner. "
              "차터 아웃 모델 가능성 → 직접 인수 또는 협업 후보")
-    st.caption(
-        "5개 시그널은 매 스냅샷에서 자동 산출됩니다. "
-        "세부 로직은 각 KPI의 ❓ 툴팁 참조. 원본 데이터는 아래 5개 탭에서 drilling."
-    )
+    st.caption("원본 데이터는 아래 탭에서 drilling.")
     st.markdown("---")
 
 
@@ -1434,12 +1450,14 @@ def _tanker_fleet_view():
     with c2:
         fig = px.pie(sub_dist, names="tanker_subclass", values="총_GT",
                      color="tanker_subclass", color_discrete_map=_TANKER_PALETTE,
-                     hole=0.45)
+                     hole=0.5)
         fig.update_layout(height=320, margin=dict(t=10, b=10),
                           legend=dict(font=dict(size=10)))
-        fig.update_traces(textinfo="percent+label")
+        fig.update_traces(textinfo="percent+label", textposition="outside")
+        theme.donut_center(fig, fmt.fmt_gt(sub_dist["총_GT"].sum()),
+                           "탱커 총 GT")
         st.plotly_chart(fig, width="stretch")
-    st.dataframe(sub_dist, width="stretch", hide_index=True)
+    theme.dataframe(sub_dist)
     _csv_button(sub_dist, f"tanker_subclass_mix_{snapshot}.csv",
                 key="tk_dl_subclass")
 
@@ -1585,7 +1603,7 @@ def _top_vessels_by_usd_view(sub_sel: str = "전체") -> None:
                  "gt", "age", "USD_M", "ton_M", "n_rows",
                  "months_active", "util_pct", "status", "imo"]
     cols_show = [c for c in cols_show if c in show.columns]
-    st.dataframe(show[cols_show], width="stretch", hide_index=True)
+    theme.dataframe(show[cols_show])
     _csv_button(merged[cols_show + ["kapal_norm"]] if "kapal_norm" in merged.columns
                 else merged, f"top_vessels_usd_{snapshot}.csv",
                 key="tk_dl_top_usd")
@@ -1609,7 +1627,7 @@ def _top_vessels_by_usd_view(sub_sel: str = "전체") -> None:
             cols_idle = ["nama_kapal", "tanker_subclass", "nama_pemilik",
                          "gt", "age", "USD_M", "months_active", "util_pct"]
             cols_idle = [c for c in cols_idle if c in disp.columns]
-            st.dataframe(disp[cols_idle], width="stretch", hide_index=True)
+            theme.dataframe(disp[cols_idle])
             _csv_button(idle_high, f"high_revenue_idle_{snapshot}.csv",
                         key="tk_dl_idle_usd")
             st.caption(
@@ -1633,7 +1651,7 @@ def _top_vessels_by_usd_view(sub_sel: str = "전체") -> None:
             cols_eff = ["nama_kapal", "tanker_subclass", "nama_pemilik",
                         "gt", "age", "USD_per_call_M", "n_rows", "USD_M"]
             cols_eff = [c for c in cols_eff if c in disp.columns]
-            st.dataframe(disp[cols_eff], width="stretch", hide_index=True)
+            theme.dataframe(disp[cols_eff])
             st.caption(
                 "n_rows ≥ 10 필터 적용. **USD/call 높음 = 대형 cargo 운송선** — "
                 "일반적으로 VLCC / 대형 LNG carrier. 한국 신조 발주 직접 비교 대상."
@@ -1670,13 +1688,13 @@ def _top_vessels_by_usd_view(sub_sel: str = "전체") -> None:
         own_top = own.head(top_n).sort_values("총_GT")
         fig = px.bar(own_top, x="총_GT", y="nama_pemilik", orientation="h",
                      hover_data=["척수", "GT_점유율_%"],
-                     color="총_GT", color_continuous_scale="Blues")
+                     color="총_GT", color_continuous_scale=theme.SCALES["blue"])
         fig.update_layout(height=max(360, top_n * 22),
                           margin=dict(t=10, b=10),
                           yaxis_title="", xaxis_title="총 GT",
                           coloraxis_showscale=False)
         st.plotly_chart(fig, width="stretch")
-        st.dataframe(own.head(top_n), width="stretch", hide_index=True)
+        theme.dataframe(own.head(top_n))
         _csv_button(own, f"tanker_owners_{snapshot}.csv",
                     label="📥 전체 소유주 CSV", key="tk_dl_owners")
 
@@ -1696,7 +1714,7 @@ def _top_vessels_by_usd_view(sub_sel: str = "전체") -> None:
         with c1:
             fig = px.bar(fl.sort_values("척수"), x="척수", y="bendera",
                          orientation="h", color="척수",
-                         color_continuous_scale="Oranges")
+                         color_continuous_scale=theme.SCALES["amber"])
             fig.update_layout(height=380, margin=dict(t=10, b=10),
                               yaxis_title="", xaxis_title="척수",
                               coloraxis_showscale=False)
@@ -1704,7 +1722,7 @@ def _top_vessels_by_usd_view(sub_sel: str = "전체") -> None:
         with c2:
             fig = px.bar(fl.sort_values("총_GT"), x="총_GT", y="bendera",
                          orientation="h", color="총_GT",
-                         color_continuous_scale="Blues")
+                         color_continuous_scale=theme.SCALES["blue"])
             fig.update_layout(height=380, margin=dict(t=10, b=10),
                               yaxis_title="", xaxis_title="총 GT",
                               coloraxis_showscale=False)
@@ -1840,7 +1858,7 @@ def _od_usd_lanes(df: pd.DataFrame, od_agg: pd.DataFrame) -> None:
     # Bar chart
     fig = px.bar(top.sort_values("USD_M"), x="USD_M", y="pair",
                  orientation="h",
-                 color="USD_M", color_continuous_scale="Blues",
+                 color="USD_M", color_continuous_scale=theme.SCALES["blue"],
                  hover_data=["ton_M", "n_rows"],
                  labels={"USD_M": "USD (M)", "pair": ""})
     fig.update_layout(height=max(400, top_n * 22),
@@ -1869,7 +1887,7 @@ def _od_usd_lanes(df: pd.DataFrame, od_agg: pd.DataFrame) -> None:
         "usd_rank": "USD 순위", "ton_rank": "톤 순위",
         "rank_shift": "순위 변동",
     })
-    st.dataframe(show, width="stretch", hide_index=True)
+    theme.dataframe(show)
     st.caption(
         "**해석**: 순위 변동 > 0 = 톤 기준보다 USD 기준이 더 높음 → "
         "**고가 commodity 우세 항로** (Crude/Chemical/FAME). "
@@ -2037,13 +2055,13 @@ def _tanker_flow_view():
         # bucket pie (group small commodities into named buckets)
         bucket_agg = (agg.groupby("bucket")["총_톤"].sum()
                       .reset_index().sort_values("총_톤", ascending=False))
-        fig2 = px.pie(bucket_agg, names="bucket", values="총_톤", hole=0.45,
+        fig2 = px.pie(bucket_agg, names="bucket", values="총_톤", hole=0.5,
                       color="bucket", color_discrete_map=_KOM_BUCKET_PALETTE,
                       title="카테고리별 톤 점유율")
         fig2.update_layout(height=360, margin=dict(t=40, b=10))
         fig2.update_traces(textinfo="percent+label")
         st.plotly_chart(fig2, width="stretch")
-        st.dataframe(agg.head(50), width="stretch", hide_index=True)
+        theme.dataframe(agg.head(50))
         _csv_button(agg, f"tanker_top_commodities_{snapshot}.csv",
                     label="📥 화물 종류 전체 CSV", key="tk_dl_kom")
 
@@ -2067,7 +2085,7 @@ def _tanker_flow_view():
         st.info("항로 데이터 없음")
     else:
         top_od = st.slider("Top N 항로", 10, 50, 20, key="tk_od_topn")
-        st.dataframe(od_agg.head(top_od), width="stretch", hide_index=True)
+        theme.dataframe(od_agg.head(top_od))
         _csv_button(od_agg, f"tanker_routes_{snapshot}.csv",
                     label="📥 항로 전체 CSV", key="tk_dl_routes")
         # bar chart: top OD pairs
@@ -2075,7 +2093,7 @@ def _tanker_flow_view():
         topd["pair"] = topd["origin"].astype(str) + " → " + topd["destination"].astype(str)
         topd = topd.sort_values("총_톤")
         fig = px.bar(topd, x="총_톤", y="pair", orientation="h",
-                     color="총_톤", color_continuous_scale="Blues",
+                     color="총_톤", color_continuous_scale=theme.SCALES["blue"],
                      hover_data=["행수"])
         fig.update_layout(height=max(360, top_od * 22),
                           margin=dict(t=10, b=10),
@@ -2263,7 +2281,7 @@ def _cargo_usd_revenue_proxy(df: pd.DataFrame) -> None:
                           legend=dict(orientation="h", y=-0.3))
         st.plotly_chart(fig, width="stretch")
 
-    st.dataframe(bucket_agg, width="stretch", hide_index=True)
+    theme.dataframe(bucket_agg)
     _csv_button(bucket_agg, f"cargo_usd_buckets_{snapshot}.csv",
                 key="tk_dl_usd_buckets")
 
@@ -2278,7 +2296,7 @@ def _cargo_usd_revenue_proxy(df: pd.DataFrame) -> None:
                               op_agg["USD_M"].sum() * 100).round(2)
     op_agg["USD_M"] = op_agg["USD_M"].round(0)
     op_agg["ton_M"] = op_agg["ton_M"].round(2)
-    st.dataframe(op_agg, width="stretch", hide_index=True)
+    theme.dataframe(op_agg)
     _csv_button(op_agg, f"cargo_usd_operators_{snapshot}.csv",
                 key="tk_dl_usd_op")
 
@@ -2415,7 +2433,7 @@ def _subclass_tonnage_trend(df: pd.DataFrame) -> None:
         # YoY chart — green for growth, red for decline
         fig = px.bar(ydf.sort_values("YoY_avg_%"),
                      x="YoY_avg_%", y="subclass", orientation="h",
-                     color="YoY_avg_%", color_continuous_scale="RdYlGn",
+                     color="YoY_avg_%", color_continuous_scale=theme.SCALES["diverging"],
                      color_continuous_midpoint=0,
                      hover_data=["24mo_ton", "share_%", "valid_pairs"],
                      labels={"YoY_avg_%": "평균 YoY 변화 (%)",
@@ -2425,7 +2443,7 @@ def _subclass_tonnage_trend(df: pd.DataFrame) -> None:
         fig.update_layout(height=320, margin=dict(t=10, b=10),
                           coloraxis_showscale=False)
         st.plotly_chart(fig, width="stretch")
-        st.dataframe(ydf, width="stretch", hide_index=True)
+        theme.dataframe(ydf)
         _csv_button(ydf, f"subclass_yoy_{snapshot}.csv",
                     key="tk_dl_subclass_yoy")
         st.caption(
@@ -2521,10 +2539,12 @@ def _bbm_demand_trend(df: pd.DataFrame) -> None:
                          .rename(columns={"bucket": "category", "ton": "총_톤"}))
         fig = px.pie(bucket_totals, names="category", values="총_톤",
                      color="category", color_discrete_map=_KOM_BUCKET_PALETTE,
-                     hole=0.4)
-        fig.update_traces(textinfo="percent+label")
+                     hole=0.5)
+        fig.update_traces(textinfo="percent+label", textposition="outside")
         fig.update_layout(height=300, margin=dict(t=10, b=10),
                           legend=dict(font=dict(size=10)))
+        theme.donut_center(fig, fmt.fmt_ton(float(bucket_totals["총_톤"].sum())),
+                           "BBM 누적")
         st.plotly_chart(fig, width="stretch")
 
     # YoY pivot if multi-year coverage
@@ -2727,7 +2747,7 @@ def _tanker_port_view():
         fig.update_layout(height=320, margin=dict(t=10, b=10), showlegend=False)
         st.plotly_chart(fig, width="stretch")
     with c2:
-        st.dataframe(cls_dist, width="stretch", hide_index=True)
+        theme.dataframe(cls_dist)
     st.caption(
         "예: 'VLCC급'으로 분류된 항구 = 24개월 LK3에서 LOA ≥ 320m 탱커가 "
         "실제 입항한 적이 있는 항구. 자체 시설 한계가 아닌 _관측 기반_ 추정치."
@@ -2765,7 +2785,7 @@ def _tanker_port_view():
     if not vol.empty:
         fig = px.bar(vol.sort_values("TON_per_call"), y="kode_pelabuhan",
                      x="TON_per_call", orientation="h",
-                     color="TON_per_call", color_continuous_scale="Blues",
+                     color="TON_per_call", color_continuous_scale=theme.SCALES["blue"],
                      hover_data=["nama_pelabuhan", "기항수", "Class_capacity"])
         fig.update_layout(height=460, margin=dict(t=10, b=10),
                           yaxis_title="", xaxis_title="평균 톤/기항",
@@ -2916,7 +2936,7 @@ def _port_operator_hhi(df: pd.DataFrame) -> None:
         if not mono.empty:
             disp = mono[show_cols].copy()
             disp["total_ton"] = disp["total_ton"].round(0)
-            st.dataframe(disp, width="stretch", hide_index=True)
+            theme.dataframe(disp)
     with cB:
         st.markdown("##### 🟢 Top 15 Competitive (진입 매력 ↑)")
         comp = pdf_f[pdf_f["band"].str.startswith("Compet")] \
@@ -2924,13 +2944,13 @@ def _port_operator_hhi(df: pd.DataFrame) -> None:
         if not comp.empty:
             disp = comp[show_cols].copy()
             disp["total_ton"] = disp["total_ton"].round(0)
-            st.dataframe(disp, width="stretch", hide_index=True)
+            theme.dataframe(disp)
 
     # Full table + CSV
     with st.expander("전체 port HHI 표"):
         full = pdf_f[show_cols].copy().sort_values("HHI", ascending=False)
         full["total_ton"] = full["total_ton"].round(0)
-        st.dataframe(full, width="stretch", hide_index=True)
+        theme.dataframe(full)
         _csv_button(full, f"port_operator_hhi_{snapshot}.csv",
                     key="tk_dl_phhi")
     st.caption(
@@ -3052,7 +3072,7 @@ def _port_mass_balance(df: pd.DataFrame) -> None:
             for col in ("BONGKAR", "MUAT", "NET", "TOTAL"):
                 if col in disp.columns:
                     disp[col] = disp[col].round(0)
-            st.dataframe(disp, width="stretch", hide_index=True)
+            theme.dataframe(disp)
     with cB:
         st.markdown("##### 🔺 Top 10 Export-dominant (수출항)")
         exp = sub[sub["dominance"].str.startswith("Export")].sort_values(
@@ -3062,7 +3082,7 @@ def _port_mass_balance(df: pd.DataFrame) -> None:
             for col in ("BONGKAR", "MUAT", "NET", "TOTAL"):
                 if col in disp.columns:
                     disp[col] = disp[col].round(0)
-            st.dataframe(disp, width="stretch", hide_index=True)
+            theme.dataframe(disp)
 
     # Full table + CSV
     with st.expander("전체 항구 mass-balance 표"):
@@ -3071,7 +3091,7 @@ def _port_mass_balance(df: pd.DataFrame) -> None:
             if col in full.columns:
                 full[col] = full[col].round(0)
         full = full.sort_values("TOTAL", ascending=False)
-        st.dataframe(full, width="stretch", hide_index=True)
+        theme.dataframe(full)
         _csv_button(full, f"port_mass_balance_{snapshot}.csv",
                     key="tk_dl_balance")
     st.caption(
@@ -3144,7 +3164,7 @@ def _port_sts_pattern(df: pd.DataFrame) -> None:
     cols_show = ["kode_pelabuhan", "nama_pelabuhan", "STS_rows",
                  "unique_kapal", "unique_ops", "STS_ton"]
     cols_show = [c for c in cols_show if c in top_h.columns]
-    st.dataframe(top_h[cols_show], width="stretch", hide_index=True)
+    theme.dataframe(top_h[cols_show])
 
     # ---- Side-by-side: top hubs bar + STS commodity mix ----
     cA, cB = st.columns([3, 2])
@@ -3152,7 +3172,7 @@ def _port_sts_pattern(df: pd.DataFrame) -> None:
         plot_h = top_h.head(15).copy().sort_values("STS_ton")
         fig = px.bar(plot_h, x="STS_ton", y="kode_pelabuhan",
                      orientation="h", color="STS_ton",
-                     color_continuous_scale="Blues",
+                     color_continuous_scale=theme.SCALES["blue"],
                      hover_data=["nama_pelabuhan", "unique_kapal", "unique_ops"])
         fig.update_layout(height=460, margin=dict(t=10, b=10),
                           coloraxis_showscale=False, yaxis_title="",
@@ -3173,7 +3193,7 @@ def _port_sts_pattern(df: pd.DataFrame) -> None:
         if not mix.empty:
             fig = px.pie(mix, names="bucket", values="ton",
                          color="bucket",
-                         color_discrete_map=_KOM_BUCKET_PALETTE, hole=0.4,
+                         color_discrete_map=_KOM_BUCKET_PALETTE, hole=0.5,
                          title="STS 화물 카테고리 mix")
             fig.update_traces(textinfo="percent+label")
             fig.update_layout(height=460, margin=dict(t=40, b=10),
@@ -3191,7 +3211,7 @@ def _port_sts_pattern(df: pd.DataFrame) -> None:
     op_sts["STS_ton"] = op_sts["STS_ton"].round(0)
     op_sts["STS_share_%"] = (op_sts["STS_ton"] /
                               max(op_sts["STS_ton"].sum(), 1) * 100).round(2)
-    st.dataframe(op_sts, width="stretch", hide_index=True)
+    theme.dataframe(op_sts)
     _csv_button(op_sts, f"sts_operators_{snapshot}.csv",
                 key="tk_dl_sts_op")
     st.caption(
@@ -3259,7 +3279,7 @@ def _port_geo_map(g: pd.DataFrame) -> None:
             "Max_LOA": ":.0f", "Class_capacity": True,
             "lat": False, "lon": False,
         },
-        color_continuous_scale="Viridis",
+        color_continuous_scale=theme.SCALES["teal"],
         size_max=40,
     )
     # Manually focus on Indonesia (lon ~94-141, lat ~-11 to 6)
@@ -3287,7 +3307,7 @@ def _port_geo_map(g: pd.DataFrame) -> None:
     if missing:
         with st.expander(f"좌표 미보유 항구 {len(missing)}개"):
             mdf = pd.DataFrame(missing).sort_values("총_톤", ascending=False)
-            st.dataframe(mdf, width="stretch", hide_index=True)
+            theme.dataframe(mdf)
             st.caption(
                 "이 항구들은 dashboard/app.py::_PORT_COORDS 사전에 lat/lon 추가 시 자동으로 지도에 표시됩니다."
             )
@@ -3400,7 +3420,7 @@ def _port_commodity_diversity(df: pd.DataFrame) -> None:
         else:
             fig = px.bar(diverse.sort_values("유효_화물수"),
                          x="유효_화물수", y="kode_pelabuhan", orientation="h",
-                         color="유효_화물수", color_continuous_scale="Viridis",
+                         color="유효_화물수", color_continuous_scale=theme.SCALES["teal"],
                          hover_data=["주력_화물", "주력_점유율_%",
                                        "고유_화물수", "총_톤"])
             fig.update_layout(height=460, margin=dict(t=10, b=10),
@@ -3547,7 +3567,7 @@ def _tanker_operator_view():
 
     fig = px.bar(top.sort_values(metric_col),
                  x=metric_col, y="op_norm", orientation="h",
-                 color="고유_탱커", color_continuous_scale="Blues",
+                 color="고유_탱커", color_continuous_scale=theme.SCALES["blue"],
                  hover_data=["행수", "고유_항구", "고유_항로",
                              "BONGKAR_톤", "MUAT_톤", "톤_점유율_%"])
     fig.update_layout(height=max(400, top_n * 22),
@@ -3593,7 +3613,7 @@ def _tanker_operator_view():
         fig = px.scatter(
             eff, x="median_dwell_h", y="ton_per_call", size="총_톤",
             hover_name="op_norm", color="고유_탱커",
-            color_continuous_scale="Viridis", size_max=50,
+            color_continuous_scale=theme.SCALES["teal"], size_max=50,
             labels={"median_dwell_h": "평균 체류시간 (h, 중앙값)",
                     "ton_per_call": "회당 평균 거래량 (톤)",
                     "고유_탱커": "운영 탱커 수"},
@@ -3745,7 +3765,7 @@ def _idx_listed_view() -> None:
         top = agg.iloc[0] if not agg.empty else None
         kpi(cols[3], "Top issuer",
             f"{top['ticker']} ({fmt.fmt_int(top['매칭_척수'])}척)" if top is not None else "-")
-        st.dataframe(agg.round(0), width="stretch", hide_index=True)
+        theme.dataframe(agg.round(0))
 
         # Per-ticker drill-down expander
         for tk in agg["ticker"].tolist():
@@ -3780,7 +3800,7 @@ def _idx_listed_view() -> None:
     kpi(cols[0], "Tbk 회사 수", fmt.fmt_int(len(tbk_agg)))
     kpi(cols[1], "Tbk 보유 탱커", fmt.fmt_int(len(tbk)))
     kpi(cols[2], "Tbk 보유 GT", fmt.fmt_gt(float(tbk["gt_num"].sum())))
-    st.dataframe(tbk_agg, width="stretch", hide_index=True)
+    theme.dataframe(tbk_agg)
 
     cols_show = ["nama_kapal", "tanker_subclass", "nama_pemilik",
                  "bendera", "gt", "tahun", "imo"]
@@ -3837,7 +3857,7 @@ def _korean_exposure_view() -> None:
             st.markdown("##### Subclass mix")
             fig = px.pie(sub_counts, names="subclass", values="n",
                          color="subclass", color_discrete_map=_TANKER_PALETTE,
-                         hole=0.45)
+                         hole=0.5)
             fig.update_traces(textinfo="percent+label")
             fig.update_layout(height=300, margin=dict(t=10, b=10),
                               legend=dict(font=dict(size=10)))
@@ -3865,7 +3885,7 @@ def _korean_exposure_view() -> None:
               .reset_index().sort_values("척수", ascending=False))
     if not own.empty:
         st.markdown("##### Top 한국계 탱커 보유 회사")
-        st.dataframe(own.head(15), width="stretch", hide_index=True)
+        theme.dataframe(own.head(15))
 
     # ---- full list
     st.markdown("##### 한국계 탱커 전체 목록")
@@ -3876,7 +3896,7 @@ def _korean_exposure_view() -> None:
                  "imo"]
     cols_show = [c for c in cols_show if c in show.columns]
     show = show[cols_show].sort_values("gt", ascending=False, na_position="last")
-    st.dataframe(show, width="stretch", hide_index=True)
+    theme.dataframe(show)
     _csv_button(show, f"korean_tankers_{snapshot}.csv",
                 key="tk_dl_kr")
 
@@ -3968,7 +3988,7 @@ def _monthly_operator_hhi_view(flows: pd.DataFrame) -> None:
     cA, cB = st.columns(2)
     with cA:
         fig2 = px.bar(hdf, x="period", y="Top1_share_%",
-                      color="Top1_share_%", color_continuous_scale="Reds",
+                      color="Top1_share_%", color_continuous_scale=theme.SCALES["red"],
                       labels={"period": "기간", "Top1_share_%": "Top1 점유율 (%)"})
         fig2.update_layout(height=300, margin=dict(t=20, b=10),
                            coloraxis_showscale=False)
@@ -3981,7 +4001,7 @@ def _monthly_operator_hhi_view(flows: pd.DataFrame) -> None:
         fig3.update_layout(height=300, margin=dict(t=20, b=10))
         st.plotly_chart(fig3, width="stretch")
 
-    st.dataframe(hdf, width="stretch", hide_index=True)
+    theme.dataframe(hdf)
     _csv_button(hdf, f"operator_hhi_monthly_{snapshot}.csv",
                 key="tk_dl_hhi")
     st.caption(
@@ -4056,7 +4076,7 @@ def _operator_drilldown(flows: pd.DataFrame, fleet: pd.DataFrame,
         rt["pair"] = rt["origin"].astype(str) + " → " + rt["destination"].astype(str)
         rt = rt.sort_values("톤")
         fig = px.bar(rt, x="톤", y="pair", orientation="h",
-                     color="톤", color_continuous_scale="Blues",
+                     color="톤", color_continuous_scale=theme.SCALES["blue"],
                      hover_data=["행수"])
         fig.update_layout(height=max(280, top_n * 24),
                           margin=dict(t=10, b=10),
@@ -4105,7 +4125,7 @@ def _operator_drilldown(flows: pd.DataFrame, fleet: pd.DataFrame,
         else:
             fig = px.pie(bm, names="bucket", values="ton",
                          color="bucket", color_discrete_map=_KOM_BUCKET_PALETTE,
-                         hole=0.4)
+                         hole=0.5)
             fig.update_layout(height=320, margin=dict(t=10, b=10),
                               legend=dict(font=dict(size=10)))
             fig.update_traces(textinfo="percent+label")
@@ -4130,7 +4150,7 @@ def _operator_drilldown(flows: pd.DataFrame, fleet: pd.DataFrame,
                           xaxis_title="기간", yaxis_title="톤",
                           xaxis_tickangle=-30)
         st.plotly_chart(fig, width="stretch")
-        st.dataframe(trend, width="stretch", hide_index=True)
+        theme.dataframe(trend)
 
 
 # ------------- Tanker Investment Signals view (iteration #5) -------------
@@ -4268,7 +4288,7 @@ def _tanker_investment_view():
     if not cap_plot.empty:
         fig = px.bar(cap_plot.sort_values("util_pct"),
                      x="util_pct", y="c_sub", orientation="h",
-                     color="util_pct", color_continuous_scale="RdYlGn_r",
+                     color="util_pct", color_continuous_scale=theme.SCALES["diverging_r"],
                      labels={"util_pct": "이용률 (%)", "c_sub": "Subclass"},
                      hover_data=["척수", "annual_capacity", "annual_ton"])
         fig.add_vline(x=100, line_dash="dash", line_color="#dc2626",
@@ -4315,7 +4335,7 @@ def _tanker_investment_view():
         if not growers.empty:
             fig = px.bar(growers.sort_values("delta"),
                          x="delta", y="pair", orientation="h",
-                         color="yoy_pct", color_continuous_scale="Greens",
+                         color="yoy_pct", color_continuous_scale=theme.SCALES["green"],
                          hover_data=["prior", "latest", "yoy_pct"])
             fig.update_layout(height=520, margin=dict(t=10, b=10),
                               yaxis_title="", xaxis_title="ΔTON (latest - prior)",
@@ -4328,7 +4348,7 @@ def _tanker_investment_view():
         if not decliners.empty:
             fig = px.bar(decliners.sort_values("delta", ascending=False),
                          x="delta", y="pair", orientation="h",
-                         color="yoy_pct", color_continuous_scale="Reds_r",
+                         color="yoy_pct", color_continuous_scale=theme.SCALES["diverging"],
                          hover_data=["prior", "latest", "yoy_pct"])
             fig.update_layout(height=520, margin=dict(t=10, b=10),
                               yaxis_title="", xaxis_title="ΔTON",
@@ -4376,13 +4396,13 @@ def _tanker_investment_view():
         {lbl: i for i, lbl in enumerate(order)})
     cls_view = cls_view.sort_values("__order").drop(columns="__order")
 
-    st.dataframe(cls_view.round(1), width="stretch", hide_index=True)
+    theme.dataframe(cls_view.round(1))
 
     plot_df = cls_view[cls_view["fleet_척수"] > 0].copy()
     if not plot_df.empty:
         fig = px.bar(plot_df, x="class_capacity", y="TON_per_fleet_vessel",
                      color="TON_per_fleet_vessel",
-                     color_continuous_scale="Reds",
+                     color_continuous_scale=theme.SCALES["red"],
                      labels={"TON_per_fleet_vessel": "연간 톤 / 선",
                              "class_capacity": "클래스"},
                      hover_data=["fleet_척수", "fleet_GT", "연간_cargo_톤"])
@@ -4516,7 +4536,7 @@ def _tanker_trend_view():
 
     st.markdown("---")
     st.subheader("전체 스냅샷 KPI 표")
-    st.dataframe(df, width="stretch", hide_index=True)
+    theme.dataframe(df)
     _csv_button(df, "tanker_snapshot_trend.csv",
                 label="📥 트렌드 KPI CSV", key="tk_trend_dl_full")
     st.caption(
@@ -4582,7 +4602,7 @@ def _tanker_search_view():
             help="(vessel_key, snapshot_month) 단위 row 수")
         kpi(cols[2], "스냅샷 범위",
             f"{fleet_hits['snapshot_month'].min()} ~ {fleet_hits['snapshot_month'].max()}")
-        st.dataframe(agg, width="stretch", hide_index=True)
+        theme.dataframe(agg)
         _csv_button(agg, f"vessel_lookup_fleet_{name_q[:12] or imo_q[:8]}.csv",
                     key="tk_search_dl_fleet")
 
@@ -4649,7 +4669,7 @@ def _tanker_search_view():
                          "berangkat_tanggal", "bongkar_kom", "bongkar_ton",
                          "muat_kom", "muat_ton", "gt", "dwt"]
             show_cols = [c for c in show_cols if c in act.columns]
-            st.dataframe(act[show_cols], width="stretch", hide_index=True)
+            theme.dataframe(act[show_cols])
             _csv_button(act,
                         f"vessel_lookup_activity_{name_q[:12]}.csv",
                         key="tk_search_dl_act")
@@ -4731,7 +4751,7 @@ def page_pertamina():
                    else "기타 / 모회사"), axis=1)
     own_groups["avg_age"] = own_groups["avg_age"].round(1)
     own_groups["평균_GT"] = own_groups["평균_GT"].round(0)
-    st.dataframe(own_groups, width="stretch", hide_index=True)
+    theme.dataframe(own_groups)
     _csv_button(own_groups, f"pertamina_entities_{snapshot}.csv",
                 key="pert_dl_entities")
 
@@ -4748,10 +4768,12 @@ def page_pertamina():
         if not sub_mix.empty:
             fig = px.pie(sub_mix, names="tanker_subclass", values="n",
                          color="tanker_subclass",
-                         color_discrete_map=_TANKER_PALETTE, hole=0.45)
-            fig.update_traces(textinfo="percent+label")
+                         color_discrete_map=_TANKER_PALETTE, hole=0.5)
+            fig.update_traces(textinfo="percent+label", textposition="outside")
             fig.update_layout(height=320, margin=dict(t=10, b=10),
                               legend=dict(font=dict(size=10)))
+            theme.donut_center(fig, fmt.fmt_int(int(sub_mix["n"].sum())),
+                               "보유 척수")
             st.plotly_chart(fig, width="stretch")
     with cB:
         st.markdown("##### Pertamina 운송 화물 카테고리 mix (24mo)")
@@ -4769,10 +4791,12 @@ def page_pertamina():
             if not mix.empty:
                 fig = px.pie(mix, names="bucket", values="ton",
                              color="bucket",
-                             color_discrete_map=_KOM_BUCKET_PALETTE, hole=0.45)
-                fig.update_traces(textinfo="percent+label")
+                             color_discrete_map=_KOM_BUCKET_PALETTE, hole=0.5)
+                fig.update_traces(textinfo="percent+label", textposition="outside")
                 fig.update_layout(height=320, margin=dict(t=10, b=10),
                                   legend=dict(font=dict(size=10)))
+                theme.donut_center(fig, fmt.fmt_ton(float(mix["ton"].sum())),
+                                   "총 운송")
                 st.plotly_chart(fig, width="stretch")
 
     st.markdown("---")
@@ -4794,11 +4818,11 @@ def page_pertamina():
         cols_show = [c for c in cols_show if c in top_p.columns]
         top_disp = top_p[cols_show].copy()
         top_disp["톤"] = top_disp["톤"].round(0)
-        st.dataframe(top_disp, width="stretch", hide_index=True)
+        theme.dataframe(top_disp)
         # bar chart
         fig = px.bar(top_p.head(15).sort_values("톤"),
                      x="톤", y="kode_pelabuhan", orientation="h",
-                     color="톤", color_continuous_scale="Blues",
+                     color="톤", color_continuous_scale=theme.SCALES["blue"],
                      hover_data=["nama_pelabuhan", "기항", "고유_탱커"])
         fig.update_layout(height=420, margin=dict(t=10, b=10),
                           coloraxis_showscale=False, yaxis_title="")
@@ -4869,7 +4893,7 @@ def page_cargo():
         if pt.empty:
             st.info("LK3 데이터 없음")
         else:
-            st.dataframe(pt, width="stretch", hide_index=True)
+            theme.dataframe(pt)
             fig = px.bar(pt, x="kode_pelabuhan", y=["rows_dn", "rows_ln"],
                          barmode="stack", height=380,
                          labels={"value": "행 수", "kode_pelabuhan": "항구"})
@@ -4888,7 +4912,7 @@ def page_cargo():
                                      values="rows", aggfunc="sum", fill_value=0)
             pivot = pivot.loc[pivot.sum(axis=1).sort_values(ascending=False).head(40).index]
             fig = px.imshow(pivot, aspect="auto", height=620,
-                            color_continuous_scale="Blues",
+                            color_continuous_scale=theme.SCALES["blue"],
                             labels=dict(x="기간", y="항구", color="행"))
             fig.update_layout(margin=dict(t=20, b=20))
             st.plotly_chart(fig, width="stretch")
@@ -4912,7 +4936,7 @@ def page_cargo():
             mdf = pd.DataFrame(missing_rows)
             st.caption(f"누락 키: {len(mdf):,} (port {len(ports_list)} × period {len(periods)} × kind 2 - 보유 {len(existing):,})")
             if not mdf.empty:
-                st.dataframe(mdf.head(2000), width="stretch", hide_index=True)
+                theme.dataframe(mdf.head(2000))
 
 
 def page_changes():
@@ -4939,7 +4963,7 @@ def page_changes():
         s = col3.text_input("검색", key="vsrch")
         df = q.vessel_changes(change_month, change_type=ct, field_name=fn, search=s, limit=5000)
         st.caption(f"{len(df):,} rows (limit 5000)")
-        st.dataframe(df, width="stretch", hide_index=True)
+        theme.dataframe(df)
 
     with tab_c:
         col1, col2, col3 = st.columns([1, 1, 2])
@@ -4950,7 +4974,7 @@ def page_changes():
         p = col3.selectbox("port", port_options, key="cprt")
         df = q.cargo_changes(change_month, change_type=ct, port=p, kind=kind, limit=5000)
         st.caption(f"{len(df):,} rows (limit 5000)")
-        st.dataframe(df, width="stretch", hide_index=True)
+        theme.dataframe(df)
 
 
 def page_data_quality():
@@ -5007,11 +5031,11 @@ def page_data_quality():
             c1, c2 = st.columns([1, 2])
             with c1:
                 st.markdown("##### 🚢 Fleet (vessels_validation_log)")
-                st.dataframe(fdf, width="stretch", hide_index=True)
+                theme.dataframe(fdf)
             with c2:
                 fig = px.bar(fdf.sort_values("건수"), x="건수", y="field",
                              orientation="h", color="건수",
-                             color_continuous_scale="Blues")
+                             color_continuous_scale=theme.SCALES["blue"])
                 fig.update_layout(height=240, margin=dict(t=10, b=10),
                                   yaxis_title="", coloraxis_showscale=False)
                 st.plotly_chart(fig, width="stretch")
@@ -5034,7 +5058,7 @@ def page_data_quality():
             with c2:
                 fig = px.bar(cdf.sort_values("건수"),
                              x="건수", y="field_short", orientation="h",
-                             color="건수", color_continuous_scale="Greens")
+                             color="건수", color_continuous_scale=theme.SCALES["green"])
                 fig.update_layout(height=320, margin=dict(t=10, b=10),
                                   yaxis_title="", coloraxis_showscale=False)
                 st.plotly_chart(fig, width="stretch")
@@ -5055,7 +5079,7 @@ def page_data_quality():
             rec = rec.copy()
             rec["magnitude_x"] = (rec["original_value"]
                                    / rec["corrected_value"].replace(0, pd.NA)).round(0)
-            st.dataframe(rec, width="stretch", hide_index=True)
+            theme.dataframe(rec)
             _csv_button(rec,
                         f"validator_recent_{side.lower()}_{snapshot}.csv",
                         label="📥 보정 샘플 CSV", key="dq_dl_recent")
@@ -5133,7 +5157,7 @@ def page_data_quality():
             pdf["period"] = (pdf["year"].astype(str) + "-" +
                               pdf["month"].astype(int).map("{:02d}".format))
             fig = px.bar(pdf, x="period", y="rows",
-                         color="rows", color_continuous_scale="Blues")
+                         color="rows", color_continuous_scale=theme.SCALES["blue"])
             fig.update_layout(height=320, margin=dict(t=10, b=10),
                               coloraxis_showscale=False)
             st.plotly_chart(fig, width="stretch")
@@ -5176,7 +5200,7 @@ def page_data_quality():
                             .size().reset_index(name="건수")
                             .sort_values("건수", ascending=False))
             st.markdown("##### 필드별 극단 보정 건수")
-            st.dataframe(by_field, width="stretch", hide_index=True)
+            theme.dataframe(by_field)
 
             st.markdown("##### Top 50 극단 보정 (magnitude 큰 순)")
             disp = ext.head(50).copy()
@@ -5184,7 +5208,7 @@ def page_data_quality():
                 lambda v: f"{v:,.4g}" if pd.notna(v) else "-")
             disp["corrected_value"] = disp["corrected_value"].apply(
                 lambda v: f"{v:,.4g}" if pd.notna(v) else "-")
-            st.dataframe(disp, width="stretch", hide_index=True)
+            theme.dataframe(disp)
             _csv_button(ext, f"validator_extreme_{snapshot}.csv",
                         key="dq_anom_dl_ext")
 
@@ -5211,7 +5235,7 @@ def page_data_quality():
             big_lebar = int((residual["lebar"] > 80).sum())
             kpi(cols[3], "lebar > 80m", fmt.fmt_int(big_lebar))
 
-            st.dataframe(residual, width="stretch", hide_index=True)
+            theme.dataframe(residual)
             _csv_button(residual, f"residual_fleet_anomalies_{snapshot}.csv",
                         key="dq_anom_dl_res")
 
@@ -5227,7 +5251,7 @@ def page_data_quality():
                         "running": "⏳"}.get(str(s).lower(), str(s))
             disp = runs.copy()
             disp["status"] = disp["status"].map(_emoji)
-            st.dataframe(disp, width="stretch", hide_index=True)
+            theme.dataframe(disp)
             _csv_button(runs, "ingestion_runs.csv",
                         label="📥 Ingestion runs CSV", key="dq_dl_runs")
 
@@ -5249,7 +5273,7 @@ def page_ingestion():
     if runs.empty:
         st.info("기록 없음")
         return
-    st.dataframe(runs, width="stretch", hide_index=True)
+    theme.dataframe(runs)
     st.caption("선택한 run의 notes 보기")
     run_id = st.number_input("run id", min_value=int(runs["id"].min()),
                               max_value=int(runs["id"].max()),
