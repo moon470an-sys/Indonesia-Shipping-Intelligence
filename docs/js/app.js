@@ -850,8 +850,33 @@ async function renderHome() {
   renderHomeTimeseries(ts);
   bindMapControls();
   drawHomeMap();
+  fillSectorStrip(kpis?.sector_breakdown || []);
   fillForeignSidebar();
   fillMapInsights();
+}
+
+// PR-16: 5-row sector breakdown bars in the map sidebar.
+// CSS-only horizontal bars sized by pct_ton — no Plotly overhead.
+function fillSectorStrip(rows) {
+  const host = document.getElementById("map-sector-strip");
+  if (!host) return;
+  if (!rows.length) {
+    host.innerHTML = `<li class="text-slate-400 text-xs">데이터 없음</li>`;
+    return;
+  }
+  const max = Math.max(...rows.map(r => r.pct_ton || 0), 1);
+  host.innerHTML = rows.map(r => {
+    const w = Math.max(2, (r.pct_ton / max) * 100);
+    return `<li>
+      <div class="flex items-baseline justify-between text-[11px] mb-0.5">
+        <span class="text-slate-700 truncate" style="max-width:60%">${r.sector}</span>
+        <span class="font-mono text-slate-500">${(r.pct_ton || 0).toFixed(1)}%</span>
+      </div>
+      <div class="h-1.5 bg-slate-200 rounded overflow-hidden">
+        <div style="width:${w}%; background:${r.color}; height:100%"></div>
+      </div>
+    </li>`;
+  }).join("");
 }
 
 // ---------- PR-3: Home KPI 4 (large numerics) ----------
