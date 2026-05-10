@@ -415,6 +415,215 @@ async function renderMarketOverview() {
   }
 }
 
+// ---------- PR-D: Tanker Sector ----------
+const TANKER_SUBCLASS_FILTER_OPTIONS = [
+  { key: "ALL",                   label: "ALL" },
+  { key: "Crude Oil",             label: "Crude" },
+  { key: "Product",               label: "Product" },
+  { key: "Chemical",              label: "Chemical" },
+  { key: "LPG",                   label: "LPG" },
+  { key: "LNG",                   label: "LNG" },
+  { key: "FAME / Vegetable Oil",  label: "FAME" },
+];
+
+// Map a route's bucket array to a coarse subclass for filter matching.
+// Bucket labels in tanker_flow_map.lanes mix English (Crude/LPG/LNG/FAME/Naphtha)
+// with Korean ("BBM-가솔린", "BBM-디젤", "기타", "기타 식용유"). This table
+// is best-effort — the goal is filter responsiveness, not perfect taxonomy.
+const BUCKET_TO_SUBCLASS = {
+  "Crude":          "Crude Oil",
+  "LPG":            "LPG",
+  "LNG":            "LNG",
+  "FAME":           "FAME / Vegetable Oil",
+  "기타 식용유":    "FAME / Vegetable Oil",
+  "Chemical":       "Chemical",
+  "Naphtha":        "Product",
+};
+
+function bucketsToSubclasses(buckets) {
+  const out = new Set();
+  for (const b of (buckets || [])) {
+    if (BUCKET_TO_SUBCLASS[b]) out.add(BUCKET_TO_SUBCLASS[b]);
+    else if (typeof b === "string" && b.startsWith("BBM")) out.add("Product");
+  }
+  return out;
+}
+
+const tsState = {
+  filter: "ALL",
+  subclassFacts: null,
+  routeFacts: null,
+};
+
+async function renderTankerSector() {
+  const filterHost = document.getElementById("ts-subclass-filter");
+  const cardHost = document.getElementById("ts-subclass-cards");
+  const captionEl = document.getElementById("ts-route-caption");
+  const regHost = document.getElementById("ts-regulatory");
+
+  if (!filterHost || !cardHost) return;
+
+  // Load derived inputs
+  try {
+    [tsState.subclassFacts, tsState.routeFacts] = await Promise.all([
+      loadDerived("subclass_facts.json"),
+      loadDerived("route_facts.json"),
+    ]);
+  } catch (e) {
+    cardHost.innerHTML = `<div class="bg-yellow-50 text-yellow-900 text-sm p-3 rounded col-span-full">
+      Tanker Sector: derived JSON 로드 실패 (${e.message}). <code>python scripts/build_derived.py</code>를 실행하세요.</div>`;
+    return;
+  }
+
+  // Render subclass filter pills
+  filterHost.innerHTML = "";
+  TANKER_SUBCLASS_FILTER_OPTIONS.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.dataset.key = opt.key;
+    btn.className = "ts-pill px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-100";
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      tsState.filter = opt.key;
+      renderTankerSectorBody();
+    });
+    filterHost.appendChild(btn);
+  });
+
+  // Regulatory notes (one-time fetch + inject)
+  if (regHost) {
+    try {
+      const r = await fetch("./derived/regulatory_notes.html");
+      if (r.ok) regHost.innerHTML = await r.text();
+      else regHost.innerHTML =
+        `<p class="text-xs text-slate-500">regulatory_notes.html 로드 실패 (${r.status}). build script 재실행 필요.</p>`;
+    } catch (e) {
+      regHost.innerHTML =
+        `<p class="text-xs text-slate-500">regulatory_notes 로드 오류: ${e.message}</p>`;
+    }
+  }
+
+  renderTankerSectorBody();
+}
+
+function renderTankerSectorBody() {
+  const cardHost = document.getElementById("ts-subclass-cards");
+  const summaryEl = document.getElementById("ts-filter-summary");
+  const captionEl = document.getElementById("ts-route-caption");
+  const routeCountEl = document.getElementById("ts-route-count");
+  if (!cardHost || !tsState.subclassFacts) return;
+
+  const filter = tsState.filter;
+  // Active state for filter pills
+  document.querySelectorAll("#ts-subclass-filter .ts-pill").forEach(b => {
+    if (b.dataset.key === filter) {
+      b.classList.add("bg-slate-800", "text-white", "border-slate-800");
+      b.classList.remove("hover:bg-slate-100");
+    } else {
+      b.classList.remove("bg-slate-800", "text-white", "border-slate-800");
+      b.classList.add("hover:bg-slate-100");
+    }
+  });
+
+  // ---- subclass cards ----
+  let rows = (tsState.subclassFacts.subclasses || []).filter(r => r.subclass !== "UNKNOWN");
+  if (filter !== "ALL") rows = rows.filter(r => r.subclass === filter);
+
+  cardHost.innerHTML = rows.map(r => {
+    const cagrTxt = r.cagr_24m_pct == null
+      ? `<span class="text-slate-400">— (Insufficient data)</span>`
+      : `<span class="${r.cagr_24m_pct >= 0 ? "text-blue-700" : "text-red-700"} font-semibold">${r.cagr_24m_pct >= 0 ? "+" : ""}${r.cagr_24m_pct.toFixed(2)}%</span>`;
+    const callsPerVessel = (r.vessel_count && r.vessel_count > 0)
+      ? (r.calls_last_12m / r.vessel_count).toFixed(1)
+      : "—";
+    const ageTxt = r.avg_age_gt_weighted == null ? "—" : `${r.avg_age_gt_weighted.toFixed(1)}년`;
+    const hhiTxt = r.hhi == null ? "—" : Math.round(r.hhi).toLocaleString();
+    const color = SUBCLASS_PALETTE[r.subclass] || "#64748b";
+    return `<div class="bg-white rounded-xl shadow p-4 border-l-4" style="border-color:${color}">
+      <div class="flex items-baseline justify-between mb-2">
+        <h3 class="font-semibold">${r.subclass}</h3>
+        <span class="text-xs text-slate-400">${(r.vessel_count || 0).toLocaleString()} vessels</span>
+      </div>
+      <dl class="text-sm space-y-1">
+        <div class="flex justify-between"><dt class="text-slate-500">24M ton CAGR</dt><dd>${cagrTxt}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">12M 척당 평균 calls</dt><dd>${callsPerVessel}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">GT 가중 평균 선령</dt><dd>${ageTxt}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">운영사 수 / HHI</dt><dd>${r.operator_count} · ${hhiTxt}</dd></div>
+      </dl>
+      <p class="text-[10.5px] text-slate-400 mt-3 italic">
+        모든 수치는 공개 데이터 집계 결과이며, 시장 전망이나 투자 판단을 의미하지 않습니다.
+      </p>
+    </div>`;
+  }).join("");
+
+  if (summaryEl) {
+    summaryEl.textContent = filter === "ALL"
+      ? `${rows.length}개 subclass · 모두 표시`
+      : `${filter} 단일 subclass`;
+  }
+
+  // ---- route scatter ----
+  let routes = (tsState.routeFacts.routes || []).slice();
+  if (filter !== "ALL") {
+    routes = routes.filter(r => bucketsToSubclasses(r.buckets).has(filter));
+  }
+  if (routeCountEl) {
+    routeCountEl.textContent = `${routes.length} routes shown`;
+  }
+  if (captionEl) {
+    captionEl.textContent = filter === "ALL"
+      ? "x = 24M ton 변화율 (per-month OD aggregation 미구현 → 0 anchored), y = 활동 선박 수, 크기 = 24M ton. 해석은 사용자의 분석 목적에 따라 달라집니다."
+      : `x = 24M ton 변화율 (insufficient data), y = 활동 선박 수, 크기 = 24M ton. ${filter} 관련 항로만 표시 (bucket 라벨 기반 매칭).`;
+  }
+
+  if (routes.length === 0) {
+    Plotly.purge("ts-route-scatter");
+    document.getElementById("ts-route-scatter").innerHTML =
+      `<div class="text-sm text-slate-500 text-center py-12">선택한 subclass에 매칭되는 항로가 없습니다.</div>`;
+    return;
+  }
+
+  const sizeMax = Math.max(...routes.map(r => r.ton_24m || 0), 1);
+  const trace = {
+    x: routes.map(_ => 0),       // change_pct unavailable in v0
+    y: routes.map(r => r.vessels_seen || 0),
+    text: routes.map(r => `${r.origin} → ${r.destination}`),
+    mode: "markers",
+    type: "scatter",
+    marker: {
+      size: routes.map(r => Math.max(8, 60 * (r.ton_24m || 0) / sizeMax)),
+      color: routes.map(r => {
+        const subs = bucketsToSubclasses(r.buckets);
+        if (subs.has("Crude Oil")) return SUBCLASS_PALETTE["Crude Oil"];
+        if (subs.has("LPG"))       return SUBCLASS_PALETTE["LPG"];
+        if (subs.has("LNG"))       return SUBCLASS_PALETTE["LNG"];
+        if (subs.has("FAME / Vegetable Oil")) return SUBCLASS_PALETTE["FAME / Vegetable Oil"];
+        if (subs.has("Chemical"))  return SUBCLASS_PALETTE["Chemical"];
+        if (subs.has("Product"))   return SUBCLASS_PALETTE["Product"];
+        return "#94a3b8";
+      }),
+      opacity: 0.8,
+      line: { color: "#1e293b", width: 0.5 },
+    },
+    customdata: routes.map(r => [r.ton_24m, (r.buckets || []).slice(0, 4).join(", ")]),
+    hovertemplate:
+      "<b>%{text}</b><br>" +
+      "Vessels seen: %{y}<br>" +
+      "24M ton: %{customdata[0]:,.0f}<br>" +
+      "Buckets: %{customdata[1]}<extra></extra>",
+  };
+  Plotly.newPlot("ts-route-scatter", [trace], {
+    margin: { t: 10, l: 50, r: 20, b: 50 },
+    xaxis: {
+      title: "24M ton change % (insufficient data — needs per-month OD aggregation)",
+      zeroline: true,
+      zerolinecolor: "#cbd5e1",
+      range: [-1, 1],
+    },
+    yaxis: { title: "활동 선박 수 (24M)" },
+    showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+}
+
 // ---------- Fleet ----------
 // Column indexes mirror docs/data/vessels_search.json schema:
 //   0 key  1 code  2 name  3 call_sign  4 type  5 owner  6 gt  7 year  8 imo
@@ -2222,6 +2431,10 @@ async function ensureLoaded(tab) {
       renderChanges();
       renderSectorDelta();
       state.loaded.add("changes");
+    }
+    if (tab === "tanker-sector" && !state.loaded.has("tanker-sector")) {
+      await renderTankerSector();
+      state.loaded.add("tanker-sector");
     }
   } catch (e) {
     console.error(e);

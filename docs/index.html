@@ -871,20 +871,41 @@
         <p class="text-xs text-slate-400 mt-4" id="about-meta"></p>
       </div>
     </section>
-    <!-- Tanker Sector (placeholder; content lands in PR-D) -->
+    <!-- Tanker Sector (PR-D) -->
     <section id="tab-tanker-sector" class="tab-panel hidden">
-      <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="font-semibold text-lg mb-2">⛽ Tanker Sector</h2>
-        <p class="text-sm text-slate-600 mb-4">
-          Subclass 별 24M ton CAGR · 평균 선령 · HHI · 항로 분포 등 사실 기반 위젯이 준비 중입니다.
-          데이터는 <code>docs/derived/subclass_facts.json</code>, <code>docs/derived/route_facts.json</code>,
-          <code>docs/derived/owner_profile.json</code>에서 공급됩니다.
-        </p>
-        <div class="text-xs text-slate-500 border-l-4 border-slate-200 pl-3 py-1">
-          PR-D 작업이 머지되면 이 섹션에 위젯이 표시됩니다.
-        </div>
-        <small class="source-label" data-source="lk3-and-vessel">Source: Inaportnet LK3 + kapal.dephub.go.id (build pending)</small>
+      <!-- 6.1 Global subclass filter -->
+      <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-2">
+        <span class="text-xs text-slate-500 mr-2 uppercase tracking-wide">Subclass 필터</span>
+        <div id="ts-subclass-filter" class="flex flex-wrap gap-1 text-xs"></div>
+        <span class="text-[11px] text-slate-400 ml-auto" id="ts-filter-summary"></span>
       </div>
+
+      <!-- 6.2 Subclass fact cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6" id="ts-subclass-cards"
+           data-source="docs/derived/subclass_facts.json"></div>
+
+      <!-- 6.3 Route distribution scatter -->
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/route_facts.json">
+        <div class="flex items-baseline justify-between mb-1">
+          <h3 class="font-semibold">항로 분포 (Top 60 OD pairs · 24M 집계)</h3>
+          <span class="text-xs text-slate-500" id="ts-route-count"></span>
+        </div>
+        <p class="text-xs text-slate-500 mb-2" id="ts-route-caption">
+          x = 24M ton 변화율 (per-month OD aggregation 미구현 → 0 anchored), y = 활동 선박 수, 크기 = 24M ton.
+          해석은 사용자의 분석 목적에 따라 달라집니다.
+        </p>
+        <div id="ts-route-scatter" style="height:380px"></div>
+      </div>
+
+      <!-- 6.4 Regulatory & technical info box (collapsible) -->
+      <details class="bg-white rounded-xl shadow p-4 mb-8" data-source="data/regulatory_notes.md">
+        <summary class="font-semibold cursor-pointer select-none">
+          📘 규제 · 기술 표준 (카보타지 · SIUPAL · IBC · MARPOL · PT PMA)
+        </summary>
+        <div id="ts-regulatory" class="prose prose-sm max-w-none mt-3">
+          <p class="text-xs text-slate-500">규제 정보 로딩 중…</p>
+        </div>
+      </details>
     </section>
   </main>
 
