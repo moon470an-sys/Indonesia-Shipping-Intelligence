@@ -32,6 +32,51 @@ async function loadJson(name) {
   return await r.json();
 }
 
+// ---------- PR-B: derived/* loader + source label + global footer ----------
+async function loadDerived(name) {
+  const r = await fetch(`./derived/${name}`);
+  if (!r.ok) throw new Error(`fetch derived/${name} failed ${r.status}`);
+  return await r.json();
+}
+
+// addSourceLabel(elOrId, source): append a small "Source: ..." caption to a
+// chart/table container. Used by PR-C/D/E and the auto-scanner below.
+function addSourceLabel(elOrId, source) {
+  const el = typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
+  if (!el || !source) return;
+  if (el.querySelector(":scope > .source-label")) return;
+  const tag = document.createElement("small");
+  tag.className = "source-label";
+  tag.textContent = `Source: ${source}`;
+  el.appendChild(tag);
+}
+
+// Walk every container with [data-source] and inject the label once.
+// Containers in HTML annotate themselves with data-source="..."; this
+// function is called after each tab render (and once at boot).
+function setupSourceLabels(root = document) {
+  root.querySelectorAll("[data-source]").forEach(el => {
+    addSourceLabel(el, el.getAttribute("data-source"));
+  });
+}
+
+// Read derived/meta.json and write the freshness line into the global
+// disclaimer footer. Degrades silently if the derived/ payload is missing.
+async function loadGlobalFooter() {
+  const target = document.getElementById("footer-freshness");
+  if (!target) return;
+  try {
+    const m = await loadDerived("meta.json");
+    const lk3 = m.latest_lk3_month || "—";
+    const vsl = m.latest_vessel_snapshot_month || "—";
+    const built = (m.build_at || "").replace("T", " ").replace(/Z$/, " UTC");
+    target.textContent =
+      `LK3 latest: ${lk3} · vessel snapshot: ${vsl} · build: ${built}`;
+  } catch (e) {
+    target.textContent = "Freshness data unavailable (docs/derived/meta.json not built yet)";
+  }
+}
+
 // ---------- KPIs ----------
 function kpiCard(label, value, sub) {
   const div = document.createElement("div");
@@ -111,7 +156,10 @@ function renderOverview() {
   const k = state.changes;
   document.getElementById("meta-line").textContent =
     `snapshot ${o.snapshot_month} · change month ${k ? k.change_month : "(없음)"} · ${state.meta.vessel_months.length} snapshots`;
-  document.getElementById("generated-at").textContent = state.meta.generated_at || "—";
+  // generated-at moved into the global footer in PR-B; tolerate its absence
+  // for older deployments.
+  const genEl = document.getElementById("generated-at");
+  if (genEl) genEl.textContent = state.meta.generated_at || "—";
   document.getElementById("about-meta").textContent =
     `Snapshots: ${state.meta.vessel_months.length} (vessel) / ${state.meta.cargo_months.length} (cargo) — generated ${state.meta.generated_at}`;
 
@@ -1902,8 +1950,12 @@ function showTab(name) {
     else { t.classList.remove("active"); t.classList.add("hover:bg-slate-700"); }
   });
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
-  document.getElementById(`tab-${name}`).classList.remove("hidden");
+  const panel = document.getElementById(`tab-${name}`);
+  if (panel) panel.classList.remove("hidden");
   ensureLoaded(name);
+  // PR-B: re-scan source labels since lazy-loaded tabs may add new
+  // [data-source] containers on activation.
+  if (panel) setupSourceLabels(panel);
 }
 
 async function ensureLoaded(tab) {
@@ -1979,6 +2031,9 @@ async function boot() {
   renderOverview();
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
   showTab("overview");
+  // PR-B: global footer + initial pass over [data-source] elements.
+  loadGlobalFooter();
+  setupSourceLabels();
 }
 
 boot().catch(e => {

@@ -16,14 +16,15 @@
         <h1 class="text-xl font-bold tracking-tight">🚢 Indonesia Shipping Intelligence</h1>
         <p class="text-xs text-slate-400" id="meta-line">snapshot loading…</p>
       </div>
-      <nav class="flex gap-1 text-sm">
-        <button data-tab="overview" class="tab px-3 py-1.5 rounded bg-slate-700">📊 Overview</button>
-        <button data-tab="fleet"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">🚢 Fleet</button>
-        <button data-tab="cargo"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">📦 Cargo</button>
-        <button data-tab="trends"   class="tab px-3 py-1.5 rounded hover:bg-slate-700">📈 Trends</button>
-        <button data-tab="financials" class="tab px-3 py-1.5 rounded hover:bg-slate-700">💼 Financials</button>
-        <button data-tab="changes"  class="tab px-3 py-1.5 rounded hover:bg-slate-700">🔄 Changes</button>
-        <button data-tab="about"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">ℹ️ About</button>
+      <nav class="flex gap-1 text-sm flex-wrap">
+        <button data-tab="overview"      class="tab px-3 py-1.5 rounded bg-slate-700">📊 Market Overview</button>
+        <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700">⛽ Tanker Sector</button>
+        <button data-tab="cargo"         class="tab px-3 py-1.5 rounded hover:bg-slate-700">📦 Cargo</button>
+        <button data-tab="fleet"         class="tab px-3 py-1.5 rounded hover:bg-slate-700">🚢 Fleet</button>
+        <button data-tab="financials"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">💼 Listed Operators</button>
+        <button data-tab="trends"        class="tab px-3 py-1.5 rounded hover:bg-slate-700">📈 Trends</button>
+        <button data-tab="changes"       class="tab px-3 py-1.5 rounded hover:bg-slate-700">🔄 Changes</button>
+        <button data-tab="about"         class="tab px-3 py-1.5 rounded hover:bg-slate-700">📚 Glossary &amp; Methodology</button>
       </nav>
     </div>
   </header>
@@ -36,7 +37,7 @@
 
       <!-- Top sectors donut (latest data month) -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl shadow p-4">
+        <div class="bg-white rounded-xl shadow p-4" data-source="monitoring-inaportnet.dephub.go.id (LK3)">
           <h2 class="font-semibold mb-1">Sector 점유율 (최근 데이터 월)</h2>
           <p class="text-xs text-slate-500 mb-1" id="overview-sector-sub">ton 기준 / calls 토글</p>
           <div class="flex justify-end mb-1">
@@ -47,21 +48,21 @@
           </div>
           <div id="chart-overview-sector" style="height:280px"></div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2" data-source="monitoring-inaportnet.dephub.go.id (LK3)">
           <h2 class="font-semibold mb-2">월별 ton 추이 (전 sector 합)</h2>
           <div id="chart-overview-monthly-ton" style="height:280px"></div>
         </div>
       </div>
 
       <!-- Existing Overview KPIs + charts -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-overview"></div>
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8" id="kpi-changes"></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-overview" data-source="kapal.dephub.go.id (vessel snapshot)"></div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8" id="kpi-changes" data-source="kapal.dephub.go.id + LK3 (changes)"></div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-xl shadow p-4">
+        <div class="bg-white rounded-xl shadow p-4" data-source="monitoring-inaportnet.dephub.go.id (LK3)">
           <h2 class="font-semibold mb-2">월별 LK3 행수 (data month)</h2>
           <div id="chart-monthly" style="height:340px"></div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4">
+        <div class="bg-white rounded-xl shadow p-4" data-source="monitoring-inaportnet.dephub.go.id (LK3)">
           <h2 class="font-semibold mb-2">Top 항구 (총 LK3 행수)</h2>
           <div id="chart-top-ports" style="height:340px"></div>
         </div>
@@ -816,10 +817,37 @@
         <p class="text-xs text-slate-400 mt-4" id="about-meta"></p>
       </div>
     </section>
+    <!-- Tanker Sector (placeholder; content lands in PR-D) -->
+    <section id="tab-tanker-sector" class="tab-panel hidden">
+      <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="font-semibold text-lg mb-2">⛽ Tanker Sector</h2>
+        <p class="text-sm text-slate-600 mb-4">
+          Subclass 별 24M ton CAGR · 평균 선령 · HHI · 항로 분포 등 사실 기반 위젯이 준비 중입니다.
+          데이터는 <code>docs/derived/subclass_facts.json</code>, <code>docs/derived/route_facts.json</code>,
+          <code>docs/derived/owner_profile.json</code>에서 공급됩니다.
+        </p>
+        <div class="text-xs text-slate-500 border-l-4 border-slate-200 pl-3 py-1">
+          PR-D 작업이 머지되면 이 섹션에 위젯이 표시됩니다.
+        </div>
+        <small class="source-label" data-source="lk3-and-vessel">Source: Inaportnet LK3 + kapal.dephub.go.id (build pending)</small>
+      </div>
+    </section>
   </main>
 
-  <footer class="text-center text-xs text-slate-400 py-6">
-    Generated <span id="generated-at">…</span> · Static build, no server.
+  <footer id="global-footer" class="bg-slate-100 border-t border-slate-200 mt-12 py-6">
+    <div class="max-w-7xl mx-auto px-4 text-xs text-slate-600 leading-relaxed">
+      <p class="font-medium text-slate-700 mb-1">⚠️ 면책 (Disclaimer)</p>
+      <p class="mb-2">
+        본 사이트는 공개 데이터(kapal.dephub.go.id · monitoring-inaportnet.dephub.go.id · IDX 공시)를
+        가공한 <strong>정보 레퍼런스</strong>이며, <strong>투자 권유나 자문이 아닙니다</strong>.
+        데이터의 정확성·최신성은 보장되지 않습니다.
+      </p>
+      <p class="text-slate-500">
+        <span id="footer-freshness">Loading freshness…</span>
+        ·
+        <a href="https://github.com/moon470an-sys/Indonesia-Shipping-Intelligence" class="text-blue-600 hover:underline" target="_blank">Source code</a>
+      </p>
+    </div>
   </footer>
 
   <script src="./js/app.js" type="module"></script>
