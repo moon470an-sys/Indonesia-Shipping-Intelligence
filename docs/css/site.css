@@ -25,6 +25,108 @@
 .kpi-sub-large { font-size: 12px; color: #64748b; margin-top: 0.4rem; }
 .kpi-trend-up   { color: #2563eb; }
 .kpi-trend-down { color: #dc2626; }
+
+/* Renewal v2 PR-6: glossary tooltip system. Inline ⓘ badge that reveals
+   the term definition on hover/focus. Replaces the deleted About tab's
+   glossary list with contextual, click-near-the-term help. */
+.term {
+  border-bottom: 1px dotted #94a3b8;
+  cursor: help;
+  position: relative;
+}
+.term-info {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  color: #1e293b;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+  user-select: none;
+}
+.term-info:hover, .term-info:focus,
+.term:hover .term-info {
+  background: #1A3A6B;
+  color: #fff;
+  outline: none;
+}
+.term-info[data-info]::after {
+  content: attr(data-info);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 280px;
+  padding: 8px 10px;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 11.5px;
+  line-height: 1.5;
+  font-weight: 400;
+  border-radius: 6px;
+  white-space: normal;
+  text-align: left;
+  letter-spacing: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.term-info[data-info]::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1e293b;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 50;
+}
+.term-info:hover::after, .term-info:focus::after,
+.term:hover .term-info::after, .term:focus-within .term-info::after,
+.term-info:hover::before, .term-info:focus::before,
+.term:hover .term-info::before, .term:focus-within .term-info::before {
+  opacity: 1;
+}
+
+/* Header polish — improve hierarchy, freshness badge */
+.app-header { backdrop-filter: blur(4px); }
+.freshness-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(86, 192, 224, 0.18);
+  color: #56C0E0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.freshness-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #56C0E0;
+  box-shadow: 0 0 0 2px rgba(86, 192, 224, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
 table tbody tr:nth-child(even) { background:#fafafa; }
 table tbody tr:hover { background:#fef3c7; }
 .heatmap-cell { width:24px; height:24px; }

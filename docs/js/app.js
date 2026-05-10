@@ -46,20 +46,84 @@ function setupSourceLabels(root = document) {
   });
 }
 
-// Read derived/meta.json and write the freshness line into the global
-// disclaimer footer. Degrades silently if the derived/ payload is missing.
+// Read derived/meta.json and populate both:
+//   - the global disclaimer footer (full freshness line)
+//   - the header pill (compact "LK3 YYYY-MM" badge)
+// Degrades silently if the derived/ payload is missing.
 async function loadGlobalFooter() {
-  const target = document.getElementById("footer-freshness");
-  if (!target) return;
+  const footerEl = document.getElementById("footer-freshness");
+  const headerEl = document.getElementById("header-freshness-text");
   try {
     const m = await loadDerived("meta.json");
     const lk3 = m.latest_lk3_month || "—";
     const vsl = m.latest_vessel_snapshot_month || "—";
     const built = (m.build_at || "").replace("T", " ").replace(/Z$/, " UTC");
-    target.textContent =
-      `LK3 latest: ${lk3} · vessel snapshot: ${vsl} · build: ${built}`;
+    if (footerEl) {
+      footerEl.textContent =
+        `LK3 latest: ${lk3} · vessel snapshot: ${vsl} · build: ${built}`;
+    }
+    if (headerEl) headerEl.textContent = `LK3 ${lk3}`;
   } catch (e) {
-    target.textContent = "Freshness data unavailable (docs/derived/meta.json not built yet)";
+    if (footerEl) footerEl.textContent = "Freshness data unavailable";
+    if (headerEl) headerEl.textContent = "freshness —";
+  }
+}
+
+// ---------- PR-6: glossary tooltip system ----------
+// Map of glossary terms -> definitions. Surfaced as ⓘ badges next to
+// the term wherever it appears in card labels, chart titles, etc.
+// Replaces the deleted About tab's static glossary.
+const GLOSSARY = {
+  "Bongkar": "Bongkar (B / dn) — 양하 (discharge): 항구 도착 시 내려진 화물.",
+  "Muat":    "Muat (M / ln) — 선적 (load): 항구 출발 시 적재된 화물.",
+  "GT":      "Gross Tonnage — 선박 부피 측정 단위(IMO 기준). 적재 능력의 대략적 지표.",
+  "DWT":     "Dead Weight Tonnage — 선박이 적재 가능한 화물·연료·청수 등의 총 중량(ton).",
+  "HHI":     "Herfindahl-Hirschman Index — 운영사별 점유율 제곱합 × 10,000. 1,500 미만=분산 / 1,500-2,500=중간 / 2,500+=집중 (KPPU 기준).",
+  "CAGR":    "Compound Annual Growth Rate — (last_12m / prev_12m)^(1/2) - 1. 두 윈도우가 모두 12개월일 때만 산출.",
+  "subclass":"Tanker Subclass — Crude Oil / Product / Chemical / LPG / LNG / FAME-Vegetable Oil 6종. JenisDetailKet 라벨에 키워드 룰 적용.",
+  "ln":      "ln — international (국제) 트래픽. LK3 신고 분류.",
+  "dn":      "dn — domestic (국내) 트래픽. LK3 신고 분류.",
+  "ROA":     "Return on Assets — 순이익 ÷ 총자산. 자산 효율성 지표.",
+  "OD":      "Origin → Destination — 항로 페어. tanker_flow_map.lanes 기준 24M 누계.",
+  "YoY":     "Year-over-Year — 직전 12개월 합계 대비 변동률.",
+};
+
+// Returns the markup for a small ⓘ badge. Used inline in template strings.
+function infoBadge(term) {
+  const def = GLOSSARY[term];
+  if (!def) return "";
+  // Escape double quotes for the data-info attribute.
+  const safe = def.replace(/"/g, "&quot;");
+  return `<span class="term-info" data-info="${safe}" tabindex="0" aria-label="${term} 정의">ⓘ</span>`;
+}
+
+// Sweep a container after render and append a ⓘ badge after the first
+// occurrence of each glossary term inside heading / label elements.
+// Idempotent: re-running on the same DOM is safe because we skip any
+// element that already contains a .term-info child.
+function decorateGlossary(root = document) {
+  if (!root) return;
+  const selectors = ["h2", "h3", "h4", "dt", ".kpi-label", ".gloss-target"];
+  const allTerms = Object.keys(GLOSSARY);
+  for (const sel of selectors) {
+    root.querySelectorAll(sel).forEach(el => {
+      if (el.querySelector(":scope > .term-info") || el.dataset.glossDone === "1") return;
+      let html = el.innerHTML;
+      let touched = false;
+      for (const term of allTerms) {
+        // Match on a word-ish boundary that works for Korean+ASCII mixed strings.
+        // Avoid mid-word matches like "GTSI" containing "GT".
+        const re = new RegExp(`(^|[\\s\\(\\)\\/·\\.,])(${term})(?=[\\s\\(\\)\\/·\\.,:]|$)`);
+        if (re.test(html)) {
+          html = html.replace(re, (_m, pre, t) => `${pre}${t}${infoBadge(t)}`);
+          touched = true;
+        }
+      }
+      if (touched) {
+        el.innerHTML = html;
+        el.dataset.glossDone = "1";
+      }
+    });
   }
 }
 
@@ -514,7 +578,7 @@ function renderFinancials() {
 }
 
 // ---------- Tabs ----------
-function showTab(name) {
+async function showTab(name) {
   document.querySelectorAll(".tab").forEach(t => {
     if (t.dataset.tab === name) { t.classList.add("active"); t.classList.remove("hover:bg-slate-700"); }
     else { t.classList.remove("active"); t.classList.add("hover:bg-slate-700"); }
@@ -522,10 +586,14 @@ function showTab(name) {
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
   const panel = document.getElementById(`tab-${name}`);
   if (panel) panel.classList.remove("hidden");
-  ensureLoaded(name);
+  await ensureLoaded(name);
   // PR-B: re-scan source labels since lazy-loaded tabs may add new
   // [data-source] containers on activation.
-  if (panel) setupSourceLabels(panel);
+  // PR-6: also decorate any glossary terms surfaced after the lazy load.
+  if (panel) {
+    setupSourceLabels(panel);
+    decorateGlossary(panel);
+  }
 }
 
 async function ensureLoaded(tab) {
@@ -563,6 +631,7 @@ async function boot() {
   showTab("overview");
   loadGlobalFooter();
   setupSourceLabels();
+  decorateGlossary(document);
 }
 
 
