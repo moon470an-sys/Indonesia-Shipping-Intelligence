@@ -230,10 +230,30 @@ def page_overview():
         f"{snapshot} 스냅샷 기준 — 선박 등기, 항구, LK3 물동량 적재 상태",
     )
     cols = st.columns(4)
-    kpi(cols[0], "선박 등록", v["total"], help="vessels_snapshot.row_count — 56개 검색코드 합산")
+    kpi(cols[0], "선박 등록 (전체)", v["total"],
+        help="vessels_snapshot.row_count — 56개 검색코드 합산 (어선·여객선 포함)")
     kpi(cols[1], "검색 코드", f"{v['codes']}/56", help="실제로 데이터가 들어온 검색코드 수")
     kpi(cols[2], "항구", c["ports"], help="LK3에서 등장한 고유 항구 수 (origin+destination)")
     kpi(cols[3], "물동량 행", c["rows"], help="cargo_snapshot.row_count — 24mo 누적")
+
+    # Cargo-sector scope: Fleet/Cargo tabs show the filtered subset shown here.
+    cargo_fleet = _cargo_vessels_full(snapshot)
+    if not cargo_fleet.empty:
+        cargo_gt = pd.to_numeric(cargo_fleet["gt"], errors="coerce").fillna(0).sum()
+        class_mix = cargo_fleet["vessel_class"].value_counts().to_dict()
+        st.markdown("##### 화물선 (CARGO sector) 현황 — Fleet · Cargo 탭이 사용하는 범위")
+        cols2 = st.columns(6)
+        kpi(cols2[0], "화물선 수", fmt.fmt_int(len(cargo_fleet)),
+            help=f"전체 등기 {v['total']:,}척 중 어선·여객선·예인선·정부선 제외")
+        kpi(cols2[1], "총 GT", fmt.fmt_gt(float(cargo_gt)))
+        kpi(cols2[2], "Tanker", fmt.fmt_int(int(class_mix.get("Tanker", 0))))
+        kpi(cols2[3], "General Cargo",
+            fmt.fmt_int(int(class_mix.get("General Cargo", 0))))
+        kpi(cols2[4], "Container + Bulk",
+            fmt.fmt_int(int(class_mix.get("Container", 0)
+                            + class_mix.get("Bulk Carrier", 0))))
+        kpi(cols2[5], "Other Cargo (Barge 등)",
+            fmt.fmt_int(int(class_mix.get("Other Cargo", 0))))
 
     st.subheader(f"{change_month} 변경 탐지 KPI")
     cols = st.columns(6)
@@ -5534,9 +5554,20 @@ def page_pertamina():
                     key="pert_dl_aged")
 
 
+@st.cache_data(ttl=3600)
+def _classify_jk_to_vessel_class(jk_unique: tuple[str, ...]) -> dict[str, str]:
+    """Vectorized backend.taxonomy classification for unique LK3 JENIS KAPAL
+    labels. Caches the lookup across reruns — labels are stable strings,
+    typically ~80 distinct values across all of LK3.
+    """
+    from backend.taxonomy import classify_vessel_type
+    return {jk: classify_vessel_type(jk)[1] for jk in jk_unique}
+
+
 def _cargo_long_form(flows: pd.DataFrame) -> pd.DataFrame:
     """Reshape `cargo_flows()` rows into a long-form (one row per ton movement)
-    DataFrame with kapal/operator/origin/destination/kom/ton/direction/bucket.
+    DataFrame with kapal/operator/origin/destination/kom/ton/direction/bucket
+    and a derived `vessel_class` from the LK3 ``jenis_kapal`` label.
     """
     if flows.empty:
         return flows
@@ -5554,6 +5585,10 @@ def _cargo_long_form(flows: pd.DataFrame) -> pd.DataFrame:
     long["ton"] = pd.to_numeric(long["ton"], errors="coerce").fillna(0)
     long = long[long["ton"] > 0].copy()
     long["bucket"] = long["kom"].map(_classify_kom_for_palette)
+
+    jk_unique = tuple(sorted(long["jenis_kapal"].dropna().unique().tolist()))
+    jk_map = _classify_jk_to_vessel_class(jk_unique)
+    long["vessel_class"] = long["jenis_kapal"].map(jk_map).fillna("UNMAPPED")
     return long
 
 
@@ -5710,6 +5745,13 @@ def page_cargo():
         all_periods = sorted(long_all["period"].dropna().unique().tolist())
         period_default = (all_periods[-12:] if len(all_periods) > 12
                            else all_periods)
+        all_classes = (long_all.groupby("vessel_class")["ton"].sum()
+                                   .sort_values(ascending=False).index.tolist())
+        # Pre-compute top operators (ton) so the operator multiselect ranks them
+        op_ton_lookup = (long_all.dropna(subset=["operator"])
+                                    .groupby("operator")["ton"].sum()
+                                    .sort_values(ascending=False))
+        top_operators = op_ton_lookup.head(50).index.tolist()
 
         c1, c2 = st.columns([2, 3])
         with c1:
@@ -5740,12 +5782,31 @@ def page_cargo():
             top_n_lanes = st.slider("Top N 항로", 10, 200, 60, 10,
                                       key="cg_topn")
 
+        c6, c7 = st.columns([2, 3])
+        with c6:
+            sel_classes = st.multiselect(
+                "선종 (Vessel Class)", all_classes, default=[],
+                key="cg_class",
+                help="LK3 JENIS KAPAL → 분류. 비어두면 전체 선종. "
+                      "Tanker, General Cargo, Container, Bulk Carrier, Other Cargo.",
+            )
+        with c7:
+            sel_operators = st.multiselect(
+                f"운영사 (PERUSAHAAN) — 상위 {len(top_operators)}개 미리보기",
+                top_operators, default=[], key="cg_operator",
+                help="비어두면 전체 운영사. 텍스트 검색은 항목명 일부 입력 가능.",
+            )
+
     # ---------------- Apply filters ----------------
     f = long_all
     if sel_buckets:
         f = f[f["bucket"].isin(sel_buckets)]
     if sel_periods:
         f = f[f["period"].isin(sel_periods)]
+    if sel_classes:
+        f = f[f["vessel_class"].isin(sel_classes)]
+    if sel_operators:
+        f = f[f["operator"].isin(sel_operators)]
     if dir_pick.startswith("BONGKAR"):
         f = f[f["direction"] == "BONGKAR"]
     elif dir_pick.startswith("MUAT"):
@@ -5761,13 +5822,15 @@ def page_cargo():
     n_op = int(f["operator"].dropna().nunique())
     total_ton = float(f["ton"].sum())
     n_buckets = int(f["bucket"].nunique())
+    n_classes = int(f["vessel_class"].nunique())
 
-    cols = st.columns(5)
+    cols = st.columns(6)
     kpi(cols[0], "행 수", fmt.fmt_int(n_flows))
     kpi(cols[1], "총 톤", fmt.fmt_ton(total_ton))
     kpi(cols[2], "고유 선박", fmt.fmt_int(n_kapal))
     kpi(cols[3], "운영사", fmt.fmt_int(n_op))
     kpi(cols[4], "화물 카테고리", fmt.fmt_int(n_buckets))
+    kpi(cols[5], "선종", fmt.fmt_int(n_classes))
 
     if f.empty:
         st.info("필터 조건에 해당하는 데이터가 없습니다.")
@@ -5806,6 +5869,43 @@ def page_cargo():
                                            font=dict(size=10)))
             st.plotly_chart(fig, width="stretch")
 
+        cC, cD = st.columns(2)
+        with cC:
+            st.markdown("**선종 × 카테고리 매트릭스** (톤)")
+            xt = (f.groupby(["vessel_class", "bucket"])["ton"]
+                       .sum().reset_index())
+            if xt.empty:
+                st.info("매트릭스 데이터 없음")
+            else:
+                pivot = xt.pivot(index="vessel_class", columns="bucket",
+                                   values="ton").fillna(0)
+                # Order rows by total tonnage
+                pivot = pivot.loc[pivot.sum(axis=1).sort_values(
+                    ascending=False).index]
+                fig = px.imshow(pivot, aspect="auto",
+                                 color_continuous_scale=theme.SCALES["blue"],
+                                 labels=dict(x="화물 카테고리",
+                                              y="선종",
+                                              color="톤"))
+                fig.update_layout(height=420, margin=dict(t=20, b=20))
+                st.plotly_chart(fig, width="stretch")
+        with cD:
+            st.markdown("**선종별 월별 톤수 추이**")
+            mc = (f.groupby(["period", "vessel_class"])["ton"]
+                       .sum().reset_index().sort_values("period"))
+            if mc.empty:
+                st.info("데이터 없음")
+            else:
+                fig = px.area(mc, x="period", y="ton",
+                                color="vessel_class",
+                                color_discrete_map=_CARGO_CLASS_PALETTE,
+                                labels={"period": "월", "ton": "톤",
+                                          "vessel_class": "선종"})
+                fig.update_layout(height=420, margin=dict(t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.2,
+                                               font=dict(size=10)))
+                st.plotly_chart(fig, width="stretch")
+
         st.markdown("**Top 화물 (raw komoditi 텍스트 기준)**")
         kom_top = (f.dropna(subset=["kom"])
                        .groupby(["kom", "bucket"])
@@ -5818,6 +5918,19 @@ def page_cargo():
         theme.dataframe(kom_top)
         _csv_button(kom_top, f"cargo_top_komoditi_{snapshot}.csv",
                      key="cg_dl_komtop")
+
+        st.markdown("**Top 운영사 (총 톤)**")
+        op_top = (f.dropna(subset=["operator"])
+                       .groupby("operator")
+                       .agg(톤=("ton", "sum"),
+                            행수=("ton", "size"),
+                            선박수=("kapal", "nunique"))
+                       .reset_index().sort_values("톤", ascending=False)
+                       .head(25))
+        op_top["톤"] = op_top["톤"].round(0)
+        theme.dataframe(op_top)
+        _csv_button(op_top, f"cargo_top_operators_{snapshot}.csv",
+                     key="cg_dl_optop")
 
     # ============ 2) OD Map ============
     with tab_map:
@@ -5898,7 +6011,7 @@ def page_cargo():
                                na_position="last")
 
         show_cols = ["period", "direction", "bucket", "kom",
-                      "kapal", "operator", "jenis_kapal",
+                      "kapal", "operator", "jenis_kapal", "vessel_class",
                       "origin", "destination", "ton", "gt", "dwt"]
         show_cols = [c for c in show_cols if c in tbl.columns]
         tbl_show = tbl[show_cols].head(3000).copy()
