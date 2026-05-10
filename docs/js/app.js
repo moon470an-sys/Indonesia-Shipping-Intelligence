@@ -203,6 +203,216 @@ function renderOverview() {
     { x: tp.map(p => p.port), y: tp.map(p => p.ln), name: "ln", type: "bar", marker: { color: "#f97316" } },
   ], { barmode: "stack", margin: { t: 10, l: 50, r: 10, b: 80 }, xaxis: { tickangle: -40 } },
   { displayModeBar: false, responsive: true });
+
+  renderMarketOverview();
+}
+
+// ---------- PR-C: Market Overview (derived/subclass_facts + owner_profile) ----------
+const SUBCLASS_PALETTE = {
+  "Crude Oil": "#92400e",
+  "Product": "#0284c7",
+  "Chemical": "#059669",
+  "LPG": "#d97706",
+  "LNG": "#7c3aed",
+  "FAME / Vegetable Oil": "#65a30d",
+  "UNKNOWN": "#94a3b8",
+};
+
+async function renderMarketOverview() {
+  const host = document.getElementById("mo-kpi-hero");
+  if (!host) return;
+  let sub, owners, meta;
+  try {
+    [sub, owners, meta] = await Promise.all([
+      loadDerived("subclass_facts.json"),
+      loadDerived("owner_profile.json"),
+      loadDerived("meta.json"),
+    ]);
+  } catch (e) {
+    host.innerHTML = `<div class="bg-yellow-50 text-yellow-900 text-sm p-3 rounded col-span-full">
+      Market Overview: derived JSON not available (${e.message}). Run <code>python scripts/build_derived.py</code>.</div>`;
+    return;
+  }
+
+  // ---- KPI 1-6 ----
+  const k = state.kpi || {};
+  const series = k.monthly_series || [];
+  const seriesEffective = k.latest_period_is_partial_data_dropped
+    ? series.slice(0, -1) : series;
+  const last12 = seriesEffective.slice(-12);
+  const totalLast12 = last12.reduce((s, r) => s + (r.ton || 0), 0);
+  const tankerLast12 = (sub.subclasses || []).reduce(
+    (s, r) => s + (r.ton_last_12m || 0), 0);
+  const tankerCount = sub.tanker_fleet_summary?.vessel_count;
+  const fleetTotal = k.fleet_total || (state.overview?.vessel_total ?? null);
+  const tankerAge = sub.tanker_fleet_summary?.avg_age_gt_weighted;
+  const lnDnPct = (() => {
+    const mt = state.overview?.monthly_traffic || [];
+    const lastP = mt.map(r => r.period).sort().slice(-1)[0];
+    if (!lastP) return null;
+    const dn = mt.find(r => r.period === lastP && r.kind === "dn")?.rows || 0;
+    const ln = mt.find(r => r.period === lastP && r.kind === "ln")?.rows || 0;
+    const tot = dn + ln;
+    return tot > 0 ? { ln: (ln / tot) * 100, dn: (dn / tot) * 100, period: lastP } : null;
+  })();
+  const buildAt = (meta.build_at || "").replace("T", " ").replace(/Z$/, " UTC");
+
+  const kpis = [
+    {
+      label: "전체 12M ton",
+      value: fmt0(totalLast12),
+      sub: `LK3 (${last12[0]?.period || "—"} → ${last12.slice(-1)[0]?.period || "—"})`,
+    },
+    {
+      label: "탱커 12M ton",
+      value: fmt0(tankerLast12),
+      sub: `${((tankerLast12 / Math.max(totalLast12, 1)) * 100).toFixed(1)}% of total`,
+    },
+    {
+      label: "등록 선박 (전체 / 탱커)",
+      value: tankerCount != null
+        ? `${fmt(fleetTotal || 0)} / ${fmt(tankerCount)}`
+        : `${fmt(fleetTotal || 0)} / —`,
+      sub: "kapal.dephub.go.id",
+    },
+    {
+      label: "탱커 GT 가중 평균 선령",
+      value: tankerAge != null ? `${tankerAge.toFixed(1)}년` : "—",
+      sub: tankerAge != null ? "전체 탱커 fleet 기준" : "Insufficient data",
+    },
+    {
+      label: lnDnPct ? `ln vs dn (${lnDnPct.period})` : "ln vs dn",
+      value: lnDnPct ? `${lnDnPct.ln.toFixed(0)} : ${lnDnPct.dn.toFixed(0)}` : "—",
+      sub: lnDnPct ? "international vs domestic (calls)" : "Insufficient data",
+    },
+    {
+      label: "데이터 신선도",
+      value: meta.latest_lk3_month || "—",
+      sub: `vessel ${meta.latest_vessel_snapshot_month || "—"} · build ${buildAt.split(" ")[0] || "—"}`,
+    },
+  ];
+  host.innerHTML = "";
+  kpis.forEach(item => host.appendChild(kpiCard(item.label, item.value, item.sub)));
+
+  // ---- Subclass scatter ----
+  // x: cagr_24m_pct (null → 0 with annotation), y: avg_age_gt_weighted, size: ton_last_12m
+  const subs = (sub.subclasses || []).filter(r => r.subclass !== "UNKNOWN");
+  const cagrAvail = subs.some(r => r.cagr_24m_pct != null);
+  const sizeMax = Math.max(...subs.map(r => r.ton_last_12m || 0), 1);
+  const trace = {
+    x: subs.map(r => r.cagr_24m_pct ?? 0),
+    y: subs.map(r => r.avg_age_gt_weighted ?? 0),
+    text: subs.map(r => r.subclass),
+    mode: "markers+text",
+    type: "scatter",
+    textposition: "top center",
+    textfont: { size: 11 },
+    marker: {
+      size: subs.map(r => Math.max(12, 80 * (r.ton_last_12m || 0) / sizeMax)),
+      color: subs.map(r => SUBCLASS_PALETTE[r.subclass] || "#64748b"),
+      line: { color: "#1e293b", width: 1 },
+      opacity: 0.85,
+    },
+    hovertemplate:
+      "<b>%{text}</b><br>" +
+      "CAGR (24M): %{x:.2f}%<br>" +
+      "Avg age (GT-weighted): %{y:.1f} yr<br>" +
+      "12M ton: %{customdata:,.0f}<extra></extra>",
+    customdata: subs.map(r => r.ton_last_12m),
+  };
+  Plotly.newPlot("mo-subclass-scatter", [trace], {
+    margin: { t: 10, l: 50, r: 20, b: 50 },
+    xaxis: {
+      title: cagrAvail ? "24M CAGR (%)" : "24M CAGR (insufficient data — needs 2 full years of LK3)",
+      zeroline: true,
+      zerolinecolor: "#cbd5e1",
+    },
+    yaxis: { title: "GT-weighted avg age (years)" },
+    showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+
+  if (!cagrAvail) {
+    const cap = document.getElementById("mo-scatter-caption");
+    if (cap) {
+      cap.textContent =
+        "x축은 24M ton CAGR이지만 현재 LK3 데이터가 23개월(부분 월 제외)이라 산출 불가 — 다음 월 snapshot이 도착하면 자동 활성화됩니다. 점은 임시로 0에 정렬됩니다.";
+    }
+  }
+
+  // ---- 3 fact summary cards (rule-based, fact-only) ----
+  const factsHost = document.getElementById("mo-fact-cards");
+  if (factsHost) {
+    const tankerLast = sub.subclasses.reduce((s, r) => s + (r.ton_last_12m || 0), 0);
+    const tankerPrev = sub.subclasses.reduce((s, r) => s + (r.ton_prev_12m || 0), 0);
+    const deltaPct = tankerPrev > 0
+      ? ((tankerLast - tankerPrev) / tankerPrev) * 100
+      : null;
+    const totalGt = sub.subclasses.reduce((s, r) => s + (r.sum_gt || 0), 0);
+    const wtd25 = totalGt > 0
+      ? sub.subclasses.reduce(
+          (s, r) => s + ((r.pct_age_25_plus || 0) * (r.sum_gt || 0)), 0) / totalGt
+      : null;
+    // Top 5 routes share of 24M ton (from route_facts.json)
+    let routeShare = null, routeCount = 0;
+    try {
+      const rt = await loadDerived("route_facts.json");
+      const tops = rt.routes || [];
+      const top5 = tops.slice(0, 5).reduce((s, r) => s + (r.ton_24m || 0), 0);
+      const all = tops.reduce((s, r) => s + (r.ton_24m || 0), 0);
+      routeCount = tops.length;
+      routeShare = all > 0 ? (top5 / all) * 100 : null;
+    } catch (_e) { /* graceful */ }
+
+    const facts = [
+      {
+        text: deltaPct != null
+          ? `최근 12M 탱커 ton은 직전 12M 대비 ${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(1)}% 변동했습니다.`
+          : "최근 12M 탱커 ton 변동률: 데이터 부족 (Insufficient data).",
+      },
+      {
+        text: wtd25 != null
+          ? `현재 등록된 탱커 중 선령 25년 이상 비중은 약 ${wtd25.toFixed(1)}%입니다 (GT 가중).`
+          : "선령 25년 이상 비중: 데이터 부족.",
+      },
+      {
+        text: routeShare != null
+          ? `최근 24M 탱커 ton의 상위 5개 항로 누적 비중은 ${routeShare.toFixed(1)}%입니다 (Top ${routeCount} 항로 기준).`
+          : "상위 5개 항로 누적 비중: 데이터 부족.",
+      },
+    ];
+    factsHost.innerHTML = facts.map(f => `
+      <div class="bg-white rounded-xl shadow p-3">
+        <p class="text-sm text-slate-700 leading-relaxed">${f.text}</p>
+        <p class="text-[10.5px] text-slate-400 mt-2 italic">
+          Heuristic summary based on aggregated public data. Not investment advice.
+        </p>
+      </div>`).join("");
+  }
+
+  // ---- Top 20 owners table ----
+  const tbody = document.querySelector("#mo-owners-table tbody");
+  if (tbody) {
+    const top20 = (owners.owners || []).slice(0, 20);
+    tbody.innerHTML = top20.map((o, i) => {
+      const mix = Object.entries(o.subclass_mix || {})
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([k, v]) => `${k}:${v}`)
+        .join(" · ") || "—";
+      const listed = o.ticker
+        ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-100 text-blue-800">${o.ticker}</span>`
+        : `<span class="text-slate-400 text-xs">private</span>`;
+      return `<tr>
+        <td class="px-2 py-1 text-slate-500">${i + 1}</td>
+        <td class="px-2 py-1">${o.owner}</td>
+        <td class="px-2 py-1 text-right">${fmt(o.tankers || 0)}</td>
+        <td class="px-2 py-1 text-right">${fmt0(o.sum_gt || 0)}</td>
+        <td class="px-2 py-1 text-right">${fmt0(o.avg_gt || 0)}</td>
+        <td class="px-2 py-1 text-xs text-slate-600">${mix}</td>
+        <td class="px-2 py-1 text-center">${listed}</td>
+      </tr>`;
+    }).join("");
+  }
 }
 
 // ---------- Fleet ----------
