@@ -170,22 +170,13 @@
       <!-- KPI strip -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-financials"></div>
 
-      <!-- Filter strip — only the columns that are actually displayed in the §7.3 table -->
+      <!-- Filter strip (year only — sort is now via column-header clicks) -->
       <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-3">
         <div>
-          <label class="text-xs text-slate-500 block">기준 연도</label>
+          <label class="text-xs text-slate-500 block" for="fn-year">기준 연도</label>
           <select id="fn-year" class="border rounded px-2 py-1 text-sm"></select>
         </div>
-        <div>
-          <label class="text-xs text-slate-500 block">정렬 기준</label>
-          <select id="fn-sortby" class="border rounded px-2 py-1 text-sm">
-            <option value="revenue">매출</option>
-            <option value="net_margin">순이익률</option>
-            <option value="roa">ROA</option>
-            <option value="debt_to_assets">부채비율</option>
-            <option value="fleet_gt">선대 GT</option>
-          </select>
-        </div>
+        <p class="text-[11px] text-slate-500 ml-auto">정렬은 표 헤더 클릭</p>
       </div>
 
       <!-- Single scatter (renewal v2 §7.2): x=매출 log · y=순이익률 · size=선대 GT -->
@@ -199,16 +190,16 @@
       <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="data/companies_financials.yml">
         <h2 class="font-semibold mb-2">기업별 재무 비교 <span class="text-xs text-slate-400" id="fn-table-year"></span></h2>
         <div class="overflow-auto max-h-[60vh] border rounded">
-          <table class="min-w-full text-sm" id="fn-tbl">
+          <table class="min-w-full text-sm fn-sortable" id="fn-tbl">
             <thead class="bg-slate-100 sticky top-0">
               <tr class="text-left">
-                <th class="px-2 py-1">ticker</th>
-                <th class="px-2 py-1">name</th>
-                <th class="px-2 py-1 text-right">매출 (IDR bn)</th>
-                <th class="px-2 py-1 text-right">순이익률</th>
-                <th class="px-2 py-1 text-right">ROA</th>
-                <th class="px-2 py-1 text-right">부채비율</th>
-                <th class="px-2 py-1 text-right">선대 GT</th>
+                <th class="px-2 py-1"                 data-sort="ticker"        scope="col">ticker</th>
+                <th class="px-2 py-1"                 data-sort="name"          scope="col">name</th>
+                <th class="px-2 py-1 text-right"      data-sort="revenue"        data-numeric="1" scope="col">매출 (IDR bn)</th>
+                <th class="px-2 py-1 text-right"      data-sort="net_margin"     data-numeric="1" scope="col">순이익률</th>
+                <th class="px-2 py-1 text-right"      data-sort="roa"            data-numeric="1" scope="col">ROA</th>
+                <th class="px-2 py-1 text-right"      data-sort="debt_to_assets" data-numeric="1" scope="col">부채비율</th>
+                <th class="px-2 py-1 text-right"      data-sort="fleet_gt"       data-numeric="1" scope="col">선대 GT</th>
               </tr>
             </thead>
             <tbody></tbody>
