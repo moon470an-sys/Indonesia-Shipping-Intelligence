@@ -680,14 +680,27 @@ function renderFinancials() {
 }
 
 // ---------- Tabs ----------
+// PR-13: tab name -> document.title suffix
+const TAB_TITLES = {
+  "overview":      "Home",
+  "tanker-sector": "Tanker Sector",
+  "cargo-fleet":   "Cargo & Fleet",
+  "financials":    "Listed Operators",
+};
+
 async function showTab(name) {
   document.querySelectorAll(".tab").forEach(t => {
-    if (t.dataset.tab === name) { t.classList.add("active"); t.classList.remove("hover:bg-slate-700"); }
+    const isActive = t.dataset.tab === name;
+    t.setAttribute("aria-selected", isActive ? "true" : "false");
+    if (isActive) { t.classList.add("active"); t.classList.remove("hover:bg-slate-700"); }
     else { t.classList.remove("active"); t.classList.add("hover:bg-slate-700"); }
   });
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
   const panel = document.getElementById(`tab-${name}`);
   if (panel) panel.classList.remove("hidden");
+  // PR-13: dynamic title so browser tabs / bookmarks reflect the active tab
+  const tabLabel = TAB_TITLES[name] || "Home";
+  document.title = `${tabLabel} · Indonesia Shipping Intelligence`;
   await ensureLoaded(name);
   // PR-B: re-scan source labels since lazy-loaded tabs may add new
   // [data-source] containers on activation.
@@ -696,6 +709,25 @@ async function showTab(name) {
     setupSourceLabels(panel);
     decorateGlossary(panel);
   }
+}
+
+// PR-13: Arrow-key navigation across the nav tablist (WAI-ARIA pattern)
+function bindTabKeyboardNav() {
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  tabs.forEach((tab, i) => {
+    tab.addEventListener("keydown", (e) => {
+      let next = null;
+      if (e.key === "ArrowRight") next = tabs[(i + 1) % tabs.length];
+      else if (e.key === "ArrowLeft") next = tabs[(i - 1 + tabs.length) % tabs.length];
+      else if (e.key === "Home") next = tabs[0];
+      else if (e.key === "End") next = tabs[tabs.length - 1];
+      if (next) {
+        e.preventDefault();
+        next.focus();
+        showTab(next.dataset.tab);
+      }
+    });
+  });
 }
 
 async function ensureLoaded(tab) {
@@ -730,6 +762,7 @@ async function boot() {
   try { state.meta = await loadDerived("meta.json"); } catch (e) { state.meta = null; }
   await renderHome();
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
+  bindTabKeyboardNav();
   showTab("overview");
   loadGlobalFooter();
   setupSourceLabels();

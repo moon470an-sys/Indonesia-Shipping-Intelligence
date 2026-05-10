@@ -267,6 +267,25 @@ section.tab-panel h3::before {
   border-radius: 4px;
 }
 
+/* PR-13: Skip-to-content link, hidden until focused via keyboard */
+.skip-link {
+  position: absolute;
+  left: -1000px;
+  top: 8px;
+  background: #1A3A6B;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  z-index: 100;
+  font-size: 13px;
+  font-weight: 600;
+}
+.skip-link:focus {
+  left: 8px;
+  outline: 2px solid #56C0E0;
+  outline-offset: 2px;
+}
+
 /* Mobile: shrink the map sidebar font, stack things tighter */
 @media (max-width: 768px) {
   #home-map-controls { font-size: 11px; }
