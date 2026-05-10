@@ -6063,6 +6063,117 @@ def page_cargo():
         )
         _cargo_od_map(f, top_n=top_n_lanes, key_prefix="cg_map")
 
+        st.markdown("---")
+
+        # ---- Sankey of top OD pairs ----
+        st.subheader("🔀 OD Sankey (Top 항로)")
+        st.caption(
+            "출발 항구 → 도착 항구 흐름. 화살 두께 ∝ 톤. self-loop "
+            "(origin = destination, 즉 STS 자체 이동) 제외."
+        )
+        od_pairs = (f.dropna(subset=["origin", "destination"])
+                       .assign(o_norm=lambda d: d["origin"].map(_normalize_port_name),
+                                d_norm=lambda d: d["destination"].map(_normalize_port_name))
+                       .dropna(subset=["o_norm", "d_norm"]))
+        od_pairs = od_pairs[od_pairs["o_norm"] != od_pairs["d_norm"]]
+        od_top = (od_pairs.groupby(["o_norm", "d_norm"])["ton"].sum()
+                            .reset_index()
+                            .rename(columns={"o_norm": "origin",
+                                              "d_norm": "destination",
+                                              "ton": "총_톤"})
+                            .sort_values("총_톤", ascending=False))
+        sankey_top_n = st.slider("Sankey Top N", 10, 80, 30, 5,
+                                    key="cg_sankey_n")
+        _render_sankey(od_top.head(sankey_top_n), ton_col="총_톤")
+
+        st.markdown("---")
+
+        # ---- YoY growth analysis ----
+        st.subheader("📈 항로 YoY 성장 분석 (최근 vs 직전 기간)")
+        st.caption(
+            "현재 필터된 기간을 절반으로 나눠 후반(latest) vs 전반(prior) "
+            "톤수 변화를 비교. 후반 톤 ≥ 50,000 행만 표시 — 단일 운송 노이즈 컷."
+        )
+        # Use the periods currently in `f` (already period-filtered by sidebar)
+        periods_in_f = sorted(f["period"].dropna().unique().tolist())
+        half = len(periods_in_f) // 2
+        if half < 2 or len(periods_in_f) < 4:
+            st.info("성장률 분석은 4개월 이상 필터 시 가능 (현재 "
+                     f"{len(periods_in_f)}개월).")
+        else:
+            latest_set = set(periods_in_f[-half:])
+            prior_set = set(periods_in_f[:half] if half * 2 == len(periods_in_f)
+                            else periods_in_f[-2 * half:-half])
+            yoy = od_pairs.assign(side=od_pairs["period"].map(
+                lambda p: "latest" if p in latest_set
+                else ("prior" if p in prior_set else None)))
+            yoy = yoy.dropna(subset=["side"])
+            agg = (yoy.groupby(["o_norm", "d_norm", "side"])["ton"].sum()
+                       .unstack(fill_value=0).reset_index())
+            if "latest" not in agg.columns: agg["latest"] = 0
+            if "prior" not in agg.columns: agg["prior"] = 0
+            agg = agg[(agg["prior"] >= 50_000) | (agg["latest"] >= 50_000)]
+            agg["delta_ton"] = agg["latest"] - agg["prior"]
+            agg["growth_pct"] = ((agg["latest"] - agg["prior"])
+                                    / agg["prior"].replace(0, pd.NA) * 100)
+            agg = agg.dropna(subset=["growth_pct"])
+            agg["growth_pct"] = agg["growth_pct"].round(1)
+
+            if agg.empty:
+                st.info("성장률 분석할 항로가 없습니다.")
+            else:
+                cA, cB = st.columns(2)
+                with cA:
+                    st.markdown("**🚀 Top 성장 항로**")
+                    growers = agg.sort_values("delta_ton",
+                                                 ascending=False).head(15)
+                    growers["route"] = (growers["o_norm"] + " → "
+                                          + growers["d_norm"])
+                    fig = px.bar(growers.sort_values("delta_ton"),
+                                  x="delta_ton", y="route", orientation="h",
+                                  color="growth_pct",
+                                  color_continuous_scale=theme.SCALES["green"],
+                                  hover_data=["latest", "prior", "growth_pct"],
+                                  labels={"delta_ton": "증가 톤",
+                                            "route": "",
+                                            "growth_pct": "%"})
+                    fig.update_layout(height=460, margin=dict(t=10, b=10),
+                                       coloraxis_showscale=True)
+                    st.plotly_chart(fig, width="stretch")
+                with cB:
+                    st.markdown("**📉 Top 감소 항로**")
+                    losers = agg.sort_values("delta_ton",
+                                                ascending=True).head(15)
+                    losers["route"] = (losers["o_norm"] + " → "
+                                         + losers["d_norm"])
+                    fig = px.bar(losers.sort_values("delta_ton",
+                                                       ascending=False),
+                                  x="delta_ton", y="route", orientation="h",
+                                  color="growth_pct",
+                                  color_continuous_scale=theme.SCALES["red"],
+                                  hover_data=["latest", "prior", "growth_pct"],
+                                  labels={"delta_ton": "감소 톤 (음수)",
+                                            "route": "",
+                                            "growth_pct": "%"})
+                    fig.update_layout(height=460, margin=dict(t=10, b=10),
+                                       coloraxis_showscale=True)
+                    st.plotly_chart(fig, width="stretch")
+
+                # Table
+                with st.expander("📋 전체 YoY 변동 테이블"):
+                    show = agg[["o_norm", "d_norm", "prior", "latest",
+                                  "delta_ton", "growth_pct"]].rename(
+                        columns={"o_norm": "출발", "d_norm": "도착",
+                                  "prior": "전반", "latest": "후반",
+                                  "delta_ton": "증감",
+                                  "growth_pct": "성장률_%"})
+                    show["전반"] = show["전반"].round(0)
+                    show["후반"] = show["후반"].round(0)
+                    show["증감"] = show["증감"].round(0)
+                    theme.dataframe(show.sort_values("증감", ascending=False))
+                    _csv_button(show, f"cargo_yoy_routes_{snapshot}.csv",
+                                 label="📥 YoY 항로 CSV", key="cg_dl_yoy")
+
     # ============ 3) Per-port ============
     with tab_port:
         st.markdown("**항구별 톤수 Top 30** (origin / destination 합산)")
