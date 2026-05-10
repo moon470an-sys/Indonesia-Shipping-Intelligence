@@ -24,6 +24,35 @@ function fmtTon(v, opts = {}) {
 }
 const fmtCount = (v) => v == null ? "—" : Number(v).toLocaleString();
 
+// PR-17: tiny inline SVG sparkline for card trends. Returns a string.
+// values: array of numbers; opts: { width, height, color, fillOpacity }
+function sparkline(values, opts = {}) {
+  const width = opts.width ?? 90;
+  const height = opts.height ?? 24;
+  const color = opts.color ?? "#1A3A6B";
+  const fillO = opts.fillOpacity ?? 0.15;
+  if (!values || values.length < 2) {
+    return `<svg width="${width}" height="${height}" aria-hidden="true"></svg>`;
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = (max - min) || 1;
+  const stepX = width / (values.length - 1);
+  // Pad y so the line never sits flush against the edges.
+  const pad = 2;
+  const innerH = height - pad * 2;
+  const pts = values.map((v, i) => [i * stepX, pad + innerH - ((v - min) / span) * innerH]);
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(2)} ${p[1].toFixed(2)}`).join(" ");
+  const fillPath = `${linePath} L${pts[pts.length - 1][0].toFixed(2)} ${height} L${pts[0][0].toFixed(2)} ${height} Z`;
+  const lastX = pts[pts.length - 1][0].toFixed(2);
+  const lastY = pts[pts.length - 1][1].toFixed(2);
+  return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" aria-hidden="true">
+    <path d="${fillPath}" fill="${color}" fill-opacity="${fillO}" />
+    <path d="${linePath}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linejoin="round" />
+    <circle cx="${lastX}" cy="${lastY}" r="2" fill="${color}" />
+  </svg>`;
+}
+
 // PR-12: render an IDX-listed ticker as a small chip link to the
 // IDX listed-companies search page. Plain text fallback when ticker is null.
 function idxLink(ticker, opts = {}) {
@@ -312,6 +341,11 @@ function drawTankerCards() {
   const activeEl = document.getElementById("ts-active-filter");
   if (!host) return;
   const cards = tsState.tankerSubclass?.cards || [];
+  // Build sparkline series lookup from monthly data
+  const monthlyBySub = {};
+  for (const s of (tsState.tankerSubclass?.monthly?.series || [])) {
+    monthlyBySub[s.subclass] = s.ton_by_period || [];
+  }
   host.innerHTML = cards.map(c => {
     const color = SUBCLASS_PALETTE[c.subclass] || "#64748b";
     const tonStr = fmtTon(c.ton_last_12m);
@@ -344,9 +378,12 @@ function drawTankerCards() {
         <h4 class="font-semibold text-slate-700">${c.subclass}</h4>
         <span class="text-[10.5px] text-slate-400">${(c.vessel_count || 0).toLocaleString()}척</span>
       </div>
-      <div class="flex items-baseline gap-2 mb-3">
-        <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
-        <span class="text-xs text-slate-500">tons (12M)</span>
+      <div class="flex items-end justify-between gap-2 mb-2">
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
+          <span class="text-xs text-slate-500">tons (12M)</span>
+        </div>
+        <div title="24M monthly ton trend">${sparkline(monthlyBySub[c.subclass] || [], { color, width: 80, height: 24 })}</div>
       </div>
       <div class="mb-3">${trend}</div>
       <dl class="text-xs space-y-1.5 text-slate-600 mb-3">
