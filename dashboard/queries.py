@@ -216,6 +216,132 @@ def tankers_full(snapshot_month: str) -> pd.DataFrame:
     return tk
 
 
+def cargo_vessels_full(snapshot_month: str) -> pd.DataFrame:
+    """Cargo-sector vessels with class + tanker subclass annotation.
+
+    Mirrors `vessels_full` shape and adds:
+      * sector           — taxonomy sector (always 'CARGO' in this filter)
+      * vessel_class     — Tanker | Container | Bulk Carrier | General Cargo |
+                            Other Cargo
+      * tanker_subclass  — Crude/Product/Chemical/LPG/LNG/FAME/Water/UNKNOWN
+                            for vessel_class == 'Tanker'; empty string otherwise
+      * age              — int(snapshot_year) - tahun_num (NaN if missing)
+
+    Fishing / Passenger / Offshore-support / Non-commercial vessels are
+    filtered out so downstream Fleet/Cargo views focus on commercial cargo.
+    """
+    from backend.taxonomy import (
+        SECTOR_CARGO, CLS_TANKER, classify_tanker_subclass,
+        classify_vessel_type,
+    )
+
+    df = vessels_full(snapshot_month)
+    if df.empty:
+        return df
+
+    label = df["jenis_detail"].fillna(df["jenis_kapal"])
+    classified = label.map(lambda s: classify_vessel_type(s))
+    df = df.assign(
+        sector=classified.map(lambda t: t[0]),
+        vessel_class=classified.map(lambda t: t[1]),
+    )
+    cargo = df[df["sector"] == SECTOR_CARGO].copy()
+    if cargo.empty:
+        return cargo
+
+    is_tanker = cargo["vessel_class"] == CLS_TANKER
+    sub = pd.Series("", index=cargo.index, dtype=object)
+    sub.loc[is_tanker] = label.loc[cargo.index[is_tanker]].map(classify_tanker_subclass)
+    cargo["tanker_subclass"] = sub
+
+    snap_yr = int(snapshot_month[:4]) if snapshot_month else None
+    if snap_yr is not None:
+        age = snap_yr - pd.to_numeric(cargo["tahun"], errors="coerce")
+        cargo["age"] = age.where(age >= 0)
+    else:
+        cargo["age"] = pd.NA
+    return cargo
+
+
+def cargo_flows(snapshot_month: str) -> pd.DataFrame:
+    """Generic LK3 cargo flows — excludes fishing / passenger / pure tug /
+    pleasure vessels.
+
+    Mirrors the shape of `tanker_cargo_flows` (same columns) but covers all
+    commercial cargo categories (tankers, container, bulk, general cargo,
+    barge, etc.) — used by the dedicated Cargo tab with commodity filtering
+    and OD-map rendering.
+
+    Filtering is SQL-side via LIKE on the LK3 ``JENIS KAPAL`` field. We
+    EXCLUDE labels containing keywords for non-cargo segments and accept
+    anything else, so partially-classified rows are still surfaced.
+    """
+    def j(k: str) -> str:
+        escaped = k.replace("'", "''")
+        return f"json_extract(raw_row, '$.\"{escaped}\"')"
+
+    n = lambda j_expr: f"CAST(NULLIF(NULLIF({j_expr}, '-'), '') AS REAL)"
+
+    K_JK    = "('JENIS KAPAL', 'JENIS KAPAL')"
+    K_KAPAL = "('KAPAL', 'KAPAL')"
+    K_OP    = "('PERUSAHAAN', 'PERUSAHAAN')"
+    K_ORIG  = "('TIBA', 'DARI')"
+    K_DEST  = "('BERANGKAT', 'KE')"
+    K_BK    = "('BONGKAR', 'KOMODITI')"
+    K_BT    = "('BONGKAR', 'TON')"
+    K_MK    = "('MUAT', 'KOMODITI')"
+    K_MT    = "('MUAT', 'TON')"
+    K_DWT   = "('UKURAN', 'DWT')"
+    K_GT    = "('UKURAN', 'GT')"
+    K_LOA   = "('UKURAN', 'LOA')"
+    K_DRMAX = "('DRAFT', 'MAX')"
+    K_TIBA  = "('TIBA', 'TANGGAL')"
+    K_DEP   = "('BERANGKAT', 'TANGGAL')"
+
+    # Exclude non-cargo segments by JENIS KAPAL keywords. Patterns mirror the
+    # taxonomy "fishing / passenger / offshore / non-commercial" buckets but
+    # are written for SQL LIKE.
+    exclude_kws = (
+        "%FISH%", "%IKAN%", "%FISHERY%", "%FISHING%",
+        "%PURSE SEINER%", "%LIVESTOCK%", "%TERNAK%",
+        "%PENUMPANG%", "%PASSENGER%", "%FERRY%", "%CRUISE%",
+        "%KAPAL CEPAT%", "%WATER BUS%", "%CATAMARAN%",
+        "%KAPAL PERANG%", "%PATROL%", "%PATROLI%", "%NAVY%",
+        "%YACHT%", "%WISATA%", "%PILOT BOAT%", "%MEDICAL%",
+        "%RESCUE%", "%MOORING BOAT%",
+        # Pure tugs / dredgers / supply vessels — they carry no cargo of
+        # interest for the LK3 commodity view. Keep barges (tongkang) since
+        # they often haul oil / dry cargo.
+        "%TUG BOAT%", "%MOTOR TUNDA%", "%PUSHER TUG%", "%HARBOUR TUG%",
+        "%AHTS%", "%ANCHOR HANDLING%", "%PLATFORM SUPPLY%", "%PSV%",
+        "%DREDGER%", "%HOPPER%", "%SUCTION%", "%KAPAL HISAP%",
+        "%CABLE LAYING%", "%PIPE LAYING%", "%SEISMIC%", "%RESEARCH%",
+        "%FLOATING STORAGE%",
+    )
+    pred_parts = " AND ".join([f"COALESCE({j(K_JK)}, '') NOT LIKE '{kw}'"
+                                for kw in exclude_kws])
+
+    sql = text(
+        f"SELECT data_year, data_month, kind, kode_pelabuhan, "
+        f"  {j(K_KAPAL)} AS kapal, {j(K_JK)} AS jenis_kapal, {j(K_OP)} AS operator, "
+        f"  {j(K_ORIG)} AS origin, {j(K_DEST)} AS destination, "
+        f"  {j(K_TIBA)} AS tiba_tanggal, {j(K_DEP)} AS berangkat_tanggal, "
+        f"  {j(K_BK)} AS bongkar_kom, {n(j(K_BT))} AS bongkar_ton, "
+        f"  {j(K_MK)} AS muat_kom, {n(j(K_MT))} AS muat_ton, "
+        f"  {n(j(K_DWT))} AS dwt, {n(j(K_GT))} AS gt, "
+        f"  {n(j(K_LOA))} AS loa, {n(j(K_DRMAX))} AS draft_max "
+        f"FROM cargo_snapshot "
+        f"WHERE snapshot_month = :m AND ({pred_parts})"
+    )
+    with engine.connect() as conn:
+        df = pd.read_sql(sql, conn, params={"m": snapshot_month})
+    if df.empty:
+        return df
+    df["period"] = (df["data_year"].astype(str) + "-" +
+                    df["data_month"].astype(int).map("{:02d}".format))
+    return df
+
+
 def tanker_cargo_flows(snapshot_month: str) -> pd.DataFrame:
     """Slim tanker-only cargo dataset for the Tanker Cargo Flow sub-tabs.
 
