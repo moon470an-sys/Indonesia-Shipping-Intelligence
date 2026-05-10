@@ -313,6 +313,138 @@ def build_subclass_facts() -> dict:
 # 3. route_facts.json
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
+# Renewal v2: cargo_fleet.json (PR-4) — treemap + commodity bars + class donut + age bars
+# ----------------------------------------------------------------------
+def build_fleet_class_counts(snapshot_month: str) -> dict:
+    """Group vessels_snapshot.raw_data into 5 visual classes.
+
+    Per spec section 6.3: Container · Bulk · Tanker · General · Other.
+    Mapping uses backend.taxonomy.classify_vessel_type to fold the rich
+    Indonesian/English vessel-type labels.
+    """
+    from backend.taxonomy import (
+        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
+        classify_vessel_type,
+    )
+    visual_map = {
+        CLS_CONTAINER: "Container",
+        CLS_BULK:      "Bulk Carrier",
+        CLS_TANKER:    "Tanker",
+        CLS_GENERAL:   "General Cargo",
+        CLS_OTHER_CARGO: "Other Cargo",
+    }
+    counts: dict[str, int] = defaultdict(int)
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT json_extract(raw_data, '$.JenisDetailKet') AS jenis,
+                   COUNT(*) AS n
+              FROM vessels_snapshot
+             WHERE snapshot_month = ?
+               AND raw_data IS NOT NULL
+             GROUP BY jenis
+            """,
+            (snapshot_month,),
+        )
+        for jenis, n in cur:
+            if not jenis:
+                counts["Other"] += n
+                continue
+            _sec, vc = classify_vessel_type(jenis)
+            label = visual_map.get(vc, "Other")
+            counts[label] += n
+    # Stable order matching spec
+    order = ["Container", "Bulk Carrier", "Tanker", "General Cargo", "Other Cargo", "Other"]
+    return [{"class": k, "count": counts.get(k, 0)} for k in order if counts.get(k, 0) > 0]
+
+
+def build_fleet_age_bins(snapshot_month: str, current_year: int | None = None) -> dict:
+    """5-year bins of vessel age, with 25+ flagged for color emphasis.
+
+    Reads vessels_snapshot.raw_data.TahunPembuatan; falls back to skip
+    rows with bad/missing build year.
+    """
+    if current_year is None:
+        current_year = datetime.now(timezone.utc).year
+    bins_def = [
+        ("0-4 yr",    0,   4,  False),
+        ("5-9 yr",    5,   9,  False),
+        ("10-14 yr",  10,  14, False),
+        ("15-19 yr",  15,  19, False),
+        ("20-24 yr",  20,  24, False),
+        ("25-29 yr",  25,  29, True),
+        ("30-34 yr",  30,  34, True),
+        ("35+ yr",    35,  999, True),
+    ]
+    counts = [0] * len(bins_def)
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT json_extract(raw_data, '$.TahunPembuatan')
+              FROM vessels_snapshot
+             WHERE snapshot_month = ?
+               AND raw_data IS NOT NULL
+            """,
+            (snapshot_month,),
+        )
+        for (tahun,) in cur:
+            try:
+                age = current_year - int(tahun)
+                if age < 0 or age > 200:
+                    continue
+            except (TypeError, ValueError):
+                continue
+            for i, (_label, lo, hi, _flag) in enumerate(bins_def):
+                if lo <= age <= hi:
+                    counts[i] += 1
+                    break
+    return {
+        "bins": [{"label": l, "count": c, "older": flag}
+                 for c, (l, _lo, _hi, flag) in zip(counts, bins_def)],
+        "current_year": current_year,
+    }
+
+
+def build_cargo_fleet() -> dict:
+    """Renewal v2 PR-4: treemap + commodity bars + class donut + age bars."""
+    cargo = _load_json(DATA / "cargo.json")
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    # 6.1 Treemap data — cargo categories (jenis) by 24M ton
+    treemap_rows = []
+    for j in (cargo.get("jenis_top") or [])[:15]:
+        treemap_rows.append({
+            "category": j["jenis"],
+            "ton_total": round(j.get("ton_total") or 0, 1),
+            "calls": (j.get("calls_dn") or 0) + (j.get("calls_ln") or 0),
+        })
+
+    # 6.2 Top 10 commodities (cross-sector, not just tanker)
+    top_commodities = []
+    for k in (cargo.get("komoditi_top") or [])[:10]:
+        top_commodities.append({
+            "name": k["komoditi"],
+            "ton_total": round(k.get("ton_total") or 0, 1),
+        })
+
+    # 6.3 Class donut + 6.4 Age bars (one snapshot pass each)
+    class_counts = build_fleet_class_counts(snap)
+    age_bins = build_fleet_age_bins(snap)
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "treemap_categories": treemap_rows,
+        "top_commodities": top_commodities,
+        "class_counts": class_counts,
+        "age_bins": age_bins,
+    }
+
+
+# ----------------------------------------------------------------------
 # Renewal v2: home_kpi.json + timeseries.json + tanker_subclass.json + tanker_top.json
 # ----------------------------------------------------------------------
 SECTOR_PALETTE_5 = {
@@ -1011,6 +1143,12 @@ def main() -> None:
     bytes_total += _write_json(DERIVED / "tanker_top.json", ttop)
     print(f"  tanker_top.json — {len(ttop['top_commodities'])} commodities + "
           f"{len(ttop['top_operators'])} operators")
+
+    cf = build_cargo_fleet()
+    bytes_total += _write_json(DERIVED / "cargo_fleet.json", cf)
+    print(f"  cargo_fleet.json — {len(cf['treemap_categories'])} treemap + "
+          f"{len(cf['top_commodities'])} commodities + {len(cf['class_counts'])} classes + "
+          f"{len(cf['age_bins']['bins'])} age bins")
 
     tk = build_owner_ticker_map()
     bytes_total += _write_json(DERIVED / "owner_ticker_map.json", tk)

@@ -452,55 +452,39 @@ function renderFinancials() {
   const totNi = sumOf("net_income");
   const totFleetGt = sumOf("fleet_gt");
   const margin = totRev ? (totNi / totRev * 100) : null;
+  // Renewal v2 §7.1: 4 KPI hero
+  const avgDebt = yrRows.length
+    ? yrRows.reduce((s, r) => s + (r.debt_to_assets || 0), 0) / yrRows.length
+    : null;
   renderKpis("kpi-financials", [
     { label: `합산 매출 (${yr})`, value: fmt0(totRev), sub: "IDR billion" },
-    { label: "합산 순이익", value: fmt0(totNi),
-      sub: margin == null ? "—" : `평균 마진 ${margin.toFixed(1)}%` },
+    { label: "평균 순이익률",
+      value: margin == null ? "—" : `${margin.toFixed(1)}%`,
+      sub: `${yrRows.length}개사 가중 평균` },
+    { label: "평균 부채비율",
+      value: avgDebt == null ? "—" : `${avgDebt.toFixed(1)}%`,
+      sub: "Debt / Assets" },
     { label: "합산 선대 GT", value: fmt0(totFleetGt), sub: "kGT (1,000 GT)" },
-    { label: "수록 기업 수", value: fmt(yrRows.length),
-      sub: f.companies.length === yrRows.length
-            ? `전체 ${f.companies.length}개사` : `${f.companies.length}개사 중` },
   ]);
 
-  // Revenue trend — multi-line, all companies, all years
-  const tickerColors = {};
-  const palette = ["#1e3a8a", "#0d9488", "#d97706", "#6d28d9", "#dc2626",
-                   "#0ea5e9", "#16a34a", "#db2777", "#475569"];
-  f.companies.forEach((c, i) => { tickerColors[c.ticker] = palette[i % palette.length]; });
-  const allYears = Array.from(new Set(f.rows.map(r => r.year))).sort();
-  const revTraces = f.companies.map(c => {
-    const byYear = {};
-    for (const r of f.rows) {
-      if (r.ticker === c.ticker) byYear[r.year] = r.revenue;
-    }
-    return {
-      x: allYears, y: allYears.map(y => byYear[y] ?? null),
-      name: c.ticker, type: "scatter", mode: "lines+markers",
-      line: { color: tickerColors[c.ticker] },
-      hovertemplate: `<b>${c.ticker}</b><br>${c.name_short}<br>%{x}: %{y:,} bn IDR<extra></extra>`,
-    };
-  });
-  Plotly.newPlot("chart-fn-revenue", revTraces,
-    { margin: { t: 10, l: 60, r: 10, b: 50 }, yaxis: { title: "Revenue (IDR bn)" },
-      legend: { orientation: "h", y: -0.18 } },
-    { displayModeBar: false, responsive: true });
-
-  // Margin vs leverage scatter for selected year
+  // Renewal v2 §7.2: scatter — x=매출 log, y=순이익률, size=선대 GT
   Plotly.newPlot("chart-fn-scatter", [{
-    x: yrRows.map(r => r.net_margin),
-    y: yrRows.map(r => r.debt_to_assets),
+    x: yrRows.map(r => r.revenue),
+    y: yrRows.map(r => r.net_margin),
     text: yrRows.map(r => r.ticker),
-    mode: "markers+text", textposition: "top center",
+    mode: "markers+text",
+    textposition: "top center",
     marker: {
-      size: yrRows.map(r => Math.max(8, Math.sqrt((r.revenue || 0) / 30))),
-      color: yrRows.map(r => tickerColors[r.ticker] || "#475569"),
-      opacity: 0.75, line: { color: "#0f172a", width: 1 },
+      size: yrRows.map(r => Math.max(10, Math.sqrt((r.fleet_gt || 0) / 5))),
+      color: "#1A3A6B",
+      opacity: 0.75,
+      line: { color: "#0f172a", width: 1 },
     },
-    hovertemplate: "<b>%{text}</b><br>net margin %{x:.1f}%<br>debt/assets %{y:.1f}%<extra></extra>",
+    hovertemplate: "<b>%{text}</b><br>매출 %{x:,} bn IDR<br>순이익률 %{y:.1f}%<extra></extra>",
   }], {
     margin: { t: 10, l: 60, r: 10, b: 50 },
-    xaxis: { title: "Net margin (%)", zeroline: true },
-    yaxis: { title: "Debt / Assets (%)", zeroline: false },
+    xaxis: { title: "매출 (IDR bn, log)", type: "log", zeroline: false },
+    yaxis: { title: "순이익률 (%)", zeroline: true, zerolinecolor: "#cbd5e1" },
   }, { displayModeBar: false, responsive: true });
 
   // Comparison table
@@ -510,32 +494,21 @@ function renderFinancials() {
     if (x == null) return 1; if (y == null) return -1;
     return y - x;  // desc by default for all numeric metrics
   });
-  // Map ticker → company name + focus
+  // Renewal v2 §7.3: simplified 7-column table
   const byTicker = {};
   for (const c of f.companies) byTicker[c.ticker] = c;
   const num0 = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
-  const num1 = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 });
   const pct1 = (v) => v == null ? "—" : `${Number(v).toFixed(1)}%`;
-  const niCell = (v) => {
-    if (v == null) return `<td class="px-2 py-1 text-right">—</td>`;
-    const cls = v < 0 ? "text-red-600 font-semibold" : "";
-    return `<td class="px-2 py-1 text-right ${cls}">${num0(v)}</td>`;
-  };
   document.querySelector("#fn-tbl tbody").innerHTML = sorted.map(r => {
     const c = byTicker[r.ticker] || {};
     return `<tr>
       <td class="px-2 py-1 font-mono">${r.ticker}</td>
       <td class="px-2 py-1">${c.name_short || ""}</td>
-      <td class="px-2 py-1 text-slate-500">${(c.sector_focus || []).join(" · ")}</td>
       <td class="px-2 py-1 text-right">${num0(r.revenue)}</td>
-      ${niCell(r.net_income)}
       <td class="px-2 py-1 text-right">${pct1(r.net_margin)}</td>
-      <td class="px-2 py-1 text-right">${num0(r.total_assets)}</td>
-      <td class="px-2 py-1 text-right">${pct1(r.debt_to_assets)}</td>
       <td class="px-2 py-1 text-right">${pct1(r.roa)}</td>
-      <td class="px-2 py-1 text-right">${num0(r.capex)}</td>
+      <td class="px-2 py-1 text-right">${pct1(r.debt_to_assets)}</td>
       <td class="px-2 py-1 text-right">${num0(r.fleet_gt)}</td>
-      <td class="px-2 py-1 text-right">${num0(r.fleet_count)}</td>
     </tr>`;
   }).join("");
 }
@@ -947,9 +920,115 @@ function fillMapInsights() {
     : `<li class="text-slate-400">데이터 없음</li>`;
 }
 
+// ---------- PR-4: Cargo & Fleet (treemap + commodity bars + class donut + age bars) ----------
 async function renderCargoFleet() {
-  // Treemap + class donut + age bars land in PR-4.
   setupSourceLabels(document.getElementById("tab-cargo-fleet"));
+  let payload;
+  try { payload = await loadDerived("cargo_fleet.json"); }
+  catch (e) {
+    const host = document.getElementById("cf-treemap");
+    if (host) host.innerHTML = `<div class="text-sm text-yellow-800 p-3">cargo_fleet.json 로드 실패: ${e.message}</div>`;
+    return;
+  }
+  drawCargoTreemap(payload.treemap_categories || []);
+  drawCargoCommodityBars(payload.top_commodities || []);
+  drawFleetClassDonut(payload.class_counts || []);
+  drawFleetAgeBars(payload.age_bins?.bins || []);
+}
+
+function drawCargoTreemap(rows) {
+  if (!rows.length) return;
+  // Plotly treemap: parents="" creates a single-level treemap.
+  const labels = rows.map(r => r.category);
+  const values = rows.map(r => r.ton_total);
+  const palette = ["#1A3A6B", "#0284c7", "#059669", "#d97706", "#7c3aed",
+                   "#92400e", "#65a30d", "#475569", "#dc2626", "#0891b2",
+                   "#9333ea", "#be185d", "#84cc16", "#ea580c", "#0ea5e9"];
+  Plotly.newPlot("cf-treemap", [{
+    type: "treemap",
+    labels,
+    parents: rows.map(_ => ""),
+    values,
+    marker: { colors: palette.slice(0, rows.length), line: { width: 1, color: "#fff" } },
+    textinfo: "label+value+percent root",
+    texttemplate: "<b>%{label}</b><br>%{value:,.0f} ton<br>%{percentRoot:.1%}",
+    hovertemplate: "<b>%{label}</b><br>%{value:,.0f} tons<extra></extra>",
+  }], {
+    margin: { t: 10, l: 10, r: 10, b: 10 },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawCargoCommodityBars(rows) {
+  if (!rows.length) return;
+  const list = rows.slice().reverse();   // top item at top of chart
+  const tonMax = Math.max(...list.map(r => r.ton_total), 1);
+  Plotly.newPlot("cf-commodity-bar", [{
+    x: list.map(r => r.ton_total),
+    y: list.map(r => r.name),
+    type: "bar",
+    orientation: "h",
+    marker: {
+      color: list.map((_, i) => i === list.length - 1 ? "#1A3A6B" : "#56C0E0"),
+      line: { color: "#1e293b", width: 0.5 },
+    },
+    text: list.map(r => `${(r.ton_total / 1e9).toFixed(2)}B`),
+    textposition: "outside",
+    cliponaxis: false,
+    hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
+  }], {
+    margin: { t: 10, l: 130, r: 70, b: 40 },
+    xaxis: { title: "ton (24M)" },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawFleetClassDonut(rows) {
+  if (!rows.length) return;
+  const palette = {
+    "Container":     "#0284c7",
+    "Bulk Carrier":  "#7c3aed",
+    "Tanker":        "#1A3A6B",
+    "General Cargo": "#0891b2",
+    "Other Cargo":   "#65a30d",
+    "Other":         "#94a3b8",
+  };
+  Plotly.newPlot("cf-class-donut", [{
+    values: rows.map(r => r.count),
+    labels: rows.map(r => r.class),
+    type: "pie",
+    hole: 0.55,
+    marker: { colors: rows.map(r => palette[r.class] || "#94a3b8") },
+    textinfo: "label+percent",
+    hovertemplate: "<b>%{label}</b><br>%{value:,} 척 (%{percent})<extra></extra>",
+  }], {
+    margin: { t: 10, l: 20, r: 20, b: 30 },
+    legend: { orientation: "v", y: 0.5, x: 1.05 },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawFleetAgeBars(bins) {
+  if (!bins.length) return;
+  Plotly.newPlot("cf-age-bars", [{
+    x: bins.map(b => b.label),
+    y: bins.map(b => b.count),
+    type: "bar",
+    marker: {
+      color: bins.map(b => b.older ? "#dc2626" : "#1A3A6B"),
+      opacity: 0.85,
+    },
+    text: bins.map(b => b.count.toLocaleString()),
+    textposition: "outside",
+    hovertemplate: "<b>%{x}</b><br>%{y:,} 척<extra></extra>",
+    cliponaxis: false,
+  }], {
+    margin: { t: 30, l: 60, r: 20, b: 50 },
+    xaxis: { title: "선령" },
+    yaxis: { title: "선박 수" },
+    annotations: [{
+      x: 0.5, y: 1.08, xref: "paper", yref: "paper",
+      text: "<span style='color:#dc2626'>■</span> 25년 이상 (강조)",
+      showarrow: false, font: { size: 11, color: "#475569" },
+    }],
+  }, { displayModeBar: false, responsive: true });
 }
 
 boot().catch(e => {

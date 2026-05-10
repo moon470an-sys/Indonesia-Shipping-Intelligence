@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "treemap_categories": [
+    {
+      "category": "Curah Kering",
+      "ton_total": 3904262174.9,
+      "calls": 341823
+    },
+    {
+      "category": "Curah Cair",
+      "ton_total": 823284240.1,
+      "calls": 222089
+    },
+    {
+      "category": "Petikemas Antar Pulau",
+      "ton_total": 324290592.7,
+      "calls": 422771
+    },
+    {
+      "category": "Break Bulk",
+      "ton_total": 244045885.9,
+      "calls": 85446
+    },
+    {
+      "category": "Unitized",
+      "ton_total": 236915028.7,
+      "calls": 563008
+    },
+    {
+      "category": "Petikemas Internasional",
+      "ton_total": 234036147.1,
+      "calls": 94063
+    },
+    {
+      "category": "Bag Cargo",
+      "ton_total": 115632684.8,
+      "calls": 318237
+    },
+    {
+      "category": "Tanpa Bongkar Muat",
+      "ton_total": 118738.0,
+      "calls": 236
+    },
+    {
+      "category": "Ekor",
+      "ton_total": 65008.2,
+      "calls": 130
+    }
+  ],
+  "top_commodities": [
+    {
+      "name": "BATU BARA",
+      "ton_total": 1355221636.5
+    },
+    {
+      "name": "BATUBARA",
+      "ton_total": 944284466.9
+    },
+    {
+      "name": "NICKEL ORE",
+      "ton_total": 616726161.6
+    },
+    {
+      "name": "PETIKEMAS 20 FULL",
+      "ton_total": 138013350.2
+    },
+    {
+      "name": "COAL",
+      "ton_total": 77008186.0
+    },
+    {
+      "name": "PETIKEMAS 40 FULL",
+      "ton_total": 68337787.7
+    },
+    {
+      "name": "CPO",
+      "ton_total": 65018992.4
+    },
+    {
+      "name": "INDONESIAN STEAM COAL IN BULK",
+      "ton_total": 61373814.7
+    },
+    {
+      "name": "GENERAL CARGO",
+      "ton_total": 54631917.1
+    },
+    {
+      "name": "CRUDE OIL",
+      "ton_total": 47962407.5
+    }
+  ],
+  "class_counts": [
+    {
+      "class": "Container",
+      "count": 305
+    },
+    {
+      "class": "Bulk Carrier",
+      "count": 315
+    },
+    {
+      "class": "Tanker",
+      "count": 2415
+    },
+    {
+      "class": "General Cargo",
+      "count": 13478
+    },
+    {
+      "class": "Other Cargo",
+      "count": 13055
+    },
+    {
+      "class": "Other",
+      "count": 62453
+    }
+  ],
+  "age_bins": {
+    "bins": [
+      {
+        "label": "0-4 yr",
+        "count": 9603,
+        "older": false
+      },
+      {
+        "label": "5-9 yr",
+        "count": 14704,
+        "older": false
+      },
+      {
+        "label": "10-14 yr",
+        "count": 16195,
+        "older": false
+      },
+      {
+        "label": "15-19 yr",
+        "count": 14088,
+        "older": false
+      },
+      {
+        "label": "20-24 yr",
+        "count": 10041,
+        "older": false
+      },
+      {
+        "label": "25-29 yr",
+        "count": 8462,
+        "older": true
+      },
+      {
+        "label": "30-34 yr",
+        "count": 6613,
+        "older": true
+      },
+      {
+        "label": "35+ yr",
+        "count": 10296,
+        "older": true
+      }
+    ],
+    "current_year": 2026
+  }
+}
