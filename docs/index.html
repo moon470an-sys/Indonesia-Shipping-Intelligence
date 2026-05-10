@@ -3,8 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Indonesia Shipping Intelligence</title>
-  <meta name="description" content="Indonesia vessel registry + cargo monitoring dashboard" />
+  <title>Indonesia Shipping Intelligence — 인도네시아 해운 시장 정보 레퍼런스</title>
+  <meta name="description" content="인도네시아 해운 시장의 공개 데이터(LK3 물동량 · 선박 등록 · IDX 공시) 기반 정보 레퍼런스. 탱커 subclass 분석, OD 항로 흐름 지도, 상장 운영사 재무 비교." />
+  <meta name="author" content="ST International" />
+
+  <!-- Open Graph / social cards -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Indonesia Shipping Intelligence" />
+  <meta property="og:description" content="인도네시아 해운 시장 정보 레퍼런스 — Tanker · Cargo · Listed Operators" />
+  <meta property="og:url" content="https://moon470an-sys.github.io/Indonesia-Shipping-Intelligence/" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Indonesia Shipping Intelligence" />
+  <meta name="twitter:description" content="공개 데이터 기반 인도네시아 해운 시장 정보 레퍼런스" />
+
+  <link rel="canonical" href="https://moon470an-sys.github.io/Indonesia-Shipping-Intelligence/" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231A3A6B'/%3E%3Ctext x='32' y='44' font-size='42' text-anchor='middle' fill='white'%3E🚢%3C/text%3E%3C/svg%3E" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
   <!-- Renewal v2 (PR-2): d3 + topojson power the Home flow map -->
@@ -13,7 +28,8 @@
   <link rel="stylesheet" href="./css/site.css" />
 </head>
 <body class="bg-slate-50 text-slate-800">
-  <header class="app-header bg-slate-900 text-white">
+  <a href="#tab-overview" class="skip-link">본문으로 건너뛰기</a>
+  <header class="app-header bg-slate-900 text-white" role="banner">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
       <div class="flex items-center gap-3 flex-wrap">
         <div>
@@ -21,21 +37,21 @@
           <p class="text-[11px] text-slate-400 mt-0.5">공개 데이터 기반 인도네시아 해운 시장 정보 레퍼런스</p>
         </div>
         <span class="freshness-badge" id="header-freshness" title="데이터 기준일">
-          <span class="freshness-dot"></span><span id="header-freshness-text">loading…</span>
+          <span class="freshness-dot" aria-hidden="true"></span><span id="header-freshness-text">loading…</span>
         </span>
       </div>
-      <nav class="flex gap-1 text-sm flex-wrap" aria-label="Primary tabs">
-        <button data-tab="overview"      class="tab px-3 py-1.5 rounded bg-slate-700">🏠 Home</button>
-        <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700">🛢️ Tanker Sector</button>
-        <button data-tab="cargo-fleet"   class="tab px-3 py-1.5 rounded hover:bg-slate-700">📊 Cargo &amp; Fleet</button>
-        <button data-tab="financials"    class="tab px-3 py-1.5 rounded hover:bg-slate-700">💼 Listed Operators</button>
+      <nav class="flex gap-1 text-sm flex-wrap" aria-label="Primary tabs" role="tablist">
+        <button data-tab="overview"      class="tab px-3 py-1.5 rounded bg-slate-700"   role="tab" aria-selected="true"  aria-controls="tab-overview">🏠 Home</button>
+        <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-tanker-sector">🛢️ Tanker Sector</button>
+        <button data-tab="cargo-fleet"   class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-cargo-fleet">📊 Cargo &amp; Fleet</button>
+        <button data-tab="financials"    class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-financials">💼 Listed Operators</button>
       </nav>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
+  <main id="main-content" class="max-w-7xl mx-auto px-4 py-6" role="main">
     <!-- Home (PR-1 placeholder; KPI 4 + map + timeseries land in PR-3 / PR-2) -->
-    <section id="tab-overview" class="tab-panel">
+    <section id="tab-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-overview" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">🏠 Home</h2>
         <p class="text-sm text-slate-500">인도네시아 해운 시장을 5분 안에. KPI 4 → 지도 → 24M 추이.</p>
@@ -117,7 +133,7 @@
     </section>
 
     <!-- Cargo & Fleet (PR-1 placeholder; treemap + donut + age bars land in PR-4) -->
-    <section id="tab-cargo-fleet" class="tab-panel hidden">
+    <section id="tab-cargo-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">📊 Cargo &amp; Fleet</h2>
         <p class="text-sm text-slate-500">화물 카테고리 트리맵 · 품목 Top 10 · Class 도넛 · 선령 분포.</p>
@@ -145,7 +161,7 @@
     </section>
 
     <!-- Listed Operators -->
-    <section id="tab-financials" class="tab-panel hidden">
+    <section id="tab-financials" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">💼 Listed Operators</h2>
         <p class="text-sm text-slate-500">IDX 상장 해운 운영사의 재무 + 선대 비교. 단위: IDR billion (10억 루피아) · 선대 GT는 kGT.</p>
@@ -205,7 +221,7 @@
     </section>
 
     <!-- Tanker Sector (renewal v2 — spec §5) -->
-    <section id="tab-tanker-sector" class="tab-panel hidden">
+    <section id="tab-tanker-sector" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">🛢️ Tanker Sector</h2>
         <p class="text-sm text-slate-500">탱커 시장 심화 — Subclass 카드 · 시장 구조 · 24M 추이 · Top 코모디티 · Top 운영사.</p>
