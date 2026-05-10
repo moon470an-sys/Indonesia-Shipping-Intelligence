@@ -88,6 +88,14 @@ const GLOSSARY = {
   "YoY":     "Year-over-Year — 직전 12개월 합계 대비 변동률.",
 };
 
+// PR-7: tiny helpers for consistent empty + error UI across widgets.
+function emptyState(message, icon = "📭") {
+  return `<div class="state-empty"><div class="state-icon">${icon}</div><div>${message}</div></div>`;
+}
+function errorState(message, icon = "⚠️") {
+  return `<div class="state-error"><div class="state-icon">${icon}</div><div>${message}</div></div>`;
+}
+
 // Returns the markup for a small ⓘ badge. Used inline in template strings.
 function infoBadge(term) {
   const def = GLOSSARY[term];
@@ -216,8 +224,9 @@ async function renderTankerSector() {
       loadDerived("tanker_top.json"),
     ]);
   } catch (e) {
-    cardHost.innerHTML = `<div class="bg-yellow-50 text-yellow-900 text-sm p-3 rounded col-span-full">
-      Tanker Sector: derived JSON 로드 실패 (${e.message}). <code>python scripts/build_derived.py</code>를 실행하세요.</div>`;
+    cardHost.innerHTML = `<div class="col-span-full">${errorState(
+      `Tanker Sector derived JSON 로드 실패: ${e.message}. <code>python scripts/build_derived.py</code>를 실행하세요.`
+    )}</div>`;
     return;
   }
 
@@ -480,17 +489,8 @@ function renderFinancials() {
     return;
   }
 
-  // Disclaimer banner
-  const meta = f.metadata || {};
-  const allPlaceholder = f.companies.every(c => c.data_quality === "estimated_placeholder");
-  if (meta.source || allPlaceholder) {
-    const banner = document.getElementById("fn-banner");
-    const bannerTxt = document.getElementById("fn-banner-text");
-    banner.classList.remove("hidden");
-    bannerTxt.textContent =
-      ` ${meta.source || ""} (last updated ${meta.last_updated || "—"})`
-      + (allPlaceholder ? " — 모든 수치는 placeholder로, 외부 사용 전 IDX 사업보고서로 검증 필요." : "");
-  }
+  // PR-7: fn-banner element removed; the global footer + Listed Operators
+  // tab description already carry the IDX source attribution.
 
   // First-time setup: populate year dropdown + bind listeners
   if (!fnState.initialized) {
@@ -996,7 +996,7 @@ async function renderCargoFleet() {
   try { payload = await loadDerived("cargo_fleet.json"); }
   catch (e) {
     const host = document.getElementById("cf-treemap");
-    if (host) host.innerHTML = `<div class="text-sm text-yellow-800 p-3">cargo_fleet.json 로드 실패: ${e.message}</div>`;
+    if (host) host.innerHTML = errorState(`cargo_fleet.json 로드 실패: ${e.message}`);
     return;
   }
   drawCargoTreemap(payload.treemap_categories || []);
@@ -1103,5 +1103,5 @@ function drawFleetAgeBars(bins) {
 boot().catch(e => {
   console.error(e);
   document.body.insertAdjacentHTML("afterbegin",
-    `<div class="bg-red-100 text-red-800 p-4">데이터 로드 실패: ${e.message}</div>`);
+    `<div class="m-4">${errorState(`초기 데이터 로드 실패: ${e.message}`)}</div>`);
 });

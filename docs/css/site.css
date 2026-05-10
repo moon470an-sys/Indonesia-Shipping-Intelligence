@@ -127,6 +127,48 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
+/* PR-7: Skeleton loaders. Use a CSS-only shimmer so we don't need
+   any JS animation library. Apply .skeleton or .skeleton-line to a
+   placeholder div whose width sets the bone size. */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton, .skeleton-line, .skeleton-block {
+  background: linear-gradient(90deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+  color: transparent;
+  user-select: none;
+}
+.skeleton-line { height: 14px; margin: 4px 0; }
+.skeleton-block { width: 100%; height: 100%; min-height: 80px; }
+.skeleton-value { height: 36px; width: 60%; border-radius: 4px; }
+
+/* Empty / error state cards */
+.state-empty, .state-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  font-size: 13px;
+}
+.state-empty {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+}
+.state-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px dashed #fca5a5;
+}
+.state-icon { font-size: 22px; margin-bottom: 8px; opacity: 0.8; }
 table tbody tr:nth-child(even) { background:#fafafa; }
 table tbody tr:hover { background:#fef3c7; }
 .heatmap-cell { width:24px; height:24px; }
