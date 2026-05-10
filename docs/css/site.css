@@ -238,6 +238,42 @@ section.tab-panel h3::before {
   outline: 2px solid #56C0E0;
   outline-offset: 2px;
 }
+
+/* PR-11: Map controls — slightly tighter button group, denser on mobile */
+#home-map-controls .flex.rounded.border button {
+  border-right: 1px solid #e2e8f0;
+}
+#home-map-controls .flex.rounded.border button:last-child {
+  border-right: none;
+}
+#home-map-controls .flex.rounded.border button:focus-visible {
+  outline: 2px solid #56C0E0;
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+/* Legend item button reset (renders inline as a list item) */
+.map-legend-item {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  color: inherit;
+  font-family: inherit;
+}
+.map-legend-item:focus-visible {
+  outline: 2px solid #56C0E0;
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+/* Mobile: shrink the map sidebar font, stack things tighter */
+@media (max-width: 768px) {
+  #home-map-controls { font-size: 11px; }
+  .freshness-badge { font-size: 10px; padding: 1px 6px; }
+  .kpi-card-large { min-height: 110px; padding: 1rem; }
+  .kpi-value-large { font-size: clamp(24px, 6vw, 36px); }
+}
 table tbody tr:nth-child(even) { background:#fafafa; }
 table tbody tr:hover { background:#fef3c7; }
 .heatmap-cell { width:24px; height:24px; }
