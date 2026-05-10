@@ -1046,6 +1046,72 @@ def vessel_utilization(snapshot_month: str) -> pd.DataFrame:
     return merged
 
 
+def cargo_vessel_utilization(snapshot_month: str) -> pd.DataFrame:
+    """Per-cargo-vessel LK3 activity intensity, across all cargo classes.
+
+    Generalizes `vessel_utilization` (tanker-only) to the full cargo fleet
+    by joining `cargo_vessels_full` to `cargo_flows` via uppercase-stripped
+    vessel name. Returns one row per cargo vessel with the same activity
+    columns plus the `vessel_class` and `tanker_subclass` annotations from
+    the fleet side.
+
+    Bucketing (24mo window):
+
+    * Idle (<25%) ........ months_active < 6
+    * Light (25–50%) ..... 6–12 months active
+    * Active (50–75%) .... 12–18 months active
+    * Heavy (≥75%) ....... ≥18 months active
+
+    Notes
+    -----
+    Name-only matching (no IMO). Same caveats as `vessel_utilization`.
+    """
+    fleet = cargo_vessels_full(snapshot_month)
+    flows = cargo_flows(snapshot_month)
+    if fleet.empty:
+        return pd.DataFrame()
+
+    fleet = fleet.assign(
+        kapal_norm=fleet["nama_kapal"].fillna("").str.upper().str.strip(),
+    )
+
+    if flows.empty:
+        merged = fleet.copy()
+        for col, default in (("activity_rows", 0), ("months_active", 0),
+                              ("total_ton", 0.0), ("unique_operators", 0),
+                              ("unique_ports", 0)):
+            merged[col] = default
+    else:
+        flows = flows.assign(
+            kapal_norm=flows["kapal"].fillna("").str.upper().str.strip(),
+            ton_total=(pd.to_numeric(flows["bongkar_ton"], errors="coerce").fillna(0)
+                        + pd.to_numeric(flows["muat_ton"], errors="coerce").fillna(0)),
+        )
+        activity = (flows.groupby("kapal_norm")
+                          .agg(activity_rows=("kapal", "size"),
+                               months_active=("period", "nunique"),
+                               total_ton=("ton_total", "sum"),
+                               unique_operators=("operator", "nunique"),
+                               unique_ports=("kode_pelabuhan", "nunique"))
+                          .reset_index())
+        merged = fleet.merge(activity, on="kapal_norm", how="left").fillna({
+            "activity_rows": 0, "months_active": 0, "total_ton": 0.0,
+            "unique_operators": 0, "unique_ports": 0,
+        })
+
+    merged = merged[merged["kapal_norm"] != ""].copy()
+    merged["util_pct"] = (merged["months_active"] / 24.0 * 100).round(1)
+
+    def _tier(pct: float) -> str:
+        if pct >= 75:   return "Heavy (≥75%)"
+        if pct >= 50:   return "Active (50–75%)"
+        if pct >= 25:   return "Light (25–50%)"
+        return "Idle (<25%)"
+
+    merged["status"] = merged["util_pct"].map(_tier)
+    return merged
+
+
 def vessel_lookup(name_q: str = "", imo_q: str = "",
                    limit: int = 50) -> pd.DataFrame:
     """Search ``vessels_snapshot`` across all snapshots.

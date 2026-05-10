@@ -101,6 +101,8 @@ def _residual_fleet_anomalies(m): return q.residual_fleet_anomalies(m)
 @st.cache_data(ttl=1800)
 def _vessel_utilization(m): return q.vessel_utilization(m)
 @st.cache_data(ttl=1800)
+def _cargo_vessel_utilization(m): return q.cargo_vessel_utilization(m)
+@st.cache_data(ttl=1800)
 def _korean_tankers(m): return q.korean_affiliated_tankers(m)
 @st.cache_data(ttl=1800)
 def _pertamina_fleet(m): return q.pertamina_fleet(m)
@@ -453,10 +455,11 @@ def page_fleet():
     st.markdown("---")
 
     # ---------------- Sub-tabs ----------------
-    sub_comp, sub_age, sub_owner, sub_list = st.tabs(
+    sub_comp, sub_age, sub_owner, sub_util, sub_list = st.tabs(
         ["📊 구성 (Class · Subclass)",
          "📅 선령 / 연도 분포",
          "🏢 선주 · 국적",
+         "🛳️ 가동률 (Class별)",
          "📋 선박 리스트"]
     )
 
@@ -630,7 +633,125 @@ def page_fleet():
                                   coloraxis_showscale=False)
                 st.plotly_chart(fig, width="stretch")
 
-    # ============ 4) Sortable list ============
+    # ============ 4) Utilization (cross-class) ============
+    with sub_util:
+        st.caption(
+            "**가동률 정의**: LK3 (cargo_snapshot)에 등장한 24개월 중 활동 개월 수. "
+            "Heavy ≥18mo · Active 12–18mo · Light 6–12mo · Idle <6mo. "
+            "매칭은 등기 `nama_kapal` ↔ LK3 `KAPAL` 대문자 동일 — "
+            "동명/표기차 false negative 가능."
+        )
+        with st.spinner("선박-cargo 매칭 중…"):
+            util = _cargo_vessel_utilization(snapshot)
+
+        if util.empty:
+            st.info("가동률 데이터를 계산할 수 없습니다.")
+        else:
+            # Restrict to currently-filtered fleet (by vessel_key)
+            keep_keys = set(fdf["vessel_key"].dropna().tolist())
+            uview = util[util["vessel_key"].isin(keep_keys)] if keep_keys \
+                       else util
+
+            if uview.empty:
+                st.info("현재 필터 조건에 해당하는 가동률 데이터 없음.")
+            else:
+                # ---- KPI row ----
+                n = len(uview)
+                n_idle = int((uview["status"] == "Idle (<25%)").sum())
+                n_heavy = int((uview["status"] == "Heavy (≥75%)").sum())
+                idle_gt = float(pd.to_numeric(
+                    uview.loc[uview["status"] == "Idle (<25%)", "gt"],
+                    errors="coerce").fillna(0).sum())
+                cols = st.columns(5)
+                kpi(cols[0], "분석 선박", fmt.fmt_int(n))
+                kpi(cols[1], "Idle 선박", fmt.fmt_int(n_idle))
+                kpi(cols[2], "Idle 비율", fmt.fmt_pct(n_idle / n * 100))
+                kpi(cols[3], "Idle 총 GT", fmt.fmt_gt(idle_gt),
+                    help="유휴 선대의 총 GT — 자본 매몰 규모")
+                kpi(cols[4], "Heavy 선박", fmt.fmt_int(n_heavy),
+                    help="24개월 중 ≥ 18개월 활동 — 핵심 운영 자산")
+
+                # ---- Per-class breakdown ----
+                cA, cB = st.columns([2, 3])
+                with cA:
+                    st.markdown("**Class별 가동률 분포 (척수)**")
+                    mat = (uview.groupby(["vessel_class", "status"])
+                                .size().reset_index(name="n"))
+                    pivot = mat.pivot_table(index="vessel_class",
+                                              columns="status",
+                                              values="n", fill_value=0)
+                    status_order = ["Idle (<25%)", "Light (25–50%)",
+                                     "Active (50–75%)", "Heavy (≥75%)"]
+                    pivot = pivot.reindex(columns=[s for s in status_order
+                                                       if s in pivot.columns],
+                                            fill_value=0)
+                    pivot["Total"] = pivot.sum(axis=1)
+                    pivot["Idle_%"] = (pivot.get("Idle (<25%)", 0)
+                                          / pivot["Total"] * 100).round(1)
+                    pivot["Heavy_%"] = (pivot.get("Heavy (≥75%)", 0)
+                                           / pivot["Total"] * 100).round(1)
+                    pivot = pivot.sort_values("Total", ascending=False)
+                    theme.dataframe(pivot.reset_index())
+
+                with cB:
+                    st.markdown("**Class별 Idle 비율 (높을수록 매물·차터 후보 多)**")
+                    cls_idle = (uview.groupby("vessel_class")
+                                      .agg(n=("vessel_key", "count"),
+                                           idle_n=("status",
+                                                    lambda s: (s == "Idle (<25%)").sum()))
+                                      .reset_index())
+                    cls_idle["idle_pct"] = (cls_idle["idle_n"]
+                                                / cls_idle["n"] * 100).round(1)
+                    cls_idle = cls_idle.sort_values("idle_pct",
+                                                       ascending=True)
+                    fig = px.bar(cls_idle, x="idle_pct", y="vessel_class",
+                                  orientation="h", color="vessel_class",
+                                  color_discrete_map=_CARGO_CLASS_PALETTE,
+                                  hover_data=["n", "idle_n"],
+                                  labels={"idle_pct": "Idle 비율 (%)",
+                                            "vessel_class": ""})
+                    fig.update_layout(height=320, margin=dict(t=10, b=10),
+                                       showlegend=False)
+                    st.plotly_chart(fig, width="stretch")
+
+                # ---- Status × Class stacked bar ----
+                st.markdown("**상태별 척수 (Class 누적)**")
+                fig = px.bar(mat, x="vessel_class", y="n",
+                              color="status",
+                              category_orders={"status": status_order},
+                              color_discrete_map=_UTIL_PALETTE,
+                              labels={"vessel_class": "", "n": "척수"})
+                fig.update_layout(height=360, margin=dict(t=10, b=10),
+                                   barmode="stack",
+                                   legend=dict(orientation="h", y=-0.2,
+                                                font=dict(size=10)))
+                st.plotly_chart(fig, width="stretch")
+
+                # ---- High-value idle list ----
+                st.markdown("##### 💎 고가치 유휴 화물선 Top 30 (GT 큰 순)")
+                idle_top = (uview[uview["status"] == "Idle (<25%)"]
+                                .dropna(subset=["gt"])
+                                .sort_values("gt", ascending=False)
+                                .head(30))
+                if idle_top.empty:
+                    st.info("Idle 분류 선박 없음")
+                else:
+                    show_cols = ["nama_kapal", "vessel_class",
+                                  "tanker_subclass", "nama_pemilik",
+                                  "bendera", "gt", "tahun", "age",
+                                  "months_active", "total_ton", "util_pct"]
+                    show_cols = [c for c in show_cols
+                                    if c in idle_top.columns]
+                    theme.dataframe(idle_top[show_cols])
+                    util_export_cols = show_cols + ["status"]
+                    util_export_cols = [c for c in util_export_cols
+                                            if c in uview.columns]
+                    _csv_button(uview[util_export_cols],
+                                 f"cargo_vessel_utilization_{snapshot}.csv",
+                                 label="📥 가동률 전체 CSV",
+                                 key="ft_dl_util")
+
+    # ============ 5) Sortable list ============
     with sub_list:
         st.markdown("**선박 리스트** — 컬럼 헤더 클릭으로 정렬, 검색/CSV 다운로드 지원")
         cA, cB = st.columns([1, 1])
