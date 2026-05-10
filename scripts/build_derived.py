@@ -494,9 +494,23 @@ def build_home_kpi() -> dict:
     # ---- Tanker fleet (count + GT-weighted avg age) ----
     age_stats, fleet_summary = build_tanker_age_stats(src_meta.get("latest"))
 
+    # ---- PR-16: 5-sector breakdown for Home sidebar mini-bars ----
+    top_sectors = kpi.get("top_sectors") or []
+    sector_breakdown = [
+        {
+            "sector": s.get("sector"),
+            "ton": round(s.get("ton") or 0, 1),
+            "pct_ton": round(s.get("pct_ton") or 0, 2),
+            "color": SECTOR_PALETTE_5.get(s.get("sector"), "#6b7280"),
+        }
+        for s in top_sectors
+        if s.get("sector") not in ("UNMAPPED",)
+    ]
+
     return {
         "schema_version": 1,
         "snapshot_month": src_meta.get("latest"),
+        "sector_breakdown": sector_breakdown,
         "kpis": [
             {
                 "id": "total_12m_ton",

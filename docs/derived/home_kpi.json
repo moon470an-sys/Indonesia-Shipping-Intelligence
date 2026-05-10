@@ -1,6 +1,38 @@
 {
   "schema_version": 1,
   "snapshot_month": "2026-05",
+  "sector_breakdown": [
+    {
+      "sector": "CARGO",
+      "ton": 245110042.5,
+      "pct_ton": 99.38,
+      "color": "#1A3A6B"
+    },
+    {
+      "sector": "PASSENGER",
+      "ton": 1246389.6,
+      "pct_ton": 0.51,
+      "color": "#0d9488"
+    },
+    {
+      "sector": "OFFSHORE_SUPPORT",
+      "ton": 237829.0,
+      "pct_ton": 0.1,
+      "color": "#475569"
+    },
+    {
+      "sector": "FISHING",
+      "ton": 35871.8,
+      "pct_ton": 0.01,
+      "color": "#d97706"
+    },
+    {
+      "sector": "NON_COMMERCIAL",
+      "ton": 6.0,
+      "pct_ton": 0,
+      "color": "#6b7280"
+    }
+  ],
   "kpis": [
     {
       "id": "total_12m_ton",
