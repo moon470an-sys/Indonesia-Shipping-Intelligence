@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "events": [
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: QUANTUM HARMONY  GT 164,630  owner: PT PRIMA SENTOSA TANGGUH",
+      "_meta": {
+        "vessel_key": "NM:QUANTUM HARMONY|",
+        "gt": 164630.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: SUCCESS FORTUNE XL  GT 158,764  owner: PT. SUKSES OCEAN KHATULISTIWA LINE",
+      "_meta": {
+        "vessel_key": "NM:SUCCESS FORTUNE XL|",
+        "gt": 158764.0,
+        "jenis_kapal_code": "1.5.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GAGAK RIMANG  GT 157,303  owner: SATUAN KERJA KHUSUS PELAKSANA KEGIATAN USAHA HULU MINYAK DAN GAS BUMI (SKK MIGAS)",
+      "_meta": {
+        "vessel_key": "NM:GAGAK RIMANG|",
+        "gt": 157303.0,
+        "jenis_kapal_code": "1.3.6"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: PNS SERENA  GT 157,245  owner: PT. PATRIA NUSASEGARA",
+      "_meta": {
+        "vessel_key": "NM:PNS SERENA|",
+        "gt": 157245.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: BELANAK NATUNA  GT 132,371  owner: BP MIGAS",
+      "_meta": {
+        "vessel_key": "NM:BELANAK NATUNA|",
+        "gt": 132371.0,
+        "jenis_kapal_code": "1.3.5"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: ARUNIKA JAYA  GT 119,393  owner: PT MOL GAS MARITIME SOLUTIONS INDONESIA",
+      "_meta": {
+        "vessel_key": "NM:ARUNIKA JAYA|",
+        "gt": 119393.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: LADY EVA  GT 111,835  owner: PT MITRAUSAHA TANKER PERSADA",
+      "_meta": {
+        "vessel_key": "NM:LADY EVA|",
+        "gt": 111835.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: PRIMA CARRIER  GT 111,539  owner: PT. PRIMA OSEAN NUSANTARA",
+      "_meta": {
+        "vessel_key": "NM:PRIMA CARRIER|",
+        "gt": 111539.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: PGN FSRU LAMPUNG  GT 109,671  owner: PT. HOEGH LNG LAMPUNG",
+      "_meta": {
+        "vessel_key": "NM:PGN FSRU LAMPUNG|",
+        "gt": 109671.0,
+        "jenis_kapal_code": "1.4.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: EKAPUTRA 1  GT 109,281  owner: PT. HIKMAH SARANA BAHARI",
+      "_meta": {
+        "vessel_key": "NM:EKAPUTRA 1|",
+        "gt": 109281.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: JAWA SATU  GT 106,900  owner: PT. JAWA SATU REGAS",
+      "_meta": {
+        "vessel_key": "NM:JAWA SATU|",
+        "gt": 106900.0,
+        "jenis_kapal_code": "1.4.4"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GAS GARUDA  GT 97,561  owner: PT ASIA SAMUDRA LINE",
+      "_meta": {
+        "vessel_key": "NM:GAS GARUDA|",
+        "gt": 97561.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: NUSANTARA REGAS SATU  GT 96,700  owner: PT ENERGOS INFRASTRUCTURE INDONESIA",
+      "_meta": {
+        "vessel_key": "NM:NUSANTARA REGAS SATU|",
+        "gt": 96700.0,
+        "jenis_kapal_code": "1.4.4"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: DANAPUTRI 1  GT 95,753  owner: PT GTS INTERNASIONAL Tbk",
+      "_meta": {
+        "vessel_key": "NM:DANAPUTRI 1|",
+        "gt": 95753.0,
+        "jenis_kapal_code": "1.4.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GOLDEN ISAIA  GT 95,753  owner: PT. GOLDEN PRIMA MARITIM",
+      "_meta": {
+        "vessel_key": "NM:GOLDEN ISAIA|",
+        "gt": 95753.0,
+        "jenis_kapal_code": "1.4.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: LNG AQUARIUS  GT 95,084  owner: PT. HANOCHEM SHIPPING",
+      "_meta": {
+        "vessel_key": "NM:LNG AQUARIUS|",
+        "gt": 95084.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: SC SERENITY  GT 94,934  owner: PT LAUTAN ARMADA NUSANTARA",
+      "_meta": {
+        "vessel_key": "NM:SC SERENITY|",
+        "gt": 94934.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: PRIMA CONCORD  GT 93,410  owner: PT PRIMA PASIFIK NUSANTARA",
+      "_meta": {
+        "vessel_key": "NM:PRIMA CONCORD|",
+        "gt": 93410.0,
+        "jenis_kapal_code": "1.4.3"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: JENGGALA NASSIM  GT 81,510  owner: PT. JENGGALA MARITIM NUSANTARA",
+      "_meta": {
+        "vessel_key": "NM:JENGGALA NASSIM|",
+        "gt": 81510.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: SHIP 115  GT 76,216  owner: PT. SUASA BENUA SUKSES",
+      "_meta": {
+        "vessel_key": "NM:SHIP 115|",
+        "gt": 76216.0,
+        "jenis_kapal_code": "1.3.6"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: LADINDA  GT 67,255  owner: PT. EMHA TARA NAVINDO",
+      "_meta": {
+        "vessel_key": "NM:LADINDA|",
+        "gt": 67255.0,
+        "jenis_kapal_code": "1.7.63"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: KAKAP NATUNA  GT 67,192  owner: SKK MIGAS",
+      "_meta": {
+        "vessel_key": "NM:KAKAP NATUNA|",
+        "gt": 67192.0,
+        "jenis_kapal_code": "1.3.6"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: SHIP 114  GT 66,084  owner: PT. SILLOMARITIME PERDANA TBK",
+      "_meta": {
+        "vessel_key": "NM:SHIP 114|",
+        "gt": 66084.0,
+        "jenis_kapal_code": "1.3.6"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: H MANADO  GT 64,642  owner: PT SAUDARA SAMUDERA NUSANTARA",
+      "_meta": {
+        "vessel_key": "NM:H MANADO|",
+        "gt": 64642.0,
+        "jenis_kapal_code": "1.1.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GOLDEN SPLENDOR  GT 63,661  owner: PT PELAYARAN SUKSES PERSADA",
+      "_meta": {
+        "vessel_key": "NM:GOLDEN SPLENDOR|",
+        "gt": 63661.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GAMALAMA  GT 63,005  owner: PT PERTAMINA PATRA NIAGA",
+      "_meta": {
+        "vessel_key": "NM:GAMALAMA|",
+        "gt": 63005.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GAMKONORA  GT 63,005  owner: PT PERTAMINA PATRA NIAGA",
+      "_meta": {
+        "vessel_key": "NM:GAMKONORA|",
+        "gt": 63005.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: GEDE  GT 63,005  owner: PT PERTAMINA PATRA NIAGA",
+      "_meta": {
+        "vessel_key": "NM:GEDE|",
+        "gt": 63005.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: PERTAMINA GALUNGGUNG  GT 63,005  owner: PT MIANGAS BAHTERA LAJU ABADI",
+      "_meta": {
+        "vessel_key": "NM:PERTAMINA GALUNGGUNG|",
+        "gt": 63005.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    },
+    {
+      "date": "2026-05",
+      "type": "new_registration",
+      "summary": "등록 선박: SAVIR TIGER  GT 62,863  owner: PT SAPPHIRE MARITIME",
+      "_meta": {
+        "vessel_key": "NM:SAVIR TIGER|",
+        "gt": 62863.0,
+        "jenis_kapal_code": "1.3.1"
+      },
+      "chart_link": "#tab-fleet"
+    }
+  ],
+  "_notes": {
+    "v0_mode": "Baseline-only snapshot (one cargo/vessel month). All vessels are ADDED records — the v0 surfaces top-30 by GT as a sample. Genuine MoM event detection (port_change, fleet_change, subclass volume_change) activates once a second snapshot lands.",
+    "thresholds_pending": {
+      "new_registration": "GT ≥ 5,000 + tanker subclass",
+      "port_change": "ABS(MoM ton delta_pct) ≥ 50%",
+      "fleet_change": "owner ±3 vessels in 1 month",
+      "volume_change": "subclass MoM ton delta_pct ≥ 30%"
+    }
+  }
+}

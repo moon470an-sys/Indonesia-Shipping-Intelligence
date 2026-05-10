@@ -1,0 +1,948 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "top_n": 60,
+  "routes": [
+    {
+      "origin": "TUBAN",
+      "destination": "BALIKPAPAN",
+      "ton_24m": 2729135.6,
+      "calls_24m": 117,
+      "vessels_seen": 89,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "FAME",
+        "LPG",
+        "Naphtha",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "TUBAN",
+      "ton_24m": 2668383.0,
+      "calls_24m": 114,
+      "vessels_seen": 72,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "기타",
+        "기타 식용유",
+        "아스팔트"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "DUMAI",
+      "ton_24m": 2553007.0,
+      "calls_24m": 88,
+      "vessels_seen": 55,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "CILACAP",
+      "ton_24m": 2325042.2,
+      "calls_24m": 111,
+      "vessels_seen": 62,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "Kerosene",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "TUBAN",
+      "ton_24m": 2304923.9,
+      "calls_24m": 136,
+      "vessels_seen": 105,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "Kerosene",
+        "LPG",
+        "Naphtha",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "CILACAP",
+      "ton_24m": 2174499.9,
+      "calls_24m": 115,
+      "vessels_seen": 78,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "Naphtha",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "TUBAN",
+      "ton_24m": 2100519.0,
+      "calls_24m": 64,
+      "vessels_seen": 46,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TUBAN",
+      "ton_24m": 1956735.0,
+      "calls_24m": 88,
+      "vessels_seen": 60,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "Kerosene",
+        "기타",
+        "기타 식용유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "BALIKPAPAN",
+      "ton_24m": 1786627.1,
+      "calls_24m": 94,
+      "vessels_seen": 74,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "기타",
+        "기타 식용유",
+        "아스팔트"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "BALONGAN",
+      "ton_24m": 1303415.7,
+      "calls_24m": 52,
+      "vessels_seen": 40,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "Crude",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "TELUK SEMANGKA",
+      "ton_24m": 1280316.0,
+      "calls_24m": 33,
+      "vessels_seen": 31,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "MUNTOK",
+      "ton_24m": 1274196.8,
+      "calls_24m": 50,
+      "vessels_seen": 32,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TANJUNG GEREM",
+      "destination": "TANJUNG PRIOK",
+      "ton_24m": 1269928.9,
+      "calls_24m": 14,
+      "vessels_seen": 13,
+      "buckets": [
+        "FAME",
+        "기타",
+        "벙커유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "BELAWAN",
+      "ton_24m": 1229983.7,
+      "calls_24m": 108,
+      "vessels_seen": 80,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "LPG",
+        "기타",
+        "기타 식용유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "BALONGAN",
+      "ton_24m": 1220854.2,
+      "calls_24m": 47,
+      "vessels_seen": 30,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "Crude",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "KABIL",
+      "destination": "BELAWAN",
+      "ton_24m": 1198866.6,
+      "calls_24m": 103,
+      "vessels_seen": 57,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "기타",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TELUK SEMANGKA",
+      "destination": "TUBAN",
+      "ton_24m": 1160690.0,
+      "calls_24m": 43,
+      "vessels_seen": 28,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "BALONGAN",
+      "ton_24m": 1103765.0,
+      "calls_24m": 45,
+      "vessels_seen": 35,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "Kerosene",
+        "Naphtha",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BELAWAN",
+      "destination": "KABIL",
+      "ton_24m": 1063086.7,
+      "calls_24m": 90,
+      "vessels_seen": 61,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "기타",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "SEMAMPIR",
+      "ton_24m": 1051712.0,
+      "calls_24m": 70,
+      "vessels_seen": 42,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "기타",
+        "기타 식용유",
+        "벙커유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "BALIKPAPAN",
+      "ton_24m": 1028105.8,
+      "calls_24m": 45,
+      "vessels_seen": 28,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "LHOKSEUMAWE",
+      "destination": "BELAWAN",
+      "ton_24m": 1017869.9,
+      "calls_24m": 218,
+      "vessels_seen": 15,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "기타",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TG. PRIOK",
+      "ton_24m": 1012182.0,
+      "calls_24m": 44,
+      "vessels_seen": 33,
+      "buckets": [
+        "BBM-디젤",
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TANJUNG UBAN",
+      "ton_24m": 967145.0,
+      "calls_24m": 96,
+      "vessels_seen": 45,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "FAME",
+        "LPG",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "BALIKPAPAN",
+      "ton_24m": 931541.4,
+      "calls_24m": 77,
+      "vessels_seen": 61,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "Naphtha",
+        "기타",
+        "기타 식용유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "DUMAI",
+      "ton_24m": 913447.4,
+      "calls_24m": 23,
+      "vessels_seen": 20,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "Crude",
+        "Kerosene",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "KABIL",
+      "ton_24m": 903401.7,
+      "calls_24m": 222,
+      "vessels_seen": 91,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "LPG",
+        "기타",
+        "기타 식용유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "MUNTOK",
+      "destination": "BALONGAN",
+      "ton_24m": 899963.0,
+      "calls_24m": 20,
+      "vessels_seen": 15,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TELUK KABUNG",
+      "ton_24m": 867127.0,
+      "calls_24m": 63,
+      "vessels_seen": 40,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "BBM-항공유",
+        "LPG",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "BANYUWANGI",
+      "ton_24m": 863111.0,
+      "calls_24m": 52,
+      "vessels_seen": 38,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "LPG",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "KOTABARU - BATULICIN",
+      "destination": "TARJUN",
+      "ton_24m": 831043.2,
+      "calls_24m": 209,
+      "vessels_seen": 56,
+      "buckets": [
+        "BBM-디젤",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "기타 식용유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "PANJANG",
+      "destination": "TARAHAN",
+      "ton_24m": 815815.7,
+      "calls_24m": 206,
+      "vessels_seen": 53,
+      "buckets": [
+        "CPO/팜오일",
+        "Crude",
+        "기타",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TELUK JAKARTA",
+      "destination": "PATIMBAN",
+      "ton_24m": 809370.3,
+      "calls_24m": 15,
+      "vessels_seen": 5,
+      "buckets": [
+        "BBM-디젤",
+        "LNG"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "CILACAP",
+      "ton_24m": 802295.7,
+      "calls_24m": 40,
+      "vessels_seen": 35,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "Crude",
+        "Kerosene",
+        "LPG",
+        "Naphtha",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CINTA",
+      "destination": "TUBAN",
+      "ton_24m": 801256.0,
+      "calls_24m": 35,
+      "vessels_seen": 16,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "MUNTOK",
+      "destination": "TUBAN",
+      "ton_24m": 780597.0,
+      "calls_24m": 42,
+      "vessels_seen": 28,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "LAWE-LAWE",
+      "ton_24m": 778984.7,
+      "calls_24m": 23,
+      "vessels_seen": 12,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TANJUNG PRIOK",
+      "destination": "BALONGAN",
+      "ton_24m": 753175.0,
+      "calls_24m": 33,
+      "vessels_seen": 18,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "Crude",
+        "Kerosene",
+        "LPG",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "PATIMBAN",
+      "destination": "TELUK JAKARTA",
+      "ton_24m": 752204.6,
+      "calls_24m": 14,
+      "vessels_seen": 4,
+      "buckets": [
+        "LNG",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "CILACAP",
+      "ton_24m": 749737.3,
+      "calls_24m": 38,
+      "vessels_seen": 33,
+      "buckets": [
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "FAME",
+        "LPG",
+        "Naphtha",
+        "기타",
+        "기타 식용유",
+        "아스팔트"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "TANJUNG PRIOK",
+      "ton_24m": 744413.4,
+      "calls_24m": 67,
+      "vessels_seen": 51,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "Naphtha",
+        "기타",
+        "벙커유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "DUMAI",
+      "ton_24m": 740375.0,
+      "calls_24m": 45,
+      "vessels_seen": 44,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "FAME",
+        "Kerosene",
+        "기타",
+        "기타 식용유",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TG. PRIOK",
+      "destination": "DUMAI",
+      "ton_24m": 715376.0,
+      "calls_24m": 27,
+      "vessels_seen": 21,
+      "buckets": [
+        "BBM-디젤",
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TG. PRIOK",
+      "destination": "TUBAN",
+      "ton_24m": 705340.0,
+      "calls_24m": 26,
+      "vessels_seen": 18,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TELUK JAKARTA",
+      "destination": "LABUHAN MARINGGAI",
+      "ton_24m": 693200.0,
+      "calls_24m": 11,
+      "vessels_seen": 4,
+      "buckets": [
+        "LNG"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TELUK JAKARTA",
+      "destination": "BLANG LANCANG",
+      "ton_24m": 691501.9,
+      "calls_24m": 12,
+      "vessels_seen": 6,
+      "buckets": [
+        "LNG"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "TG. PRIOK",
+      "ton_24m": 688582.7,
+      "calls_24m": 34,
+      "vessels_seen": 25,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "WAYAME",
+      "ton_24m": 663605.9,
+      "calls_24m": 49,
+      "vessels_seen": 37,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "FAME",
+        "기타",
+        "기타 식용유",
+        "벙커유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "KOTABARU - BATULICIN",
+      "destination": "MEKAR PUTIH",
+      "ton_24m": 645128.2,
+      "calls_24m": 132,
+      "vessels_seen": 34,
+      "buckets": [
+        "BBM-디젤",
+        "FAME",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "BAU-BAU",
+      "ton_24m": 637859.3,
+      "calls_24m": 54,
+      "vessels_seen": 44,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "FAME",
+        "Naphtha",
+        "기타",
+        "기타 식용유",
+        "벙커유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "DUMAI",
+      "ton_24m": 628719.0,
+      "calls_24m": 25,
+      "vessels_seen": 23,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "기타",
+        "아스팔트"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BAU-BAU",
+      "destination": "WAYAME",
+      "ton_24m": 615514.8,
+      "calls_24m": 45,
+      "vessels_seen": 31,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "FAME",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "SENIPAH",
+      "ton_24m": 612092.1,
+      "calls_24m": 20,
+      "vessels_seen": 16,
+      "buckets": [
+        "Crude",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "MERAK",
+      "destination": "BALONGAN",
+      "ton_24m": 608079.0,
+      "calls_24m": 59,
+      "vessels_seen": 29,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-디젤",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "MAKASSAR",
+      "ton_24m": 602453.0,
+      "calls_24m": 95,
+      "vessels_seen": 53,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "LPG",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TANJUNG GEREM",
+      "ton_24m": 598148.0,
+      "calls_24m": 36,
+      "vessels_seen": 26,
+      "buckets": [
+        "BBM-기타",
+        "BBM-디젤",
+        "BBM-항공유",
+        "Crude",
+        "FAME",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "TELUK SEMANGKA",
+      "ton_24m": 589032.1,
+      "calls_24m": 19,
+      "vessels_seen": 15,
+      "buckets": [
+        "Crude",
+        "LPG",
+        "Naphtha",
+        "기타"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "TANJUNG PRIOK",
+      "destination": "PANJANG",
+      "ton_24m": 582607.6,
+      "calls_24m": 63,
+      "vessels_seen": 44,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "LPG",
+        "기타",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "MERAK",
+      "destination": "TUBAN",
+      "ton_24m": 581196.4,
+      "calls_24m": 70,
+      "vessels_seen": 41,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-항공유",
+        "기타",
+        "기타 식용유"
+      ],
+      "is_self_loop": false
+    },
+    {
+      "origin": "BELAWAN",
+      "destination": "DUMAI",
+      "ton_24m": 579408.5,
+      "calls_24m": 81,
+      "vessels_seen": 54,
+      "buckets": [
+        "BBM-가솔린",
+        "BBM-기타",
+        "BBM-디젤",
+        "CPO/팜오일",
+        "Crude",
+        "FAME",
+        "LPG",
+        "기타",
+        "팜 파생"
+      ],
+      "is_self_loop": false
+    }
+  ],
+  "_notes": {
+    "source": "tanker_flow_map.lanes (24M aggregate)",
+    "change_pct_24m": "null in v0 — requires per-month OD aggregation; planned for PR-D iteration once a second snapshot lands"
+  }
+}
