@@ -312,6 +312,168 @@ def build_subclass_facts() -> dict:
 # ----------------------------------------------------------------------
 # 3. route_facts.json
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+# Renewal v2: map_flow.json — Home tab animated flow map data
+# ----------------------------------------------------------------------
+# Five visual categories rolled up from the granular bucket labels in
+# tanker_flow_map.lanes. Order matters — color key is rendered top-down.
+MAP_CATEGORIES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    # (display name, hex color, bucket labels rolled into this category)
+    ("Crude",          "#92400e", ("Crude",)),
+    ("Product / BBM",  "#0284c7", ("Naphtha", "Kerosene", "BBM-가솔린", "BBM-디젤", "BBM-항공유", "BBM-기타", "기타")),
+    ("Chemical",       "#059669", ("Chemical",)),
+    ("LPG / LNG",      "#7c3aed", ("LPG", "LNG")),
+    ("FAME / Edible",  "#65a30d", ("FAME", "기타 식용유", "벙커유", "CPO/팜오일", "콩 식물", "기타 식용유", "아스팔트")),
+)
+
+
+def _bucket_to_category(bucket: str | None) -> str | None:
+    if not bucket:
+        return None
+    for name, _, sources in MAP_CATEGORIES:
+        if bucket in sources:
+            return name
+    if bucket.startswith("BBM"):
+        return "Product / BBM"
+    return None
+
+
+def build_map_flow() -> dict:
+    """Renewal v2: produce a single payload covering ports + Top 30 routes
+    grouped by category for the new Home flow map.
+
+    Source = docs/data/tanker_flow_map.json (already 24M aggregate). The
+    payload reshape is light (no SQL), so this is fast.
+    """
+    src = _load_json(DATA / "tanker_flow_map.json")
+    raw_ports = src.get("ports", [])
+    lanes = src.get("lanes", [])
+    totals = src.get("totals", {})
+
+    # ---- Aggregate per (origin, destination) -> ton + calls + categories ----
+    agg: dict[tuple[str, str], dict] = defaultdict(
+        lambda: {"ton": 0.0, "calls": 0, "vessels": 0, "category_ton": defaultdict(float)}
+    )
+    for ln in lanes:
+        o = ln.get("o"); d = ln.get("d")
+        if not o or not d:
+            continue
+        key = (o, d)
+        ton = float(ln.get("ton") or 0.0)
+        agg[key]["ton"] += ton
+        agg[key]["calls"] += int(ln.get("calls") or 0)
+        agg[key]["vessels"] += int(ln.get("vessels") or 0)
+        cat = _bucket_to_category(ln.get("bucket"))
+        if cat:
+            agg[key]["category_ton"][cat] += ton
+
+    # ---- Top 30 routes by total ton (excluding self-loops) ----
+    candidates = [(k, v) for k, v in agg.items() if k[0] != k[1]]
+    candidates.sort(key=lambda kv: kv[1]["ton"], reverse=True)
+    top30 = candidates[:30]
+
+    # Look up port coords from the raw ports list
+    port_idx = {p["port"]: p for p in raw_ports}
+
+    routes_top30 = []
+    for (o, d), v in top30:
+        op = port_idx.get(o)
+        dp = port_idx.get(d)
+        if not op or not dp:
+            continue
+        # Pick dominant category by ton share
+        cat_share = sorted(v["category_ton"].items(), key=lambda kv: -kv[1])
+        primary_cat = cat_share[0][0] if cat_share else None
+        routes_top30.append({
+            "origin": o,
+            "destination": d,
+            "lat_o": op.get("lat"), "lon_o": op.get("lon"),
+            "lat_d": dp.get("lat"), "lon_d": dp.get("lon"),
+            "ton_24m": round(v["ton"], 1),
+            "calls": v["calls"],
+            "vessels": v["vessels"],
+            "category": primary_cat,
+            "category_ton": {k: round(t, 1) for k, t in cat_share},
+        })
+
+    # ---- Ports payload (sized by ton, sorted desc; cap at top 60 for clarity) ----
+    ports_sorted = sorted(raw_ports, key=lambda p: p.get("ton") or 0, reverse=True)
+    ports_out = [
+        {
+            "name": p["port"],
+            "lat": p.get("lat"),
+            "lon": p.get("lon"),
+            "ton_24m": round(p.get("ton") or 0.0, 1),
+        }
+        for p in ports_sorted[:60]
+        if p.get("lat") is not None and p.get("lon") is not None
+    ]
+
+    # ---- Foreign ports placeholder (intl_ton from totals only; per-port aggregation
+    # would require parsing TIBA.DARI / BERANGKAT.KE in cargo_snapshot raw_row;
+    # deferred to a follow-up since current tanker_flow_map already strips intl rows). ----
+    foreign_ports = {
+        "totals_intl_ton": totals.get("intl_ton"),
+        "items": [],
+        "note": (
+            "Foreign-port breakdown deferred — needs LK3 raw_row parse "
+            "for kind='ln' rows. Today only the aggregate intl_ton "
+            "from tanker_flow_map.totals is exposed."
+        ),
+    }
+
+    # ---- Insights (3 fact lines, rule-based, no value-judgement) ----
+    total_top30 = sum(r["ton_24m"] for r in routes_top30) or 0.0
+    biggest_port = ports_out[0] if ports_out else None
+    biggest_route = routes_top30[0] if routes_top30 else None
+    overall_ton = totals.get("plot_ton", 0) or 0
+    intl_share = (
+        (totals.get("intl_ton") or 0) /
+        ((totals.get("plot_ton") or 0) + (totals.get("intl_ton") or 0))
+    ) * 100 if (totals.get("plot_ton") and totals.get("intl_ton")) else None
+
+    insights: list[str] = []
+    if biggest_port and overall_ton > 0:
+        share = (biggest_port["ton_24m"] / overall_ton) * 100
+        insights.append(
+            f"최대 거점 항구: {biggest_port['name']} "
+            f"(24M ton의 {share:.1f}% 처리)"
+        )
+    if biggest_route:
+        insights.append(
+            f"최대 항로: {biggest_route['origin']} → {biggest_route['destination']} "
+            f"({biggest_route['ton_24m']/1e6:.1f}M tons, "
+            f"{biggest_route.get('vessels', 0)}척)"
+        )
+    if intl_share is not None:
+        insights.append(
+            f"국제(ln) 운항 ton 비중: {intl_share:.1f}% (24M 누계)"
+        )
+
+    return {
+        "schema_version": 2,
+        "snapshot_month": src.get("snapshot_month"),
+        "categories": [
+            {"name": name, "color": color}
+            for name, color, _ in MAP_CATEGORIES
+        ],
+        "ports": ports_out,
+        "routes_top30": routes_top30,
+        "foreign_ports": foreign_ports,
+        "insights": insights,
+        "totals": {
+            "domestic_ton": totals.get("plot_ton"),
+            "intl_ton": totals.get("intl_ton"),
+            "unknown_ton": totals.get("unknown_ton"),
+        },
+        "_notes": {
+            "scope": "domestic Indonesian flows from tanker_flow_map.lanes (24M aggregate)",
+            "foreign_ports": "aggregate ton only; per-port breakdown deferred",
+            "category_assignment": "primary category = bucket with highest ton share per route",
+        },
+    }
+
+
 def build_route_facts() -> dict:
     """Top 60 OD-pair routes aggregated from tanker_flow_map.lanes."""
     flow = _load_json(DATA / "tanker_flow_map.json")
@@ -586,6 +748,11 @@ def main() -> None:
     rt = build_route_facts()
     bytes_total += _write_json(DERIVED / "route_facts.json", rt)
     print(f"  route_facts.json — top {len(rt['routes'])} routes")
+
+    mp = build_map_flow()
+    bytes_total += _write_json(DERIVED / "map_flow.json", mp)
+    print(f"  map_flow.json — {len(mp['ports'])} ports + "
+          f"{len(mp['routes_top30'])} routes (renewal v2)")
 
     tk = build_owner_ticker_map()
     bytes_total += _write_json(DERIVED / "owner_ticker_map.json", tk)

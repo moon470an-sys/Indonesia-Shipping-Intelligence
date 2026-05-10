@@ -1,0 +1,907 @@
+{
+  "schema_version": 2,
+  "snapshot_month": "2026-05",
+  "categories": [
+    {
+      "name": "Crude",
+      "color": "#92400e"
+    },
+    {
+      "name": "Product / BBM",
+      "color": "#0284c7"
+    },
+    {
+      "name": "Chemical",
+      "color": "#059669"
+    },
+    {
+      "name": "LPG / LNG",
+      "color": "#7c3aed"
+    },
+    {
+      "name": "FAME / Edible",
+      "color": "#65a30d"
+    }
+  ],
+  "ports": [
+    {
+      "name": "TUBAN",
+      "lat": -6.9,
+      "lon": 112.05,
+      "ton_24m": 35926625.0
+    },
+    {
+      "name": "BALIKPAPAN",
+      "lat": -1.27,
+      "lon": 116.83,
+      "ton_24m": 34328426.0
+    },
+    {
+      "name": "DUMAI",
+      "lat": 1.67,
+      "lon": 101.45,
+      "ton_24m": 28488893.2
+    },
+    {
+      "name": "CILACAP",
+      "lat": -7.73,
+      "lon": 109.02,
+      "ton_24m": 25673154.0
+    },
+    {
+      "name": "BALONGAN",
+      "lat": -6.32,
+      "lon": 108.39,
+      "ton_24m": 18958427.5
+    },
+    {
+      "name": "TANJUNG PRIOK",
+      "lat": -6.1,
+      "lon": 106.88,
+      "ton_24m": 15431747.9
+    },
+    {
+      "name": "BELAWAN",
+      "lat": 3.78,
+      "lon": 98.69,
+      "ton_24m": 10729174.4
+    },
+    {
+      "name": "GRESIK",
+      "lat": -7.16,
+      "lon": 112.65,
+      "ton_24m": 9299356.7
+    },
+    {
+      "name": "TG. PRIOK",
+      "lat": -6.1,
+      "lon": 106.88,
+      "ton_24m": 9083317.0
+    },
+    {
+      "name": "TELUK SEMANGKA",
+      "lat": -5.85,
+      "lon": 104.65,
+      "ton_24m": 8925833.3
+    },
+    {
+      "name": "MERAK",
+      "lat": -5.93,
+      "lon": 106.0,
+      "ton_24m": 8668162.7
+    },
+    {
+      "name": "BAU-BAU",
+      "lat": -5.47,
+      "lon": 122.62,
+      "ton_24m": 8632548.1
+    },
+    {
+      "name": "BANYUWANGI",
+      "lat": -8.21,
+      "lon": 114.37,
+      "ton_24m": 8198232.1
+    },
+    {
+      "name": "MUNTOK",
+      "lat": -2.07,
+      "lon": 105.16,
+      "ton_24m": 8197344.6
+    },
+    {
+      "name": "WAYAME",
+      "lat": -3.62,
+      "lon": 128.13,
+      "ton_24m": 7921199.2
+    },
+    {
+      "name": "MAKASSAR",
+      "lat": -5.13,
+      "lon": 119.41,
+      "ton_24m": 7758017.5
+    },
+    {
+      "name": "PANJANG",
+      "lat": -5.45,
+      "lon": 105.32,
+      "ton_24m": 7721120.8
+    },
+    {
+      "name": "KABIL",
+      "lat": 1.06,
+      "lon": 104.1,
+      "ton_24m": 7247759.4
+    },
+    {
+      "name": "TANJUNG GEREM",
+      "lat": -5.95,
+      "lon": 106.05,
+      "ton_24m": 6996698.9
+    },
+    {
+      "name": "PONTIANAK",
+      "lat": -0.03,
+      "lon": 109.34,
+      "ton_24m": 6453300.3
+    },
+    {
+      "name": "TANJUNG EMAS",
+      "lat": -6.96,
+      "lon": 110.42,
+      "ton_24m": 6016052.5
+    },
+    {
+      "name": "TANJUNG UBAN",
+      "lat": 1.07,
+      "lon": 104.21,
+      "ton_24m": 5922968.2
+    },
+    {
+      "name": "TANJUNG MANGGIS",
+      "lat": -8.57,
+      "lon": 115.55,
+      "ton_24m": 5845325.2
+    },
+    {
+      "name": "TANJUNG PERAK",
+      "lat": -7.2,
+      "lon": 112.74,
+      "ton_24m": 5547540.8
+    },
+    {
+      "name": "SEMAMPIR",
+      "lat": -7.2,
+      "lon": 112.74,
+      "ton_24m": 5338636.8
+    },
+    {
+      "name": "KOTABARU - BATULICIN",
+      "lat": -3.3,
+      "lon": 116.2,
+      "ton_24m": 4750586.9
+    },
+    {
+      "name": "CINTA",
+      "lat": -5.95,
+      "lon": 106.2,
+      "ton_24m": 4313275.4
+    },
+    {
+      "name": "MARUNDA",
+      "lat": -6.1,
+      "lon": 106.96,
+      "ton_24m": 4305646.3
+    },
+    {
+      "name": "TELUK JAKARTA",
+      "lat": -6.1,
+      "lon": 106.88,
+      "ton_24m": 4305414.9
+    },
+    {
+      "name": "TELUK KABUNG",
+      "lat": -1.05,
+      "lon": 100.41,
+      "ton_24m": 4038832.0
+    },
+    {
+      "name": "BONTANG",
+      "lat": 0.13,
+      "lon": 117.49,
+      "ton_24m": 4033185.3
+    },
+    {
+      "name": "SAMARINDA",
+      "lat": -0.5,
+      "lon": 117.15,
+      "ton_24m": 3932494.4
+    },
+    {
+      "name": "SAMPIT",
+      "lat": -2.54,
+      "lon": 112.94,
+      "ton_24m": 3916823.3
+    },
+    {
+      "name": "BITUNG",
+      "lat": 1.44,
+      "lon": 125.18,
+      "ton_24m": 3913225.0
+    },
+    {
+      "name": "KOTABARU",
+      "lat": -3.3,
+      "lon": 116.2,
+      "ton_24m": 3904779.8
+    },
+    {
+      "name": "BOOM BARU",
+      "lat": -2.99,
+      "lon": 104.76,
+      "ton_24m": 3863473.5
+    },
+    {
+      "name": "ARJUNA",
+      "lat": -5.95,
+      "lon": 107.5,
+      "ton_24m": 3720630.5
+    },
+    {
+      "name": "KALBUT",
+      "lat": -7.74,
+      "lon": 113.86,
+      "ton_24m": 3452354.3
+    },
+    {
+      "name": "PLAJU",
+      "lat": -3.0,
+      "lon": 104.78,
+      "ton_24m": 3303949.0
+    },
+    {
+      "name": "KUMAI",
+      "lat": -2.74,
+      "lon": 111.74,
+      "ton_24m": 3199753.6
+    },
+    {
+      "name": "BLANG LANCANG",
+      "lat": 5.18,
+      "lon": 97.15,
+      "ton_24m": 3084106.9
+    },
+    {
+      "name": "LAWE-LAWE",
+      "lat": -1.13,
+      "lon": 116.92,
+      "ton_24m": 3035329.4
+    },
+    {
+      "name": "LABUHAN MARINGGAI",
+      "lat": -1.13,
+      "lon": 116.92,
+      "ton_24m": 2867267.6
+    },
+    {
+      "name": "TANJUNG SEKONG",
+      "lat": -5.98,
+      "lon": 106.05,
+      "ton_24m": 2775077.7
+    },
+    {
+      "name": "SENIPAH",
+      "lat": -0.95,
+      "lon": 117.0,
+      "ton_24m": 2717830.8
+    },
+    {
+      "name": "MEKAR PUTIH",
+      "lat": -8.59,
+      "lon": 116.43,
+      "ton_24m": 2647758.1
+    },
+    {
+      "name": "BANJARMASIN",
+      "lat": -3.32,
+      "lon": 114.59,
+      "ton_24m": 2608597.6
+    },
+    {
+      "name": "PATIMBAN",
+      "lat": -6.31,
+      "lon": 107.91,
+      "ton_24m": 2592865.3
+    },
+    {
+      "name": "AMPENAN",
+      "lat": -8.57,
+      "lon": 116.08,
+      "ton_24m": 2582821.6
+    },
+    {
+      "name": "LUWUK",
+      "lat": -1.04,
+      "lon": 122.79,
+      "ton_24m": 2484737.1
+    },
+    {
+      "name": "SORONG",
+      "lat": -0.86,
+      "lon": 131.25,
+      "ton_24m": 2354586.8
+    },
+    {
+      "name": "JABUNG",
+      "lat": -1.1,
+      "lon": 104.3,
+      "ton_24m": 2267255.0
+    },
+    {
+      "name": "KENDARI",
+      "lat": -3.97,
+      "lon": 122.52,
+      "ton_24m": 2261616.9
+    },
+    {
+      "name": "LHOKSEUMAWE",
+      "lat": 5.18,
+      "lon": 97.15,
+      "ton_24m": 2183633.4
+    },
+    {
+      "name": "KALBUT SITUBONDO",
+      "lat": -7.74,
+      "lon": 113.86,
+      "ton_24m": 2143628.0
+    },
+    {
+      "name": "BENOA",
+      "lat": -8.74,
+      "lon": 115.21,
+      "ton_24m": 2037712.9
+    },
+    {
+      "name": "BINTUNI",
+      "lat": -2.13,
+      "lon": 133.51,
+      "ton_24m": 2022184.7
+    },
+    {
+      "name": "SUNGAI PAKNING",
+      "lat": 1.39,
+      "lon": 102.13,
+      "ton_24m": 2019255.6
+    },
+    {
+      "name": "BIMA",
+      "lat": -8.45,
+      "lon": 118.72,
+      "ton_24m": 2004368.0
+    },
+    {
+      "name": "TANJUNG REDEP",
+      "lat": 2.15,
+      "lon": 117.5,
+      "ton_24m": 1944602.2
+    }
+  ],
+  "routes_top30": [
+    {
+      "origin": "TUBAN",
+      "destination": "BALIKPAPAN",
+      "lat_o": -6.9,
+      "lon_o": 112.05,
+      "lat_d": -1.27,
+      "lon_d": 116.83,
+      "ton_24m": 2729135.6,
+      "calls": 117,
+      "vessels": 89,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1482576.0,
+        "Crude": 1155972.4,
+        "FAME / Edible": 88887.2,
+        "LPG / LNG": 1700.0
+      }
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "TUBAN",
+      "lat_o": -7.73,
+      "lon_o": 109.02,
+      "lat_d": -6.9,
+      "lon_d": 112.05,
+      "ton_24m": 2668383.0,
+      "calls": 114,
+      "vessels": 72,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 2298540.9,
+        "Crude": 347899.1,
+        "FAME / Edible": 21943.0
+      }
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "DUMAI",
+      "lat_o": -6.9,
+      "lon_o": 112.05,
+      "lat_d": 1.67,
+      "lon_d": 101.45,
+      "ton_24m": 2553007.0,
+      "calls": 88,
+      "vessels": 55,
+      "category": "Crude",
+      "category_ton": {
+        "Crude": 1304269.0,
+        "Product / BBM": 1248738.0
+      }
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "CILACAP",
+      "lat_o": -6.9,
+      "lon_o": 112.05,
+      "lat_d": -7.73,
+      "lon_d": 109.02,
+      "ton_24m": 2325042.2,
+      "calls": 111,
+      "vessels": 62,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1164343.1,
+        "Crude": 1160699.1
+      }
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "TUBAN",
+      "lat_o": -1.27,
+      "lon_o": 116.83,
+      "lat_d": -6.9,
+      "lon_d": 112.05,
+      "ton_24m": 2304923.9,
+      "calls": 136,
+      "vessels": 105,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1967041.9,
+        "Crude": 295229.0,
+        "FAME / Edible": 40153.0,
+        "LPG / LNG": 2500.0
+      }
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "CILACAP",
+      "lat_o": -1.27,
+      "lon_o": 116.83,
+      "lat_d": -7.73,
+      "lon_d": 109.02,
+      "ton_24m": 2174499.9,
+      "calls": 115,
+      "vessels": 78,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1314502.9,
+        "Crude": 836904.0,
+        "FAME / Edible": 23093.0
+      }
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "TUBAN",
+      "lat_o": -6.32,
+      "lon_o": 108.39,
+      "lat_d": -6.9,
+      "lon_d": 112.05,
+      "ton_24m": 2100519.0,
+      "calls": 64,
+      "vessels": 46,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1896548.0,
+        "Crude": 203971.0
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TUBAN",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": -6.9,
+      "lon_d": 112.05,
+      "ton_24m": 1956735.0,
+      "calls": 88,
+      "vessels": 60,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1373267.0,
+        "Crude": 554600.0,
+        "FAME / Edible": 22868.0
+      }
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "BALIKPAPAN",
+      "lat_o": -7.73,
+      "lon_o": 109.02,
+      "lat_d": -1.27,
+      "lon_d": 116.83,
+      "ton_24m": 1786627.1,
+      "calls": 94,
+      "vessels": 74,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1309196.3,
+        "Crude": 462349.8,
+        "FAME / Edible": 15081.0
+      }
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "BALONGAN",
+      "lat_o": -6.9,
+      "lon_o": 112.05,
+      "lat_d": -6.32,
+      "lon_d": 108.39,
+      "ton_24m": 1303415.7,
+      "calls": 52,
+      "vessels": 40,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 966189.7,
+        "Crude": 337226.0
+      }
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "TELUK SEMANGKA",
+      "lat_o": -6.9,
+      "lon_o": 112.05,
+      "lat_d": -5.85,
+      "lon_d": 104.65,
+      "ton_24m": 1280316.0,
+      "calls": 33,
+      "vessels": 31,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 728537.0,
+        "Crude": 551779.0
+      }
+    },
+    {
+      "origin": "TUBAN",
+      "destination": "MUNTOK",
+      "lat_o": -6.9,
+      "lon_o": 112.05,
+      "lat_d": -2.07,
+      "lon_d": 105.16,
+      "ton_24m": 1274196.8,
+      "calls": 50,
+      "vessels": 32,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 649464.8,
+        "Crude": 624732.0
+      }
+    },
+    {
+      "origin": "TANJUNG GEREM",
+      "destination": "TANJUNG PRIOK",
+      "lat_o": -5.95,
+      "lon_o": 106.05,
+      "lat_d": -6.1,
+      "lon_d": 106.88,
+      "ton_24m": 1269928.9,
+      "calls": 14,
+      "vessels": 13,
+      "category": "FAME / Edible",
+      "category_ton": {
+        "FAME / Edible": 1257178.9,
+        "Product / BBM": 12750.0
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "BELAWAN",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": 3.78,
+      "lon_d": 98.69,
+      "ton_24m": 1229983.7,
+      "calls": 108,
+      "vessels": 80,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 848277.0,
+        "Crude": 178226.0,
+        "FAME / Edible": 129473.2,
+        "LPG / LNG": 5100.0
+      }
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "BALONGAN",
+      "lat_o": -7.73,
+      "lon_o": 109.02,
+      "lat_d": -6.32,
+      "lon_d": 108.39,
+      "ton_24m": 1220854.2,
+      "calls": 47,
+      "vessels": 30,
+      "category": "Crude",
+      "category_ton": {
+        "Crude": 880680.3,
+        "Product / BBM": 340173.9
+      }
+    },
+    {
+      "origin": "KABIL",
+      "destination": "BELAWAN",
+      "lat_o": 1.06,
+      "lon_o": 104.1,
+      "lat_d": 3.78,
+      "lon_d": 98.69,
+      "ton_24m": 1198866.6,
+      "calls": 103,
+      "vessels": 57,
+      "category": "Crude",
+      "category_ton": {
+        "Crude": 558287.5,
+        "FAME / Edible": 137235.0,
+        "Product / BBM": 71122.7
+      }
+    },
+    {
+      "origin": "TELUK SEMANGKA",
+      "destination": "TUBAN",
+      "lat_o": -5.85,
+      "lon_o": 104.65,
+      "lat_d": -6.9,
+      "lon_d": 112.05,
+      "ton_24m": 1160690.0,
+      "calls": 43,
+      "vessels": 28,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 721712.0,
+        "Crude": 438978.0
+      }
+    },
+    {
+      "origin": "BALIKPAPAN",
+      "destination": "BALONGAN",
+      "lat_o": -1.27,
+      "lon_o": 116.83,
+      "lat_d": -6.32,
+      "lon_d": 108.39,
+      "ton_24m": 1103765.0,
+      "calls": 45,
+      "vessels": 35,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 545296.0,
+        "Crude": 544423.0,
+        "FAME / Edible": 14046.0
+      }
+    },
+    {
+      "origin": "BELAWAN",
+      "destination": "KABIL",
+      "lat_o": 3.78,
+      "lon_o": 98.69,
+      "lat_d": 1.06,
+      "lon_d": 104.1,
+      "ton_24m": 1063086.7,
+      "calls": 90,
+      "vessels": 61,
+      "category": "FAME / Edible",
+      "category_ton": {
+        "FAME / Edible": 193995.9,
+        "Product / BBM": 143645.1,
+        "Crude": 27260.8
+      }
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "SEMAMPIR",
+      "lat_o": -7.73,
+      "lon_o": 109.02,
+      "lat_d": -7.2,
+      "lon_d": 112.74,
+      "ton_24m": 1051712.0,
+      "calls": 70,
+      "vessels": 42,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1020625.0,
+        "FAME / Edible": 31087.0
+      }
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "BALIKPAPAN",
+      "lat_o": -6.32,
+      "lon_o": 108.39,
+      "lat_d": -1.27,
+      "lon_d": 116.83,
+      "ton_24m": 1028105.8,
+      "calls": 45,
+      "vessels": 28,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 957197.8,
+        "Crude": 70908.0
+      }
+    },
+    {
+      "origin": "LHOKSEUMAWE",
+      "destination": "BELAWAN",
+      "lat_o": 5.18,
+      "lon_o": 97.15,
+      "lat_d": 3.78,
+      "lon_d": 98.69,
+      "ton_24m": 1017869.9,
+      "calls": 218,
+      "vessels": 15,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 1009869.9
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TG. PRIOK",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": -6.1,
+      "lon_d": 106.88,
+      "ton_24m": 1012182.0,
+      "calls": 44,
+      "vessels": 33,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 717884.0,
+        "Crude": 294298.0
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TANJUNG UBAN",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": 1.07,
+      "lon_d": 104.21,
+      "ton_24m": 967145.0,
+      "calls": 96,
+      "vessels": 45,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 943272.0,
+        "LPG / LNG": 17001.0,
+        "FAME / Edible": 6872.0
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "BALIKPAPAN",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": -1.27,
+      "lon_d": 116.83,
+      "ton_24m": 931541.4,
+      "calls": 77,
+      "vessels": 61,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 526685.0,
+        "Crude": 271196.0,
+        "FAME / Edible": 114016.4
+      }
+    },
+    {
+      "origin": "BALONGAN",
+      "destination": "DUMAI",
+      "lat_o": -6.32,
+      "lon_o": 108.39,
+      "lat_d": 1.67,
+      "lon_d": 101.45,
+      "ton_24m": 913447.4,
+      "calls": 23,
+      "vessels": 20,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 676397.0,
+        "Crude": 237050.4
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "KABIL",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": 1.06,
+      "lon_d": 104.1,
+      "ton_24m": 903401.7,
+      "calls": 222,
+      "vessels": 91,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 460021.0,
+        "FAME / Edible": 309816.0,
+        "Crude": 58354.2,
+        "LPG / LNG": 10052.0
+      }
+    },
+    {
+      "origin": "MUNTOK",
+      "destination": "BALONGAN",
+      "lat_o": -2.07,
+      "lon_o": 105.16,
+      "lat_d": -6.32,
+      "lon_d": 108.39,
+      "ton_24m": 899963.0,
+      "calls": 20,
+      "vessels": 15,
+      "category": "Crude",
+      "category_ton": {
+        "Crude": 641235.0,
+        "Product / BBM": 258728.0
+      }
+    },
+    {
+      "origin": "DUMAI",
+      "destination": "TELUK KABUNG",
+      "lat_o": 1.67,
+      "lon_o": 101.45,
+      "lat_d": -1.05,
+      "lon_d": 100.41,
+      "ton_24m": 867127.0,
+      "calls": 63,
+      "vessels": 40,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 863727.0,
+        "LPG / LNG": 3400.0
+      }
+    },
+    {
+      "origin": "CILACAP",
+      "destination": "BANYUWANGI",
+      "lat_o": -7.73,
+      "lon_o": 109.02,
+      "lat_d": -8.21,
+      "lon_d": 114.37,
+      "ton_24m": 863111.0,
+      "calls": 52,
+      "vessels": 38,
+      "category": "Product / BBM",
+      "category_ton": {
+        "Product / BBM": 821791.0,
+        "LPG / LNG": 26120.0,
+        "FAME / Edible": 15200.0
+      }
+    }
+  ],
+  "foreign_ports": {
+    "totals_intl_ton": 219828660.4,
+    "items": [],
+    "note": "Foreign-port breakdown deferred — needs LK3 raw_row parse for kind='ln' rows. Today only the aggregate intl_ton from tanker_flow_map.totals is exposed."
+  },
+  "insights": [
+    "최대 거점 항구: TUBAN (24M ton의 8.7% 처리)",
+    "최대 항로: TUBAN → BALIKPAPAN (2.7M tons, 89척)",
+    "국제(ln) 운항 ton 비중: 34.8% (24M 누계)"
+  ],
+  "totals": {
+    "domestic_ton": 412084116.2,
+    "intl_ton": 219828660.4,
+    "unknown_ton": 142923723.8
+  },
+  "_notes": {
+    "scope": "domestic Indonesian flows from tanker_flow_map.lanes (24M aggregate)",
+    "foreign_ports": "aggregate ton only; per-port breakdown deferred",
+    "category_assignment": "primary category = bucket with highest ton share per route"
+  }
+}
