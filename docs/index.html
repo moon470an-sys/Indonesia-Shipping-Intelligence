@@ -218,6 +218,92 @@
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-cargo"></div>
 
+      <!-- 🗺️ Tanker cargo flow map (Origin → Destination) — tanker_flow_map.json -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <div>
+            <h2 class="font-semibold">🗺️ 탱커 화물 흐름 지도 (Origin → Destination)</h2>
+            <p class="text-xs text-slate-500">
+              버블 = 항구별 24mo 총 톤 · 선 두께 ∝ 항로 톤 · 색상 = 화물 카테고리.
+              외국 항구는 지도 밖 (별도 KPI에 합산).
+            </p>
+          </div>
+          <span class="text-xs text-slate-500" id="fm-status">로딩…</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">화물 카테고리 (다중 선택, 비우면 전체)</label>
+            <div id="fm-buckets" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">방향</label>
+            <div class="flex gap-3 text-xs items-center pt-1">
+              <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="fm-dir" value="all" checked> 전체</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="fm-dir" value="B"> BONGKAR (양하)</label>
+              <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="fm-dir" value="M"> MUAT (적재)</label>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Top N 항로 <span id="fm-topn-label" class="font-semibold">60</span></label>
+            <input id="fm-topn" type="range" min="10" max="200" step="10" value="60" class="w-full" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3" id="fm-kpi"></div>
+
+        <div id="fm-map" style="height:620px"></div>
+
+        <details class="mt-3">
+          <summary class="font-semibold text-sm cursor-pointer text-slate-700">📋 항로 테이블 (현재 필터 Top N)</summary>
+          <div class="overflow-auto max-h-[40vh] border rounded mt-2">
+            <table class="min-w-full text-xs" id="fm-lane-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th class="px-2 py-1">출발</th>
+                  <th class="px-2 py-1">도착</th>
+                  <th class="px-2 py-1">카테고리</th>
+                  <th class="px-2 py-1 text-right">총 톤</th>
+                  <th class="px-2 py-1 text-right">항해수</th>
+                  <th class="px-2 py-1 text-right">선박수</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
+
+        <div class="mt-4 pt-4 border-t border-slate-200">
+          <h3 class="font-semibold text-sm mb-1">🛳️ 해당 화물을 실은 선박 리스트</h3>
+          <p class="text-xs text-slate-500 mb-2">현재 카테고리/방향 필터 기준 선박별 누적 톤 + 주요 항로</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2" id="fm-v-kpi"></div>
+          <div class="flex items-center gap-3 mb-2 flex-wrap">
+            <label class="text-xs text-slate-500">선박 Top N <span id="fm-vtopn-label" class="font-semibold">50</span></label>
+            <input id="fm-vtopn" type="range" min="10" max="200" step="10" value="50" class="w-48" />
+            <input id="fm-vq" placeholder="선박명 / 운영사 검색" class="border rounded px-2 py-1 text-xs ml-auto" />
+          </div>
+          <div class="overflow-auto max-h-[60vh] border rounded">
+            <table class="min-w-full text-xs" id="fm-vessel-tbl">
+              <thead class="bg-slate-100 sticky top-0">
+                <tr class="text-left">
+                  <th class="px-2 py-1">선박</th>
+                  <th class="px-2 py-1">운영사</th>
+                  <th class="px-2 py-1">jenis_kapal</th>
+                  <th class="px-2 py-1">주력 카테고리</th>
+                  <th class="px-2 py-1 text-right">GT</th>
+                  <th class="px-2 py-1 text-right">DWT</th>
+                  <th class="px-2 py-1 text-right">총 톤</th>
+                  <th class="px-2 py-1 text-right">항해수</th>
+                  <th class="px-2 py-1">주요 항로 (B)</th>
+                  <th class="px-2 py-1">주요 항로 (M)</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- By Vessel Sector — uses cargo_sector_monthly.json -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="bg-white rounded-xl shadow p-4">

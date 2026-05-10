@@ -17,6 +17,7 @@ const state = {
   taxonomy: null,
   sectorMonthly: null,
   tanker: null,
+  flowMap: null,
   financials: null,
   loaded: new Set(),
   vesselsRows: [],
@@ -748,6 +749,292 @@ function renderCargo() {
 
   // 🛢️ Tanker Focus — lit by tanker_focus.json
   renderTankerFocus();
+
+  // 🗺️ Tanker cargo flow map — lit by tanker_flow_map.json
+  renderFlowMap();
+}
+
+// ---------- Tanker Cargo Flow Map ----------
+// Origin → destination arcs colored by commodity bucket, port bubbles sized
+// by 24mo total ton. Mirrors dashboard/app.py:_tanker_cargo_flow_map. Filter
+// state lives in fmState; lane and vessel re-aggregation runs client-side
+// from the pre-baked tanker_flow_map.json payload.
+
+const fmState = {
+  initialized: false,
+  selBuckets: new Set(),  // empty Set means "all buckets"
+  dir: "all",             // all | B | M
+  topN: 60,
+  vTopN: 50,
+  vQ: "",
+};
+
+function renderFlowMap() {
+  const fm = state.flowMap;
+  const status = document.getElementById("fm-status");
+  const map = document.getElementById("fm-map");
+  if (!fm || !Array.isArray(fm.lanes)) {
+    if (status) status.textContent = "tanker_flow_map.json 미로드 (이전 빌드)";
+    if (map) map.innerHTML = "<p class='text-sm text-slate-500 p-4'>지도 데이터 없음 — backend/build_static.py 실행 후 다시 빌드 필요</p>";
+    return;
+  }
+
+  // First-time setup: build dynamic widgets and bind handlers.
+  if (!fmState.initialized) {
+    fmState.initialized = true;
+    const cont = document.getElementById("fm-buckets");
+    const palette = fm.bucket_palette || {};
+    const buckets = fm.buckets_ranked || [];
+    // Default selection: top 6 buckets so the user immediately sees a dense view.
+    const top6 = new Set(buckets.slice(0, 6));
+    fmState.selBuckets = new Set(top6);
+    if (cont) {
+      cont.innerHTML = "";
+      buckets.forEach((b) => {
+        const color = palette[b] || "#64748b";
+        const wrap = document.createElement("label");
+        wrap.className = "flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer text-xs";
+        wrap.style.borderColor = color;
+        wrap.innerHTML = `<input type="checkbox" ${top6.has(b) ? "checked" : ""}> <span style="color:${color}">${b}</span>`;
+        const inp = wrap.querySelector("input");
+        inp.addEventListener("change", () => {
+          if (inp.checked) fmState.selBuckets.add(b); else fmState.selBuckets.delete(b);
+          renderFlowMap();
+        });
+        cont.appendChild(wrap);
+      });
+    }
+    document.querySelectorAll("input[name='fm-dir']").forEach(r => {
+      r.addEventListener("change", () => { fmState.dir = r.value; renderFlowMap(); });
+    });
+    const sl = document.getElementById("fm-topn");
+    const lab = document.getElementById("fm-topn-label");
+    if (sl) sl.addEventListener("input", () => {
+      fmState.topN = parseInt(sl.value, 10);
+      if (lab) lab.textContent = fmState.topN;
+      renderFlowMap();
+    });
+    const vsl = document.getElementById("fm-vtopn");
+    const vlab = document.getElementById("fm-vtopn-label");
+    if (vsl) vsl.addEventListener("input", () => {
+      fmState.vTopN = parseInt(vsl.value, 10);
+      if (vlab) vlab.textContent = fmState.vTopN;
+      renderFlowVessels();
+    });
+    const vq = document.getElementById("fm-vq");
+    if (vq) vq.addEventListener("input", (e) => {
+      fmState.vQ = (e.target.value || "").toLowerCase();
+      renderFlowVessels();
+    });
+  }
+
+  if (status) {
+    status.textContent = `${(fm.lanes || []).length} 매핑 항로 · ${(fm.vessels || []).length} 선박 · snapshot ${fm.snapshot_month || "—"}`;
+  }
+
+  const sel = fmState.selBuckets;
+  const dir = fmState.dir;
+  const passDir = (d) => dir === "all" || d === dir;
+  const passBucket = (b) => sel.size === 0 || sel.has(b);
+
+  // Filter lanes, then aggregate by (o, d, bucket): sum ton + calls,
+  // max(vessels) (upper bound — we can't distinct-count across direction
+  // splits without sending per-vessel-per-lane data, which would bloat
+  // the payload).
+  const fl = (fm.lanes || []).filter(l => passBucket(l.bucket) && passDir(l.dir));
+  const odMap = new Map();
+  for (const l of fl) {
+    const k = `${l.o}${l.d}${l.bucket}`;
+    let cur = odMap.get(k);
+    if (!cur) {
+      cur = {
+        o: l.o, d: l.d, bucket: l.bucket,
+        lat_o: l.lat_o, lon_o: l.lon_o,
+        lat_d: l.lat_d, lon_d: l.lon_d,
+        ton: 0, calls: 0, vessels: 0,
+      };
+      odMap.set(k, cur);
+    }
+    cur.ton += l.ton;
+    cur.calls += l.calls;
+    cur.vessels = Math.max(cur.vessels, l.vessels);
+  }
+  const od = Array.from(odMap.values()).sort((a, b) => b.ton - a.ton);
+  const odTop = od.slice(0, fmState.topN);
+
+  // KPI strip
+  const filterTon = fl.reduce((s, l) => s + l.ton, 0);
+  const totals = fm.totals || {};
+  renderKpis("fm-kpi", [
+    { label: "필터 톤 합 (지도)", value: fmt0(filterTon),
+      sub: `${od.length} 항로 (현재 필터)` },
+    { label: "지도 표시 톤 (전체)", value: fmt0(totals.plot_ton),
+      sub: "ID 좌표 양쪽 매핑된 항로" },
+    { label: "국제 항해 톤", value: fmt0(totals.intl_ton),
+      sub: "외국 origin / dest" },
+    { label: "미매핑 톤", value: fmt0(totals.unknown_ton),
+      sub: "좌표 사전에 없음" },
+  ]);
+
+  // Build Plotly traces — flow arcs grouped by bucket, plus port bubbles.
+  const palette = fm.bucket_palette || {};
+  const byBucket = new Map();
+  for (const r of odTop) {
+    if (!byBucket.has(r.bucket)) byBucket.set(r.bucket, []);
+    byBucket.get(r.bucket).push(r);
+  }
+  const maxTon = odTop.length ? Math.max(...odTop.map(r => r.ton)) : 1;
+  const traces = [];
+  byBucket.forEach((rows, bucket) => {
+    const color = palette[bucket] || "#64748b";
+    rows.forEach((r, i) => {
+      const w = 1.0 + 8.0 * Math.sqrt(r.ton / maxTon);
+      traces.push({
+        type: "scattergeo",
+        lon: [r.lon_o, r.lon_d],
+        lat: [r.lat_o, r.lat_d],
+        mode: "lines",
+        line: { width: w, color },
+        opacity: 0.75,
+        hoverinfo: "text",
+        text: `<b>${bucket}</b><br>${r.o} → ${r.d}<br>${fmt0(r.ton)} ton · ${r.vessels}척 · ${r.calls}회`,
+        name: bucket,
+        legendgroup: bucket,
+        showlegend: i === 0,
+      });
+    });
+  });
+
+  // Port bubbles — use pre-baked all-mappable port totals (not filter-aware,
+  // intentional: bubbles represent port size, not just the current filter).
+  const ports = (fm.ports || []).slice(0, 200);
+  const maxPortTon = ports.length ? Math.max(...ports.map(p => p.ton)) : 1;
+  if (ports.length) {
+    traces.push({
+      type: "scattergeo",
+      lon: ports.map(p => p.lon),
+      lat: ports.map(p => p.lat),
+      mode: "markers",
+      marker: {
+        size: ports.map(p => 4 + 26 * (p.ton / maxPortTon)),
+        color: "#0f172a",
+        opacity: 0.85,
+        line: { width: 0.5, color: "#ffffff" },
+      },
+      hoverinfo: "text",
+      text: ports.map(p => `<b>${p.port}</b><br>${fmt0(p.ton)} ton`),
+      name: "항구 (총 톤)",
+      showlegend: true,
+    });
+  }
+
+  Plotly.newPlot("fm-map", traces, {
+    margin: { t: 10, b: 10, l: 10, r: 10 },
+    legend: {
+      orientation: "h", y: -0.05, x: 0,
+      bgcolor: "rgba(255,255,255,0.85)", bordercolor: "#e2e8f0",
+      borderwidth: 1, font: { size: 11 },
+    },
+    geo: {
+      scope: "asia",
+      projection: { type: "natural earth" },
+      showcountries: true, showcoastlines: true, showland: true,
+      showocean: true, oceancolor: "#f1f5f9",
+      landcolor: "#fefefe", countrycolor: "#cbd5e1",
+      coastlinecolor: "#94a3b8",
+      lataxis: { range: [-12, 8] },
+      lonaxis: { range: [94, 142] },
+    },
+  }, { displayModeBar: false, responsive: true });
+
+  // Lane table (Top N)
+  const lt = document.querySelector("#fm-lane-tbl tbody");
+  if (lt) {
+    lt.innerHTML = odTop.map(r => `<tr>
+      <td class="px-2 py-1">${r.o}</td>
+      <td class="px-2 py-1">${r.d}</td>
+      <td class="px-2 py-1" style="color:${palette[r.bucket] || '#64748b'}">${r.bucket}</td>
+      <td class="px-2 py-1 text-right">${fmt0(r.ton)}</td>
+      <td class="px-2 py-1 text-right">${fmt(r.calls)}</td>
+      <td class="px-2 py-1 text-right">${fmt(r.vessels)}</td>
+    </tr>`).join("");
+  }
+
+  renderFlowVessels();
+}
+
+function renderFlowVessels() {
+  const fm = state.flowMap;
+  if (!fm) return;
+  const sel = fmState.selBuckets;
+  const dir = fmState.dir;
+  const passDir = (d) => dir === "all" || d === dir;
+  const passBucket = (b) => sel.size === 0 || sel.has(b);
+
+  // Per-vessel re-aggregation across selected buckets and direction.
+  const rows = [];
+  for (const v of (fm.vessels || [])) {
+    let ton = 0, calls = 0, topBucket = "", topBucketTon = -1;
+    for (const [b, dirObj] of Object.entries(v.by_bucket || {})) {
+      if (!passBucket(b)) continue;
+      let bTon = 0, bCalls = 0;
+      if (passDir("B") && dirObj.B) { bTon += dirObj.B.ton || 0; bCalls += dirObj.B.calls || 0; }
+      if (passDir("M") && dirObj.M) { bTon += dirObj.M.ton || 0; bCalls += dirObj.M.calls || 0; }
+      ton += bTon;
+      calls += bCalls;
+      if (bTon > topBucketTon) { topBucketTon = bTon; topBucket = b; }
+    }
+    if (ton <= 0) continue;
+    rows.push({
+      kapal: v.kapal,
+      operator: v.operator || "",
+      jenis_kapal: v.jenis_kapal || "",
+      bucket: topBucket,
+      gt: v.gt, dwt: v.dwt,
+      ton, calls,
+      top_route_b: v.top_route_b || "",
+      top_route_m: v.top_route_m || "",
+    });
+  }
+  rows.sort((a, b) => b.ton - a.ton);
+
+  // Search filter
+  const q = fmState.vQ;
+  const filtered = q
+    ? rows.filter(r => (r.kapal || "").toLowerCase().includes(q)
+                    || (r.operator || "").toLowerCase().includes(q))
+    : rows;
+  const top = filtered.slice(0, fmState.vTopN);
+
+  // KPI
+  const opSet = new Set(rows.map(r => r.operator).filter(Boolean));
+  const meanCalls = rows.length ? (rows.reduce((s, r) => s + r.calls, 0) / rows.length).toFixed(1) : "—";
+  renderKpis("fm-v-kpi", [
+    { label: "선박 수 (필터 매칭)", value: fmt(rows.length),
+      sub: filtered.length !== rows.length ? `검색 후 ${fmt(filtered.length)}` : "" },
+    { label: "Top 1 톤", value: rows.length ? fmt0(rows[0].ton) : "—",
+      sub: rows[0] ? rows[0].kapal : "" },
+    { label: "운영사 수", value: fmt(opSet.size) },
+    { label: "평균 항해/척", value: meanCalls },
+  ]);
+
+  // Vessel table
+  const palette = fm.bucket_palette || {};
+  const tb = document.querySelector("#fm-vessel-tbl tbody");
+  if (tb) {
+    tb.innerHTML = top.map(r => `<tr>
+      <td class="px-2 py-1">${r.kapal}</td>
+      <td class="px-2 py-1">${r.operator}</td>
+      <td class="px-2 py-1">${r.jenis_kapal}</td>
+      <td class="px-2 py-1" style="color:${palette[r.bucket] || '#64748b'}">${r.bucket}</td>
+      <td class="px-2 py-1 text-right">${fmt0(r.gt)}</td>
+      <td class="px-2 py-1 text-right">${fmt0(r.dwt)}</td>
+      <td class="px-2 py-1 text-right">${fmt0(r.ton)}</td>
+      <td class="px-2 py-1 text-right">${fmt(r.calls)}</td>
+      <td class="px-2 py-1">${r.top_route_b}</td>
+      <td class="px-2 py-1">${r.top_route_m}</td>
+    </tr>`).join("");
+  }
 }
 
 function _filterRowsByKind(rows, kind) {
@@ -1641,6 +1928,10 @@ async function ensureLoaded(tab) {
       if (!state.tanker) {
         try { state.tanker = await loadJson("tanker_focus.json"); }
         catch (e) { state.tanker = null; }
+      }
+      if (!state.flowMap) {
+        try { state.flowMap = await loadJson("tanker_flow_map.json"); }
+        catch (e) { state.flowMap = null; }
       }
       renderCargo();
       state.loaded.add("cargo");
