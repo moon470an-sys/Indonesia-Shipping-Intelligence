@@ -496,12 +496,228 @@ async function boot() {
 }
 
 
-// ---------- PR-1 stubs: full render lands in PR-2 / PR-3 / PR-4 ----------
+// ---------- PR-2: Home animated flow map (d3 + topojson) ----------
+// World atlas TopoJSON (countries-110m). Loaded once and cached.
+const TOPO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const ID_INDONESIA = 360;  // ISO 3166-1 numeric
+
+const homeState = {
+  mapData: null,
+  topology: null,
+  filterCategory: "all",   // all | tanker | bulk (bulk shows note)
+  filterPeriod: "24m",     // 24m | 12m (12m shows note)
+  filterTraffic: "dn_ln",  // dn_ln | ln (ln shows note)
+};
+
 async function renderHome() {
-  // KPI 4 + sector stacked area land in PR-3; map lands in PR-2.
-  // For now we just leave the placeholder DOM as written in index.html
-  // and let setupSourceLabels populate the source captions.
   setupSourceLabels(document.getElementById("tab-overview"));
+
+  // Load both the derived flow data and the world topology in parallel.
+  let topo;
+  try {
+    [homeState.mapData, topo] = await Promise.all([
+      loadDerived("map_flow.json"),
+      fetch(TOPO_URL).then(r => {
+        if (!r.ok) throw new Error(`world-atlas ${r.status}`);
+        return r.json();
+      }),
+    ]);
+    homeState.topology = topo;
+  } catch (e) {
+    const status = document.getElementById("home-map-status");
+    if (status) status.textContent = `Map data load failed: ${e.message}`;
+    return;
+  }
+
+  bindMapControls();
+  drawHomeMap();
+  fillForeignSidebar();
+  fillMapInsights();
+}
+
+function bindMapControls() {
+  const groups = [
+    { id: "map-control-cat",    state: "filterCategory" },
+    { id: "map-control-period", state: "filterPeriod" },
+    { id: "map-control-traffic",state: "filterTraffic" },
+  ];
+  for (const g of groups) {
+    const host = document.getElementById(g.id);
+    if (!host) continue;
+    host.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        homeState[g.state] = btn.dataset.key;
+        host.querySelectorAll("button").forEach(b => {
+          if (b.dataset.key === btn.dataset.key) {
+            b.classList.add("bg-slate-800", "text-white");
+            b.classList.remove("bg-white", "hover:bg-slate-100");
+          } else {
+            b.classList.remove("bg-slate-800", "text-white");
+            b.classList.add("bg-white", "hover:bg-slate-100");
+          }
+        });
+        drawHomeMap();
+      });
+    });
+  }
+}
+
+function drawHomeMap() {
+  const svg = d3.select("#home-map-svg");
+  if (!svg.node() || !homeState.mapData || !homeState.topology) return;
+  svg.selectAll("*").remove();
+
+  const W = 900, H = 500;
+  // Mercator projection centered on Indonesia (lng ~118, lat ~-2). Manual scale
+  // works better than fitSize across the islands chain.
+  const projection = d3.geoMercator()
+    .center([118, -2.5])
+    .scale(950)
+    .translate([W / 2, H / 2]);
+  const path = d3.geoPath(projection);
+
+  // ---- Layer 1: grayscale base map (Indonesia + neighbors faintly) ----
+  const topo = homeState.topology;
+  const land = topojson.feature(topo, topo.objects.countries);
+  const allCountries = svg.append("g").attr("class", "map-base");
+  allCountries.selectAll("path")
+    .data(land.features)
+    .enter().append("path")
+    .attr("d", path)
+    .attr("fill", d => d.id == ID_INDONESIA ? "#e2e8f0" : "#f8fafc")
+    .attr("stroke", "#cbd5e1")
+    .attr("stroke-width", 0.5);
+
+  // ---- Filter routes per controls. v0: bulk + 12m + ln show informative
+  // status messages but render the available 24m+all+dn_ln data as fallback. ----
+  const status = document.getElementById("home-map-status");
+  const notes = [];
+  if (homeState.filterCategory === "bulk") {
+    notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
+  }
+  if (homeState.filterPeriod === "12m") {
+    notes.push("12M OD 미산출 — 24M 누계 표시 중");
+  }
+  if (homeState.filterTraffic === "ln") {
+    notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
+  }
+  status.textContent = notes.join(" · ") || "24M 누계 · 모든 카테고리 · Top 30 routes";
+
+  let routes = (homeState.mapData.routes_top30 || []).slice();
+  // Category color map
+  const categoryColors = {};
+  for (const c of (homeState.mapData.categories || [])) categoryColors[c.name] = c.color;
+
+  // ---- Layer 2: route paths + animated particles ----
+  const routeLayer = svg.append("g").attr("class", "map-routes");
+  const tonMax = Math.max(...routes.map(r => r.ton_24m), 1);
+  routes.forEach((r, i) => {
+    const start = projection([r.lon_o, r.lat_o]);
+    const end = projection([r.lon_d, r.lat_d]);
+    if (!start || !end) return;
+    // Quadratic bezier control point: midpoint lifted perpendicular to the segment.
+    const mx = (start[0] + end[0]) / 2;
+    const my = (start[1] + end[1]) / 2;
+    const dx = end[0] - start[0], dy = end[1] - start[1];
+    const norm = Math.sqrt(dx * dx + dy * dy) || 1;
+    const lift = Math.min(60, norm * 0.3);
+    const cx = mx - (dy / norm) * lift;
+    const cy = my + (dx / norm) * lift;
+    const d = `M ${start[0]} ${start[1]} Q ${cx} ${cy} ${end[0]} ${end[1]}`;
+    const color = categoryColors[r.category] || "#6b7280";
+    const pathId = `route-path-${i}`;
+    routeLayer.append("path")
+      .attr("id", pathId)
+      .attr("d", d)
+      .attr("fill", "none")
+      .attr("stroke", color)
+      .attr("stroke-width", Math.max(1, 4 * r.ton_24m / tonMax))
+      .attr("stroke-opacity", 0.55)
+      .append("title")
+      .text(`${r.origin} → ${r.destination}\n${(r.ton_24m / 1e6).toFixed(2)}M tons · ${r.vessels}척\n${r.category || "—"}`);
+
+    // Animated particle along the path (SVG animateMotion).
+    const dur = 2.5 + Math.random() * 4;
+    const particle = routeLayer.append("circle")
+      .attr("r", Math.max(2.2, 2.2 * r.ton_24m / tonMax + 1.5))
+      .attr("fill", color)
+      .attr("opacity", 0.85);
+    const motion = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
+    motion.setAttribute("dur", `${dur}s`);
+    motion.setAttribute("repeatCount", "indefinite");
+    motion.setAttribute("rotate", "auto");
+    const mpath = document.createElementNS("http://www.w3.org/2000/svg", "mpath");
+    mpath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `#${pathId}`);
+    motion.appendChild(mpath);
+    particle.node().appendChild(motion);
+  });
+
+  // ---- Layer 3: ports ----
+  const ports = (homeState.mapData.ports || []).slice();
+  const portTonMax = Math.max(...ports.map(p => p.ton_24m), 1);
+  const portLayer = svg.append("g").attr("class", "map-ports");
+  portLayer.selectAll("circle")
+    .data(ports)
+    .enter().append("circle")
+    .attr("cx", d => projection([d.lon, d.lat])?.[0])
+    .attr("cy", d => projection([d.lon, d.lat])?.[1])
+    .attr("r", d => Math.max(2.5, 16 * Math.sqrt(d.ton_24m / portTonMax)))
+    .attr("fill", "#1A3A6B")
+    .attr("fill-opacity", 0.7)
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 0.8)
+    .append("title")
+    .text(d => `${d.name}\n24M ton: ${(d.ton_24m / 1e6).toFixed(2)}M`);
+
+  // ---- Layer 4: top-5 port labels ----
+  const top5 = ports.slice(0, 5);
+  const labelLayer = svg.append("g").attr("class", "map-labels");
+  labelLayer.selectAll("text")
+    .data(top5)
+    .enter().append("text")
+    .attr("x", d => (projection([d.lon, d.lat])?.[0] || 0) + 8)
+    .attr("y", d => (projection([d.lon, d.lat])?.[1] || 0) + 4)
+    .attr("font-size", "11px")
+    .attr("font-weight", "600")
+    .attr("fill", "#1e293b")
+    .attr("paint-order", "stroke")
+    .attr("stroke", "white")
+    .attr("stroke-width", 3)
+    .text(d => d.name);
+
+  // ---- Legend ----
+  const legend = document.getElementById("home-map-legend");
+  if (legend) {
+    legend.innerHTML =
+      `<div class="font-semibold mb-1">화물 카테고리</div>` +
+      (homeState.mapData.categories || []).map(c =>
+        `<div class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:${c.color}"></span><span class="text-slate-700">${c.name}</span></div>`
+      ).join("");
+  }
+}
+
+function fillForeignSidebar() {
+  const data = homeState.mapData?.foreign_ports || {};
+  const tonEl = document.getElementById("map-intl-ton");
+  const noteEl = document.getElementById("map-intl-note");
+  if (tonEl) {
+    tonEl.textContent = data.totals_intl_ton != null
+      ? `${(data.totals_intl_ton / 1e6).toFixed(1)}M tons`
+      : "—";
+  }
+  if (noteEl) {
+    noteEl.textContent = data.note ||
+      "tanker_flow_map.totals.intl_ton 기준 누계";
+  }
+}
+
+function fillMapInsights() {
+  const host = document.getElementById("map-insights");
+  if (!host) return;
+  const items = homeState.mapData?.insights || [];
+  host.innerHTML = items.length
+    ? items.map(t => `<li>• ${t}</li>`).join("")
+    : `<li class="text-slate-400">데이터 없음</li>`;
 }
 
 async function renderCargoFleet() {
