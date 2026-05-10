@@ -5959,9 +5959,9 @@ def page_cargo():
 
     st.markdown("---")
 
-    tab_sum, tab_map, tab_port, tab_intl, tab_list = st.tabs(
+    tab_sum, tab_map, tab_port, tab_intl, tab_sts, tab_list = st.tabs(
         ["📊 화물 요약", "🗺️ OD 지도", "🏗️ 항구별",
-         "🌐 국제 무역", "📋 상세 리스트"]
+         "🌐 국제 무역", "🔄 STS / 자체 환적", "📋 상세 리스트"]
     )
 
     # ============ 1) Summary ============
@@ -6366,7 +6366,142 @@ def page_cargo():
                 id_pair[c] = id_pair[c].round(0)
             theme.dataframe(id_pair.reset_index())
 
-    # ============ 5) Detail list ============
+    # ============ 5) STS / self-loop analysis ============
+    with tab_sts:
+        st.subheader("🔄 STS (Ship-to-Ship) / 자체 환적")
+        st.caption(
+            "**정의**: LK3 행 중 origin = destination (동일 항구) — 정유 단지·터미널 "
+            "내부 환적이나 닻 정박 중 STS 운영을 의미. "
+            "한국 메모리: 2026-05 기준 ID 탱커 LK3의 약 40%가 self-loop, 약 252M 톤 "
+            "(Pertamina Trans Kontinental이 50%+ 점유). "
+            "본 sub-tab은 **현재 필터 (선종·카테고리·기간·운영사 등)에 한정**."
+        )
+        sts = f.copy()
+        sts["o_norm"] = sts["origin"].map(_normalize_port_name)
+        sts["d_norm"] = sts["destination"].map(_normalize_port_name)
+        sts = sts.dropna(subset=["o_norm", "d_norm"])
+        sts = sts[sts["o_norm"] == sts["d_norm"]].copy()
+        sts["hub"] = sts["o_norm"]
+
+        if sts.empty:
+            st.info("현재 필터에 self-loop (STS) 행이 없습니다.")
+        else:
+            total_ton_all = float(f["ton"].sum())
+            sts_ton = float(sts["ton"].sum())
+            sts_share = (sts_ton / total_ton_all * 100) if total_ton_all else 0
+            n_hubs = int(sts["hub"].nunique())
+            n_op = int(sts["operator"].dropna().nunique())
+            n_kapal = int(sts["kapal"].dropna().nunique())
+
+            cols = st.columns(5)
+            kpi(cols[0], "STS 톤 합", fmt.fmt_ton(sts_ton))
+            kpi(cols[1], "전체 대비", fmt.fmt_pct(sts_share),
+                help="현재 필터 화물 중 self-loop 톤 비중")
+            kpi(cols[2], "STS 허브 수", fmt.fmt_int(n_hubs))
+            kpi(cols[3], "STS 운영사", fmt.fmt_int(n_op))
+            kpi(cols[4], "STS 선박", fmt.fmt_int(n_kapal))
+
+            st.markdown("---")
+
+            # ---- Top hubs & top operators ----
+            cA, cB = st.columns(2)
+            with cA:
+                st.markdown("**Top STS 허브 (총 톤)**")
+                hub_ton = (sts.groupby("hub")["ton"].sum()
+                                .sort_values(ascending=False).head(20)
+                                .reset_index())
+                fig = px.bar(hub_ton.sort_values("ton"),
+                              x="ton", y="hub", orientation="h",
+                              color="ton",
+                              color_continuous_scale=theme.SCALES["blue"],
+                              labels={"hub": "", "ton": "톤"})
+                fig.update_layout(height=520, margin=dict(t=10, b=10),
+                                   coloraxis_showscale=False)
+                st.plotly_chart(fig, width="stretch")
+
+            with cB:
+                st.markdown("**Top STS 운영사 (총 톤)**")
+                op_ton = (sts.dropna(subset=["operator"])
+                                .groupby("operator")["ton"].sum()
+                                .sort_values(ascending=False).head(20)
+                                .reset_index())
+                fig = px.bar(op_ton.sort_values("ton"),
+                              x="ton", y="operator", orientation="h",
+                              color="ton",
+                              color_continuous_scale=theme.SCALES["amber"],
+                              labels={"operator": "", "ton": "톤"})
+                fig.update_layout(height=520, margin=dict(t=10, b=10),
+                                   coloraxis_showscale=False)
+                st.plotly_chart(fig, width="stretch")
+
+            # ---- STS commodity mix + monthly trend ----
+            cC, cD = st.columns(2)
+            with cC:
+                st.markdown("**STS 화물 카테고리 mix**")
+                cm = (sts.groupby("bucket")["ton"].sum()
+                          .sort_values(ascending=False).reset_index())
+                cm = cm[cm["ton"] > 0]
+                if cm.empty:
+                    st.info("STS 카테고리 데이터 없음")
+                else:
+                    fig = px.pie(cm, names="bucket", values="ton",
+                                  color="bucket",
+                                  color_discrete_map=_KOM_BUCKET_PALETTE,
+                                  hole=0.5)
+                    fig.update_traces(textinfo="percent+label",
+                                        textposition="outside")
+                    fig.update_layout(height=420, margin=dict(t=10, b=10),
+                                       legend=dict(font=dict(size=10)))
+                    theme.donut_center(fig, fmt.fmt_ton(sts_ton),
+                                         "STS 톤")
+                    st.plotly_chart(fig, width="stretch")
+            with cD:
+                st.markdown("**STS 월별 톤수 추이 (카테고리 누적)**")
+                mt = (sts.groupby(["period", "bucket"])["ton"].sum()
+                           .reset_index().sort_values("period"))
+                if mt.empty:
+                    st.info("월별 데이터 없음")
+                else:
+                    fig = px.area(mt, x="period", y="ton",
+                                   color="bucket",
+                                   color_discrete_map=_KOM_BUCKET_PALETTE,
+                                   labels={"period": "월", "ton": "톤"})
+                    fig.update_layout(height=420, margin=dict(t=10, b=10),
+                                       legend=dict(orientation="h", y=-0.2,
+                                                    font=dict(size=10)))
+                    st.plotly_chart(fig, width="stretch")
+
+            # ---- HHI of STS hub concentration ----
+            st.markdown("##### STS 허브 집중도 (HHI)")
+            hub_pct = (hub_ton["ton"] / hub_ton["ton"].sum() * 100)
+            hhi = float((hub_pct ** 2).sum())
+            band = ("저집중" if hhi < 1500
+                     else "중집중" if hhi < 2500
+                     else "고집중")
+            cE = st.columns(4)
+            kpi(cE[0], "Top-20 HHI", f"{hhi:,.0f}",
+                help="KPPU 기준 1500/2500 — 0~10,000 percent-share HHI")
+            kpi(cE[1], "Top-1 점유율",
+                fmt.fmt_pct(float(hub_pct.max())))
+            kpi(cE[2], "Top-3 누적",
+                fmt.fmt_pct(float(hub_pct.head(3).sum())))
+            kpi(cE[3], "분류", band)
+
+            # ---- Detail table ----
+            st.markdown("##### STS 허브 × 운영사 × 카테고리 Top 50")
+            tbl = (sts.groupby(["hub", "operator", "bucket"])["ton"]
+                        .sum().reset_index()
+                        .sort_values("ton", ascending=False).head(50))
+            tbl["ton"] = tbl["ton"].round(0)
+            tbl = tbl.rename(columns={"hub": "STS_허브",
+                                          "operator": "운영사",
+                                          "bucket": "카테고리",
+                                          "ton": "톤"})
+            theme.dataframe(tbl)
+            _csv_button(tbl, f"cargo_sts_detail_{snapshot}.csv",
+                         label="📥 STS 상세 CSV", key="cg_dl_sts")
+
+    # ============ 6) Detail list ============
     with tab_list:
         st.markdown(
             "**상세 화물 행 리스트** — 현재 필터에 매치되는 LK3 raw 행 (정렬·CSV)"
