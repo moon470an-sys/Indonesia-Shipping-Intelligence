@@ -1,4 +1,26 @@
-.tab.active { background-color: rgb(13 148 136); color: white; }
+/* PR-18: nav tab states + tab-panel fade-in transition */
+.tab {
+  transition: background-color 140ms ease, color 140ms ease, transform 100ms ease;
+}
+.tab:hover { transform: translateY(-1px); }
+.tab.active {
+  background-color: #1A3A6B;     /* navy per design system */
+  color: white;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset;
+}
+.tab.active:hover { transform: none; }
+
+@keyframes panelFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tab-panel:not(.hidden) {
+  animation: panelFadeIn 240ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-panel:not(.hidden) { animation: none; }
+  .tab:hover { transform: none; }
+}
 .kpi-card { background:white; border-radius:0.75rem; box-shadow:0 1px 2px rgba(0,0,0,.06); padding:0.75rem 1rem; }
 .kpi-label { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:0.04em; }
 .kpi-value { font-size:1.7rem; font-weight:700; color:#0f172a; line-height:1.1; }
