@@ -13,13 +13,18 @@
   <link rel="stylesheet" href="./css/site.css" />
 </head>
 <body class="bg-slate-50 text-slate-800">
-  <header class="bg-slate-900 text-white">
+  <header class="app-header bg-slate-900 text-white">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="text-xl font-bold tracking-tight">🚢 Indonesia Shipping Intelligence</h1>
-        <p class="text-xs text-slate-400" id="meta-line">snapshot loading…</p>
+      <div class="flex items-center gap-3 flex-wrap">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">🚢 Indonesia Shipping Intelligence</h1>
+          <p class="text-[11px] text-slate-400 mt-0.5">공개 데이터 기반 인도네시아 해운 시장 정보 레퍼런스</p>
+        </div>
+        <span class="freshness-badge" id="header-freshness" title="데이터 기준일">
+          <span class="freshness-dot"></span><span id="header-freshness-text">loading…</span>
+        </span>
       </div>
-      <nav class="flex gap-1 text-sm flex-wrap">
+      <nav class="flex gap-1 text-sm flex-wrap" aria-label="Primary tabs">
         <button data-tab="overview"      class="tab px-3 py-1.5 rounded bg-slate-700">🏠 Home</button>
         <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700">🛢️ Tanker Sector</button>
         <button data-tab="cargo-fleet"   class="tab px-3 py-1.5 rounded hover:bg-slate-700">📊 Cargo &amp; Fleet</button>
