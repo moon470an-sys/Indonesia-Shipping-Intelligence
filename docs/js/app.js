@@ -713,9 +713,10 @@ const ID_INDONESIA = 360;  // ISO 3166-1 numeric
 const homeState = {
   mapData: null,
   topology: null,
-  filterCategory: "all",   // all | tanker | bulk (bulk shows note)
-  filterPeriod: "24m",     // 24m | 12m (12m shows note)
-  filterTraffic: "dn_ln",  // dn_ln | ln (ln shows note)
+  filterCategory: "all",      // all | tanker | bulk (bulk shows note)
+  filterPeriod: "24m",        // 24m | 12m (12m shows note)
+  filterTraffic: "dn_ln",     // dn_ln | ln (ln shows note)
+  highlightCategory: null,    // null | category-name (PR-11: legend click)
 };
 
 async function renderHome() {
@@ -949,6 +950,7 @@ function drawHomeMap() {
   // ---- Layer 2: route paths + animated particles ----
   const routeLayer = svg.append("g").attr("class", "map-routes");
   const tonMax = Math.max(...routes.map(r => r.ton_24m), 1);
+  const hi = homeState.highlightCategory;
   routes.forEach((r, i) => {
     const start = projection([r.lon_o, r.lat_o]);
     const end = projection([r.lon_d, r.lat_d]);
@@ -964,30 +966,49 @@ function drawHomeMap() {
     const d = `M ${start[0]} ${start[1]} Q ${cx} ${cy} ${end[0]} ${end[1]}`;
     const color = categoryColors[r.category] || "#6b7280";
     const pathId = `route-path-${i}`;
-    routeLayer.append("path")
+    const dimmed = hi && r.category !== hi;
+    const baseStroke = Math.max(1, 4 * r.ton_24m / tonMax);
+    const path = routeLayer.append("path")
       .attr("id", pathId)
       .attr("d", d)
       .attr("fill", "none")
       .attr("stroke", color)
-      .attr("stroke-width", Math.max(1, 4 * r.ton_24m / tonMax))
-      .attr("stroke-opacity", 0.55)
-      .append("title")
+      .attr("stroke-width", baseStroke)
+      .attr("stroke-opacity", dimmed ? 0.08 : 0.55)
+      .style("cursor", "help")
+      .style("transition", "stroke-width 140ms ease, stroke-opacity 140ms ease");
+    path.append("title")
       .text(`${r.origin} → ${r.destination}\n${fmtTon(r.ton_24m)} tons · ${r.vessels}척\n${r.category || "—"}`);
 
-    // Animated particle along the path (SVG animateMotion).
-    const dur = 2.5 + Math.random() * 4;
-    const particle = routeLayer.append("circle")
-      .attr("r", Math.max(2.2, 2.2 * r.ton_24m / tonMax + 1.5))
-      .attr("fill", color)
-      .attr("opacity", 0.85);
-    const motion = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
-    motion.setAttribute("dur", `${dur}s`);
-    motion.setAttribute("repeatCount", "indefinite");
-    motion.setAttribute("rotate", "auto");
-    const mpath = document.createElementNS("http://www.w3.org/2000/svg", "mpath");
-    mpath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `#${pathId}`);
-    motion.appendChild(mpath);
-    particle.node().appendChild(motion);
+    // Hover : bump stroke width + pop opacity even if dimmed
+    path.on("mouseenter", function() {
+      d3.select(this)
+        .attr("stroke-width", baseStroke * 2.2)
+        .attr("stroke-opacity", 0.95);
+    });
+    path.on("mouseleave", function() {
+      d3.select(this)
+        .attr("stroke-width", baseStroke)
+        .attr("stroke-opacity", dimmed ? 0.08 : 0.55);
+    });
+
+    // Animated particle along the path (SVG animateMotion). Suppress when
+    // the route is dimmed by the legend filter — keeps motion focused.
+    if (!dimmed) {
+      const dur = 2.5 + Math.random() * 4;
+      const particle = routeLayer.append("circle")
+        .attr("r", Math.max(2.2, 2.2 * r.ton_24m / tonMax + 1.5))
+        .attr("fill", color)
+        .attr("opacity", 0.85);
+      const motion = document.createElementNS("http://www.w3.org/2000/svg", "animateMotion");
+      motion.setAttribute("dur", `${dur}s`);
+      motion.setAttribute("repeatCount", "indefinite");
+      motion.setAttribute("rotate", "auto");
+      const mpath = document.createElementNS("http://www.w3.org/2000/svg", "mpath");
+      mpath.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `#${pathId}`);
+      motion.appendChild(mpath);
+      particle.node().appendChild(motion);
+    }
   });
 
   // ---- Layer 3: ports ----
@@ -1023,14 +1044,39 @@ function drawHomeMap() {
     .attr("stroke-width", 3)
     .text(d => d.name);
 
-  // ---- Legend ----
+  // ---- Legend (PR-11: clickable to filter routes by category) ----
   const legend = document.getElementById("home-map-legend");
   if (legend) {
+    const cats = homeState.mapData.categories || [];
     legend.innerHTML =
-      `<div class="font-semibold mb-1">화물 카테고리</div>` +
-      (homeState.mapData.categories || []).map(c =>
-        `<div class="flex items-center gap-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:${c.color}"></span><span class="text-slate-700">${c.name}</span></div>`
-      ).join("");
+      `<div class="font-semibold mb-1 flex items-center justify-between gap-2">
+         <span>화물 카테고리</span>
+         ${homeState.highlightCategory
+           ? `<button id="map-legend-clear" class="text-[10px] text-blue-600 hover:underline" type="button">전체</button>`
+           : ""}
+       </div>` +
+      cats.map(c => {
+        const active = homeState.highlightCategory === c.name;
+        const dimmed = homeState.highlightCategory && !active;
+        return `<button type="button" data-cat="${c.name}"
+                       class="map-legend-item flex items-center gap-1.5 w-full text-left py-0.5 px-1 rounded hover:bg-slate-100"
+                       style="opacity:${dimmed ? 0.4 : 1}">
+                  <span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:${c.color}"></span>
+                  <span class="text-slate-700 ${active ? "font-semibold" : ""}">${c.name}</span>
+                </button>`;
+      }).join("");
+    legend.querySelectorAll("[data-cat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cat = btn.dataset.cat;
+        homeState.highlightCategory = (homeState.highlightCategory === cat) ? null : cat;
+        drawHomeMap();
+      });
+    });
+    const clr = document.getElementById("map-legend-clear");
+    if (clr) clr.addEventListener("click", () => {
+      homeState.highlightCategory = null;
+      drawHomeMap();
+    });
   }
 }
 
