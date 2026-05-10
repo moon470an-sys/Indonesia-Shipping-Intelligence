@@ -473,6 +473,85 @@ def build_recent_events() -> dict:
 
 
 # ----------------------------------------------------------------------
+# PR-D: 7. regulatory_notes.html (markdown -> minimal HTML)
+# ----------------------------------------------------------------------
+def md_to_html(md: str) -> str:
+    """Tiny markdown subset converter: H1/H2/H3, lists, paragraphs,
+    blockquotes, **bold**, `code`, [text](url), ---. Used to embed
+    data/regulatory_notes.md into a collapsible block in PR-D.
+    """
+    def inline(s: str) -> str:
+        s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+        s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+        s = re.sub(
+            r"\[([^\]]+)\]\(([^)]+)\)",
+            r'<a href="\2" target="_blank" rel="noopener" class="text-blue-600 hover:underline">\1</a>',
+            s,
+        )
+        return s
+
+    out: list[str] = []
+    in_ul = False
+    in_paragraph: list[str] = []
+
+    def _flush_paragraph():
+        if in_paragraph:
+            out.append("<p>" + " ".join(in_paragraph) + "</p>")
+            in_paragraph.clear()
+
+    def _close_ul():
+        nonlocal in_ul
+        if in_ul:
+            out.append("</ul>")
+            in_ul = False
+
+    for raw in md.splitlines():
+        line = raw.rstrip()
+        if not line:
+            _flush_paragraph()
+            _close_ul()
+            continue
+        if line.startswith("# "):
+            _flush_paragraph(); _close_ul()
+            out.append(f"<h2>{inline(line[2:])}</h2>")
+        elif line.startswith("## "):
+            _flush_paragraph(); _close_ul()
+            out.append(f"<h3>{inline(line[3:])}</h3>")
+        elif line.startswith("### "):
+            _flush_paragraph(); _close_ul()
+            out.append(f"<h4>{inline(line[4:])}</h4>")
+        elif line.startswith("---"):
+            _flush_paragraph(); _close_ul()
+            out.append("<hr>")
+        elif line.startswith("> "):
+            _flush_paragraph(); _close_ul()
+            out.append(f"<blockquote>{inline(line[2:])}</blockquote>")
+        elif line.startswith("- "):
+            _flush_paragraph()
+            if not in_ul:
+                out.append("<ul>")
+                in_ul = True
+            out.append(f"<li>{inline(line[2:])}</li>")
+        else:
+            _close_ul()
+            in_paragraph.append(inline(line))
+
+    _flush_paragraph()
+    _close_ul()
+    return "\n".join(out)
+
+
+def build_regulatory_notes() -> str | None:
+    src = ROOT / "data" / "regulatory_notes.md"
+    if not src.exists():
+        return None
+    html = md_to_html(src.read_text(encoding="utf-8"))
+    out = DERIVED / "regulatory_notes.html"
+    out.write_text(html, encoding="utf-8")
+    return html
+
+
+# ----------------------------------------------------------------------
 # 6. owner_ticker_map.json
 # ----------------------------------------------------------------------
 def build_owner_ticker_map() -> dict:
@@ -530,6 +609,13 @@ def main() -> None:
     ev = build_recent_events()
     bytes_total += _write_json(DERIVED / "recent_events.json", ev)
     print(f"  recent_events.json — {len(ev['events'])} events")
+
+    reg = build_regulatory_notes()
+    if reg is not None:
+        bytes_total += len(reg)
+        print(f"  regulatory_notes.html — {len(reg):,} bytes")
+    else:
+        print("  regulatory_notes.html — skipped (data/regulatory_notes.md missing)")
 
     print(f"Done. Total bytes: {bytes_total:,}")
 
