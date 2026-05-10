@@ -169,6 +169,75 @@
   border: 1px dashed #fca5a5;
 }
 .state-icon { font-size: 22px; margin-bottom: 8px; opacity: 0.8; }
+
+/* PR-8: card interaction polish.
+   - Subtle hover lift on cards that are interactive
+   - Accent stripe on section h3 (visible information hierarchy)
+   - Active subclass filter pill */
+
+/* Generic card lift — opt-in via .card-interactive class */
+.card-interactive {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  will-change: transform;
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.10);
+}
+
+/* h3 inside content sections: small navy accent stripe */
+section.tab-panel h3 {
+  position: relative;
+  padding-left: 10px;
+}
+section.tab-panel h3::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: #1A3A6B;
+}
+
+/* Active-filter pill (Tanker Sector header) */
+.active-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 12px;
+  background: #1A3A6B;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+}
+.active-filter-pill button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.active-filter-pill button:hover { background: rgba(255,255,255,0.35); }
+.active-filter-pill button:focus { outline: 2px solid #56C0E0; outline-offset: 1px; }
+
+/* Tab buttons need a focus ring for keyboard nav */
+.tab:focus-visible {
+  outline: 2px solid #56C0E0;
+  outline-offset: 2px;
+}
 table tbody tr:nth-child(even) { background:#fafafa; }
 table tbody tr:hover { background:#fef3c7; }
 .heatmap-cell { width:24px; height:24px; }

@@ -287,8 +287,10 @@ function drawTankerCards() {
     const hhiTxt = c.hhi == null ? "—" : Math.round(c.hhi).toLocaleString();
     const isActive = tsState.filter !== "ALL" && tsState.filter === c.subclass;
     const ringCls = isActive ? "ring-2 ring-slate-800" : "";
-    return `<div class="bg-white rounded-xl shadow p-4 border-l-4 cursor-pointer transition hover:shadow-lg ${ringCls}"
-                 style="border-color:${color}" data-subclass="${c.subclass}">
+    return `<div class="card-interactive bg-white rounded-xl shadow p-4 border-l-4 cursor-pointer ${ringCls}"
+                 style="border-color:${color}" data-subclass="${c.subclass}"
+                 role="button" tabindex="0" aria-pressed="${isActive}"
+                 aria-label="${c.subclass} 필터 토글">
       <div class="flex items-baseline justify-between mb-2">
         <h4 class="font-semibold text-slate-700">${c.subclass}</h4>
         <span class="text-[10.5px] text-slate-400">${(c.vessel_count || 0).toLocaleString()}척</span>
@@ -306,19 +308,35 @@ function drawTankerCards() {
     </div>`;
   }).join("");
 
-  // Click → toggle filter
+  // Click / Enter / Space → toggle filter
+  const applyFilter = (s) => {
+    tsState.filter = (tsState.filter === s) ? "ALL" : s;
+    drawTankerCards();
+    drawTankerScatter();
+    drawTankerMonthly();
+    drawTankerCommodityBars();
+  };
   host.querySelectorAll("[data-subclass]").forEach(el => {
-    el.addEventListener("click", () => {
-      const s = el.dataset.subclass;
-      tsState.filter = (tsState.filter === s) ? "ALL" : s;
-      drawTankerCards();
-      drawTankerScatter();
-      drawTankerMonthly();
-      drawTankerCommodityBars();
+    el.addEventListener("click", () => applyFilter(el.dataset.subclass));
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        applyFilter(el.dataset.subclass);
+      }
     });
   });
+
+  // PR-8: prominent active-filter pill with explicit Clear button.
   if (activeEl) {
-    activeEl.textContent = tsState.filter === "ALL" ? "전체 subclass" : `필터: ${tsState.filter}`;
+    if (tsState.filter === "ALL") {
+      activeEl.textContent = "전체 subclass — 카드를 클릭하여 필터링";
+      activeEl.className = "text-xs text-slate-500";
+    } else {
+      activeEl.innerHTML = `<span class="active-filter-pill">필터: ${tsState.filter}<button type="button" id="ts-filter-clear" aria-label="필터 해제">×</button></span>`;
+      activeEl.className = "";
+      const clr = document.getElementById("ts-filter-clear");
+      if (clr) clr.addEventListener("click", () => applyFilter(tsState.filter));
+    }
   }
 }
 
