@@ -6,6 +6,31 @@ const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString());
 const fmt1 = (n) => (n == null ? "—" : Number(n).toLocaleString(undefined, { maximumFractionDigits: 1 }));
 const fmt0 = (n) => (n == null ? "—" : Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 }));
 
+// PR-9: Unified scaled-unit formatters. Picks B / M / K / raw based on
+// magnitude so labels stay readable across 5 orders of magnitude.
+//   fmtTon(3_094_000_000) -> "3.09B"   (with optional unit suffix)
+//   fmtTon(2_415, 0)      -> "2,415"
+//   fmtCount(2_415)       -> "2,415"
+//   fmtPct(8.94)          -> "+8.9%"   sign + 1 decimal
+function fmtTon(v, opts = {}) {
+  if (v == null) return "—";
+  const n = Number(v);
+  if (!isFinite(n)) return "—";
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return `${(n / 1e9).toFixed(opts.b ?? 2)}B`;
+  if (abs >= 1e6) return `${(n / 1e6).toFixed(opts.m ?? 1)}M`;
+  if (abs >= 1e3) return `${(n / 1e3).toFixed(opts.k ?? 1)}K`;
+  return n.toLocaleString(undefined, { maximumFractionDigits: opts.r ?? 0 });
+}
+const fmtCount = (v) => v == null ? "—" : Number(v).toLocaleString();
+function fmtPct(v, opts = {}) {
+  if (v == null) return "—";
+  const n = Number(v);
+  if (!isFinite(n)) return "—";
+  const sign = (opts.sign && n > 0) ? "+" : "";
+  return `${sign}${n.toFixed(opts.d ?? 1)}%`;
+}
+
 const state = {
   meta: null,
   financials: null,
@@ -278,7 +303,7 @@ function drawTankerCards() {
   const cards = tsState.tankerSubclass?.cards || [];
   host.innerHTML = cards.map(c => {
     const color = SUBCLASS_PALETTE[c.subclass] || "#64748b";
-    const tonM = (c.ton_last_12m || 0) / 1e6;
+    const tonStr = fmtTon(c.ton_last_12m);
     const yoy = c.yoy_pct;
     const trend = yoy == null
       ? `<span class="text-slate-400 text-sm">YoY —</span>`
@@ -296,7 +321,7 @@ function drawTankerCards() {
         <span class="text-[10.5px] text-slate-400">${(c.vessel_count || 0).toLocaleString()}척</span>
       </div>
       <div class="flex items-baseline gap-2 mb-3">
-        <span class="text-2xl font-bold text-slate-900">${tonM.toFixed(2)}M</span>
+        <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
         <span class="text-xs text-slate-500">tons (12M)</span>
       </div>
       <div class="mb-2">${trend}</div>
@@ -434,7 +459,7 @@ function drawTankerCommodityBars() {
       opacity: list.map(c => (filter === "ALL" || filter === c.subclass) ? 0.9 : 0.25),
     },
     hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
-    text: list.map(c => `${(c.ton_total / 1e6).toFixed(1)}M`),
+    text: list.map(c => fmtTon(c.ton_total)),
     textposition: "outside",
     cliponaxis: false,
   };
@@ -488,7 +513,7 @@ function drawTankerOperatorDonut() {
     margin: { t: 10, l: 10, r: 10, b: 30 },
     showlegend: false,
     annotations: [{
-      text: `Total<br>${(totalGt/1e6).toFixed(2)}M GT`,
+      text: `Total<br>${fmtTon(totalGt)} GT`,
       x: 0.5, y: 0.5, showarrow: false, font: { size: 12, color: "#475569" },
     }],
   }, { displayModeBar: false, responsive: true });
@@ -700,7 +725,6 @@ async function renderHome() {
 function renderHomeKpi(payload) {
   const host = document.getElementById("home-kpi");
   if (!host || !payload) return;
-  const fmtTon = v => v == null ? "—" : `${(v / 1e6).toFixed(1)}M`;
   const trend = (yoy) => {
     if (yoy == null) return `<span class="text-slate-400 text-sm">YoY —</span>`;
     const cls = yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down";
@@ -921,7 +945,7 @@ function drawHomeMap() {
       .attr("stroke-width", Math.max(1, 4 * r.ton_24m / tonMax))
       .attr("stroke-opacity", 0.55)
       .append("title")
-      .text(`${r.origin} → ${r.destination}\n${(r.ton_24m / 1e6).toFixed(2)}M tons · ${r.vessels}척\n${r.category || "—"}`);
+      .text(`${r.origin} → ${r.destination}\n${fmtTon(r.ton_24m)} tons · ${r.vessels}척\n${r.category || "—"}`);
 
     // Animated particle along the path (SVG animateMotion).
     const dur = 2.5 + Math.random() * 4;
@@ -954,7 +978,7 @@ function drawHomeMap() {
     .attr("stroke", "#fff")
     .attr("stroke-width", 0.8)
     .append("title")
-    .text(d => `${d.name}\n24M ton: ${(d.ton_24m / 1e6).toFixed(2)}M`);
+    .text(d => `${d.name}\n24M ton: ${fmtTon(d.ton_24m)}`);
 
   // ---- Layer 4: top-5 port labels ----
   const top5 = ports.slice(0, 5);
@@ -989,7 +1013,7 @@ function fillForeignSidebar() {
   const noteEl = document.getElementById("map-intl-note");
   if (tonEl) {
     tonEl.textContent = data.totals_intl_ton != null
-      ? `${(data.totals_intl_ton / 1e6).toFixed(1)}M tons`
+      ? `${fmtTon(data.totals_intl_ton)} tons`
       : "—";
   }
   if (noteEl) {
@@ -1058,7 +1082,7 @@ function drawCargoCommodityBars(rows) {
       color: list.map((_, i) => i === list.length - 1 ? "#1A3A6B" : "#56C0E0"),
       line: { color: "#1e293b", width: 0.5 },
     },
-    text: list.map(r => `${(r.ton_total / 1e9).toFixed(2)}B`),
+    text: list.map(r => fmtTon(r.ton_total)),
     textposition: "outside",
     cliponaxis: false,
     hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
