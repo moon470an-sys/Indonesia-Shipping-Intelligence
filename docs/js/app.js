@@ -594,22 +594,41 @@ function renderFinancials() {
   // PR-7: fn-banner element removed; the global footer + Listed Operators
   // tab description already carry the IDX source attribution.
 
-  // First-time setup: populate year dropdown + bind listeners
+  // First-time setup: year dropdown + sortable column header bindings.
   if (!fnState.initialized) {
     fnState.initialized = true;
+    fnState.sortDir = -1;  // default desc on first sort
     const years = Array.from(new Set(f.rows.map(r => r.year))).sort();
     const yrSel = document.getElementById("fn-year");
     yrSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
     yrSel.value = years[years.length - 1];
     fnState.year = yrSel.value;
     yrSel.addEventListener("change", (e) => { fnState.year = e.target.value; renderFinancials(); });
-    document.getElementById("fn-sortby").addEventListener("change", (e) => {
-      fnState.sortBy = e.target.value; renderFinancials();
+    // PR-14: clickable / keyboard-activated column headers
+    document.querySelectorAll("#fn-tbl th[data-sort]").forEach(th => {
+      th.setAttribute("tabindex", "0");
+      th.setAttribute("role", "columnheader");
+      th.setAttribute("aria-sort", "none");
+      const handler = () => {
+        const key = th.dataset.sort;
+        if (fnState.sortBy === key) {
+          fnState.sortDir = -(fnState.sortDir);
+        } else {
+          fnState.sortBy = key;
+          fnState.sortDir = th.dataset.numeric ? -1 : 1;  // numeric default desc, text default asc
+        }
+        renderFinancials();
+      };
+      th.addEventListener("click", handler);
+      th.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(); }
+      });
     });
   }
 
   const yr = fnState.year;
   const sortBy = fnState.sortBy;
+  const sortDir = fnState.sortDir || -1;
   const yrRows = f.rows.filter(r => r.year === yr);
 
   // KPI strip — industry totals for the selected year
@@ -653,16 +672,37 @@ function renderFinancials() {
     yaxis: { title: "순이익률 (%)", zeroline: true, zerolinecolor: "#cbd5e1" },
   }, { displayModeBar: false, responsive: true });
 
-  // Comparison table
-  document.getElementById("fn-table-year").textContent = `(${yr} 기준)`;
-  const sorted = yrRows.slice().sort((a, b) => {
-    const x = a[sortBy], y = b[sortBy];
-    if (x == null) return 1; if (y == null) return -1;
-    return y - x;  // desc by default for all numeric metrics
-  });
-  // Renewal v2 §7.3: simplified 7-column table
+  // Comparison table — PR-14: bidirectional sort with header indicators
+  const yearTxt = document.getElementById("fn-table-year");
+  if (yearTxt) yearTxt.textContent = `(${yr} 기준)`;
+  // Resolve cell value: ticker / name come from the company catalog, others from rows
   const byTicker = {};
   for (const c of f.companies) byTicker[c.ticker] = c;
+  const cellVal = (r, key) => {
+    if (key === "ticker") return r.ticker || "";
+    if (key === "name") return (byTicker[r.ticker] || {}).name_short || "";
+    return r[key];
+  };
+  const sorted = yrRows.slice().sort((a, b) => {
+    const x = cellVal(a, sortBy), y = cellVal(b, sortBy);
+    if (x == null && y == null) return 0;
+    if (x == null) return 1; if (y == null) return -1;
+    if (typeof x === "string" || typeof y === "string") {
+      return String(x).localeCompare(String(y)) * sortDir;
+    }
+    return (x > y ? 1 : (x < y ? -1 : 0)) * -sortDir;
+  });
+  // Update sort indicators on each header
+  document.querySelectorAll("#fn-tbl th[data-sort]").forEach(th => {
+    th.classList.remove("sort-asc", "sort-desc");
+    th.setAttribute("aria-sort", "none");
+    if (th.dataset.sort === sortBy) {
+      const cls = sortDir === 1 ? "sort-asc" : "sort-desc";
+      th.classList.add(cls);
+      th.setAttribute("aria-sort", sortDir === 1 ? "ascending" : "descending");
+    }
+  });
+
   const num0 = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
   const pct1 = (v) => v == null ? "—" : `${Number(v).toFixed(1)}%`;
   document.querySelector("#fn-tbl tbody").innerHTML = sorted.map(r => {
