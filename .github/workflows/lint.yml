@@ -1,0 +1,31 @@
+name: Language lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/index.html"
+      - "docs/derived/**"
+      - "data/**.md"
+      - "i18n/**"
+      - "scripts/lint_language.py"
+      - ".github/workflows/lint.yml"
+  pull_request:
+    paths:
+      - "docs/index.html"
+      - "docs/derived/**"
+      - "data/**.md"
+      - "i18n/**"
+      - "scripts/lint_language.py"
+      - ".github/workflows/lint.yml"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run blacklist lint
+        run: python scripts/lint_language.py

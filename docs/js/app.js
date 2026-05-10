@@ -415,6 +415,56 @@ async function renderMarketOverview() {
   }
 }
 
+// ---------- PR-E: Recent Events panel ----------
+async function renderRecentEvents() {
+  const tbody = document.querySelector("#re-table tbody");
+  const summary = document.getElementById("re-summary");
+  const note = document.getElementById("re-mode-note");
+  if (!tbody) return;
+
+  let payload;
+  try {
+    payload = await loadDerived("recent_events.json");
+  } catch (e) {
+    if (note) note.textContent =
+      `recent_events.json 로드 실패 (${e.message}). build script 재실행 필요.`;
+    return;
+  }
+  const events = (payload.events || []).slice().sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+    return ((b._meta?.gt) || 0) - ((a._meta?.gt) || 0);
+  });
+
+  const v0Mode = (payload._notes?.v0_mode || "").trim();
+  if (note) {
+    note.innerHTML = v0Mode
+      ? `<strong>주의:</strong> ${v0Mode}`
+      : "최근 이벤트 (시간 역순). MoM 변동·신규 등록만 표시되며, 결론·권유 텍스트 없음.";
+  }
+  if (summary) summary.textContent = `${events.length} events`;
+
+  const typeBadge = (t) => {
+    const cls = {
+      new_registration: "bg-blue-100 text-blue-800",
+      port_change:      "bg-amber-100 text-amber-800",
+      fleet_change:     "bg-emerald-100 text-emerald-800",
+      volume_change:    "bg-purple-100 text-purple-800",
+    }[t] || "bg-slate-100 text-slate-700";
+    return `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-mono ${cls}">${t}</span>`;
+  };
+
+  tbody.innerHTML = events.length === 0
+    ? `<tr><td colspan="4" class="px-2 py-3 text-center text-slate-500 text-sm">이벤트 없음.</td></tr>`
+    : events.map(e => `<tr>
+        <td class="px-2 py-1 font-mono text-xs">${e.date || "—"}</td>
+        <td class="px-2 py-1">${typeBadge(e.type)}</td>
+        <td class="px-2 py-1 text-sm">${e.summary || ""}</td>
+        <td class="px-2 py-1">
+          ${e.chart_link ? `<a href="${e.chart_link}" class="text-blue-600 hover:underline text-xs">차트 보기 →</a>` : ""}
+        </td>
+      </tr>`).join("");
+}
+
 // ---------- PR-D: Tanker Sector ----------
 const TANKER_SUBCLASS_FILTER_OPTIONS = [
   { key: "ALL",                   label: "ALL" },
@@ -2430,6 +2480,7 @@ async function ensureLoaded(tab) {
       }
       renderChanges();
       renderSectorDelta();
+      await renderRecentEvents();
       state.loaded.add("changes");
     }
     if (tab === "tanker-sector" && !state.loaded.has("tanker-sector")) {
