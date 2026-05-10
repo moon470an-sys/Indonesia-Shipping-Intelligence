@@ -10,7 +10,19 @@
       "operator_count": 32,
       "vessel_count": 1950,
       "hhi": 1434.1,
-      "cagr_24m_pct": null
+      "cagr_24m_pct": null,
+      "top_route": {
+        "origin": "LHOKSEUMAWE",
+        "destination": "BELAWAN",
+        "ton": 980848.9,
+        "vessels": 11,
+        "calls": 193
+      },
+      "top_operator": {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "count_in_subclass": 50,
+        "sum_gt": 981071.0
+      }
     },
     {
       "subclass": "Chemical",
@@ -20,7 +32,13 @@
       "operator_count": 16,
       "vessel_count": 246,
       "hhi": 2270.9,
-      "cagr_24m_pct": null
+      "cagr_24m_pct": null,
+      "top_route": null,
+      "top_operator": {
+        "owner": "PT. USDA SEROJA JAYA",
+        "count_in_subclass": 27,
+        "sum_gt": 119062.0
+      }
     },
     {
       "subclass": "LPG",
@@ -30,7 +48,19 @@
       "operator_count": 19,
       "vessel_count": 87,
       "hhi": 762.2,
-      "cagr_24m_pct": null
+      "cagr_24m_pct": null,
+      "top_route": {
+        "origin": "TANJUNG SEKONG",
+        "destination": "BALONGAN",
+        "ton": 471161.0,
+        "vessels": 16,
+        "calls": 169
+      },
+      "top_operator": {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "count_in_subclass": 6,
+        "sum_gt": 981071.0
+      }
     },
     {
       "subclass": "LNG",
@@ -40,7 +70,19 @@
       "operator_count": 8,
       "vessel_count": 11,
       "hhi": 1250.0,
-      "cagr_24m_pct": null
+      "cagr_24m_pct": null,
+      "top_route": {
+        "origin": "TELUK JAKARTA",
+        "destination": "PATIMBAN",
+        "ton": 808970.3,
+        "vessels": 4,
+        "calls": 14
+      },
+      "top_operator": {
+        "owner": "PT MITRAUSAHA TANKER PERSADA",
+        "count_in_subclass": 1,
+        "sum_gt": 123369.0
+      }
     },
     {
       "subclass": "FAME / Vegetable Oil",
@@ -50,7 +92,19 @@
       "operator_count": 1,
       "vessel_count": 94,
       "hhi": 10000.0,
-      "cagr_24m_pct": null
+      "cagr_24m_pct": null,
+      "top_route": {
+        "origin": "TANJUNG GEREM",
+        "destination": "TANJUNG PRIOK",
+        "ton": 1252178.9,
+        "vessels": 11,
+        "calls": 12
+      },
+      "top_operator": {
+        "owner": "PT. LINTAS MARITIM INDONESIA",
+        "count_in_subclass": 5,
+        "sum_gt": 37554.0
+      }
     }
   ],
   "monthly": {
