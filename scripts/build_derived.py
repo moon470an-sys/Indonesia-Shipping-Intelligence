@@ -36,6 +36,10 @@ DATA = DOCS / "data"
 DERIVED = DOCS / "derived"
 DB = ROOT / "data" / "shipping_bi.db"
 
+# Make `import backend.taxonomy` work when the script is invoked directly
+# from the repo root (PR-C: tanker fleet age aggregation).
+sys.path.insert(0, str(ROOT))
+
 # Manual seed map per INSTRUCTIONS.md §3. owner_ticker_map.json is the
 # stable, hand-curated ticker → company-name list. The build copies it
 # into docs/derived/ for static serving.
@@ -109,14 +113,120 @@ def build_meta() -> dict:
 
 
 # ----------------------------------------------------------------------
+# 2a. tanker fleet age stats (per subclass + overall)
+#
+# PR-C extension: scans vessels_snapshot for the latest snapshot, classifies
+# each vessel via backend.taxonomy, and aggregates GT-weighted age + count
+# per subclass. Output is merged into subclass_facts and exposed at the
+# top level as `tanker_fleet_summary` for KPI cards.
+# ----------------------------------------------------------------------
+def build_tanker_age_stats(snapshot_month: str) -> tuple[dict, dict]:
+    """Return ({subclass: stats}, overall_stats).
+
+    Per-subclass stats:
+      vessel_count, sum_gt, avg_age_gt_weighted, pct_age_25_plus
+    Overall stats:
+      vessel_count, sum_gt, avg_age_gt_weighted, foreign_pct (placeholder=null)
+    """
+    from backend.taxonomy import (
+        CLS_TANKER,
+        classify_tanker_subclass,
+        classify_vessel_type,
+    )
+
+    current_year = datetime.now(timezone.utc).year
+
+    per_sub: dict[str, dict] = defaultdict(lambda: {
+        "vessel_count": 0,
+        "sum_gt": 0.0,
+        "sum_gt_age": 0.0,
+        "count_age_25_plus": 0,
+        "count_with_age": 0,
+    })
+    overall = {
+        "vessel_count": 0,
+        "sum_gt": 0.0,
+        "sum_gt_age": 0.0,
+        "count_with_age": 0,
+    }
+
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT json_extract(raw_data, '$.JenisDetailKet') AS jenis_kapal,
+                   json_extract(raw_data, '$.TahunPembuatan') AS tahun,
+                   gt
+              FROM vessels_snapshot
+             WHERE snapshot_month = ?
+            """,
+            (snapshot_month,),
+        )
+        for jenis, tahun, gt in cur:
+            if not jenis:
+                continue
+            _sector, vessel_class = classify_vessel_type(jenis)
+            if vessel_class != CLS_TANKER:
+                continue
+            sub = classify_tanker_subclass(jenis) or "UNKNOWN"
+            try:
+                age = max(0, current_year - int(tahun))
+            except (TypeError, ValueError):
+                age = None
+            try:
+                gt_val = float(gt) if gt is not None else 0.0
+            except (TypeError, ValueError):
+                gt_val = 0.0
+
+            d = per_sub[sub]
+            d["vessel_count"] += 1
+            d["sum_gt"] += gt_val
+            if age is not None:
+                d["sum_gt_age"] += gt_val * age
+                d["count_with_age"] += 1
+                if age >= 25:
+                    d["count_age_25_plus"] += 1
+            overall["vessel_count"] += 1
+            overall["sum_gt"] += gt_val
+            if age is not None:
+                overall["sum_gt_age"] += gt_val * age
+                overall["count_with_age"] += 1
+
+    def _finalize_sub(d: dict) -> dict:
+        avg_age = (d["sum_gt_age"] / d["sum_gt"]) if d["sum_gt"] > 0 else None
+        pct_25_plus = (
+            (d["count_age_25_plus"] / d["vessel_count"]) * 100
+            if d["vessel_count"] else None
+        )
+        return {
+            "vessel_count": d["vessel_count"],
+            "sum_gt": round(d["sum_gt"], 1),
+            "avg_age_gt_weighted": round(avg_age, 2) if avg_age is not None else None,
+            "pct_age_25_plus": round(pct_25_plus, 2) if pct_25_plus is not None else None,
+        }
+
+    finalized = {sub: _finalize_sub(d) for sub, d in per_sub.items()}
+    overall_avg = (
+        (overall["sum_gt_age"] / overall["sum_gt"]) if overall["sum_gt"] > 0 else None
+    )
+    overall_out = {
+        "vessel_count": overall["vessel_count"],
+        "sum_gt": round(overall["sum_gt"], 1),
+        "avg_age_gt_weighted": round(overall_avg, 2) if overall_avg is not None else None,
+    }
+    return finalized, overall_out
+
+
+# ----------------------------------------------------------------------
 # 2. subclass_facts.json
 # ----------------------------------------------------------------------
 def build_subclass_facts() -> dict:
-    """Per-subclass 24M facts: CAGR, calls, operator count, HHI."""
+    """Per-subclass 24M facts: CAGR, calls, operator count, HHI, fleet age."""
     tf = _load_json(DATA / "tanker_focus.json")
     kpi = _load_json(DATA / "kpi_summary.json")
     by_sub = {row["subclass"]: row for row in tf["by_subclass"]}
     monthly = tf["monthly_subclass"]
+    age_stats, fleet_summary = build_tanker_age_stats(tf["snapshot_month"])
 
     period_sub_ton: dict[tuple[str, str], float] = defaultdict(float)
     period_sub_calls: dict[tuple[str, str], int] = defaultdict(int)
@@ -163,6 +273,7 @@ def build_subclass_facts() -> dict:
             hhi = None
             op_count = 0
 
+        age = age_stats.get(sub, {})
         rows.append({
             "subclass": sub,
             "ton_last_12m": round(ton_last, 1),
@@ -174,12 +285,17 @@ def build_subclass_facts() -> dict:
             "avg_ton_per_call": summary.get("avg_ton_per_call"),
             "operator_count": op_count,
             "hhi": round(hhi, 1) if hhi is not None else None,
+            "vessel_count": age.get("vessel_count"),
+            "sum_gt": age.get("sum_gt"),
+            "avg_age_gt_weighted": age.get("avg_age_gt_weighted"),
+            "pct_age_25_plus": age.get("pct_age_25_plus"),
         })
     rows.sort(key=lambda r: r.get("ton_24m") or 0, reverse=True)
     return {
         "schema_version": 1,
         "snapshot_month": tf["snapshot_month"],
         "window_months": {"last_12m": last12, "prev_12m": prev12},
+        "tanker_fleet_summary": fleet_summary,
         "subclasses": rows,
         "_notes": {
             "cagr_basis": (

@@ -30,6 +30,11 @@
       "2025-04"
     ]
   },
+  "tanker_fleet_summary": {
+    "vessel_count": 2415,
+    "sum_gt": 8202568.6,
+    "avg_age_gt_weighted": 21.08
+  },
   "subclasses": [
     {
       "subclass": "Product",
@@ -41,7 +46,11 @@
       "calls_24m": 139029,
       "avg_ton_per_call": 3960.7,
       "operator_count": 32,
-      "hhi": 1434.1
+      "hhi": 1434.1,
+      "vessel_count": 1950,
+      "sum_gt": 4842053.6,
+      "avg_age_gt_weighted": 20.94,
+      "pct_age_25_plus": 28.0
     },
     {
       "subclass": "Chemical",
@@ -53,7 +62,11 @@
       "calls_24m": 24366,
       "avg_ton_per_call": 4842.2,
       "operator_count": 16,
-      "hhi": 2270.9
+      "hhi": 2270.9,
+      "vessel_count": 246,
+      "sum_gt": 1033746.0,
+      "avg_age_gt_weighted": 18.73,
+      "pct_age_25_plus": 26.83
     },
     {
       "subclass": "LPG",
@@ -65,7 +78,11 @@
       "calls_24m": 12667,
       "avg_ton_per_call": 4397.9,
       "operator_count": 19,
-      "hhi": 762.2
+      "hhi": 762.2,
+      "vessel_count": 87,
+      "sum_gt": 1247536.0,
+      "avg_age_gt_weighted": 19.65,
+      "pct_age_25_plus": 45.98
     },
     {
       "subclass": "LNG",
@@ -77,7 +94,11 @@
       "calls_24m": 1049,
       "avg_ton_per_call": 38494.6,
       "operator_count": 8,
-      "hhi": 1250.0
+      "hhi": 1250.0,
+      "vessel_count": 11,
+      "sum_gt": 882300.0,
+      "avg_age_gt_weighted": 28.73,
+      "pct_age_25_plus": 45.45
     },
     {
       "subclass": "FAME / Vegetable Oil",
@@ -89,7 +110,11 @@
       "calls_24m": 2147,
       "avg_ton_per_call": 4042.0,
       "operator_count": 1,
-      "hhi": 10000.0
+      "hhi": 10000.0,
+      "vessel_count": 94,
+      "sum_gt": 188034.0,
+      "avg_age_gt_weighted": 10.33,
+      "pct_age_25_plus": 6.38
     },
     {
       "subclass": "UNKNOWN",
@@ -101,7 +126,11 @@
       "calls_24m": 411,
       "avg_ton_per_call": 3436.4,
       "operator_count": 0,
-      "hhi": null
+      "hhi": null,
+      "vessel_count": 1,
+      "sum_gt": 11.0,
+      "avg_age_gt_weighted": 19.0,
+      "pct_age_25_plus": 0.0
     }
   ],
   "_notes": {

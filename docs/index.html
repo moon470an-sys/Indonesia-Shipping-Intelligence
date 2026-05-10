@@ -30,8 +30,62 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6">
-    <!-- Overview -->
+    <!-- Market Overview -->
     <section id="tab-overview" class="tab-panel">
+      <!-- PR-C: 6 KPI hero strip (mobile 2x3) -->
+      <div class="mb-2">
+        <h2 class="text-base font-semibold text-slate-700">📊 Market Overview</h2>
+        <p class="text-xs text-slate-500">사실 기반 12M / 24M 집계. 해석은 사용자의 분석 목적에 따라 달라집니다.</p>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6" id="mo-kpi-hero" data-source="LK3 + kapal.dephub.go.id"></div>
+
+      <!-- PR-C: Subclass scatter + 3 fact cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2" data-source="docs/derived/subclass_facts.json">
+          <h3 class="font-semibold mb-1">Subclass 분포 (24M 집계)</h3>
+          <p class="text-xs text-slate-500 mb-2" id="mo-scatter-caption">
+            각 점은 subclass의 24개월 변화율(x)과 GT 가중 평균 선령(y)입니다. 크기는 12M ton, 색상은 subclass.
+            해석은 사용자의 분석 목적에 따라 달라집니다.
+          </p>
+          <div id="mo-subclass-scatter" style="height:340px"></div>
+        </div>
+        <div class="space-y-3" id="mo-fact-cards" data-source="docs/derived/subclass_facts.json"></div>
+      </div>
+
+      <!-- PR-C: Top 20 owners table -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/owner_profile.json">
+        <div class="flex items-baseline justify-between mb-2">
+          <h3 class="font-semibold">탱커 선대 보유 Top 20 운영사 (등록 GT 기준)</h3>
+          <span class="text-xs text-slate-500">정렬: Sum GT</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-3">
+          출처: <code>docs/derived/owner_profile.json</code> (top-50 운영사 중 GT 상위 20개).
+          상장 여부는 수동 매핑(<code>data/owner_ticker_map.json</code>) 기준이며, 미매칭 비상장사는 <code>PT (private)</code>로 표시됩니다.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="mo-owners-table">
+            <thead class="bg-slate-100 text-xs uppercase text-slate-600">
+              <tr>
+                <th class="px-2 py-1 text-left">#</th>
+                <th class="px-2 py-1 text-left">Owner</th>
+                <th class="px-2 py-1 text-right">Tankers</th>
+                <th class="px-2 py-1 text-right">Sum GT</th>
+                <th class="px-2 py-1 text-right">Avg GT</th>
+                <th class="px-2 py-1 text-left">Subclass mix</th>
+                <th class="px-2 py-1 text-center">Listed</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Operational metrics (legacy view) -->
+      <div class="border-t border-slate-200 pt-4 mb-2">
+        <h2 class="text-base font-semibold text-slate-700">🔍 Operational metrics</h2>
+        <p class="text-xs text-slate-500">최근 월 운영 지표 + 변경 추적 (단월 기반).</p>
+      </div>
+
       <!-- Hero KPI strip (kpi_summary.json) -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4" id="kpi-hero"></div>
 
