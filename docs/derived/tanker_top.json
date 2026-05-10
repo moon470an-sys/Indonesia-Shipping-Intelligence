@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "top_commodities": [
+    {
+      "name": "CRUDE OIL",
+      "subclass": "Product",
+      "ton_total": 46659564.3,
+      "calls": 1749
+    },
+    {
+      "name": "PERTALITE",
+      "subclass": "Product",
+      "ton_total": 41424277.6,
+      "calls": 18522
+    },
+    {
+      "name": "CPO",
+      "subclass": "Product",
+      "ton_total": 36261032.1,
+      "calls": 8290
+    },
+    {
+      "name": "SOLAR",
+      "subclass": "Product",
+      "ton_total": 32403456.5,
+      "calls": 5169
+    },
+    {
+      "name": "LPG",
+      "subclass": "LPG",
+      "ton_total": 26992434.0,
+      "calls": 6666
+    },
+    {
+      "name": "LNG",
+      "subclass": "LNG",
+      "ton_total": 25554029.2,
+      "calls": 505
+    },
+    {
+      "name": "BUCO",
+      "subclass": "Product",
+      "ton_total": 24618922.6,
+      "calls": 487
+    },
+    {
+      "name": "CRUDE PALM OIL",
+      "subclass": "Product",
+      "ton_total": 20402045.3,
+      "calls": 5088
+    },
+    {
+      "name": "BBM",
+      "subclass": "Product",
+      "ton_total": 18162783.8,
+      "calls": 4697
+    },
+    {
+      "name": "BIO SOLAR",
+      "subclass": "Product",
+      "ton_total": 15837020.0,
+      "calls": 16812
+    }
+  ],
+  "top_operators": [
+    {
+      "owner": "PT PERTAMINA PATRA NIAGA",
+      "ticker": null,
+      "tankers": 57,
+      "sum_gt": 981071.0,
+      "subclass_mix": {
+        "LPG": 6,
+        "Chemical": 1,
+        "Product": 50
+      }
+    },
+    {
+      "owner": "PT. PATRIA NUSASEGARA",
+      "ticker": null,
+      "tankers": 6,
+      "sum_gt": 300589.0,
+      "subclass_mix": {
+        "LPG": 3,
+        "Product": 3
+      }
+    },
+    {
+      "owner": "PT. PUTRA UTAMA LINE",
+      "ticker": null,
+      "tankers": 7,
+      "sum_gt": 172034.0,
+      "subclass_mix": {
+        "Product": 7
+      }
+    },
+    {
+      "owner": "PT PRIMA SENTOSA TANGGUH",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 164630.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. GOLDEN PRIMA MARITIM",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 142950.0,
+      "subclass_mix": {
+        "LPG": 2
+      }
+    },
+    {
+      "owner": "PT SAPPHIRE MARITIME",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 124587.0,
+      "subclass_mix": {
+        "Product": 2
+      }
+    },
+    {
+      "owner": "PT MITRAUSAHA TANKER PERSADA",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 123369.0,
+      "subclass_mix": {
+        "LNG": 1,
+        "Chemical": 1
+      }
+    },
+    {
+      "owner": "PT MOL GAS MARITIME SOLUTIONS INDONESIA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 119393.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT. USDA SEROJA JAYA",
+      "ticker": null,
+      "tankers": 42,
+      "sum_gt": 119062.0,
+      "subclass_mix": {
+        "Chemical": 27,
+        "Product": 15
+      }
+    },
+    {
+      "owner": "PT. PRIMA OSEAN NUSANTARA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 111539.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT. HOEGH LNG LAMPUNG",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 109671.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. HIKMAH SARANA BAHARI",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 109281.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT ASIA SAMUDRA LINE",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 97561.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT GTS INTERNASIONAL Tbk",
+      "ticker": "GTSI",
+      "tankers": 1,
+      "sum_gt": 95753.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. HANOCHEM SHIPPING",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 95084.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    }
+  ],
+  "operator_total_gt": 4821156.0,
+  "operator_top5_gt": 1761274.0
+}

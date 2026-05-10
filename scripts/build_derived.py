@@ -313,6 +313,245 @@ def build_subclass_facts() -> dict:
 # 3. route_facts.json
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
+# Renewal v2: home_kpi.json + timeseries.json + tanker_subclass.json + tanker_top.json
+# ----------------------------------------------------------------------
+SECTOR_PALETTE_5 = {
+    "CARGO":           "#1A3A6B",   # navy (per spec §9.2)
+    "PASSENGER":       "#0d9488",
+    "OFFSHORE_SUPPORT":"#475569",
+    "FISHING":         "#d97706",
+    "NON_COMMERCIAL":  "#6b7280",
+    "UNMAPPED":        "#dc2626",
+}
+
+
+def _sum_period(series, periods, key="ton") -> float:
+    return sum((r.get(key) or 0.0) for r in series if r.get("period") in periods)
+
+
+def build_home_kpi() -> dict:
+    """Renewal v2: KPI 4 hero. Total / Tanker 12M ton + YoY, fleet count + age, freshness."""
+    kpi = _load_json(DATA / "kpi_summary.json")
+    tf = _load_json(DATA / "tanker_focus.json")
+    src_meta = _load_json(DATA / "meta.json")
+
+    # ---- Total Indonesia 12M ton + YoY (from kpi_summary.monthly_series) ----
+    series = kpi.get("monthly_series", [])
+    if kpi.get("latest_period_is_partial_data_dropped"):
+        series_eff = series[:-1]
+    else:
+        series_eff = series[:]
+    last12 = series_eff[-12:]
+    prev12 = series_eff[-24:-12]
+    total_last = sum((r.get("ton") or 0) for r in last12)
+    total_prev = sum((r.get("ton") or 0) for r in prev12)
+    total_yoy = ((total_last - total_prev) / total_prev * 100) if total_prev > 0 else None
+
+    # ---- Tanker 12M ton + YoY (sum tanker_focus.monthly_subclass) ----
+    monthly_sub = tf.get("monthly_subclass", [])
+    period_ton = defaultdict(float)
+    for r in monthly_sub:
+        period_ton[r["period"]] += float(r.get("ton_total") or 0)
+    sorted_periods = sorted(period_ton.keys())
+    if kpi.get("latest_period_is_partial_data_dropped") and sorted_periods:
+        sorted_periods = sorted_periods[:-1]
+    tank_last12 = sum(period_ton[p] for p in sorted_periods[-12:])
+    tank_prev12 = sum(period_ton[p] for p in sorted_periods[-24:-12])
+    tank_yoy = ((tank_last12 - tank_prev12) / tank_prev12 * 100) if tank_prev12 > 0 else None
+
+    # ---- Tanker fleet (count + GT-weighted avg age) ----
+    age_stats, fleet_summary = build_tanker_age_stats(src_meta.get("latest"))
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": src_meta.get("latest"),
+        "kpis": [
+            {
+                "id": "total_12m_ton",
+                "label": "12M 총 물동량 (인도네시아)",
+                "value_ton": round(total_last, 1),
+                "yoy_pct": round(total_yoy, 1) if total_yoy is not None else None,
+                "window": [last12[0]["period"] if last12 else None,
+                           last12[-1]["period"] if last12 else None],
+                "source": "monitoring-inaportnet.dephub.go.id (LK3)",
+            },
+            {
+                "id": "tanker_12m_ton",
+                "label": "12M 탱커 물동량",
+                "value_ton": round(tank_last12, 1),
+                "yoy_pct": round(tank_yoy, 1) if tank_yoy is not None else None,
+                "window": [sorted_periods[-12] if len(sorted_periods) >= 12 else None,
+                           sorted_periods[-1] if sorted_periods else None],
+                "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)",
+            },
+            {
+                "id": "tanker_fleet",
+                "label": "탱커 등록 척수",
+                "value_count": fleet_summary["vessel_count"],
+                "avg_age_gt_weighted": fleet_summary["avg_age_gt_weighted"],
+                "source": "kapal.dephub.go.id (vessel snapshot)",
+            },
+            {
+                "id": "data_freshness",
+                "label": "데이터 기준일",
+                "value_text": kpi.get("latest_period") if kpi.get("latest_period") else src_meta.get("latest"),
+                "vessel_snapshot": src_meta.get("latest"),
+                "partial_dropped": bool(kpi.get("latest_period_is_partial_data_dropped")),
+                "source": "docs/derived/meta.json",
+            },
+        ],
+        "_notes": {
+            "yoy_basis": "((sum(last12) - sum(prev12)) / sum(prev12)) * 100; null when prev12 missing",
+        },
+    }
+
+
+def build_timeseries() -> dict:
+    """Renewal v2: 24M sector stacked area for Home."""
+    csm = _load_json(DATA / "cargo_sector_monthly.json")
+    rows = csm.get("rows", [])
+    # Aggregate by (period, sector) summing ton across kinds + vessel classes
+    period_sector: dict[tuple[str, str], float] = defaultdict(float)
+    sectors: set[str] = set()
+    periods: set[str] = set()
+    for r in rows:
+        period_sector[(r["period"], r["sector"])] += float(r.get("ton_total") or 0)
+        sectors.add(r["sector"])
+        periods.add(r["period"])
+
+    # Stable sector ordering: by total ton desc
+    sector_total = defaultdict(float)
+    for (_p, s), t in period_sector.items():
+        sector_total[s] += t
+    ordered_sectors = sorted(sector_total.keys(), key=lambda s: -sector_total[s])
+
+    sorted_periods = sorted(periods)
+    series = []
+    for s in ordered_sectors:
+        series.append({
+            "sector": s,
+            "color": SECTOR_PALETTE_5.get(s, "#6b7280"),
+            "ton_by_period": [round(period_sector.get((p, s), 0.0), 1) for p in sorted_periods],
+        })
+    return {
+        "schema_version": 1,
+        "snapshot_month": csm.get("snapshot_month"),
+        "periods": sorted_periods,
+        "series": series,
+        "_notes": {
+            "scope": "24M monthly ton aggregated from cargo_sector_monthly.rows; "
+                     "the latest period may be partial — kpi_summary's drop flag is honored downstream",
+        },
+    }
+
+
+def build_tanker_subclass() -> dict:
+    """Renewal v2: 6 subclass cards data + 24M monthly stacked area."""
+    tf = _load_json(DATA / "tanker_focus.json")
+    sub_facts = _load_json(DERIVED / "subclass_facts.json")  # built earlier in same run
+    by_sub = {row["subclass"]: row for row in tf.get("by_subclass", [])}
+
+    # ---- Card data per subclass (fact card §5.1) ----
+    cards = []
+    for r in sub_facts.get("subclasses", []):
+        sub = r["subclass"]
+        if sub == "UNKNOWN":
+            continue
+        # Pick the busiest route for this subclass from komoditi/owner heuristics is
+        # too fuzzy without per-subclass route data — surface "—" until per-subclass
+        # OD aggregation lands.
+        # YoY surrogate: use 12m_vs_prev_12m % even when CAGR is null.
+        ton_last = r.get("ton_last_12m") or 0
+        ton_prev = r.get("ton_prev_12m") or 0
+        delta_pct = ((ton_last - ton_prev) / ton_prev * 100) if ton_prev > 0 else None
+        cards.append({
+            "subclass": sub,
+            "ton_last_12m": ton_last,
+            "yoy_pct": round(delta_pct, 1) if delta_pct is not None else None,
+            "avg_age_gt_weighted": r.get("avg_age_gt_weighted"),
+            "operator_count": r.get("operator_count"),
+            "vessel_count": r.get("vessel_count"),
+            "hhi": r.get("hhi"),
+            "cagr_24m_pct": r.get("cagr_24m_pct"),
+        })
+    cards.sort(key=lambda c: c.get("ton_last_12m") or 0, reverse=True)
+
+    # ---- 24M monthly stacked: per (period, subclass) ton_total summed across kinds ----
+    monthly = tf.get("monthly_subclass", [])
+    periods_set: set[str] = set()
+    subs_seen: set[str] = set()
+    period_sub_ton: dict[tuple[str, str], float] = defaultdict(float)
+    for r in monthly:
+        if r["subclass"] == "UNKNOWN":
+            continue
+        period_sub_ton[(r["period"], r["subclass"])] += float(r.get("ton_total") or 0)
+        periods_set.add(r["period"])
+        subs_seen.add(r["subclass"])
+    sorted_periods = sorted(periods_set)
+    ordered_subs = [c["subclass"] for c in cards]   # stable card order
+    series = [
+        {
+            "subclass": s,
+            "ton_by_period": [round(period_sub_ton.get((p, s), 0.0), 1) for p in sorted_periods],
+        }
+        for s in ordered_subs
+    ]
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": tf.get("snapshot_month"),
+        "cards": cards,
+        "monthly": {"periods": sorted_periods, "series": series},
+        "_notes": {
+            "yoy_basis": "12M-vs-prev-12M % (cagr_24m_pct also exposed if available)",
+            "top_route_per_subclass": "deferred — needs per-subclass OD aggregation",
+        },
+    }
+
+
+def build_tanker_top() -> dict:
+    """Renewal v2: Top 10 commodities + Top 15 operators with subclass mix + ticker."""
+    tf = _load_json(DATA / "tanker_focus.json")
+    tk_map = OWNER_TICKER_INITIAL
+    rev = {}
+    for ticker, names in tk_map.items():
+        for n in names:
+            rev[_norm_company(n)] = ticker
+
+    kom = (tf.get("komoditi_top") or [])[:10]
+    fleet_owners = (tf.get("fleet_owners") or [])
+    fleet_owners_sorted = sorted(fleet_owners, key=lambda o: -(o.get("sum_gt") or 0))
+    top_owners = []
+    for o in fleet_owners_sorted[:15]:
+        norm = _norm_company(o["owner"])
+        ticker = rev.get(norm)
+        top_owners.append({
+            "owner": o["owner"],
+            "ticker": ticker,
+            "tankers": o["tanker_count"],
+            "sum_gt": o["sum_gt"],
+            "subclass_mix": o.get("subclass_counts", {}),
+        })
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": tf.get("snapshot_month"),
+        "top_commodities": [
+            {
+                "name": k["komoditi"],
+                "subclass": k.get("subclass"),
+                "ton_total": k.get("ton_total"),
+                "calls": k.get("calls"),
+            }
+            for k in kom
+        ],
+        "top_operators": top_owners,
+        "operator_total_gt": sum((o.get("sum_gt") or 0) for o in fleet_owners_sorted),
+        "operator_top5_gt": sum((o.get("sum_gt") or 0) for o in fleet_owners_sorted[:5]),
+    }
+
+
+# ----------------------------------------------------------------------
 # Renewal v2: map_flow.json — Home tab animated flow map data
 # ----------------------------------------------------------------------
 # Five visual categories rolled up from the granular bucket labels in
@@ -753,6 +992,25 @@ def main() -> None:
     bytes_total += _write_json(DERIVED / "map_flow.json", mp)
     print(f"  map_flow.json — {len(mp['ports'])} ports + "
           f"{len(mp['routes_top30'])} routes (renewal v2)")
+
+    # PR-3: Home + Subclass cards / Top widgets payloads
+    hk = build_home_kpi()
+    bytes_total += _write_json(DERIVED / "home_kpi.json", hk)
+    print(f"  home_kpi.json — {len(hk['kpis'])} KPIs (renewal v2)")
+
+    ts = build_timeseries()
+    bytes_total += _write_json(DERIVED / "timeseries.json", ts)
+    print(f"  timeseries.json — {len(ts['periods'])} periods × {len(ts['series'])} sectors")
+
+    tsub = build_tanker_subclass()
+    bytes_total += _write_json(DERIVED / "tanker_subclass.json", tsub)
+    print(f"  tanker_subclass.json — {len(tsub['cards'])} subclass cards + "
+          f"{len(tsub['monthly']['periods'])} months stacked")
+
+    ttop = build_tanker_top()
+    bytes_total += _write_json(DERIVED / "tanker_top.json", ttop)
+    print(f"  tanker_top.json — {len(ttop['top_commodities'])} commodities + "
+          f"{len(ttop['top_operators'])} operators")
 
     tk = build_owner_ticker_map()
     bytes_total += _write_json(DERIVED / "owner_ticker_map.json", tk)

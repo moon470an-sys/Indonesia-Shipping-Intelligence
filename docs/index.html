@@ -304,34 +304,15 @@
         <p class="text-xs text-slate-400 mt-4" id="about-meta"></p>
       </div>
     </section>
-    <!-- Tanker Sector (PR-D) -->
+    <!-- Tanker Sector (renewal v2 — spec §5) -->
     <section id="tab-tanker-sector" class="tab-panel hidden">
-      <!-- 6.1 Global subclass filter -->
-      <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-2">
-        <span class="text-xs text-slate-500 mr-2 uppercase tracking-wide">Subclass 필터</span>
-        <div id="ts-subclass-filter" class="flex flex-wrap gap-1 text-xs"></div>
-        <span class="text-[11px] text-slate-400 ml-auto" id="ts-filter-summary"></span>
+      <div class="mb-4">
+        <h2 class="text-2xl font-bold text-slate-800">🛢️ Tanker Sector</h2>
+        <p class="text-sm text-slate-500">탱커 시장 심화 — Subclass 카드 · 시장 구조 · 24M 추이 · Top 코모디티 · Top 운영사.</p>
       </div>
 
-      <!-- 6.2 Subclass fact cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6" id="ts-subclass-cards"
-           data-source="docs/derived/subclass_facts.json"></div>
-
-      <!-- 6.3 Route distribution scatter -->
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/route_facts.json">
-        <div class="flex items-baseline justify-between mb-1">
-          <h3 class="font-semibold">항로 분포 (Top 60 OD pairs · 24M 집계)</h3>
-          <span class="text-xs text-slate-500" id="ts-route-count"></span>
-        </div>
-        <p class="text-xs text-slate-500 mb-2" id="ts-route-caption">
-          x = 24M ton 변화율 (per-month OD aggregation 미구현 → 0 anchored), y = 활동 선박 수, 크기 = 24M ton.
-          해석은 사용자의 분석 목적에 따라 달라집니다.
-        </p>
-        <div id="ts-route-scatter" style="height:380px"></div>
-      </div>
-
-      <!-- 6.4 Regulatory & technical info box (collapsible) -->
-      <details class="bg-white rounded-xl shadow p-4 mb-8" data-source="data/regulatory_notes.md">
+      <!-- Regulatory box (collapsible) -->
+      <details class="bg-white rounded-xl shadow p-4 mb-6" data-source="data/regulatory_notes.md">
         <summary class="font-semibold cursor-pointer select-none">
           📘 규제 · 기술 표준 (카보타지 · SIUPAL · IBC · MARPOL · PT PMA)
         </summary>
@@ -339,6 +320,56 @@
           <p class="text-xs text-slate-500">규제 정보 로딩 중…</p>
         </div>
       </details>
+
+      <!-- 5.1 Subclass cards -->
+      <div class="mb-2 flex items-baseline justify-between">
+        <h3 class="font-semibold">Subclass 비교</h3>
+        <span class="text-xs text-slate-500" id="ts-active-filter">전체</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8" id="ts-cards"
+           data-source="docs/derived/tanker_subclass.json"></div>
+
+      <!-- 5.2 Subclass scatter (market structure) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/subclass_facts.json">
+        <h3 class="font-semibold mb-1">시장 구조 (24M CAGR × 평균 선령)</h3>
+        <p class="text-xs text-slate-500 mb-2" id="ts-scatter-caption">
+          각 점은 subclass의 24개월 변화율(x), GT 가중 평균 선령(y), 12M ton(크기). 영역 라벨 없음.
+        </p>
+        <div id="ts-scatter" style="height:340px"></div>
+      </div>
+
+      <!-- 5.3 Subclass monthly stacked area -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_subclass.json">
+        <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
+          <h3 class="font-semibold">Subclass 월별 추이 (24M)</h3>
+          <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="ts-monthly-mode">
+            <button data-key="abs" class="px-2 py-1 bg-slate-800 text-white">절대값</button>
+            <button data-key="yoy" class="px-2 py-1 bg-white hover:bg-slate-100">YoY %</button>
+          </div>
+        </div>
+        <div id="ts-monthly" style="height:340px"></div>
+      </div>
+
+      <!-- 5.4 Top commodities horizontal bars -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_top.json">
+        <h3 class="font-semibold mb-2">Top 10 코모디티 (12M ton 기준)</h3>
+        <div id="ts-commodity-bars" style="height:380px"></div>
+      </div>
+
+      <!-- 5.5 Top operators bars + donut -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2" data-source="docs/derived/tanker_top.json">
+          <h3 class="font-semibold mb-2">Top 15 운영사 (Sum GT)</h3>
+          <div id="ts-operator-bars" style="height:480px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/tanker_top.json">
+          <h3 class="font-semibold mb-2">Top 5 vs 그 외 점유율</h3>
+          <div id="ts-operator-donut" style="height:340px"></div>
+          <p class="text-[11px] text-slate-400 mt-2 italic">
+            상장 운영사는 ticker 배지로 표시 — 클릭 시 Listed Operators 탭으로 이동.
+          </p>
+        </div>
+      </div>
     </section>
   </main>
 
