@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "tickers": {
+    "BLTA": [
+      "PT BERLIAN LAJU TANKER"
+    ],
+    "BULL": [
+      "PT BUANA LISTYA TAMA"
+    ],
+    "SMDR": [
+      "PT SAMUDERA INDONESIA"
+    ],
+    "ELPI": [
+      "PT PELITA SAMUDERA SHIPPING"
+    ],
+    "SOCI": [
+      "PT SOECHI LINES"
+    ],
+    "GTSI": [
+      "PT GTS INTERNASIONAL"
+    ],
+    "HUMI": [
+      "PT HUMPUSS MARITIM INTERNASIONAL"
+    ]
+  },
+  "_notes": {
+    "source": "Manual seed list (INSTRUCTIONS.md §3). Verify against IDX corporate disclosures.",
+    "matching": "Frontend + builds match by normalized owner name (PT/Tbk/punct stripped, case-folded)."
+  }
+}

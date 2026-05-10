@@ -1,0 +1,637 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "owners": [
+    {
+      "owner": "PT PERTAMINA PATRA NIAGA",
+      "owner_norm": "PERTAMINA PATRA NIAGA",
+      "ticker": null,
+      "tankers": 57,
+      "sum_gt": 981071.0,
+      "avg_gt": 17212.0,
+      "max_gt": 63005.0,
+      "subclass_mix": {
+        "LPG": 6,
+        "Chemical": 1,
+        "Product": 50
+      }
+    },
+    {
+      "owner": "PT. PATRIA NUSASEGARA",
+      "owner_norm": "PATRIA NUSASEGARA",
+      "ticker": null,
+      "tankers": 6,
+      "sum_gt": 300589.0,
+      "avg_gt": 50098.0,
+      "max_gt": 157245.0,
+      "subclass_mix": {
+        "LPG": 3,
+        "Product": 3
+      }
+    },
+    {
+      "owner": "PT. PUTRA UTAMA LINE",
+      "owner_norm": "PUTRA UTAMA LINE",
+      "ticker": null,
+      "tankers": 7,
+      "sum_gt": 172034.0,
+      "avg_gt": 24576.0,
+      "max_gt": 53829.0,
+      "subclass_mix": {
+        "Product": 7
+      }
+    },
+    {
+      "owner": "PT PRIMA SENTOSA TANGGUH",
+      "owner_norm": "PRIMA SENTOSA TANGGUH",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 164630.0,
+      "avg_gt": 164630.0,
+      "max_gt": 164630.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. GOLDEN PRIMA MARITIM",
+      "owner_norm": "GOLDEN PRIMA MARITIM",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 142950.0,
+      "avg_gt": 71475.0,
+      "max_gt": 95753.0,
+      "subclass_mix": {
+        "LPG": 2
+      }
+    },
+    {
+      "owner": "PT SAPPHIRE MARITIME",
+      "owner_norm": "SAPPHIRE MARITIME",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 124587.0,
+      "avg_gt": 62294.0,
+      "max_gt": 62863.0,
+      "subclass_mix": {
+        "Product": 2
+      }
+    },
+    {
+      "owner": "PT MITRAUSAHA TANKER PERSADA",
+      "owner_norm": "MITRAUSAHA TANKER PERSADA",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 123369.0,
+      "avg_gt": 61684.0,
+      "max_gt": 111835.0,
+      "subclass_mix": {
+        "LNG": 1,
+        "Chemical": 1
+      }
+    },
+    {
+      "owner": "PT MOL GAS MARITIME SOLUTIONS INDONESIA",
+      "owner_norm": "MOL GAS MARITIME SOLUTIONS INDONESIA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 119393.0,
+      "avg_gt": 119393.0,
+      "max_gt": 119393.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT. USDA SEROJA JAYA",
+      "owner_norm": "USDA SEROJA JAYA",
+      "ticker": null,
+      "tankers": 42,
+      "sum_gt": 119062.0,
+      "avg_gt": 2835.0,
+      "max_gt": 11254.0,
+      "subclass_mix": {
+        "Chemical": 27,
+        "Product": 15
+      }
+    },
+    {
+      "owner": "PT. PRIMA OSEAN NUSANTARA",
+      "owner_norm": "PRIMA OSEAN NUSANTARA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 111539.0,
+      "avg_gt": 111539.0,
+      "max_gt": 111539.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT. HOEGH LNG LAMPUNG",
+      "owner_norm": "HOEGH LNG LAMPUNG",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 109671.0,
+      "avg_gt": 109671.0,
+      "max_gt": 109671.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. HIKMAH SARANA BAHARI",
+      "owner_norm": "HIKMAH SARANA BAHARI",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 109281.0,
+      "avg_gt": 109281.0,
+      "max_gt": 109281.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT ASIA SAMUDRA LINE",
+      "owner_norm": "ASIA SAMUDRA LINE",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 97561.0,
+      "avg_gt": 97561.0,
+      "max_gt": 97561.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT GTS INTERNASIONAL Tbk",
+      "owner_norm": "GTS INTERNASIONAL",
+      "ticker": "GTSI",
+      "tankers": 1,
+      "sum_gt": 95753.0,
+      "avg_gt": 95753.0,
+      "max_gt": 95753.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. HANOCHEM SHIPPING",
+      "owner_norm": "HANOCHEM SHIPPING",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 95084.0,
+      "avg_gt": 95084.0,
+      "max_gt": 95084.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT LAUTAN ARMADA NUSANTARA",
+      "owner_norm": "LAUTAN ARMADA NUSANTARA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 94934.0,
+      "avg_gt": 94934.0,
+      "max_gt": 94934.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT PRIMA PASIFIK NUSANTARA",
+      "owner_norm": "PRIMA PASIFIK NUSANTARA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 93410.0,
+      "avg_gt": 93410.0,
+      "max_gt": 93410.0,
+      "subclass_mix": {
+        "LNG": 1
+      }
+    },
+    {
+      "owner": "PT. CARAKA TIRTA PRATAMA",
+      "owner_norm": "CARAKA TIRTA PRATAMA",
+      "ticker": null,
+      "tankers": 4,
+      "sum_gt": 92661.0,
+      "avg_gt": 23165.0,
+      "max_gt": 28063.0,
+      "subclass_mix": {
+        "Product": 4
+      }
+    },
+    {
+      "owner": "PT HUTAMA TRANS KENCANA",
+      "owner_norm": "HUTAMA TRANS KENCANA",
+      "ticker": null,
+      "tankers": 7,
+      "sum_gt": 83098.0,
+      "avg_gt": 11871.0,
+      "max_gt": 28480.0,
+      "subclass_mix": {
+        "LPG": 1,
+        "Chemical": 3,
+        "Product": 3
+      }
+    },
+    {
+      "owner": "PT. JENGGALA MARITIM NUSANTARA",
+      "owner_norm": "JENGGALA MARITIM NUSANTARA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 81510.0,
+      "avg_gt": 81510.0,
+      "max_gt": 81510.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. WARUNA NUSASENTANA",
+      "owner_norm": "WARUNA NUSASENTANA",
+      "ticker": null,
+      "tankers": 5,
+      "sum_gt": 80389.0,
+      "avg_gt": 16078.0,
+      "max_gt": 22555.0,
+      "subclass_mix": {
+        "LPG": 1,
+        "Chemical": 1,
+        "Product": 3
+      }
+    },
+    {
+      "owner": "PT. BAROKAH GEMILANG PERKASA",
+      "owner_norm": "BAROKAH GEMILANG PERKASA",
+      "ticker": null,
+      "tankers": 18,
+      "sum_gt": 73618.0,
+      "avg_gt": 4090.0,
+      "max_gt": 23246.0,
+      "subclass_mix": {
+        "Chemical": 1,
+        "Product": 17
+      }
+    },
+    {
+      "owner": "PT PELAYARAN SUKSES PERSADA",
+      "owner_norm": "PELAYARAN SUKSES PERSADA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 63661.0,
+      "avg_gt": 63661.0,
+      "max_gt": 63661.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT MIANGAS BAHTERA LAJU ABADI",
+      "owner_norm": "MIANGAS BAHTERA LAJU ABADI",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 63005.0,
+      "avg_gt": 63005.0,
+      "max_gt": 63005.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT JENGGALA MARITIM NUSANTARA",
+      "owner_norm": "JENGGALA MARITIM NUSANTARA",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 62616.0,
+      "avg_gt": 31308.0,
+      "max_gt": 45812.0,
+      "subclass_mix": {
+        "LPG": 2
+      }
+    },
+    {
+      "owner": "PT ARMADA BUMI PRATIWI LINES",
+      "owner_norm": "ARMADA BUMI PRATIWI LINES",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 61724.0,
+      "avg_gt": 61724.0,
+      "max_gt": 61724.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. PETROCEAN INDO PASIFIK",
+      "owner_norm": "PETROCEAN INDO PASIFIK",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 61724.0,
+      "avg_gt": 61724.0,
+      "max_gt": 61724.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. LINTAS SAMUDRA MARITIM",
+      "owner_norm": "LINTAS SAMUDRA MARITIM",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 60208.0,
+      "avg_gt": 60208.0,
+      "max_gt": 60208.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT LAUTAN PASIFIK SEJAHTERA",
+      "owner_norm": "LAUTAN PASIFIK SEJAHTERA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 59831.0,
+      "avg_gt": 59831.0,
+      "max_gt": 59831.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. DESTINASI MARITIM INDONESIA",
+      "owner_norm": "DESTINASI MARITIM INDONESIA",
+      "ticker": null,
+      "tankers": 5,
+      "sum_gt": 59412.0,
+      "avg_gt": 11882.0,
+      "max_gt": 25174.0,
+      "subclass_mix": {
+        "Chemical": 5
+      }
+    },
+    {
+      "owner": "PT ALAM BAHARI INTERNASIONAL",
+      "owner_norm": "ALAM BAHARI INTERNASIONAL",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 58088.0,
+      "avg_gt": 58088.0,
+      "max_gt": 58088.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT PERTAMINA INTERNATIONAL SHIPPING",
+      "owner_norm": "PERTAMINA INTERNATIONAL SHIPPING",
+      "ticker": null,
+      "tankers": 9,
+      "sum_gt": 57946.0,
+      "avg_gt": 6438.0,
+      "max_gt": 22481.0,
+      "subclass_mix": {
+        "LPG": 1,
+        "Chemical": 5,
+        "Product": 3
+      }
+    },
+    {
+      "owner": "PT. AGATE BUMI TANKER ",
+      "owner_norm": "AGATE BUMI TANKER",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 52048.0,
+      "avg_gt": 52048.0,
+      "max_gt": 52048.0,
+      "subclass_mix": {
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. BAHARI NUSANTARA",
+      "owner_norm": "BAHARI NUSANTARA",
+      "ticker": null,
+      "tankers": 9,
+      "sum_gt": 48502.0,
+      "avg_gt": 5389.0,
+      "max_gt": 8517.0,
+      "subclass_mix": {
+        "Chemical": 5,
+        "LPG": 2,
+        "Product": 2
+      }
+    },
+    {
+      "owner": "PT. MITRAUSAHA TANKER PERSADA",
+      "owner_norm": "MITRAUSAHA TANKER PERSADA",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 48425.0,
+      "avg_gt": 48425.0,
+      "max_gt": 48425.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. CASSA MEGA LAUTAN",
+      "owner_norm": "CASSA MEGA LAUTAN",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 47059.0,
+      "avg_gt": 47059.0,
+      "max_gt": 47059.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT CASSA MEGA LAUTAN",
+      "owner_norm": "CASSA MEGA LAUTAN",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 46789.0,
+      "avg_gt": 46789.0,
+      "max_gt": 46789.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. PERSADA LAUT ENERGI",
+      "owner_norm": "PERSADA LAUT ENERGI",
+      "ticker": null,
+      "tankers": 1,
+      "sum_gt": 46506.0,
+      "avg_gt": 46506.0,
+      "max_gt": 46506.0,
+      "subclass_mix": {
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. HUTAMA TRANS KENCANA",
+      "owner_norm": "HUTAMA TRANS KENCANA",
+      "ticker": null,
+      "tankers": 3,
+      "sum_gt": 46093.0,
+      "avg_gt": 15364.0,
+      "max_gt": 28828.0,
+      "subclass_mix": {
+        "Chemical": 1,
+        "Product": 2
+      }
+    },
+    {
+      "owner": "PT. NUSA BHAKTI JAYARAYA",
+      "owner_norm": "NUSA BHAKTI JAYARAYA",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 45426.0,
+      "avg_gt": 22713.0,
+      "max_gt": 23242.0,
+      "subclass_mix": {
+        "Chemical": 1,
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT DESTINASI MARITIM INDONESIA",
+      "owner_norm": "DESTINASI MARITIM INDONESIA",
+      "ticker": null,
+      "tankers": 5,
+      "sum_gt": 42407.0,
+      "avg_gt": 8481.0,
+      "max_gt": 14654.0,
+      "subclass_mix": {
+        "Chemical": 4,
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. PERTAMINA INTERNATIONAL SHIPPING",
+      "owner_norm": "PERTAMINA INTERNATIONAL SHIPPING",
+      "ticker": null,
+      "tankers": 3,
+      "sum_gt": 40633.0,
+      "avg_gt": 13544.0,
+      "max_gt": 18273.0,
+      "subclass_mix": {
+        "LPG": 2,
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. PERTAMINA TRANS KONTINENTAL",
+      "owner_norm": "PERTAMINA TRANS KONTINENTAL",
+      "ticker": null,
+      "tankers": 14,
+      "sum_gt": 37764.0,
+      "avg_gt": 2697.0,
+      "max_gt": 5339.0,
+      "subclass_mix": {
+        "Product": 11,
+        "Chemical": 2,
+        "LPG": 1
+      }
+    },
+    {
+      "owner": "PT. LINTAS MARITIM INDONESIA",
+      "owner_norm": "LINTAS MARITIM INDONESIA",
+      "ticker": null,
+      "tankers": 15,
+      "sum_gt": 37554.0,
+      "avg_gt": 2504.0,
+      "max_gt": 7064.0,
+      "subclass_mix": {
+        "Chemical": 2,
+        "FAME / Vegetable Oil": 5,
+        "Product": 8
+      }
+    },
+    {
+      "owner": "PT. ATAMIMI GROUP OF COMPANIES",
+      "owner_norm": "ATAMIMI GROUP OF COMPANIES",
+      "ticker": null,
+      "tankers": 3,
+      "sum_gt": 36775.0,
+      "avg_gt": 12258.0,
+      "max_gt": 13210.0,
+      "subclass_mix": {
+        "Chemical": 1,
+        "Product": 2
+      }
+    },
+    {
+      "owner": "PT.KEMAS SEJAHTERA LESTARI",
+      "owner_norm": "KEMAS SEJAHTERA LESTARI",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 36510.0,
+      "avg_gt": 18255.0,
+      "max_gt": 18530.0,
+      "subclass_mix": {
+        "LPG": 2
+      }
+    },
+    {
+      "owner": "PT. PRIMA LAUTAN BINTANG",
+      "owner_norm": "PRIMA LAUTAN BINTANG",
+      "ticker": null,
+      "tankers": 3,
+      "sum_gt": 34920.0,
+      "avg_gt": 11640.0,
+      "max_gt": 17476.0,
+      "subclass_mix": {
+        "LPG": 2,
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. ARMADA BUMI PRATIWI LINES",
+      "owner_norm": "ARMADA BUMI PRATIWI LINES",
+      "ticker": null,
+      "tankers": 5,
+      "sum_gt": 34617.0,
+      "avg_gt": 6923.0,
+      "max_gt": 23245.0,
+      "subclass_mix": {
+        "Product": 5
+      }
+    },
+    {
+      "owner": "PT ARMADA MARITIME OFFSHORE",
+      "owner_norm": "ARMADA MARITIME OFFSHORE",
+      "ticker": null,
+      "tankers": 2,
+      "sum_gt": 32640.0,
+      "avg_gt": 16320.0,
+      "max_gt": 23235.0,
+      "subclass_mix": {
+        "Chemical": 1,
+        "Product": 1
+      }
+    },
+    {
+      "owner": "PT. SUKSES MARITIME LINE",
+      "owner_norm": "SUKSES MARITIME LINE",
+      "ticker": null,
+      "tankers": 3,
+      "sum_gt": 32079.0,
+      "avg_gt": 10693.0,
+      "max_gt": 23781.0,
+      "subclass_mix": {
+        "LPG": 2,
+        "Product": 1
+      }
+    }
+  ],
+  "_notes": {
+    "scope": "Top tanker operators (tanker_focus.fleet_owners — currently top 50 by sum_gt)",
+    "ticker_source": "owner_ticker_map.json",
+    "top_routes": "Per-owner top routes deferred to PR-D iteration (needs LK3 vessel-level join)"
+  }
+}

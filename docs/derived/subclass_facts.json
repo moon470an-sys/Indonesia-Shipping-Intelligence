@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "window_months": {
+    "last_12m": [
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04"
+    ],
+    "prev_12m": [
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04"
+    ]
+  },
+  "subclasses": [
+    {
+      "subclass": "Product",
+      "ton_last_12m": 282398298.1,
+      "ton_prev_12m": 264071654.8,
+      "cagr_24m_pct": null,
+      "calls_last_12m": 73970,
+      "ton_24m": 550655753.7,
+      "calls_24m": 139029,
+      "avg_ton_per_call": 3960.7,
+      "operator_count": 32,
+      "hhi": 1434.1
+    },
+    {
+      "subclass": "Chemical",
+      "ton_last_12m": 63257756.3,
+      "ton_prev_12m": 53976941.7,
+      "cagr_24m_pct": null,
+      "calls_last_12m": 12758,
+      "ton_24m": 117985689.6,
+      "calls_24m": 24366,
+      "avg_ton_per_call": 4842.2,
+      "operator_count": 16,
+      "hhi": 2270.9
+    },
+    {
+      "subclass": "LPG",
+      "ton_last_12m": 28489123.8,
+      "ton_prev_12m": 26626533.2,
+      "cagr_24m_pct": null,
+      "calls_last_12m": 6432,
+      "ton_24m": 55707796.0,
+      "calls_24m": 12667,
+      "avg_ton_per_call": 4397.9,
+      "operator_count": 19,
+      "hhi": 762.2
+    },
+    {
+      "subclass": "LNG",
+      "ton_last_12m": 22095304.2,
+      "ton_prev_12m": 17932457.6,
+      "cagr_24m_pct": null,
+      "calls_last_12m": 547,
+      "ton_24m": 40380884.7,
+      "calls_24m": 1049,
+      "avg_ton_per_call": 38494.6,
+      "operator_count": 8,
+      "hhi": 1250.0
+    },
+    {
+      "subclass": "FAME / Vegetable Oil",
+      "ton_last_12m": 3958622.3,
+      "ton_prev_12m": 4661759.3,
+      "cagr_24m_pct": null,
+      "calls_last_12m": 1007,
+      "ton_24m": 8678107.3,
+      "calls_24m": 2147,
+      "avg_ton_per_call": 4042.0,
+      "operator_count": 1,
+      "hhi": 10000.0
+    },
+    {
+      "subclass": "UNKNOWN",
+      "ton_last_12m": 542888.9,
+      "ton_prev_12m": 869490.2,
+      "cagr_24m_pct": null,
+      "calls_last_12m": 189,
+      "ton_24m": 1412379.1,
+      "calls_24m": 411,
+      "avg_ton_per_call": 3436.4,
+      "operator_count": 0,
+      "hhi": null
+    }
+  ],
+  "_notes": {
+    "cagr_basis": "annualized: (ton_last_12m / ton_prev_12m) ^ 0.5 - 1; set to null unless both windows are exactly 12 months (this build: last=12M, prev=11M)",
+    "hhi_basis": "Σ(share^2)*10000 over fleet_owners.subclass_counts (top-50 owner truncation)",
+    "operator_count_caveat": "limited to fleet_owners list (top-50 by sum_gt)"
+  }
+}
