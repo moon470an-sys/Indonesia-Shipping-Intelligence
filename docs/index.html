@@ -168,39 +168,27 @@
         <p class="text-xs text-slate-500 ml-auto">단위: IDR billion (10억 루피아) · 선대 GT는 kGT</p>
       </div>
 
-      <!-- Comparison charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">매출 추이 (연간)</h2>
-          <p class="text-xs text-slate-500 mb-1">선택 연도와 무관 — 회사별 시계열</p>
-          <div id="chart-fn-revenue" style="height:380px"></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h2 class="font-semibold mb-2">순이익률 vs 부채비율 (선택 연도)</h2>
-          <p class="text-xs text-slate-500 mb-1">버블 크기 = 매출, x = 순이익률, y = 부채비율</p>
-          <div id="chart-fn-scatter" style="height:380px"></div>
-        </div>
+      <!-- Single scatter (renewal v2 §7.2): x=매출 log · y=순이익률 · size=선대 GT -->
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="data/companies_financials.yml">
+        <h3 class="font-semibold mb-2">매출 × 순이익률 (선택 연도)</h3>
+        <p class="text-xs text-slate-500 mb-1">x = 매출 (log), y = 순이익률 (%), 크기 = 선대 GT. 영역 라벨 없음.</p>
+        <div id="chart-fn-scatter" style="height:380px"></div>
       </div>
 
-      <!-- Comparison table -->
-      <div class="bg-white rounded-xl shadow p-4 mb-4">
+      <!-- Comparison table (renewal v2 §7.3: 7 columns only) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="data/companies_financials.yml">
         <h2 class="font-semibold mb-2">기업별 재무 비교 <span class="text-xs text-slate-400" id="fn-table-year"></span></h2>
         <div class="overflow-auto max-h-[60vh] border rounded">
-          <table class="min-w-full text-xs" id="fn-tbl">
+          <table class="min-w-full text-sm" id="fn-tbl">
             <thead class="bg-slate-100 sticky top-0">
               <tr class="text-left">
                 <th class="px-2 py-1">ticker</th>
                 <th class="px-2 py-1">name</th>
-                <th class="px-2 py-1">focus</th>
-                <th class="px-2 py-1 text-right">매출</th>
-                <th class="px-2 py-1 text-right">순이익</th>
+                <th class="px-2 py-1 text-right">매출 (IDR bn)</th>
                 <th class="px-2 py-1 text-right">순이익률</th>
-                <th class="px-2 py-1 text-right">총자산</th>
-                <th class="px-2 py-1 text-right">부채비율</th>
                 <th class="px-2 py-1 text-right">ROA</th>
-                <th class="px-2 py-1 text-right">CAPEX</th>
+                <th class="px-2 py-1 text-right">부채비율</th>
                 <th class="px-2 py-1 text-right">선대 GT</th>
-                <th class="px-2 py-1 text-right">척수</th>
               </tr>
             </thead>
             <tbody></tbody>
