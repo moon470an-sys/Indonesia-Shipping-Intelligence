@@ -606,9 +606,12 @@ def main() -> None:
         log_path.write_text("\n".join(unmatched) + "\n", encoding="utf-8")
         print(f"    → unmatched.log ({len(unmatched)} entries)")
 
-    ev = build_recent_events()
-    bytes_total += _write_json(DERIVED / "recent_events.json", ev)
-    print(f"  recent_events.json — {len(ev['events'])} events")
+    # Renewal v2: Recent Events panel removed with the Changes tab. Drop the
+    # stale payload if a previous build left it on disk.
+    legacy = DERIVED / "recent_events.json"
+    if legacy.exists():
+        legacy.unlink()
+        print(f"  recent_events.json — removed (Changes tab dropped in v2)")
 
     reg = build_regulatory_notes()
     if reg is not None:
