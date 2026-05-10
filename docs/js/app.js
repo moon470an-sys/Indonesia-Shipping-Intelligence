@@ -131,25 +131,25 @@ function bucketsToSubclasses(buckets) {
   return out;
 }
 
+// Renewal v2 state — selected subclass card filters all 5 widgets in this tab.
 const tsState = {
   filter: "ALL",
   subclassFacts: null,
-  routeFacts: null,
+  tankerSubclass: null,
+  tankerTop: null,
+  monthlyMode: "abs",   // abs | yoy
 };
 
 async function renderTankerSector() {
-  const filterHost = document.getElementById("ts-subclass-filter");
-  const cardHost = document.getElementById("ts-subclass-cards");
-  const captionEl = document.getElementById("ts-route-caption");
+  const cardHost = document.getElementById("ts-cards");
   const regHost = document.getElementById("ts-regulatory");
+  if (!cardHost) return;
 
-  if (!filterHost || !cardHost) return;
-
-  // Load derived inputs
   try {
-    [tsState.subclassFacts, tsState.routeFacts] = await Promise.all([
+    [tsState.subclassFacts, tsState.tankerSubclass, tsState.tankerTop] = await Promise.all([
       loadDerived("subclass_facts.json"),
-      loadDerived("route_facts.json"),
+      loadDerived("tanker_subclass.json"),
+      loadDerived("tanker_top.json"),
     ]);
   } catch (e) {
     cardHost.innerHTML = `<div class="bg-yellow-50 text-yellow-900 text-sm p-3 rounded col-span-full">
@@ -157,152 +157,249 @@ async function renderTankerSector() {
     return;
   }
 
-  // Render subclass filter pills
-  filterHost.innerHTML = "";
-  TANKER_SUBCLASS_FILTER_OPTIONS.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.dataset.key = opt.key;
-    btn.className = "ts-pill px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-100";
-    btn.textContent = opt.label;
-    btn.addEventListener("click", () => {
-      tsState.filter = opt.key;
-      renderTankerSectorBody();
-    });
-    filterHost.appendChild(btn);
-  });
-
   // Regulatory notes (one-time fetch + inject)
   if (regHost) {
     try {
       const r = await fetch("./derived/regulatory_notes.html");
-      if (r.ok) regHost.innerHTML = await r.text();
-      else regHost.innerHTML =
-        `<p class="text-xs text-slate-500">regulatory_notes.html 로드 실패 (${r.status}). build script 재실행 필요.</p>`;
+      regHost.innerHTML = r.ok
+        ? await r.text()
+        : `<p class="text-xs text-slate-500">regulatory_notes.html 로드 실패 (${r.status}).</p>`;
     } catch (e) {
-      regHost.innerHTML =
-        `<p class="text-xs text-slate-500">regulatory_notes 로드 오류: ${e.message}</p>`;
+      regHost.innerHTML = `<p class="text-xs text-slate-500">regulatory_notes 로드 오류: ${e.message}</p>`;
     }
   }
 
-  renderTankerSectorBody();
+  // Monthly toggle wiring (one-time)
+  const toggleHost = document.getElementById("ts-monthly-mode");
+  if (toggleHost && !toggleHost.dataset.wired) {
+    toggleHost.dataset.wired = "1";
+    toggleHost.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      tsState.monthlyMode = btn.dataset.key;
+      toggleHost.querySelectorAll("button").forEach(b => {
+        if (b.dataset.key === tsState.monthlyMode) {
+          b.classList.add("bg-slate-800", "text-white");
+          b.classList.remove("bg-white", "hover:bg-slate-100");
+        } else {
+          b.classList.remove("bg-slate-800", "text-white");
+          b.classList.add("bg-white", "hover:bg-slate-100");
+        }
+      });
+      drawTankerMonthly();
+    });
+  }
+
+  drawTankerCards();
+  drawTankerScatter();
+  drawTankerMonthly();
+  drawTankerCommodityBars();
+  drawTankerOperatorBars();
+  drawTankerOperatorDonut();
 }
 
-function renderTankerSectorBody() {
-  const cardHost = document.getElementById("ts-subclass-cards");
-  const summaryEl = document.getElementById("ts-filter-summary");
-  const captionEl = document.getElementById("ts-route-caption");
-  const routeCountEl = document.getElementById("ts-route-count");
-  if (!cardHost || !tsState.subclassFacts) return;
-
-  const filter = tsState.filter;
-  // Active state for filter pills
-  document.querySelectorAll("#ts-subclass-filter .ts-pill").forEach(b => {
-    if (b.dataset.key === filter) {
-      b.classList.add("bg-slate-800", "text-white", "border-slate-800");
-      b.classList.remove("hover:bg-slate-100");
-    } else {
-      b.classList.remove("bg-slate-800", "text-white", "border-slate-800");
-      b.classList.add("hover:bg-slate-100");
-    }
-  });
-
-  // ---- subclass cards ----
-  let rows = (tsState.subclassFacts.subclasses || []).filter(r => r.subclass !== "UNKNOWN");
-  if (filter !== "ALL") rows = rows.filter(r => r.subclass === filter);
-
-  cardHost.innerHTML = rows.map(r => {
-    const cagrTxt = r.cagr_24m_pct == null
-      ? `<span class="text-slate-400">— (Insufficient data)</span>`
-      : `<span class="${r.cagr_24m_pct >= 0 ? "text-blue-700" : "text-red-700"} font-semibold">${r.cagr_24m_pct >= 0 ? "+" : ""}${r.cagr_24m_pct.toFixed(2)}%</span>`;
-    const callsPerVessel = (r.vessel_count && r.vessel_count > 0)
-      ? (r.calls_last_12m / r.vessel_count).toFixed(1)
-      : "—";
-    const ageTxt = r.avg_age_gt_weighted == null ? "—" : `${r.avg_age_gt_weighted.toFixed(1)}년`;
-    const hhiTxt = r.hhi == null ? "—" : Math.round(r.hhi).toLocaleString();
-    const color = SUBCLASS_PALETTE[r.subclass] || "#64748b";
-    return `<div class="bg-white rounded-xl shadow p-4 border-l-4" style="border-color:${color}">
+function drawTankerCards() {
+  const host = document.getElementById("ts-cards");
+  const activeEl = document.getElementById("ts-active-filter");
+  if (!host) return;
+  const cards = tsState.tankerSubclass?.cards || [];
+  host.innerHTML = cards.map(c => {
+    const color = SUBCLASS_PALETTE[c.subclass] || "#64748b";
+    const tonM = (c.ton_last_12m || 0) / 1e6;
+    const yoy = c.yoy_pct;
+    const trend = yoy == null
+      ? `<span class="text-slate-400 text-sm">YoY —</span>`
+      : `<span class="${yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} text-base font-semibold">${yoy >= 0 ? "↑" : "↓"} ${Math.abs(yoy).toFixed(1)}%</span>`;
+    const ageTxt = c.avg_age_gt_weighted == null ? "—" : `${c.avg_age_gt_weighted.toFixed(1)}년`;
+    const hhiTxt = c.hhi == null ? "—" : Math.round(c.hhi).toLocaleString();
+    const isActive = tsState.filter !== "ALL" && tsState.filter === c.subclass;
+    const ringCls = isActive ? "ring-2 ring-slate-800" : "";
+    return `<div class="bg-white rounded-xl shadow p-4 border-l-4 cursor-pointer transition hover:shadow-lg ${ringCls}"
+                 style="border-color:${color}" data-subclass="${c.subclass}">
       <div class="flex items-baseline justify-between mb-2">
-        <h3 class="font-semibold">${r.subclass}</h3>
-        <span class="text-xs text-slate-400">${(r.vessel_count || 0).toLocaleString()} vessels</span>
+        <h4 class="font-semibold text-slate-700">${c.subclass}</h4>
+        <span class="text-[10.5px] text-slate-400">${(c.vessel_count || 0).toLocaleString()}척</span>
       </div>
-      <dl class="text-sm space-y-1">
-        <div class="flex justify-between"><dt class="text-slate-500">24M ton CAGR</dt><dd>${cagrTxt}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate-500">12M 척당 평균 calls</dt><dd>${callsPerVessel}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate-500">GT 가중 평균 선령</dt><dd>${ageTxt}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate-500">운영사 수 / HHI</dt><dd>${r.operator_count} · ${hhiTxt}</dd></div>
+      <div class="flex items-baseline gap-2 mb-3">
+        <span class="text-2xl font-bold text-slate-900">${tonM.toFixed(2)}M</span>
+        <span class="text-xs text-slate-500">tons (12M)</span>
+      </div>
+      <div class="mb-2">${trend}</div>
+      <dl class="text-xs space-y-1 text-slate-600">
+        <div class="flex justify-between"><dt>평균 선령 (GT 가중)</dt><dd class="font-mono">${ageTxt}</dd></div>
+        <div class="flex justify-between"><dt>운영사 수</dt><dd class="font-mono">${c.operator_count ?? "—"}</dd></div>
+        <div class="flex justify-between"><dt>HHI</dt><dd class="font-mono">${hhiTxt}</dd></div>
       </dl>
-      <p class="text-[10.5px] text-slate-400 mt-3 italic">
-        모든 수치는 공개 데이터 집계 결과이며, 시장 전망이나 투자 판단을 의미하지 않습니다.
-      </p>
     </div>`;
   }).join("");
 
-  if (summaryEl) {
-    summaryEl.textContent = filter === "ALL"
-      ? `${rows.length}개 subclass · 모두 표시`
-      : `${filter} 단일 subclass`;
+  // Click → toggle filter
+  host.querySelectorAll("[data-subclass]").forEach(el => {
+    el.addEventListener("click", () => {
+      const s = el.dataset.subclass;
+      tsState.filter = (tsState.filter === s) ? "ALL" : s;
+      drawTankerCards();
+      drawTankerScatter();
+      drawTankerMonthly();
+      drawTankerCommodityBars();
+    });
+  });
+  if (activeEl) {
+    activeEl.textContent = tsState.filter === "ALL" ? "전체 subclass" : `필터: ${tsState.filter}`;
   }
+}
 
-  // ---- route scatter ----
-  let routes = (tsState.routeFacts.routes || []).slice();
-  if (filter !== "ALL") {
-    routes = routes.filter(r => bucketsToSubclasses(r.buckets).has(filter));
-  }
-  if (routeCountEl) {
-    routeCountEl.textContent = `${routes.length} routes shown`;
-  }
-  if (captionEl) {
-    captionEl.textContent = filter === "ALL"
-      ? "x = 24M ton 변화율 (per-month OD aggregation 미구현 → 0 anchored), y = 활동 선박 수, 크기 = 24M ton. 해석은 사용자의 분석 목적에 따라 달라집니다."
-      : `x = 24M ton 변화율 (insufficient data), y = 활동 선박 수, 크기 = 24M ton. ${filter} 관련 항로만 표시 (bucket 라벨 기반 매칭).`;
-  }
-
-  if (routes.length === 0) {
-    Plotly.purge("ts-route-scatter");
-    document.getElementById("ts-route-scatter").innerHTML =
-      `<div class="text-sm text-slate-500 text-center py-12">선택한 subclass에 매칭되는 항로가 없습니다.</div>`;
-    return;
-  }
-
-  const sizeMax = Math.max(...routes.map(r => r.ton_24m || 0), 1);
+function drawTankerScatter() {
+  const subs = (tsState.subclassFacts?.subclasses || []).filter(r => r.subclass !== "UNKNOWN");
+  if (!subs.length) return;
+  const sizeMax = Math.max(...subs.map(r => r.ton_last_12m || 0), 1);
+  const filter = tsState.filter;
+  const opacities = subs.map(r => (filter === "ALL" || filter === r.subclass) ? 0.85 : 0.2);
   const trace = {
-    x: routes.map(_ => 0),       // change_pct unavailable in v0
-    y: routes.map(r => r.vessels_seen || 0),
-    text: routes.map(r => `${r.origin} → ${r.destination}`),
-    mode: "markers",
+    x: subs.map(r => r.cagr_24m_pct ?? 0),
+    y: subs.map(r => r.avg_age_gt_weighted ?? 0),
+    text: subs.map(r => r.subclass),
+    mode: "markers+text",
     type: "scatter",
+    textposition: "top center",
+    textfont: { size: 11 },
     marker: {
-      size: routes.map(r => Math.max(8, 60 * (r.ton_24m || 0) / sizeMax)),
-      color: routes.map(r => {
-        const subs = bucketsToSubclasses(r.buckets);
-        if (subs.has("Crude Oil")) return SUBCLASS_PALETTE["Crude Oil"];
-        if (subs.has("LPG"))       return SUBCLASS_PALETTE["LPG"];
-        if (subs.has("LNG"))       return SUBCLASS_PALETTE["LNG"];
-        if (subs.has("FAME / Vegetable Oil")) return SUBCLASS_PALETTE["FAME / Vegetable Oil"];
-        if (subs.has("Chemical"))  return SUBCLASS_PALETTE["Chemical"];
-        if (subs.has("Product"))   return SUBCLASS_PALETTE["Product"];
-        return "#94a3b8";
-      }),
-      opacity: 0.8,
-      line: { color: "#1e293b", width: 0.5 },
+      size: subs.map(r => Math.max(14, 80 * (r.ton_last_12m || 0) / sizeMax)),
+      color: subs.map(r => SUBCLASS_PALETTE[r.subclass] || "#64748b"),
+      line: { color: "#1e293b", width: 1 },
+      opacity: opacities,
     },
-    customdata: routes.map(r => [r.ton_24m, (r.buckets || []).slice(0, 4).join(", ")]),
     hovertemplate:
       "<b>%{text}</b><br>" +
-      "Vessels seen: %{y}<br>" +
-      "24M ton: %{customdata[0]:,.0f}<br>" +
-      "Buckets: %{customdata[1]}<extra></extra>",
+      "CAGR (24M): %{x:.2f}%<br>" +
+      "Avg age: %{y:.1f} yr<br>" +
+      "12M ton: %{customdata:,.0f}<extra></extra>",
+    customdata: subs.map(r => r.ton_last_12m),
   };
-  Plotly.newPlot("ts-route-scatter", [trace], {
+  const cagrAvail = subs.some(r => r.cagr_24m_pct != null);
+  Plotly.newPlot("ts-scatter", [trace], {
     margin: { t: 10, l: 50, r: 20, b: 50 },
     xaxis: {
-      title: "24M ton change % (insufficient data — needs per-month OD aggregation)",
+      title: cagrAvail ? "24M CAGR (%)" : "24M CAGR (insufficient data — needs 2 full years)",
       zeroline: true,
       zerolinecolor: "#cbd5e1",
-      range: [-1, 1],
     },
-    yaxis: { title: "활동 선박 수 (24M)" },
+    yaxis: { title: "GT 가중 평균 선령 (years)" },
     showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawTankerMonthly() {
+  const data = tsState.tankerSubclass?.monthly;
+  if (!data) return;
+  const periods = data.periods || [];
+  const filter = tsState.filter;
+  const traces = (data.series || []).map(s => {
+    let y = s.ton_by_period.slice();
+    if (tsState.monthlyMode === "yoy") {
+      y = y.map((v, i) => (i < 12 || !y[i - 12]) ? null : ((v - y[i - 12]) / y[i - 12]) * 100);
+    }
+    const dim = (filter !== "ALL" && filter !== s.subclass);
+    return {
+      x: periods,
+      y,
+      name: s.subclass,
+      type: "scatter",
+      mode: "lines",
+      stackgroup: tsState.monthlyMode === "abs" ? "one" : null,
+      line: { color: SUBCLASS_PALETTE[s.subclass] || "#64748b", width: tsState.monthlyMode === "abs" ? 0.5 : 2 },
+      fillcolor: SUBCLASS_PALETTE[s.subclass] || "#64748b",
+      opacity: dim ? 0.25 : 1,
+      hovertemplate: tsState.monthlyMode === "abs"
+        ? `<b>%{x}</b><br>${s.subclass}: %{y:,.0f} tons<extra></extra>`
+        : `<b>%{x}</b><br>${s.subclass}: %{y:.1f}%<extra></extra>`,
+    };
+  });
+  Plotly.newPlot("ts-monthly", traces, {
+    margin: { t: 10, l: 60, r: 20, b: 50 },
+    xaxis: { tickangle: -40 },
+    yaxis: {
+      title: tsState.monthlyMode === "abs" ? "ton" : "YoY %",
+      zeroline: tsState.monthlyMode === "yoy",
+    },
+    legend: { orientation: "h", y: -0.2 },
+    hovermode: "x unified",
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawTankerCommodityBars() {
+  const list = (tsState.tankerTop?.top_commodities || []).slice();
+  if (!list.length) return;
+  // Reverse so largest sits at top in horizontal bar
+  list.reverse();
+  const filter = tsState.filter;
+  const trace = {
+    x: list.map(c => c.ton_total),
+    y: list.map(c => c.name),
+    type: "bar",
+    orientation: "h",
+    marker: {
+      color: list.map(c => SUBCLASS_PALETTE[c.subclass] || "#64748b"),
+      opacity: list.map(c => (filter === "ALL" || filter === c.subclass) ? 0.9 : 0.25),
+    },
+    hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
+    text: list.map(c => `${(c.ton_total / 1e6).toFixed(1)}M`),
+    textposition: "outside",
+    cliponaxis: false,
+  };
+  Plotly.newPlot("ts-commodity-bars", [trace], {
+    margin: { t: 10, l: 130, r: 60, b: 40 },
+    xaxis: { title: "ton (12M)" },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawTankerOperatorBars() {
+  const list = (tsState.tankerTop?.top_operators || []).slice();
+  if (!list.length) return;
+  list.reverse();   // bar chart paints bottom-up
+  const trace = {
+    x: list.map(o => o.sum_gt),
+    y: list.map(o => o.owner.length > 28 ? o.owner.slice(0, 26) + "…" : o.owner),
+    type: "bar",
+    orientation: "h",
+    marker: { color: list.map(o => o.ticker ? "#1A3A6B" : "#94a3b8") },
+    customdata: list.map(o => [o.tankers, o.ticker || "private", JSON.stringify(o.subclass_mix || {})]),
+    hovertemplate:
+      "<b>%{y}</b><br>" +
+      "Sum GT: %{x:,.0f}<br>" +
+      "Tankers: %{customdata[0]}<br>" +
+      "Listed: %{customdata[1]}<extra></extra>",
+    text: list.map(o => o.ticker ? o.ticker : ""),
+    textposition: "outside",
+    textfont: { size: 10, color: "#1A3A6B" },
+    cliponaxis: false,
+  };
+  Plotly.newPlot("ts-operator-bars", [trace], {
+    margin: { t: 10, l: 220, r: 60, b: 40 },
+    xaxis: { title: "Sum GT" },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function drawTankerOperatorDonut() {
+  const top5gt = tsState.tankerTop?.operator_top5_gt || 0;
+  const totalGt = tsState.tankerTop?.operator_total_gt || 0;
+  const otherGt = Math.max(0, totalGt - top5gt);
+  const trace = {
+    values: [top5gt, otherGt],
+    labels: ["Top 5", "그 외"],
+    type: "pie",
+    hole: 0.55,
+    marker: { colors: ["#1A3A6B", "#cbd5e1"] },
+    textinfo: "label+percent",
+    hovertemplate: "<b>%{label}</b><br>%{value:,.0f} GT (%{percent})<extra></extra>",
+  };
+  Plotly.newPlot("ts-operator-donut", [trace], {
+    margin: { t: 10, l: 10, r: 10, b: 30 },
+    showlegend: false,
+    annotations: [{
+      text: `Total<br>${(totalGt/1e6).toFixed(2)}M GT`,
+      x: 0.5, y: 0.5, showarrow: false, font: { size: 12, color: "#475569" },
+    }],
   }, { displayModeBar: false, responsive: true });
 }
 
@@ -512,10 +609,12 @@ const homeState = {
 async function renderHome() {
   setupSourceLabels(document.getElementById("tab-overview"));
 
-  // Load both the derived flow data and the world topology in parallel.
-  let topo;
+  // Parallel: KPI hero, timeseries, map data, world topology.
+  let topo, kpis, ts;
   try {
-    [homeState.mapData, topo] = await Promise.all([
+    [kpis, ts, homeState.mapData, topo] = await Promise.all([
+      loadDerived("home_kpi.json"),
+      loadDerived("timeseries.json"),
       loadDerived("map_flow.json"),
       fetch(TOPO_URL).then(r => {
         if (!r.ok) throw new Error(`world-atlas ${r.status}`);
@@ -529,10 +628,138 @@ async function renderHome() {
     return;
   }
 
+  renderHomeKpi(kpis);
+  renderHomeTimeseries(ts);
   bindMapControls();
   drawHomeMap();
   fillForeignSidebar();
   fillMapInsights();
+}
+
+// ---------- PR-3: Home KPI 4 (large numerics) ----------
+function renderHomeKpi(payload) {
+  const host = document.getElementById("home-kpi");
+  if (!host || !payload) return;
+  const fmtTon = v => v == null ? "—" : `${(v / 1e6).toFixed(1)}M`;
+  const trend = (yoy) => {
+    if (yoy == null) return `<span class="text-slate-400 text-sm">YoY —</span>`;
+    const cls = yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down";
+    const arrow = yoy >= 0 ? "↑" : "↓";
+    return `<span class="${cls} text-sm font-semibold">${arrow} ${Math.abs(yoy).toFixed(1)}%</span>`;
+  };
+  const cards = payload.kpis.map(k => {
+    if (k.id === "total_12m_ton") {
+      return `<div class="kpi-card-large">
+        <div class="kpi-label">12M 총 물동량</div>
+        <div>
+          <div class="kpi-value-large">${fmtTon(k.value_ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
+          <div class="kpi-sub-large">${trend(k.yoy_pct)} <span class="text-slate-400">· ${k.window?.[0] || ""} → ${k.window?.[1] || ""}</span></div>
+        </div>
+      </div>`;
+    }
+    if (k.id === "tanker_12m_ton") {
+      return `<div class="kpi-card-large">
+        <div class="kpi-label">12M 탱커 물동량</div>
+        <div>
+          <div class="kpi-value-large">${fmtTon(k.value_ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
+          <div class="kpi-sub-large">${trend(k.yoy_pct)} <span class="text-slate-400">· ${k.window?.[0] || ""} → ${k.window?.[1] || ""}</span></div>
+        </div>
+      </div>`;
+    }
+    if (k.id === "tanker_fleet") {
+      const age = k.avg_age_gt_weighted == null ? "—" : `${k.avg_age_gt_weighted.toFixed(1)}년`;
+      return `<div class="kpi-card-large">
+        <div class="kpi-label">탱커 등록 척수</div>
+        <div>
+          <div class="kpi-value-large">${fmt(k.value_count || 0)}<span class="text-base text-slate-400 ml-1">척</span></div>
+          <div class="kpi-sub-large"><span class="text-slate-600">평균 선령</span> ${age} <span class="text-slate-400">(GT 가중)</span></div>
+        </div>
+      </div>`;
+    }
+    if (k.id === "data_freshness") {
+      const partial = k.partial_dropped ? "(partial month dropped)" : "";
+      return `<div class="kpi-card-large">
+        <div class="kpi-label">데이터 기준일</div>
+        <div>
+          <div class="kpi-value-large" style="font-size:clamp(22px,3vw,32px)">${k.value_text || "—"}</div>
+          <div class="kpi-sub-large">vessel snapshot ${k.vessel_snapshot || "—"} <span class="text-slate-400">${partial}</span></div>
+        </div>
+      </div>`;
+    }
+    return "";
+  }).join("");
+  host.innerHTML = cards;
+}
+
+// ---------- PR-3: Home 24M sector stacked area ----------
+const homeTsState = { mode: "abs", payload: null };
+function renderHomeTimeseries(payload) {
+  homeTsState.payload = payload;
+  // Mode toggle wiring (one-time)
+  const toggleHost = document.getElementById("home-ts-toggle");
+  if (toggleHost && !toggleHost.dataset.wired) {
+    toggleHost.innerHTML = `
+      <button data-mode="abs" class="px-2 py-1 rounded border border-slate-200 bg-slate-800 text-white">절대값</button>
+      <button data-mode="yoy" class="px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-100">YoY %</button>`;
+    toggleHost.dataset.wired = "1";
+    toggleHost.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      homeTsState.mode = btn.dataset.mode;
+      toggleHost.querySelectorAll("button").forEach(b => {
+        if (b.dataset.mode === homeTsState.mode) {
+          b.classList.add("bg-slate-800", "text-white");
+          b.classList.remove("bg-white", "hover:bg-slate-100");
+        } else {
+          b.classList.remove("bg-slate-800", "text-white");
+          b.classList.add("bg-white", "hover:bg-slate-100");
+        }
+      });
+      drawHomeTimeseries();
+    });
+  }
+  drawHomeTimeseries();
+}
+
+function drawHomeTimeseries() {
+  const payload = homeTsState.payload;
+  if (!payload) return;
+  const periods = payload.periods || [];
+  const traces = [];
+  for (const s of (payload.series || [])) {
+    let y = s.ton_by_period.slice();
+    let name = s.sector;
+    if (homeTsState.mode === "yoy") {
+      // YoY for each period i = (y[i] - y[i-12]) / y[i-12] * 100
+      y = y.map((v, i) => {
+        if (i < 12 || !y[i - 12]) return null;
+        return ((v - y[i - 12]) / y[i - 12]) * 100;
+      });
+    }
+    traces.push({
+      x: periods,
+      y,
+      name,
+      type: "scatter",
+      mode: "lines",
+      stackgroup: homeTsState.mode === "abs" ? "one" : null,
+      line: { color: s.color, width: homeTsState.mode === "abs" ? 0.5 : 2 },
+      fillcolor: s.color,
+      hovertemplate: homeTsState.mode === "abs"
+        ? `<b>%{x}</b><br>${name}: %{y:,.0f} tons<extra></extra>`
+        : `<b>%{x}</b><br>${name}: %{y:.1f}%<extra></extra>`,
+    });
+  }
+  Plotly.newPlot("home-timeseries", traces, {
+    margin: { t: 10, l: 60, r: 20, b: 50 },
+    xaxis: { tickangle: -40 },
+    yaxis: {
+      title: homeTsState.mode === "abs" ? "ton" : "YoY %",
+      zeroline: homeTsState.mode === "yoy",
+    },
+    legend: { orientation: "h", y: -0.2 },
+    hovermode: "x unified",
+  }, { displayModeBar: false, responsive: true });
 }
 
 function bindMapControls() {

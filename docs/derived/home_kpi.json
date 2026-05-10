@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "kpis": [
+    {
+      "id": "total_12m_ton",
+      "label": "12M 총 물동량 (인도네시아)",
+      "value_ton": 3093730499.9,
+      "yoy_pct": 12.4,
+      "window": [
+        "2025-05",
+        "2026-04"
+      ],
+      "source": "monitoring-inaportnet.dephub.go.id (LK3)"
+    },
+    {
+      "id": "tanker_12m_ton",
+      "label": "12M 탱커 물동량",
+      "value_ton": 400741993.6,
+      "yoy_pct": 8.9,
+      "window": [
+        "2025-05",
+        "2026-04"
+      ],
+      "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)"
+    },
+    {
+      "id": "tanker_fleet",
+      "label": "탱커 등록 척수",
+      "value_count": 2415,
+      "avg_age_gt_weighted": 21.08,
+      "source": "kapal.dephub.go.id (vessel snapshot)"
+    },
+    {
+      "id": "data_freshness",
+      "label": "데이터 기준일",
+      "value_text": "2026-04",
+      "vessel_snapshot": "2026-05",
+      "partial_dropped": true,
+      "source": "docs/derived/meta.json"
+    }
+  ],
+  "_notes": {
+    "yoy_basis": "((sum(last12) - sum(prev12)) / sum(prev12)) * 100; null when prev12 missing"
+  }
+}
