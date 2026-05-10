@@ -889,6 +889,36 @@ def build_map_flow() -> dict:
             f"국제(ln) 운항 ton 비중: {intl_share:.1f}% (24M 누계)"
         )
 
+    # PR-12: top growing tanker subclass (12M-vs-prev-12M %)
+    try:
+        sub_facts_path = DERIVED / "subclass_facts.json"
+        if sub_facts_path.exists():
+            sf = json.loads(sub_facts_path.read_text(encoding="utf-8"))
+            ranked = []
+            for s in (sf.get("subclasses") or []):
+                if s.get("subclass") == "UNKNOWN":
+                    continue
+                ton_last = s.get("ton_last_12m") or 0
+                ton_prev = s.get("ton_prev_12m") or 0
+                if ton_prev > 0:
+                    ranked.append((s["subclass"], ((ton_last - ton_prev) / ton_prev) * 100))
+            ranked.sort(key=lambda x: -x[1])
+            if ranked:
+                name, pct = ranked[0]
+                insights.append(
+                    f"가장 빠르게 증가한 subclass (12M vs 이전 12M): "
+                    f"{name} ({'+' if pct >= 0 else ''}{pct:.1f}%)"
+                )
+    except Exception:
+        pass
+
+    # PR-12: average ton per Top 30 route — sense of route concentration
+    if routes_top30:
+        avg_route = sum(r["ton_24m"] for r in routes_top30) / len(routes_top30)
+        insights.append(
+            f"Top 30 항로당 평균 ton: {avg_route/1e6:.2f}M tons (24M 누계)"
+        )
+
     return {
         "schema_version": 2,
         "snapshot_month": src.get("snapshot_month"),

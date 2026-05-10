@@ -23,6 +23,17 @@ function fmtTon(v, opts = {}) {
   return n.toLocaleString(undefined, { maximumFractionDigits: opts.r ?? 0 });
 }
 const fmtCount = (v) => v == null ? "—" : Number(v).toLocaleString();
+
+// PR-12: render an IDX-listed ticker as a small chip link to the
+// IDX listed-companies search page. Plain text fallback when ticker is null.
+function idxLink(ticker, opts = {}) {
+  if (!ticker) return "—";
+  const url = `https://www.idx.co.id/en/listed-companies/company-profiles?keyword=${encodeURIComponent(ticker)}`;
+  const cls = opts.chip
+    ? "inline-block px-1.5 py-0.5 rounded text-[10px] font-mono bg-blue-100 text-blue-800 hover:bg-blue-200"
+    : "text-blue-600 hover:underline font-mono";
+  return `<a href="${url}" target="_blank" rel="noopener" class="${cls}" title="IDX 공시 검색: ${ticker}">${ticker}</a>`;
+}
 function fmtPct(v, opts = {}) {
   if (v == null) return "—";
   const n = Number(v);
@@ -521,6 +532,27 @@ function drawTankerOperatorBars() {
     margin: { t: 10, l: 220, r: 60, b: 40 },
     xaxis: { title: "Sum GT" },
   }, { displayModeBar: false, responsive: true });
+
+  // PR-12: click on a listed-operator bar opens the IDX search page
+  // for that ticker. Non-listed operators are no-op.
+  const opBarsEl = document.getElementById("ts-operator-bars");
+  if (opBarsEl && opBarsEl.on) {
+    opBarsEl.on("plotly_click", (ev) => {
+      const cd = ev.points?.[0]?.customdata;
+      if (!cd) return;
+      const ticker = cd[1];
+      if (!ticker || ticker === "private") return;
+      const url = `https://www.idx.co.id/en/listed-companies/company-profiles?keyword=${encodeURIComponent(ticker)}`;
+      window.open(url, "_blank", "noopener");
+    });
+    // visual hint: change cursor when hovering a listed-operator bar
+    opBarsEl.on("plotly_hover", (ev) => {
+      const cd = ev.points?.[0]?.customdata;
+      const isListed = cd && cd[1] && cd[1] !== "private";
+      opBarsEl.style.cursor = isListed ? "pointer" : "default";
+    });
+    opBarsEl.on("plotly_unhover", () => { opBarsEl.style.cursor = "default"; });
+  }
 }
 
 function drawTankerOperatorDonut() {
@@ -636,7 +668,7 @@ function renderFinancials() {
   document.querySelector("#fn-tbl tbody").innerHTML = sorted.map(r => {
     const c = byTicker[r.ticker] || {};
     return `<tr>
-      <td class="px-2 py-1 font-mono">${r.ticker}</td>
+      <td class="px-2 py-1 font-mono">${idxLink(r.ticker)}</td>
       <td class="px-2 py-1">${c.name_short || ""}</td>
       <td class="px-2 py-1 text-right">${num0(r.revenue)}</td>
       <td class="px-2 py-1 text-right">${pct1(r.net_margin)}</td>
@@ -1100,7 +1132,11 @@ function fillMapInsights() {
   if (!host) return;
   const items = homeState.mapData?.insights || [];
   host.innerHTML = items.length
-    ? items.map(t => `<li>• ${t}</li>`).join("")
+    ? items.map((t, i) => `
+        <li class="flex gap-2 items-start">
+          <span class="text-slate-400 font-mono text-[10px] mt-0.5 min-w-[14px]">${i + 1}.</span>
+          <span>${t}</span>
+        </li>`).join("")
     : `<li class="text-slate-400">데이터 없음</li>`;
 }
 
