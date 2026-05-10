@@ -312,6 +312,19 @@ function drawTankerCards() {
     const hhiTxt = c.hhi == null ? "—" : Math.round(c.hhi).toLocaleString();
     const isActive = tsState.filter !== "ALL" && tsState.filter === c.subclass;
     const ringCls = isActive ? "ring-2 ring-slate-800" : "";
+    // PR-10: top route + top operator surfaces
+    const routeStr = c.top_route
+      ? `${c.top_route.origin} → ${c.top_route.destination}`
+      : '<span class="text-slate-400">—</span>';
+    const routeMeta = c.top_route
+      ? `<span class="text-slate-400 text-[10px]">${fmtTon(c.top_route.ton)} · ${c.top_route.vessels}척</span>`
+      : "";
+    const opStr = c.top_operator
+      ? `${c.top_operator.owner.length > 24 ? c.top_operator.owner.slice(0, 22) + "…" : c.top_operator.owner}`
+      : '<span class="text-slate-400">—</span>';
+    const opMeta = c.top_operator
+      ? `<span class="text-slate-400 text-[10px]">${c.top_operator.count_in_subclass}척</span>`
+      : "";
     return `<div class="card-interactive bg-white rounded-xl shadow p-4 border-l-4 cursor-pointer ${ringCls}"
                  style="border-color:${color}" data-subclass="${c.subclass}"
                  role="button" tabindex="0" aria-pressed="${isActive}"
@@ -324,12 +337,26 @@ function drawTankerCards() {
         <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
         <span class="text-xs text-slate-500">tons (12M)</span>
       </div>
-      <div class="mb-2">${trend}</div>
-      <dl class="text-xs space-y-1 text-slate-600">
+      <div class="mb-3">${trend}</div>
+      <dl class="text-xs space-y-1.5 text-slate-600 mb-3">
         <div class="flex justify-between"><dt>평균 선령 (GT 가중)</dt><dd class="font-mono">${ageTxt}</dd></div>
         <div class="flex justify-between"><dt>운영사 수</dt><dd class="font-mono">${c.operator_count ?? "—"}</dd></div>
         <div class="flex justify-between"><dt>HHI</dt><dd class="font-mono">${hhiTxt}</dd></div>
       </dl>
+      <div class="border-t border-slate-100 pt-2.5 space-y-1.5 text-[11px] text-slate-600">
+        <div>
+          <div class="text-slate-400 text-[10px] uppercase tracking-wide mb-0.5">최대 항로</div>
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="truncate">${routeStr}</span>${routeMeta}
+          </div>
+        </div>
+        <div>
+          <div class="text-slate-400 text-[10px] uppercase tracking-wide mb-0.5">최대 운영사</div>
+          <div class="flex items-baseline justify-between gap-2">
+            <span class="truncate">${opStr}</span>${opMeta}
+          </div>
+        </div>
+      </div>
     </div>`;
   }).join("");
 

@@ -577,11 +577,81 @@ def build_timeseries() -> dict:
     }
 
 
+def _bucket_to_subclass(bucket: str | None) -> str | None:
+    """Map a tanker_flow_map.lanes bucket label to a tanker subclass."""
+    if not bucket:
+        return None
+    table = {
+        "Crude":         "Crude Oil",
+        "Naphtha":       "Product",
+        "Kerosene":      "Product",
+        "Chemical":      "Chemical",
+        "LPG":           "LPG",
+        "LNG":           "LNG",
+        "FAME":          "FAME / Vegetable Oil",
+        "기타 식용유":   "FAME / Vegetable Oil",
+        "CPO/팜오일":    "FAME / Vegetable Oil",
+    }
+    if bucket in table:
+        return table[bucket]
+    if bucket.startswith("BBM"):
+        return "Product"
+    return None
+
+
+def _top_route_per_subclass(lanes: list[dict]) -> dict[str, dict]:
+    """Aggregate lanes -> top OD pair per subclass by ton."""
+    agg: dict[tuple[str, str, str], dict] = defaultdict(
+        lambda: {"ton": 0.0, "vessels": 0, "calls": 0}
+    )
+    for ln in lanes:
+        sub = _bucket_to_subclass(ln.get("bucket"))
+        if not sub:
+            continue
+        o, d = ln.get("o"), ln.get("d")
+        if not o or not d or o == d:
+            continue
+        key = (sub, o, d)
+        agg[key]["ton"] += float(ln.get("ton") or 0)
+        agg[key]["vessels"] += int(ln.get("vessels") or 0)
+        agg[key]["calls"] += int(ln.get("calls") or 0)
+    out: dict[str, dict] = {}
+    for (sub, o, d), v in agg.items():
+        prev = out.get(sub)
+        if not prev or v["ton"] > prev["ton"]:
+            out[sub] = {"origin": o, "destination": d, **v}
+    return out
+
+
+def _top_operator_per_subclass(fleet_owners: list[dict]) -> dict[str, dict]:
+    """Top operator per subclass by tanker_count for that subclass."""
+    out: dict[str, dict] = {}
+    for fo in fleet_owners:
+        for sub, cnt in (fo.get("subclass_counts") or {}).items():
+            if not cnt:
+                continue
+            prev = out.get(sub)
+            if not prev or cnt > prev["count_in_subclass"]:
+                out[sub] = {
+                    "owner": fo["owner"],
+                    "count_in_subclass": cnt,
+                    "sum_gt": fo.get("sum_gt"),
+                }
+    return out
+
+
 def build_tanker_subclass() -> dict:
-    """Renewal v2: 6 subclass cards data + 24M monthly stacked area."""
+    """Renewal v2: 6 subclass cards data + 24M monthly stacked area.
+
+    PR-10 enrichment: top_route + top_operator per subclass.
+    """
     tf = _load_json(DATA / "tanker_focus.json")
-    sub_facts = _load_json(DERIVED / "subclass_facts.json")  # built earlier in same run
+    sub_facts = _load_json(DERIVED / "subclass_facts.json")
+    flow = _load_json(DATA / "tanker_flow_map.json")
     by_sub = {row["subclass"]: row for row in tf.get("by_subclass", [])}
+
+    top_routes = _top_route_per_subclass(flow.get("lanes", []))
+    top_operators = _top_operator_per_subclass(tf.get("fleet_owners", []))
 
     # ---- Card data per subclass (fact card §5.1) ----
     cards = []
@@ -589,10 +659,6 @@ def build_tanker_subclass() -> dict:
         sub = r["subclass"]
         if sub == "UNKNOWN":
             continue
-        # Pick the busiest route for this subclass from komoditi/owner heuristics is
-        # too fuzzy without per-subclass route data — surface "—" until per-subclass
-        # OD aggregation lands.
-        # YoY surrogate: use 12m_vs_prev_12m % even when CAGR is null.
         ton_last = r.get("ton_last_12m") or 0
         ton_prev = r.get("ton_prev_12m") or 0
         delta_pct = ((ton_last - ton_prev) / ton_prev * 100) if ton_prev > 0 else None
@@ -605,6 +671,8 @@ def build_tanker_subclass() -> dict:
             "vessel_count": r.get("vessel_count"),
             "hhi": r.get("hhi"),
             "cagr_24m_pct": r.get("cagr_24m_pct"),
+            "top_route": top_routes.get(sub),
+            "top_operator": top_operators.get(sub),
         })
     cards.sort(key=lambda c: c.get("ton_last_12m") or 0, reverse=True)
 
