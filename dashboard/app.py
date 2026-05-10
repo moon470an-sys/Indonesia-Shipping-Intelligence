@@ -5959,8 +5959,9 @@ def page_cargo():
 
     st.markdown("---")
 
-    tab_sum, tab_map, tab_port, tab_list = st.tabs(
-        ["📊 화물 요약", "🗺️ OD 지도", "🏗️ 항구별", "📋 상세 리스트"]
+    tab_sum, tab_map, tab_port, tab_intl, tab_list = st.tabs(
+        ["📊 화물 요약", "🗺️ OD 지도", "🏗️ 항구별",
+         "🌐 국제 무역", "📋 상세 리스트"]
     )
 
     # ============ 1) Summary ============
@@ -6109,7 +6110,152 @@ def page_cargo():
             fig.update_layout(height=520, margin=dict(t=20, b=20))
             st.plotly_chart(fig, width="stretch")
 
-    # ============ 4) Detail list ============
+    # ============ 4) International trade ============
+    with tab_intl:
+        st.subheader("🌐 국제 무역 — 외국 항구가 endpoint인 화물 흐름")
+        st.caption(
+            "**정의**: origin 또는 destination이 외국 항구 사전(SINGAPORE / "
+            "PORT KLANG / KAOHSIUNG / RAS TANURA 등 ~40개)에 매칭된 행. "
+            "**EXPORT** = origin이 ID, destination이 외국. "
+            "**IMPORT** = origin이 외국, destination이 ID. "
+            "**Transshipment** = 양쪽 모두 외국 (LK3에 거의 없음)."
+        )
+
+        _coord_map, _foreign = _port_name_to_coords()
+        intl = f.copy()
+        intl["o_norm"] = intl["origin"].map(_normalize_port_name)
+        intl["d_norm"] = intl["destination"].map(_normalize_port_name)
+        intl["o_foreign"] = intl["o_norm"].isin(_foreign)
+        intl["d_foreign"] = intl["d_norm"].isin(_foreign)
+        intl = intl[intl["o_foreign"] | intl["d_foreign"]].copy()
+
+        if intl.empty:
+            st.info(
+                "현재 필터에 국제 항해 행이 없습니다. 화물 카테고리 / 기간 / "
+                "운영사 필터를 풀어보세요."
+            )
+        else:
+            def _direction(r):
+                if r.o_foreign and r.d_foreign:
+                    return "Transshipment"
+                return "IMPORT" if r.o_foreign else "EXPORT"
+
+            intl["trade"] = intl.apply(_direction, axis=1)
+            intl["foreign_port"] = intl.apply(
+                lambda r: r.o_norm if r.o_foreign else r.d_norm, axis=1)
+            intl["id_port"] = intl.apply(
+                lambda r: r.d_norm if r.o_foreign else r.o_norm, axis=1)
+
+            total_intl = float(intl["ton"].sum())
+            export_ton = float(intl.loc[intl["trade"] == "EXPORT",
+                                          "ton"].sum())
+            import_ton = float(intl.loc[intl["trade"] == "IMPORT",
+                                          "ton"].sum())
+            total_all = float(f["ton"].sum())
+            share = (total_intl / total_all * 100) if total_all else 0
+            n_foreign = int(intl["foreign_port"].nunique())
+
+            cols = st.columns(5)
+            kpi(cols[0], "국제 톤 합", fmt.fmt_ton(total_intl))
+            kpi(cols[1], "EXPORT 톤", fmt.fmt_ton(export_ton),
+                help="origin = ID, destination = 외국")
+            kpi(cols[2], "IMPORT 톤", fmt.fmt_ton(import_ton),
+                help="origin = 외국, destination = ID")
+            kpi(cols[3], "전체 비중", fmt.fmt_pct(share),
+                help="필터 화물 중 국제 항해의 톤 비중")
+            kpi(cols[4], "외국 endpoint 수", fmt.fmt_int(n_foreign))
+
+            st.markdown("---")
+
+            # ---- Top foreign endpoints ----
+            cA, cB = st.columns(2)
+            with cA:
+                st.markdown("**Top 외국 항구 (총 톤)**")
+                fp = (intl.groupby(["foreign_port", "trade"])["ton"].sum()
+                          .reset_index())
+                pivot = fp.pivot_table(index="foreign_port",
+                                         columns="trade", values="ton",
+                                         fill_value=0)
+                for col in ("EXPORT", "IMPORT", "Transshipment"):
+                    if col not in pivot.columns:
+                        pivot[col] = 0
+                pivot["Total"] = pivot.sum(axis=1)
+                pivot = pivot.sort_values("Total",
+                                            ascending=False).head(20)
+                top_p = pivot.reset_index()
+                fp_long = top_p.melt(
+                    id_vars="foreign_port",
+                    value_vars=["EXPORT", "IMPORT", "Transshipment"],
+                    var_name="trade", value_name="ton")
+                fp_long = fp_long[fp_long["ton"] > 0]
+                fig = px.bar(fp_long, x="ton", y="foreign_port",
+                              color="trade", orientation="h",
+                              barmode="stack",
+                              color_discrete_map={
+                                  "EXPORT": "#16a34a",
+                                  "IMPORT": "#dc2626",
+                                  "Transshipment": "#7c3aed"},
+                              labels={"foreign_port": "",
+                                       "ton": "톤", "trade": ""})
+                fig.update_layout(height=500, margin=dict(t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.1,
+                                               font=dict(size=10)),
+                                  yaxis=dict(autorange="reversed"))
+                st.plotly_chart(fig, width="stretch")
+
+            with cB:
+                st.markdown("**국제 무역 화물 카테고리 mix**")
+                cm = (intl.groupby("bucket")["ton"].sum()
+                          .sort_values(ascending=False).reset_index())
+                cm = cm[cm["ton"] > 0]
+                if cm.empty:
+                    st.info("국제 무역 카테고리 데이터 없음")
+                else:
+                    fig = px.pie(cm, names="bucket", values="ton",
+                                  color="bucket",
+                                  color_discrete_map=_KOM_BUCKET_PALETTE,
+                                  hole=0.5)
+                    fig.update_traces(textinfo="percent+label",
+                                        textposition="outside")
+                    fig.update_layout(height=500, margin=dict(t=10, b=10),
+                                       legend=dict(font=dict(size=10)))
+                    theme.donut_center(fig, fmt.fmt_ton(float(cm["ton"].sum())),
+                                         "국제 톤")
+                    st.plotly_chart(fig, width="stretch")
+
+            # ---- Top intl routes (ID port ↔ foreign port) ----
+            st.markdown("**Top 국제 항로 (ID 항구 ↔ 외국 항구)**")
+            route_top = (intl.groupby(["id_port", "foreign_port",
+                                         "trade", "bucket"])
+                              .agg(톤=("ton", "sum"),
+                                   행수=("ton", "size"),
+                                   선박수=("kapal", "nunique"))
+                              .reset_index()
+                              .sort_values("톤", ascending=False).head(40))
+            route_top["톤"] = route_top["톤"].round(0)
+            theme.dataframe(route_top)
+            _csv_button(route_top, f"cargo_intl_routes_{snapshot}.csv",
+                         label="📥 국제 항로 CSV", key="cg_dl_intl")
+
+            # ---- ID port export/import pair table ----
+            st.markdown("**ID 항구별 EXPORT / IMPORT 균형**")
+            id_pair = (intl.groupby(["id_port", "trade"])["ton"]
+                            .sum().reset_index()
+                            .pivot_table(index="id_port", columns="trade",
+                                          values="ton", fill_value=0))
+            for col in ("EXPORT", "IMPORT", "Transshipment"):
+                if col not in id_pair.columns:
+                    id_pair[col] = 0
+            id_pair["Net_Export"] = id_pair["EXPORT"] - id_pair["IMPORT"]
+            id_pair["Total"] = (id_pair["EXPORT"] + id_pair["IMPORT"]
+                                  + id_pair["Transshipment"])
+            id_pair = id_pair.sort_values("Total", ascending=False).head(20)
+            for c in ("EXPORT", "IMPORT", "Transshipment",
+                       "Net_Export", "Total"):
+                id_pair[c] = id_pair[c].round(0)
+            theme.dataframe(id_pair.reset_index())
+
+    # ============ 5) Detail list ============
     with tab_list:
         st.markdown(
             "**상세 화물 행 리스트** — 현재 필터에 매치되는 LK3 raw 행 (정렬·CSV)"
