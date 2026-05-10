@@ -1227,6 +1227,52 @@ async function renderCargoFleet() {
   drawCargoCommodityBars(payload.top_commodities || []);
   drawFleetClassDonut(payload.class_counts || []);
   drawFleetAgeBars(payload.age_bins?.bins || []);
+  fillCargoFleetCaptions(payload);
+}
+
+// PR-15: per-chart 1-line auto facts beneath each Cargo & Fleet widget.
+function fillCargoFleetCaptions(payload) {
+  // 1) Treemap — top-3 categories' share of treemap total
+  const cats = (payload.treemap_categories || []).slice().sort((a, b) => b.ton_total - a.ton_total);
+  const totCats = cats.reduce((s, r) => s + (r.ton_total || 0), 0);
+  const top3 = cats.slice(0, 3).reduce((s, r) => s + r.ton_total, 0);
+  const cap1 = document.getElementById("cf-treemap-caption");
+  if (cap1) {
+    cap1.textContent = totCats > 0
+      ? `상위 3개 카테고리(${cats.slice(0, 3).map(c => c.category).join(" · ")})가 전체 ${cats.length}개의 ${(top3 / totCats * 100).toFixed(1)}%를 차지합니다.`
+      : "데이터 없음";
+  }
+
+  // 2) Commodities — top single commodity share of top-10 sum
+  const coms = (payload.top_commodities || []).slice();
+  const totC = coms.reduce((s, r) => s + (r.ton_total || 0), 0);
+  const cap2 = document.getElementById("cf-commodity-caption");
+  if (cap2 && coms[0]) {
+    cap2.textContent = totC > 0
+      ? `${coms[0].name} 단일 품목이 Top 10 누적 ton의 ${(coms[0].ton_total / totC * 100).toFixed(1)}%를 차지합니다.`
+      : "데이터 없음";
+  }
+
+  // 3) Class donut — share of largest class
+  const classes = (payload.class_counts || []).slice().sort((a, b) => b.count - a.count);
+  const totCls = classes.reduce((s, r) => s + (r.count || 0), 0);
+  const cap3 = document.getElementById("cf-class-caption");
+  if (cap3 && classes[0]) {
+    cap3.textContent = totCls > 0
+      ? `${classes[0]["class"]}이(가) 등록 선박 ${fmtCount(totCls)}척 중 ${(classes[0].count / totCls * 100).toFixed(1)}%로 가장 큰 비중입니다.`
+      : "데이터 없음";
+  }
+
+  // 4) Age bars — % of fleet that is 25+ years old (older=true bins)
+  const bins = (payload.age_bins?.bins || []);
+  const totAge = bins.reduce((s, b) => s + (b.count || 0), 0);
+  const olderCount = bins.filter(b => b.older).reduce((s, b) => s + (b.count || 0), 0);
+  const cap4 = document.getElementById("cf-age-caption");
+  if (cap4) {
+    cap4.textContent = totAge > 0
+      ? `등록 선박의 ${(olderCount / totAge * 100).toFixed(1)}%가 25년 이상 (${fmtCount(olderCount)}척 / ${fmtCount(totAge)}척).`
+      : "데이터 없음";
+  }
 }
 
 function drawCargoTreemap(rows) {
