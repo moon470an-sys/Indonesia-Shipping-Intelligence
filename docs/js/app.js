@@ -1155,11 +1155,14 @@ function renderHomeKpi(payload) {
     }
     if (k.id === "tanker_fleet") {
       const age = k.avg_age_gt_weighted == null ? "—" : `${k.avg_age_gt_weighted.toFixed(1)}년`;
-      return `<div class="kpi-card-large">
-        <div class="kpi-label">탱커 등록 척수</div>
+      const tankerSub = k.tanker_count != null
+        ? `<span class="text-slate-400">그중 탱커 ${fmt(k.tanker_count)}척</span> · `
+        : "";
+      return `<div class="kpi-card-large" title="Source: kapal.dephub.go.id/ditkapel_service/data_kapal/">
+        <div class="kpi-label">화물선 등록 척수 <span class="text-[10px] text-slate-400 font-normal">(kapal.dephub.go.id)</span></div>
         <div>
           <div class="kpi-value-large">${fmt(k.value_count || 0)}<span class="text-base text-slate-400 ml-1">척</span></div>
-          <div class="kpi-sub-large"><span class="text-slate-600">평균 선령</span> ${age} <span class="text-slate-400">(GT 가중)</span></div>
+          <div class="kpi-sub-large">${tankerSub}<span class="text-slate-600">평균 선령</span> ${age} <span class="text-slate-400">(GT 가중, 탱커 기준)</span></div>
         </div>
       </div>`;
     }
@@ -1594,21 +1597,24 @@ function fillMapInsights() {
 // sector trend.
 async function renderFleet() {
   setupSourceLabels(document.getElementById("tab-fleet"));
-  let cargoFleet, ownerProfile;
+  let cargoFleet, fleetOwners;
   try { cargoFleet = await loadDerived("cargo_fleet.json"); }
   catch (e) {
     const host = document.getElementById("fl-class-donut");
     if (host) host.innerHTML = errorState(`cargo_fleet.json 로드 실패: ${e.message}`);
     return;
   }
-  try { ownerProfile = await loadDerived("owner_profile.json"); }
-  catch (e) { ownerProfile = { owners: [] }; }
+  // Fleet now sourced from fleet_owners.json (kapal.dephub.go.id vessel
+  // registry, full cargo fleet) — replacing the tanker-only owner_profile
+  // backing of the previous Top owners card.
+  try { fleetOwners = await loadDerived("fleet_owners.json"); }
+  catch (e) { fleetOwners = { owners: [], totals: {} }; }
 
   drawFleetClassDonut(cargoFleet.class_counts || []);
   drawFleetAgeBars(cargoFleet.age_bins?.bins || []);
-  drawFleetOwnerBars(ownerProfile.owners || []);
-  drawFleetOwnerSubclass(ownerProfile.owners || []);
-  fillFleetCaptions(cargoFleet, ownerProfile);
+  drawFleetOwnerBars(fleetOwners.owners || []);
+  drawFleetOwnerClassmix(fleetOwners.owners || []);
+  fillFleetCaptions(cargoFleet, fleetOwners);
 }
 
 async function renderCargo() {
@@ -1843,7 +1849,7 @@ function renderCargoYearlyView(cargoYearly, fallbackCargoFleet, year, ctx) {
   }
 }
 
-function fillFleetCaptions(cargoFleet, ownerProfile) {
+function fillFleetCaptions(cargoFleet, fleetOwners) {
   // Class donut — share of largest class
   const classes = (cargoFleet.class_counts || []).slice().sort((a, b) => b.count - a.count);
   const totCls = classes.reduce((s, r) => s + (r.count || 0), 0);
@@ -1865,14 +1871,27 @@ function fillFleetCaptions(cargoFleet, ownerProfile) {
       : "데이터 없음";
   }
 
-  // Owner bars — Tbk count + Top-3 share of all listed owner tankers
-  const owners = (ownerProfile.owners || []).slice();
-  const totOwners = owners.length;
-  const tbkCount = owners.filter(o => o.ticker || /TBK\b/i.test(o.owner || "")).length;
-  const top3 = owners.slice().sort((a, b) => b.tankers - a.tankers).slice(0, 3);
+  // Source-totals strip below the Fleet tab header (kapal.dephub.go.id totals)
+  const totalsEl = document.getElementById("fl-source-totals");
+  if (totalsEl && fleetOwners?.totals) {
+    const t = fleetOwners.totals;
+    totalsEl.textContent =
+      `· 전체 화물선 ${fmtCount(t.cargo_vessels || 0)}척 · 고유 선주 ${fmtCount(t.unique_owners || 0)}개`;
+  }
+
+  // Owner bars — Top-3 by vessel count + total cargo fleet headline
+  const owners = (fleetOwners?.owners || []).slice();
+  const top3 = owners.slice(0, 3);
   const cap3 = document.getElementById("fl-owner-caption");
   if (cap3 && top3[0]) {
-    cap3.textContent = `상위 ${totOwners}개 선주 중 IDX 상장(Tbk)은 ${tbkCount}개. Top-1 = ${top3[0].owner} (${top3[0].tankers}척).`;
+    const top1 = top3[0];
+    const mixParts = Object.entries(top1.class_mix || {})
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([k, v]) => `${k} ${v}`);
+    cap3.textContent =
+      `Top-1: ${top1.owner} — ${top1.vessels}척 · GT ${fmtCount(Math.round(top1.sum_gt || 0))}`
+      + (mixParts.length ? ` · 주력: ${mixParts.join(" · ")}` : "");
   }
 }
 
@@ -2450,16 +2469,28 @@ function drawFleetAgeBars(bins) {
   }, { displayModeBar: false, responsive: true });
 }
 
+// Sourced from fleet_owners.json — full cargo fleet (kapal.dephub.go.id).
+// Each owner entry: {owner, vessels, sum_gt, avg_age_gt_weighted,
+// top_flag, class_mix:{Container:n, Bulk Carrier:n, Tanker:n, ...},
+// tanker_subclass_mix:{}}.
 function drawFleetOwnerBars(owners) {
   if (!owners.length) return;
-  const top = owners.slice().sort((a, b) => b.tankers - a.tankers).slice(0, 25);
-  // Tbk star marker
+  const top = (owners || []).slice(0, 25);
+  // Truncate long names and append top_flag chip for foreign-flag operators
   const labels = top.map(o => {
-    const isTbk = !!o.ticker || /TBK\b/i.test(o.owner || "");
-    return `${isTbk ? "★ " : ""}${o.owner}`;
+    const flagChip = o.top_flag && o.top_flag !== "Indonesia" ? ` 🌐${o.top_flag}` : "";
+    const name = o.owner.length > 38 ? o.owner.slice(0, 36) + "…" : o.owner;
+    return `${name}${flagChip}`;
   }).reverse();
-  const counts = top.map(o => o.tankers).reverse();
+  const counts = top.map(o => o.vessels).reverse();
   const gts = top.map(o => o.sum_gt).reverse();
+  const ages = top.map(o => o.avg_age_gt_weighted).reverse();
+  // top-2 classes per owner, for hover detail
+  const mixSummaries = top.map(o => {
+    const mix = o.class_mix || {};
+    return Object.entries(mix).sort((a, b) => b[1] - a[1])
+      .slice(0, 3).map(([k, v]) => `${k} ${v}`).join(" · ") || "-";
+  }).reverse();
   Plotly.newPlot("fl-owner-bars", [{
     x: counts,
     y: labels,
@@ -2476,45 +2507,53 @@ function drawFleetOwnerBars(owners) {
     text: counts.map(v => `${v}척`),
     textposition: "outside",
     cliponaxis: false,
-    customdata: gts,
-    hovertemplate: "<b>%{y}</b><br>%{x} 척<br>총 GT %{customdata:,.0f}<extra></extra>",
+    customdata: top.map((_o, i) => [
+      gts[counts.length - 1 - i] ?? 0,
+      ages[counts.length - 1 - i],
+      mixSummaries[i],
+    ]),
+    hovertemplate:
+      "<b>%{y}</b><br>" +
+      "%{x} 척 · 총 GT %{customdata[0]:,.0f}<br>" +
+      "평균 선령 (GT 가중) %{customdata[1]:.1f}년<br>" +
+      "Class mix — %{customdata[2]}<extra></extra>",
   }], {
-    margin: { t: 10, l: 240, r: 70, b: 40 },
-    xaxis: { title: "Tanker 척수" },
+    margin: { t: 10, l: 280, r: 70, b: 40 },
+    xaxis: { title: "보유 척수 (cargo only)" },
   }, { displayModeBar: false, responsive: true });
 }
 
-function drawFleetOwnerSubclass(owners) {
+// Per-owner Vessel Class mix (stacked bars). Replaces the old tanker-only
+// subclass mix chart. Uses _CARGO_CLASS_PALETTE so colors match the Cargo
+// tab map legend conventions.
+const FL_CLASS_PALETTE = {
+  "Container":     "#0284c7",
+  "Bulk Carrier":  "#7c3aed",
+  "Tanker":        "#1A3A6B",
+  "General Cargo": "#0891b2",
+  "Other Cargo":   "#65a30d",
+  "Other":         "#94a3b8",
+};
+function drawFleetOwnerClassmix(owners) {
   if (!owners.length) return;
-  // Top 5 owners + subclass mix
-  const top5 = owners.slice().sort((a, b) => b.tankers - a.tankers).slice(0, 5);
-  // Collect all subclass keys
-  const subclassSet = new Set();
-  top5.forEach(o => {
-    const mix = o.subclass_mix || {};
-    Object.keys(mix).forEach(k => subclassSet.add(k));
-  });
-  const subclasses = Array.from(subclassSet);
-  const palette = {
-    "Crude Oil": "#0f172a", "Product": "#1e40af", "Chemical": "#7c3aed",
-    "LPG": "#f59e0b", "LNG": "#0891b2",
-    "FAME / Vegetable Oil": "#16a34a", "Water": "#0ea5e9",
-    "UNKNOWN": "#9ca3af",
-  };
-  const traces = subclasses.map(sub => ({
-    x: top5.map(o => o.owner),
-    y: top5.map(o => (o.subclass_mix || {})[sub] || 0),
-    name: sub,
-    type: "bar",
-    marker: { color: palette[sub] || "#94a3b8" },
-    hovertemplate: `<b>%{x}</b><br>${sub}: %{y} 척<extra></extra>`,
-  }));
-  Plotly.newPlot("fl-owner-subclass", traces, {
+  const topN = (owners || []).slice(0, 8);
+  const classOrder = ["Container", "Bulk Carrier", "Tanker", "General Cargo", "Other Cargo", "Other"];
+  const traces = classOrder
+    .filter(cls => topN.some(o => (o.class_mix || {})[cls]))
+    .map(cls => ({
+      x: topN.map(o => o.owner.length > 22 ? o.owner.slice(0, 20) + "…" : o.owner),
+      y: topN.map(o => (o.class_mix || {})[cls] || 0),
+      name: cls,
+      type: "bar",
+      marker: { color: FL_CLASS_PALETTE[cls] || "#94a3b8" },
+      hovertemplate: `<b>%{x}</b><br>${cls}: %{y} 척<extra></extra>`,
+    }));
+  Plotly.newPlot("fl-owner-classmix", traces, {
     barmode: "stack",
-    margin: { t: 10, l: 60, r: 20, b: 100 },
+    margin: { t: 10, l: 60, r: 20, b: 110 },
     xaxis: { tickangle: -25 },
     yaxis: { title: "척수" },
-    legend: { orientation: "h", y: -0.4, font: { size: 10 } },
+    legend: { orientation: "h", y: -0.35, font: { size: 10 } },
   }, { displayModeBar: false, responsive: true });
 }
 

@@ -315,6 +315,138 @@ def build_subclass_facts() -> dict:
 # ----------------------------------------------------------------------
 # Renewal v2: cargo_fleet.json (PR-4) — treemap + commodity bars + class donut + age bars
 # ----------------------------------------------------------------------
+def build_fleet_owners(snapshot_month: str, top_n: int = 25) -> dict:
+    """Top owners across the FULL cargo fleet (not just tankers).
+
+    Sourced directly from `vessels_snapshot` (kapal.dephub.go.id vessel
+    registry). For each Indonesian-flagged vessel:
+
+      1. Classify the JenisDetailKet label via backend.taxonomy.
+      2. Keep only the CARGO sector (drops fishing/passenger/non-comm).
+      3. Bucket each into one of 5 vessel classes (Container / Bulk /
+         Tanker / General Cargo / Other Cargo).
+      4. Aggregate by `NamaPemilik` -> total count + GT + per-class mix.
+
+    Returns the top N owners ranked by total vessel count. Differs from
+    `owner_profile.json` (tanker-only, LK3-cross-referenced) — this one
+    is a pure registry view.
+    """
+    from backend.taxonomy import (
+        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
+        SECTOR_CARGO, classify_tanker_subclass, classify_vessel_type,
+    )
+    visual_map = {
+        CLS_CONTAINER: "Container",
+        CLS_BULK:      "Bulk Carrier",
+        CLS_TANKER:    "Tanker",
+        CLS_GENERAL:   "General Cargo",
+        CLS_OTHER_CARGO: "Other Cargo",
+    }
+
+    owners: dict[str, dict] = {}
+    total_vessels = 0
+    total_gt = 0.0
+    class_totals: dict[str, int] = defaultdict(int)
+
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT
+              json_extract(raw_data, '$.NamaPemilik')      AS pemilik,
+              json_extract(raw_data, '$.JenisDetailKet')   AS jenis,
+              gt,
+              json_extract(raw_data, '$.TahunPembuatan')   AS tahun,
+              json_extract(raw_data, '$.BenderaAsal')      AS bendera
+            FROM vessels_snapshot
+            WHERE snapshot_month = ?
+              AND raw_data IS NOT NULL
+            """,
+            (snapshot_month,),
+        )
+        for pemilik, jenis, gt, tahun, bendera in cur:
+            if not jenis:
+                continue
+            sector, vclass = classify_vessel_type(jenis)
+            if sector != SECTOR_CARGO:
+                continue                                    # cargo only
+            class_label = visual_map.get(vclass, "Other Cargo")
+            try:
+                gt_val = float(gt) if gt is not None else 0.0
+            except (TypeError, ValueError):
+                gt_val = 0.0
+            try:
+                tahun_val = int(tahun) if tahun is not None else None
+            except (TypeError, ValueError):
+                tahun_val = None
+
+            total_vessels += 1
+            total_gt += gt_val
+            class_totals[class_label] += 1
+
+            owner_key = (pemilik or "(미상)").strip() or "(미상)"
+            d = owners.setdefault(owner_key, {
+                "owner": owner_key,
+                "vessels": 0,
+                "sum_gt": 0.0,
+                "class_mix": defaultdict(int),
+                "tanker_subclass_mix": defaultdict(int),
+                "_sum_age_gt": 0.0,
+                "_sum_age_w": 0.0,
+                "_flag_counts": defaultdict(int),
+            })
+            d["vessels"] += 1
+            d["sum_gt"] += gt_val
+            d["class_mix"][class_label] += 1
+            if vclass == CLS_TANKER:
+                sub = classify_tanker_subclass(jenis) or "UNKNOWN"
+                d["tanker_subclass_mix"][sub] += 1
+            if tahun_val and 1900 < tahun_val < 2100:
+                age = max(0, datetime.now(timezone.utc).year - tahun_val)
+                d["_sum_age_gt"] += age * gt_val
+                d["_sum_age_w"] += gt_val
+            if bendera:
+                d["_flag_counts"][str(bendera).strip()] += 1
+
+    # Finalize: GT-weighted average age + top flag, drop temp keys
+    finalized = []
+    for d in owners.values():
+        avg_age = (d["_sum_age_gt"] / d["_sum_age_w"]) if d["_sum_age_w"] > 0 else None
+        top_flag = None
+        if d["_flag_counts"]:
+            top_flag = sorted(d["_flag_counts"].items(),
+                               key=lambda kv: -kv[1])[0][0]
+        finalized.append({
+            "owner": d["owner"],
+            "vessels": d["vessels"],
+            "sum_gt": round(d["sum_gt"], 1),
+            "avg_age_gt_weighted": round(avg_age, 1) if avg_age is not None else None,
+            "top_flag": top_flag,
+            "class_mix": dict(d["class_mix"]),
+            "tanker_subclass_mix": dict(d["tanker_subclass_mix"]),
+        })
+    finalized.sort(key=lambda o: (-o["vessels"], -o["sum_gt"]))
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snapshot_month,
+        "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessels_snapshot)",
+        "totals": {
+            "cargo_vessels": total_vessels,
+            "total_gt": round(total_gt, 1),
+            "unique_owners": len(finalized),
+            "class_totals": dict(class_totals),
+        },
+        "owners": finalized[:top_n],
+        "_notes": {
+            "scope": "CARGO sector only via backend.taxonomy "
+                     "(excludes fishing / passenger / offshore-support / non-commercial)",
+            "ranking": "by vessel count then sum_gt; ties broken by name",
+            "age_basis": "GT-weighted average — fleets weighted by capacity",
+        },
+    }
+
+
 def build_fleet_class_counts(snapshot_month: str) -> dict:
     """Group vessels_snapshot.raw_data into 5 visual classes.
 
@@ -882,6 +1014,29 @@ def build_home_kpi() -> dict:
     # ---- Tanker fleet (count + GT-weighted avg age) ----
     age_stats, fleet_summary = build_tanker_age_stats(src_meta.get("latest"))
 
+    # Total cargo fleet count (kapal.dephub.go.id registry) — used by the
+    # Home KPI card sub-line. Cheap single query, separate from the tanker
+    # breakdown so the label can read "화물선 등록 척수 / 그중 탱커".
+    cargo_fleet_count = 0
+    try:
+        from backend.taxonomy import SECTOR_CARGO, classify_vessel_type
+        with sqlite3.connect(DB) as _con:
+            _cur = _con.cursor()
+            _cur.execute(
+                "SELECT json_extract(raw_data, '$.JenisDetailKet') AS j, COUNT(*) "
+                "FROM vessels_snapshot WHERE snapshot_month = ? "
+                "GROUP BY j",
+                (src_meta.get("latest"),),
+            )
+            for j, n in _cur:
+                if not j:
+                    continue
+                sector, _vc = classify_vessel_type(j)
+                if sector == SECTOR_CARGO:
+                    cargo_fleet_count += int(n)
+    except Exception:
+        cargo_fleet_count = 0
+
     # ---- PR-16: 5-sector breakdown for Home sidebar mini-bars ----
     top_sectors = kpi.get("top_sectors") or []
     sector_breakdown = [
@@ -928,10 +1083,11 @@ def build_home_kpi() -> dict:
             },
             {
                 "id": "tanker_fleet",
-                "label": "탱커 등록 척수",
-                "value_count": fleet_summary["vessel_count"],
+                "label": "화물선 등록 척수",       # PR — repurposed from tanker-only
+                "value_count": cargo_fleet_count,  # full cargo fleet count
+                "tanker_count": fleet_summary["vessel_count"],
                 "avg_age_gt_weighted": fleet_summary["avg_age_gt_weighted"],
-                "source": "kapal.dephub.go.id (vessel snapshot)",
+                "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessel registry)",
             },
             {
                 "id": "data_freshness",
@@ -1725,6 +1881,13 @@ def main() -> None:
     bytes_total += _write_json(DERIVED / "owner_profile.json", op)
     print(f"  owner_profile.json — {len(op['owners'])} owners "
           f"(matched: {len(tk['tickers']) - len(unmatched)}/{len(tk['tickers'])} tickers)")
+
+    # Full cargo-fleet owner ranking from vessels_snapshot (kapal.dephub.go.id).
+    _snap = _load_json(DATA / "meta.json").get("latest")
+    fo = build_fleet_owners(_snap)
+    bytes_total += _write_json(DERIVED / "fleet_owners.json", fo)
+    print(f"  fleet_owners.json — {fo['totals']['cargo_vessels']:,} cargo vessels · "
+          f"{fo['totals']['unique_owners']:,} unique owners (top {len(fo['owners'])})")
     if unmatched:
         log_path = DERIVED / "unmatched.log"
         log_path.write_text("\n".join(unmatched) + "\n", encoding="utf-8")
