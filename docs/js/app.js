@@ -2413,7 +2413,7 @@ function _cvColorForIndex(i, total) {
 
 async function renderCargo() {
   setupSourceLabels(document.getElementById("tab-cargo"));
-  let payload;
+  let payload, routesPayload;
   try {
     payload = await loadDerived("cargo_ports.json");
   } catch (e) {
@@ -2425,6 +2425,12 @@ async function renderCargo() {
   if (!payload || !payload.commodities || !payload.ports) {
     return;
   }
+  // Cargo OD lines reuse map_flow.json (top-30 routes, 8 categories,
+  // 24M rolling — same data feeding the home-page map). Not snapshot
+  // month and not per-commodity yet, but ships maritime-logistics
+  // overlay immediately.
+  try { routesPayload = await loadDerived("map_flow.json"); }
+  catch (_) { routesPayload = { routes_top30: [], categories: [] }; }
 
   // Build commodity meta (key/label/color)
   const COMMS = (payload.commodities || []).map((key, i) => ({
@@ -2444,12 +2450,18 @@ async function renderCargo() {
       selPort: null,
       map: null,
       circles: [],
+      lines: [],
+      showLines: true,
       COMMS,
       DATA: ALL_PORT_DATA,
+      ROUTES: routesPayload.routes_top30 || [],
+      ROUTE_CATS: routesPayload.categories || [],
     };
   } else {
     _cvState.COMMS = COMMS;
     _cvState.DATA = ALL_PORT_DATA;
+    _cvState.ROUTES = routesPayload.routes_top30 || _cvState.ROUTES || [];
+    _cvState.ROUTE_CATS = routesPayload.categories || _cvState.ROUTE_CATS || [];
   }
 
   _cvInitMap();
@@ -2632,6 +2644,13 @@ function _cvWireControls() {
   if (og) og.addEventListener("click", _cvToggleOG);
   const all = document.getElementById("cv-all-btn");
   if (all) all.addEventListener("click", _cvToggleAll);
+  // Line toggle (해상 물류 연결선)
+  const lt = document.getElementById("cv-line-toggle");
+  if (lt) lt.addEventListener("click", () => {
+    _cvState.showLines = !_cvState.showLines;
+    document.getElementById("cv-line-track").classList.toggle("on", _cvState.showLines);
+    _cvRenderLines();
+  });
 }
 
 function _cvToggleOG() {
@@ -2757,12 +2776,76 @@ function _cvUpdateStats(PORTS) {
   e("cv-st-cnt",  PORTS.length + "개");
 }
 
+// ─── OD route lines (해상 물류 연결선) ───────────────────────────────
+// Source: map_flow.json routes_top30 — top 30 OD pairs by 24M ton.
+// Schema per route: { origin, destination, lat_o, lon_o, lat_d, lon_d,
+//                     ton_24m, calls, vessels, category, category_ton: {...} }
+
+function _cvCatColor(name) {
+  const cat = (_cvState.ROUTE_CATS || []).find(c => c.name === name);
+  return (cat && cat.color) || "#475569";
+}
+
+function _cvRouteTooltip(r) {
+  const o = r.origin, d = r.destination;
+  const sameOD = o === d;
+  const heading = sameOD ? `🔁 ${o} (STS)` : `${o} <span style="color:#7A8FB5">→</span> ${d}`;
+  const breakdown = Object.entries(r.category_ton || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([k, v]) => {
+      const col = _cvCatColor(k);
+      return `<div class="cv-tt-cell"><div class="cv-tt-cl" style="color:${col}">${k}</div><div class="cv-tt-cv">${_cvFmt(v)}</div></div>`;
+    }).join("");
+  return `<div class="cv-tt-name">${heading}</div>
+    <div class="cv-tt-tags">
+      <span class="cv-tt-tag" style="background:${_cvCatColor(r.category)}20;color:${_cvCatColor(r.category)};border:1px solid ${_cvCatColor(r.category)}40">${r.category}</span>
+    </div>
+    <div class="cv-tt-grid">${breakdown}</div>
+    <hr class="cv-tt-sep">
+    <div class="cv-tt-foot"><span class="cv-tt-fl">24M 합계 · 항해 ${r.calls||0} · 선박 ${r.vessels||0}</span><span class="cv-tt-fv">${_cvFmt(r.ton_24m||0)} TON</span></div>`;
+}
+
+function _cvRenderLines() {
+  for (const l of _cvState.lines) l.remove();
+  _cvState.lines = [];
+  if (!_cvState.map || !_cvState.showLines) return;
+  const routes = _cvState.ROUTES || [];
+  if (!routes.length) return;
+  const maxV = Math.max(...routes.map(r => r.ton_24m || 0), 1);
+  // Render thickest last so it draws on top
+  [...routes].sort((a, b) => (a.ton_24m || 0) - (b.ton_24m || 0)).forEach(r => {
+    const v = r.ton_24m || 0;
+    if (v <= 0) return;
+    const w = 0.8 + Math.sqrt(v / maxV) * 5.5;
+    const color = _cvCatColor(r.category);
+    if (r.origin === r.destination) {
+      const m = L.circleMarker([r.lat_o, r.lon_o], {
+        radius: Math.max(4, w * 1.8), fillColor: color, color: color,
+        weight: 1.2, opacity: 0.75, fillOpacity: 0,
+        dashArray: "3,3",
+      });
+      m.bindTooltip(_cvRouteTooltip(r), { className: "cv-tt", sticky: true, opacity: 1 });
+      m.addTo(_cvState.map);
+      _cvState.lines.push(m);
+      return;
+    }
+    const line = L.polyline([[r.lat_o, r.lon_o], [r.lat_d, r.lon_d]], {
+      color, weight: w, opacity: 0.55, lineCap: "round",
+    });
+    line.bindTooltip(_cvRouteTooltip(r), { className: "cv-tt", sticky: true, opacity: 1 });
+    line.addTo(_cvState.map);
+    _cvState.lines.push(line);
+  });
+}
+
 function _cvRebuild() {
   const keys = [..._cvState.selComms];
   const PORTS = _cvBuildPorts(keys);
   // Leaflet inside a hidden tab can mis-size — force invalidate when shown.
   if (_cvState.map) setTimeout(() => _cvState.map.invalidateSize(), 0);
   _cvUpdateStats(PORTS);
+  _cvRenderLines();
   _cvRenderCircles(PORTS);
   _cvRenderSidebar(PORTS);
 }

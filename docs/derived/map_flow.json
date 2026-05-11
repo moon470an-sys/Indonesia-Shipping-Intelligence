@@ -21,6 +21,18 @@
     {
       "name": "FAME / Edible",
       "color": "#65a30d"
+    },
+    {
+      "name": "Coal",
+      "color": "#52525b"
+    },
+    {
+      "name": "Nickel / Mineral Ore",
+      "color": "#0e7490"
+    },
+    {
+      "name": "Container / Gen Cargo",
+      "color": "#9333ea"
     }
   ],
   "ports": [
@@ -518,7 +530,7 @@
       "category_ton": {
         "Product / BBM": 1373267.0,
         "Crude": 554600.0,
-        "FAME / Edible": 22868.0
+        "FAME / Edible": 28868.0
       }
     },
     {
@@ -615,8 +627,8 @@
       "category": "Product / BBM",
       "category_ton": {
         "Product / BBM": 848277.0,
+        "FAME / Edible": 198380.7,
         "Crude": 178226.0,
-        "FAME / Edible": 129473.2,
         "LPG / LNG": 5100.0
       }
     },
@@ -646,10 +658,10 @@
       "ton_24m": 1198866.6,
       "calls": 103,
       "vessels": 57,
-      "category": "Crude",
+      "category": "FAME / Edible",
       "category_ton": {
+        "FAME / Edible": 569456.4,
         "Crude": 558287.5,
-        "FAME / Edible": 137235.0,
         "Product / BBM": 71122.7
       }
     },
@@ -698,7 +710,7 @@
       "vessels": 61,
       "category": "FAME / Edible",
       "category_ton": {
-        "FAME / Edible": 193995.9,
+        "FAME / Edible": 892180.8,
         "Product / BBM": 143645.1,
         "Crude": 27260.8
       }
@@ -747,7 +759,8 @@
       "vessels": 15,
       "category": "Product / BBM",
       "category_ton": {
-        "Product / BBM": 1009869.9
+        "Product / BBM": 1009869.9,
+        "FAME / Edible": 8000.0
       }
     },
     {
@@ -797,7 +810,7 @@
       "category_ton": {
         "Product / BBM": 526685.0,
         "Crude": 271196.0,
-        "FAME / Edible": 114016.4
+        "FAME / Edible": 133660.4
       }
     },
     {
@@ -829,7 +842,7 @@
       "category": "Product / BBM",
       "category_ton": {
         "Product / BBM": 460021.0,
-        "FAME / Edible": 309816.0,
+        "FAME / Edible": 374974.5,
         "Crude": 58354.2,
         "LPG / LNG": 10052.0
       }
