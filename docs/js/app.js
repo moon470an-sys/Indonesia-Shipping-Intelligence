@@ -1668,12 +1668,14 @@ function _buildFleetFilters(fv) {
   // (No sector/subclass/age/flag controls — removed.)
   _renderFleetJenisList(fv);
 
-  // Header source label ("kapal.dephub.go.id · NN,NNN rows · 전체 NN,NNN")
+  // Header source label + hbadge (jang1117 mirror)
   const sourceLabel = document.getElementById("fl-source-label");
   if (sourceLabel) {
     sourceLabel.textContent =
-      `kapal.dephub.go.id · ${fv.rows.length.toLocaleString()} rows · 전체 ${fv.rows.length.toLocaleString()}`;
+      `kapal.dephub.go.id · ${fv.rows.length.toLocaleString()} rows`;
   }
+  const hbadge = document.getElementById("fl-hbadge");
+  if (hbadge) hbadge.textContent = `${fv.rows.length.toLocaleString()} rows`;
 
   // Table header
   const th = document.getElementById("fl-thead-row");
@@ -1714,7 +1716,25 @@ function _pillBtn(label, key, active, group = "fl-cls") {
 function _wireFleetFilters() {
   const tabEl = document.getElementById("tab-fleet");
   const st = tabEl._fleetState;
-  const debouncedRender = _fleetDebounce(_renderFleetView, 150);
+  const debouncedRender = _fleetDebounce(() => {
+    tabEl._fleetPage = 1;
+    _renderFleetView();
+  }, 150);
+
+  // ── Filter panel collapsible toggle (jang1117 동작) ──
+  const fhead = document.getElementById("fl-fhead");
+  if (fhead && !fhead.dataset.bound) {
+    fhead.dataset.bound = "1";
+    fhead.addEventListener("click", () => {
+      const body = document.getElementById("fl-fbody");
+      const toggle = document.getElementById("fl-ftoggle");
+      if (!body) return;
+      const open = body.classList.toggle("hidden");
+      // hidden class added = collapsed; removed = open
+      const isOpen = !open;
+      if (toggle) toggle.textContent = isOpen ? "▲ 접기" : "▼ 펼치기";
+    });
+  }
 
   // ── Vessel Type search ──
   const jenisSearch = document.getElementById("fl-f-jenis-search");
@@ -1784,6 +1804,7 @@ function _wireFleetFilters() {
                          "fl-f-d-min", "fl-f-d-max"]) {
         const el = document.getElementById(id); if (el) el.value = "";
       }
+      document.getElementById("tab-fleet")._fleetPage = 1;
       _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
       _renderFleetView();
     });
@@ -1962,7 +1983,7 @@ function _renderFleetView() {
   _drawFlChartFlag(rows, I);
   _drawFlChartGtHist(rows, I);
 
-  // ---- Active filter count badge (jang1117 fields only) ----
+  // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
     + (st.name ? 1 : 0)
     + ((st.gtMin != null || st.gtMax != null) ? 1 : 0)
@@ -1970,16 +1991,30 @@ function _renderFleetView() {
     + ((st.loaMin != null || st.loaMax != null) ? 1 : 0)
     + ((st.widthMin != null || st.widthMax != null) ? 1 : 0)
     + ((st.depthMin != null || st.depthMax != null) ? 1 : 0);
-  const badge = document.getElementById("fl-active-count");
-  if (badge) badge.textContent = active;
+  const badge = document.getElementById("fl-fcount");
+  if (badge) {
+    badge.textContent = active;
+    badge.style.display = active > 0 ? "inline" : "none";
+  }
+  const activeFilters = document.getElementById("fl-active-filters");
+  if (activeFilters) activeFilters.textContent = active > 0 ? `활성 필터 ${active}개` : "";
 
-  // ---- Sortable table ----
-  _renderFleetTable(rows, I);
+  // ---- Sortable + paginated table (jang1117 mirror: 100 per page) ----
+  // PR — pagination state lives on _fleetPage; clamp when filter changes.
+  if (typeof tabEl._fleetPage !== "number") tabEl._fleetPage = 1;
+  const pageSize = 100;
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  if (tabEl._fleetPage > totalPages) tabEl._fleetPage = 1;
+  _renderFleetTable(rows, I, tabEl._fleetPage, pageSize);
+  _renderFleetPagination(rows.length, tabEl._fleetPage, pageSize, totalPages);
 
   const info = document.getElementById("fl-list-info");
   if (info) {
-    const shown = Math.min(rows.length, 500);
-    info.textContent = `${shown.toLocaleString()} of ${rows.length.toLocaleString()} 표시 · sort: ${st.sortCol} ${st.sortDir}`;
+    const start = (tabEl._fleetPage - 1) * pageSize + 1;
+    const end = Math.min(start + pageSize - 1, rows.length);
+    info.textContent = rows.length
+      ? `${start.toLocaleString()}–${end.toLocaleString()} / ${rows.length.toLocaleString()}`
+      : "0 / 0";
   }
   document.querySelectorAll("#fl-thead-row th[data-col]").forEach(h => {
     const m = h.querySelector("[data-sort-marker]");
@@ -1988,10 +2023,56 @@ function _renderFleetView() {
   });
 }
 
-function _renderFleetTable(rows, I) {
+// Render pagination controls (jang1117 .pgn equivalent).
+function _renderFleetPagination(total, page, pageSize, totalPages) {
+  const host = document.getElementById("fl-pgn");
+  if (!host) return;
+  if (total === 0) {
+    host.innerHTML = `<span class="text-slate-400">결과 없음</span>`;
+    return;
+  }
+  // Compact pager: ◀ prev | 1 ... [page] ... totalPages | next ▶
+  const tabEl = document.getElementById("tab-fleet");
+  const pages = [];
+  const add = (n) => pages.push(n);
+  add(1);
+  if (page > 4) add("…");
+  for (let p = Math.max(2, page - 2); p <= Math.min(totalPages - 1, page + 2); p++) add(p);
+  if (page < totalPages - 3) add("…");
+  if (totalPages > 1) add(totalPages);
+  // Dedupe consecutive duplicates
+  const uniq = [];
+  for (const p of pages) if (uniq[uniq.length - 1] !== p) uniq.push(p);
+
+  const btn = (label, target, disabled, active) =>
+    `<button type="button" data-page="${target ?? ""}" ` +
+    `class="px-2 py-0.5 rounded border ${active ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 hover:bg-slate-50"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}" ` +
+    `${disabled ? "disabled" : ""}>${label}</button>`;
+  host.innerHTML =
+    btn("◀", page - 1, page <= 1, false) +
+    uniq.map(p => p === "…"
+      ? `<span class="px-1 text-slate-400">…</span>`
+      : btn(p, p, false, p === page)).join("") +
+    btn("▶", page + 1, page >= totalPages, false);
+  if (!host.dataset.bound) {
+    host.dataset.bound = "1";
+    host.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-page]");
+      if (!b || b.disabled) return;
+      const v = Number(b.dataset.page);
+      if (!Number.isNaN(v) && v >= 1) {
+        tabEl._fleetPage = v;
+        _renderFleetView();
+      }
+    });
+  }
+}
+
+function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
   const body = document.getElementById("fl-tbody");
   if (!body) return;
-  const top = rows.slice(0, 500);
+  const start = (page - 1) * pageSize;
+  const top = rows.slice(start, start + pageSize);
   body.innerHTML = top.map(r => {
     const flag = r[I.flag] || "Indonesia";
     return `<tr class="hover:bg-slate-50 border-b border-slate-100">
