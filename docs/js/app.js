@@ -1309,7 +1309,7 @@ async function renderFleet() {
 
 async function renderCargo() {
   setupSourceLabels(document.getElementById("tab-cargo"));
-  let cargoFleet, routeFacts, timeseries;
+  let cargoFleet, routeFacts, timeseries, mapFlow;
   try { cargoFleet = await loadDerived("cargo_fleet.json"); }
   catch (e) {
     const host = document.getElementById("cg-treemap");
@@ -1320,13 +1320,16 @@ async function renderCargo() {
   catch (e) { routeFacts = { routes: [] }; }
   try { timeseries = await loadDerived("timeseries.json"); }
   catch (e) { timeseries = { periods: [], series: [] }; }
+  try { mapFlow = await loadDerived("map_flow.json"); }
+  catch (e) { mapFlow = { ports: [], routes_top30: [], categories: [] }; }
 
+  drawCargoODMap(mapFlow);
   drawCargoTreemap(cargoFleet.treemap_categories || []);
   drawCargoCommodityBars(cargoFleet.top_commodities || []);
   drawCargoTimeseries(timeseries);
   drawCargoRoutes(routeFacts.routes || []);
   drawCargoSTS(routeFacts.routes || []);
-  fillCargoCaptions(cargoFleet, routeFacts, timeseries);
+  fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow);
 
   // Wire up the "hide self-loop" checkbox on the Cargo tab
   const hideSelf = document.getElementById("cg-routes-hide-self");
@@ -1371,7 +1374,24 @@ function fillFleetCaptions(cargoFleet, ownerProfile) {
   }
 }
 
-function fillCargoCaptions(cargoFleet, routeFacts, timeseries) {
+function fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow) {
+  // 0) OD map — top route share + intl/domestic totals
+  const capMap = document.getElementById("cg-od-map-caption");
+  if (capMap && mapFlow) {
+    const routes = (mapFlow.routes_top30 || []);
+    const totals = mapFlow.totals || {};
+    const dom = totals.domestic_ton || 0;
+    const intl = totals.intl_ton || 0;
+    const unk = totals.unknown_ton || 0;
+    const all = dom + intl + unk;
+    const top1 = routes[0];
+    if (top1) {
+      capMap.textContent = `최대 항로: ${top1.origin} → ${top1.destination} (${fmtTon(top1.ton_24m)}, ${top1.category || ""}). `
+        + `전체 24M: 국내 ${fmtTon(dom)} · 국제 ${fmtTon(intl)} (${all > 0 ? (intl / all * 100).toFixed(1) : 0}%).`;
+    }
+  }
+
+
   // 1) Treemap — top-3 category share
   const cats = (cargoFleet.treemap_categories || []).slice().sort((a, b) => b.ton_total - a.ton_total);
   const totCats = cats.reduce((s, r) => s + (r.ton_total || 0), 0);
@@ -1434,6 +1454,98 @@ function fillCargoCaptions(cargoFleet, routeFacts, timeseries) {
       ? `자체 환적 (STS) 허브 ${sts.length}개 — 24개월 합계 ${fmtTon(stsTotal)}.`
       : "데이터 없음";
   }
+}
+
+function drawCargoODMap(payload) {
+  const routes = payload.routes_top30 || [];
+  const ports = payload.ports || [];
+  const categories = payload.categories || [];
+  if (!routes.length || !ports.length) {
+    const host = document.getElementById("cg-od-map");
+    if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">지도 데이터 없음.</div>`;
+    return;
+  }
+
+  // Build a name -> color map from the provided palette; fallback grey.
+  const catColor = {};
+  for (const c of categories) catColor[c.name] = c.color || "#64748b";
+
+  // Group routes by category so legend toggling works (one trace per category).
+  const byCat = {};
+  let maxTon = 0;
+  for (const r of routes) {
+    const cat = r.category || "Other";
+    (byCat[cat] = byCat[cat] || []).push(r);
+    if (r.ton_24m > maxTon) maxTon = r.ton_24m;
+  }
+
+  const traces = [];
+
+  // One legend entry per category, with all that category's OD pairs drawn as
+  // separate `lines` sub-traces (Plotly can't vary line width within one trace).
+  for (const cat of Object.keys(byCat)) {
+    const color = catColor[cat] || "#64748b";
+    let first = true;
+    for (const r of byCat[cat]) {
+      const width = 1.0 + 7.0 * Math.sqrt(r.ton_24m / Math.max(maxTon, 1));
+      traces.push({
+        type: "scattergeo",
+        lon: [r.lon_o, r.lon_d],
+        lat: [r.lat_o, r.lat_d],
+        mode: "lines",
+        line: { width: width, color: color },
+        opacity: 0.75,
+        hoverinfo: "text",
+        text: `<b>${cat}</b><br>${r.origin} → ${r.destination}<br>`
+              + `${fmtTon(r.ton_24m)}t · ${r.vessels || 0}척 · ${r.calls || 0}회`,
+        name: cat,
+        legendgroup: cat,
+        showlegend: first,
+      });
+      first = false;
+    }
+  }
+
+  // Port bubbles on top — size by ton, label on hover.
+  const portMaxTon = Math.max(...ports.map(p => p.ton_24m || 0), 1);
+  traces.push({
+    type: "scattergeo",
+    lon: ports.map(p => p.lon),
+    lat: ports.map(p => p.lat),
+    mode: "markers",
+    marker: {
+      size: ports.map(p => Math.sqrt((p.ton_24m || 0) / portMaxTon) * 26 + 4),
+      color: "#0f172a",
+      opacity: 0.85,
+      line: { width: 0.5, color: "#ffffff" },
+    },
+    text: ports.map(p => `<b>${p.name}</b><br>${fmtTon(p.ton_24m || 0)}t`),
+    hoverinfo: "text",
+    name: "항구 (24M ton)",
+    showlegend: true,
+  });
+
+  Plotly.newPlot("cg-od-map", traces, {
+    margin: { t: 5, b: 5, l: 5, r: 5 },
+    legend: {
+      orientation: "h", y: -0.05, x: 0,
+      bgcolor: "rgba(255,255,255,0.9)",
+      bordercolor: "#e2e8f0", borderwidth: 1,
+      font: { size: 11 },
+    },
+    geo: {
+      scope: "asia",
+      projection: { type: "natural earth" },
+      showcountries: true, showcoastlines: true, showland: true,
+      showocean: true,
+      oceancolor: "#f1f5f9",
+      landcolor: "#fefefe",
+      countrycolor: "#cbd5e1",
+      coastlinecolor: "#94a3b8",
+      lataxis: { range: [-12, 8] },
+      lonaxis: { range: [94, 142] },
+    },
+  }, { displayModeBar: false, responsive: true });
 }
 
 function drawCargoTreemap(rows) {
