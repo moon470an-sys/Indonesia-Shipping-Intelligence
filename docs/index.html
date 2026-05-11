@@ -70,7 +70,7 @@
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="home-kpi" data-source="docs/derived/home_kpi.json">
         <div class="kpi-card-large"><div class="kpi-label">총 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">탱커 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
-        <div class="kpi-card-large"><div class="kpi-label">탱커 등록 척수</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">화물선 등록 척수 <span class="text-[10px] text-slate-400 font-normal">(kapal.dephub.go.id)</span></div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">데이터 기준일</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
       </div>
 
@@ -155,7 +155,14 @@
     <section id="tab-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">🚢 Fleet</h2>
-        <p class="text-sm text-slate-500">화물선 (어선 · 여객선 제외) — Class 비율 · 선령 분포 · 상위 선주 (Tanker 위주, IDX 티커 매핑 포함).</p>
+        <p class="text-sm text-slate-500">
+          화물선 등록부 (어선 · 여객선 제외) — Class 비율 · 선령 분포 · 상위 선주 + Class mix.
+        </p>
+        <p class="text-[11px] text-slate-400 mt-1">
+          📡 Source: <a href="https://kapal.dephub.go.id/ditkapel_service/data_kapal/" class="underline hover:text-slate-600" target="_blank" rel="noopener">kapal.dephub.go.id/ditkapel_service/data_kapal/</a>
+          — Direktorat Jenderal Perhubungan Laut 선박 등록 데이터 (LK3 물동량과 별개).
+          <span id="fl-source-totals" class="ml-2 text-slate-500"></span>
+        </p>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -172,17 +179,23 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/owner_profile.json">
-        <h3 class="font-semibold mb-2">Top 선주 (Tanker 기준 · 척수 + 총 GT)</h3>
-        <p class="text-xs text-slate-500 mb-2">상위 25개 선주 — 막대 = 보유 척수, 색상 = 총 GT (진할수록 큰 선대). Tbk 접미 (IDX 상장)에는 ★ 표시.</p>
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/fleet_owners.json">
+        <h3 class="font-semibold mb-2">Top 25 선주 (화물선 전체 · 척수 + 총 GT)</h3>
+        <p class="text-xs text-slate-500 mb-2">
+          전체 화물선 등록부에서 보유 척수 기준 상위 25개 선주.
+          막대 길이 = 척수, 색상 = 총 GT (진할수록 큰 선대), 호버 시 GT 가중 평균 선령 · 국적 · Class mix 표시.
+        </p>
         <div id="fl-owner-bars" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-owner-caption">&nbsp;</p>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/owner_profile.json">
-        <h3 class="font-semibold mb-2">Top 5 선주 — Tanker Subclass mix</h3>
-        <p class="text-xs text-slate-500 mb-2">각 선주 별 Crude / Product / Chemical / LPG / LNG / FAME 선대 구성 (척수). 단일 subclass 집중도 vs 분산도 비교.</p>
-        <div id="fl-owner-subclass" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/fleet_owners.json">
+        <h3 class="font-semibold mb-2">Top 8 선주 — Vessel Class 구성</h3>
+        <p class="text-xs text-slate-500 mb-2">
+          상위 8개 선주 별 Container / Bulk / Tanker / General Cargo / Other Cargo 분포 (척수, 누적 막대).
+          단일 클래스 집중 vs 다양화 선주 비교.
+        </p>
+        <div id="fl-owner-classmix" style="height:420px"><div class="skeleton-block" style="height:420px"></div></div>
       </div>
     </section>
 
