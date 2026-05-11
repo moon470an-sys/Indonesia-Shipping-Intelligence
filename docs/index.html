@@ -173,22 +173,39 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <!-- Vessel Class -->
+          <!-- PR — Sector (top-level) pills: 6 values + 전체 -->
           <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">Vessel Class (다중 선택)</label>
-            <div id="fl-f-class" class="flex flex-wrap gap-1.5"></div>
-          </div>
-
-          <!-- Tanker subclass (only meaningful when Tanker selected) -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">Tanker Subclass (Tanker 활성 시)</label>
-            <div id="fl-f-subclass" class="flex flex-wrap gap-1.5"></div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Sector (대분류)</label>
+            <div id="fl-f-sector" class="flex flex-wrap gap-1.5"></div>
           </div>
 
           <!-- Age bucket -->
           <div>
             <label class="text-xs font-semibold text-slate-600 block mb-1">선령 버킷</label>
             <div id="fl-f-age" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- Tanker subclass (Tanker rows only — orthogonal to Vessel Type) -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Tanker Subclass (Tanker 행에만 적용)</label>
+            <div id="fl-f-subclass" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- PR — Vessel Type: raw JenisDetailKet, searchable multi-select -->
+          <div class="md:col-span-2 lg:col-span-3">
+            <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+              <label class="text-xs font-semibold text-slate-600">
+                Vessel Type <span class="font-normal text-slate-400">(raw <code class="text-[10px]">JenisDetailKet</code> · 그룹핑 없음 · <span id="fl-f-jenis-total">125</span>종)</span>
+              </label>
+              <div class="flex items-center gap-2 text-[11px]">
+                <input id="fl-f-jenis-search" type="text" placeholder="🔎 검색 (Barge, Fishing, …)" class="w-56 px-2 py-1 text-xs border border-slate-200 rounded">
+                <span class="text-slate-500" id="fl-f-jenis-selected">선택 0</span>
+                <button id="fl-f-jenis-clear" type="button" class="text-blue-600 hover:underline">전체 (선택 해제)</button>
+              </div>
+            </div>
+            <div id="fl-f-jenis-list" class="border border-slate-200 rounded bg-slate-50 p-1 max-h-44 overflow-y-auto grid grid-cols-2 lg:grid-cols-3 gap-x-2 text-[11px]">
+              <!-- type rows populated by JS -->
+            </div>
           </div>
 
           <!-- Owner / Name search -->

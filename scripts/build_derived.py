@@ -419,6 +419,7 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
                 owner_v,
                 sector,
                 vc,
+                (jenis or "").strip(),         # PR — raw JenisDetailKet (no taxonomy grouping)
                 ts or "",
                 gt_v,
                 loa_v,
@@ -430,29 +431,37 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
             ])
 
     # Pre-compute headline totals so the frontend doesn't need to scan rows
-    # before drawing the KPI strip.
-    from collections import Counter as _Counter
+    # before drawing the KPI strip. by_jenis is keyed on raw JenisDetailKet
+    # so the new searchable filter can show count + sector tag per type.
+    from collections import Counter as _Counter, defaultdict as _dd
     sector_totals = _Counter(r[2] for r in rows)
     vc_totals = _Counter(r[3] for r in rows)
+    jenis_agg: dict[str, dict] = {}
+    for r in rows:
+        jn = r[4] or "(blank)"
+        d = jenis_agg.setdefault(jn, {"count": 0, "sector": r[2], "vc": r[3]})
+        d["count"] += 1
 
     return {
-        "schema_version": 2,                # PR — added `sector` column
+        "schema_version": 3,                # PR — added raw `jenis` column
         "snapshot_month": snapshot_month,
         "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/",
         "current_year": cur_year,
-        "cols": ["nama", "owner", "sector", "vc", "ts", "gt", "loa",
+        "cols": ["nama", "owner", "sector", "vc", "jenis", "ts", "gt", "loa",
                   "tahun", "age", "flag", "imo", "call_sign"],
         "rows": rows,
         "totals": {
             "all_vessels": len(rows),
             "by_sector": dict(sector_totals),
             "by_class":  dict(vc_totals),
+            "by_jenis":  jenis_agg,
         },
         "_notes": {
             "scope": "ALL sectors — CARGO + PASSENGER + FISHING + "
                      "OFFSHORE_SUPPORT + NON_COMMERCIAL + UNMAPPED",
             "flag_default": "empty string == Indonesia (>99% of fleet)",
             "row_count": len(rows),
+            "jenis_distinct": len(jenis_agg),
         },
     }
 
