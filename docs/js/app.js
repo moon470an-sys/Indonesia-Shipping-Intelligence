@@ -1382,10 +1382,28 @@ function drawHomeMap() {
     if (homeState.filterPeriod === "12m") {
       notes.push("12M OD 미산출 — 24M 누계 표시 중");
     }
-    if (homeState.filterTraffic === "ln") {
-      notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
-    }
     routes = (homeState.mapData.routes_top30 || []).slice();
+  }
+  // Traffic filter (dn_ln | dn | ln). Routes don't carry kind=dn/ln yet,
+  // so we infer: foreign-port set = port names not in the Indonesian
+  // 60-port list. Today that set is empty, so 'dn' ≡ 'dn_ln' and 'ln' = ∅
+  // with an explicit note ("LK3 ln 분기 필요").
+  {
+    const idPortNames = new Set((homeState.mapData.ports || []).map(p => p.name));
+    const isDomRoute = r => idPortNames.has(r.origin) && idPortNames.has(r.destination);
+    if (homeState.filterTraffic === "dn") {
+      const before = routes.length;
+      routes = routes.filter(isDomRoute);
+      notes.push(`국내만 · ${routes.length}/${before} routes`);
+    } else if (homeState.filterTraffic === "ln") {
+      const before = routes.length;
+      routes = routes.filter(r => !isDomRoute(r));
+      if (!routes.length) {
+        notes.push(`국제 OD 데이터 미분리 — LK3 ln 분기 적재 필요 (0/${before})`);
+      } else {
+        notes.push(`국제만 · ${routes.length}/${before} routes`);
+      }
+    }
   }
   // Category filter — applies to year-mode AND 24M-mode routes.
   // Tanker-cat set: the 5 wet-cargo categories in map_flow.json.
