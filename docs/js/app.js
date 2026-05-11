@@ -1379,9 +1379,6 @@ function drawHomeMap() {
     const cats = new Set(routes.map(r => r.category).filter(Boolean));
     notes.push(`${yearLabel} 달력연도 cut · 카테고리 ${cats.size}개 색상 분리`);
   } else {
-    if (homeState.filterCategory === "bulk") {
-      notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
-    }
     if (homeState.filterPeriod === "12m") {
       notes.push("12M OD 미산출 — 24M 누계 표시 중");
     }
@@ -1389,6 +1386,24 @@ function drawHomeMap() {
       notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
     }
     routes = (homeState.mapData.routes_top30 || []).slice();
+  }
+  // Category filter — applies to year-mode AND 24M-mode routes.
+  // Tanker-cat set: the 5 wet-cargo categories in map_flow.json.
+  // Bulk-cat set: dry-bulk categories (Coal / Nickel / Iron Ore / Bauxite).
+  const TANKER_CATS = new Set(["Crude", "Product / BBM", "Chemical", "LPG / LNG", "FAME / Edible"]);
+  const BULK_CATS   = new Set(["Coal", "Nickel / Mineral Ore", "Iron Ore", "Bauxite", "Container / Gen Cargo"]);
+  if (homeState.filterCategory === "tanker") {
+    const before = routes.length;
+    routes = routes.filter(r => TANKER_CATS.has(r.category));
+    notes.push(`탱커만 · ${routes.length}/${before} routes`);
+  } else if (homeState.filterCategory === "bulk") {
+    const before = routes.length;
+    routes = routes.filter(r => BULK_CATS.has(r.category));
+    if (!routes.length && !isYearMode) {
+      notes.push(`24M Top30은 드라이벌크 OD 미포함 — 연도 모드(2024/2025/2026)에서 가능`);
+    } else {
+      notes.push(`드라이벌크만 · ${routes.length}/${before} routes`);
+    }
   }
   status.textContent = notes.join(" · ") || "24M 누계 · 모든 카테고리 · Top 30 routes";
 
