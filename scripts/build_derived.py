@@ -407,6 +407,125 @@ def build_fleet_age_bins(snapshot_month: str, current_year: int | None = None) -
     }
 
 
+def build_cargo_yearly() -> dict:
+    """Per calendar-year cargo cuts (treemap + commodities), for the Cargo tab.
+
+    Replaces the "rolling 24M" framing with explicit (2024 / 2025 / 2026)
+    buckets. Queries `cargo_snapshot` directly via JSON-extract on the
+    BONGKAR/MUAT/KOMODITI/JENIS keys (Indonesian tuple-stringified MultiIndex).
+
+    Partial years (12개월 미만) are flagged via `months_per_year` so the
+    client can render a hatched pattern on those bars and avoid spurious
+    YoY comparisons.
+
+    Returned shape:
+        {
+          schema_version, snapshot_month,
+          years: [str, ...],
+          months_per_year: {year: int_month_count},
+          by_year: {
+              year: {
+                  total_ton: float,
+                  treemap_categories: [{category, ton_total, calls}, ...],
+                  top_commodities:    [{name,     ton_total}, ...],
+              }
+          }
+        }
+    """
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    # Embed-safe JSON path encoder for keys like ('BONGKAR', 'TON')
+    def _path(key: str) -> str:
+        return ('$."' + key + '"').replace("'", "''")
+
+    P_J_B = _path("('BONGKAR', 'JENIS')")
+    P_T_B = _path("('BONGKAR', 'TON')")
+    P_K_B = _path("('BONGKAR', 'KOMODITI')")
+    P_J_M = _path("('MUAT', 'JENIS')")
+    P_T_M = _path("('MUAT', 'TON')")
+    P_K_M = _path("('MUAT', 'KOMODITI')")
+    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+
+        # Year scaffolding (years + months covered per year)
+        cur.execute(
+            "SELECT data_year, COUNT(DISTINCT data_month) "
+            "FROM cargo_snapshot WHERE snapshot_month=? "
+            "GROUP BY data_year ORDER BY 1",
+            (snap,),
+        )
+        years_meta = [(str(int(y)), int(n)) for y, n in cur if y is not None]
+
+        by_year: dict[str, dict] = {}
+
+        for y, _mc in years_meta:
+            yr_int = int(y)
+
+            # Total ton (BONGKAR + MUAT)
+            cur.execute(
+                f"SELECT SUM({ton(P_T_B)}) + SUM({ton(P_T_M)}) "
+                f"FROM cargo_snapshot WHERE snapshot_month=? AND data_year=?",
+                (snap, yr_int),
+            )
+            row = cur.fetchone()
+            total = float((row[0] if row and row[0] is not None else 0.0))
+
+            # Treemap categories (jenis) — combine BONGKAR + MUAT, top 15
+            cur.execute(
+                f"SELECT j, SUM(t) AS ton, COUNT(*) AS calls FROM ("
+                f"  SELECT json_extract(raw_row, '{P_J_B}') AS j, {ton(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f"  UNION ALL "
+                f"  SELECT json_extract(raw_row, '{P_J_M}') AS j, {ton(P_T_M)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f") WHERE j IS NOT NULL AND j != '' AND j != '-' AND t > 0 "
+                f"GROUP BY j ORDER BY ton DESC LIMIT 15",
+                (snap, yr_int, snap, yr_int),
+            )
+            treemap_rows = [
+                {"category": j, "ton_total": round(float(t), 1), "calls": int(c)}
+                for j, t, c in cur
+            ]
+
+            # Top commodities (komoditi) — combine BONGKAR + MUAT, top 10
+            cur.execute(
+                f"SELECT k, SUM(t) AS ton FROM ("
+                f"  SELECT json_extract(raw_row, '{P_K_B}') AS k, {ton(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f"  UNION ALL "
+                f"  SELECT json_extract(raw_row, '{P_K_M}') AS k, {ton(P_T_M)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f") WHERE k IS NOT NULL AND k != '' AND k != '-' AND t > 0 "
+                f"GROUP BY k ORDER BY ton DESC LIMIT 10",
+                (snap, yr_int, snap, yr_int),
+            )
+            commodity_rows = [
+                {"name": k, "ton_total": round(float(t), 1)}
+                for k, t in cur
+            ]
+
+            by_year[y] = {
+                "total_ton": round(total, 1),
+                "treemap_categories": treemap_rows,
+                "top_commodities": commodity_rows,
+            }
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "years": [y for y, _ in years_meta],
+        "months_per_year": {y: m for y, m in years_meta},
+        "by_year": by_year,
+        "_notes": {
+            "source": "cargo_snapshot — raw_row JSON via SQL json_extract",
+            "scope": "BONGKAR + MUAT combined; SELF/foreign/coastal not separated here",
+        },
+    }
+
+
 def build_cargo_fleet() -> dict:
     """Renewal v2 PR-4: treemap + commodity bars + class donut + age bars."""
     cargo = _load_json(DATA / "cargo.json")
@@ -1261,6 +1380,13 @@ def main() -> None:
     print(f"  cargo_fleet.json — {len(cf['treemap_categories'])} treemap + "
           f"{len(cf['top_commodities'])} commodities + {len(cf['class_counts'])} classes + "
           f"{len(cf['age_bins']['bins'])} age bins")
+
+    cy = build_cargo_yearly()
+    bytes_total += _write_json(DERIVED / "cargo_yearly.json", cy)
+    _year_summary = ", ".join(
+        f"{y}: {cy['months_per_year'][y]}mo" for y in cy["years"]
+    )
+    print(f"  cargo_yearly.json — {len(cy['years'])} years ({_year_summary})")
 
     tk = build_owner_ticker_map()
     bytes_total += _write_json(DERIVED / "owner_ticker_map.json", tk)

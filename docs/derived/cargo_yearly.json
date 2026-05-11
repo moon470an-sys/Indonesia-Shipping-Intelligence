@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "years": [
+    "2024",
+    "2025",
+    "2026"
+  ],
+  "months_per_year": {
+    "2024": 7,
+    "2025": 12,
+    "2026": 5
+  },
+  "by_year": {
+    "2024": {
+      "total_ton": 1791101602.5,
+      "treemap_categories": [
+        {
+          "category": "Curah Kering",
+          "ton_total": 1170617734.0,
+          "calls": 102463
+        },
+        {
+          "category": "Curah Cair",
+          "ton_total": 263477201.1,
+          "calls": 63905
+        },
+        {
+          "category": "Petikemas Antar Pulau",
+          "ton_total": 99954414.8,
+          "calls": 135439
+        },
+        {
+          "category": "Break Bulk",
+          "ton_total": 79925154.9,
+          "calls": 26089
+        },
+        {
+          "category": "Unitized",
+          "ton_total": 79142315.6,
+          "calls": 117240
+        },
+        {
+          "category": "Petikemas Internasional",
+          "ton_total": 64863233.1,
+          "calls": 30209
+        },
+        {
+          "category": "Bag Cargo",
+          "ton_total": 29020302.6,
+          "calls": 84006
+        },
+        {
+          "category": "Ekor",
+          "ton_total": 53053.8,
+          "calls": 47
+        },
+        {
+          "category": "Tanpa Bongkar Muat",
+          "ton_total": 21809.9,
+          "calls": 74
+        }
+      ],
+      "top_commodities": [
+        {
+          "name": "BATU BARA",
+          "ton_total": 464431656.1
+        },
+        {
+          "name": "BATUBARA",
+          "ton_total": 252136118.4
+        },
+        {
+          "name": "NICKEL ORE",
+          "ton_total": 161453340.9
+        },
+        {
+          "name": "PETIKEMAS 20 FULL",
+          "ton_total": 44957261.4
+        },
+        {
+          "name": "COAL",
+          "ton_total": 23836001.2
+        },
+        {
+          "name": "CPO",
+          "ton_total": 23529846.9
+        },
+        {
+          "name": "PETIKEMAS 40 FULL",
+          "ton_total": 21003871.6
+        },
+        {
+          "name": "INDONESIAN STEAM COAL IN BULK",
+          "ton_total": 19539166.3
+        },
+        {
+          "name": "CRUDE OIL",
+          "ton_total": 18507289.0
+        },
+        {
+          "name": "PERTALITE",
+          "ton_total": 14829286.5
+        }
+      ]
+    },
+    "2025": {
+      "total_ton": 3060908910.7,
+      "treemap_categories": [
+        {
+          "category": "Curah Kering",
+          "ton_total": 2038644458.6,
+          "calls": 176070
+        },
+        {
+          "category": "Curah Cair",
+          "ton_total": 416848556.7,
+          "calls": 115093
+        },
+        {
+          "category": "Petikemas Antar Pulau",
+          "ton_total": 169280891.6,
+          "calls": 216609
+        },
+        {
+          "category": "Break Bulk",
+          "ton_total": 125499087.0,
+          "calls": 42068
+        },
+        {
+          "category": "Petikemas Internasional",
+          "ton_total": 124587935.7,
+          "calls": 42126
+        },
+        {
+          "category": "Unitized",
+          "ton_total": 119930507.3,
+          "calls": 271644
+        },
+        {
+          "category": "Bag Cargo",
+          "ton_total": 60473678.4,
+          "calls": 162264
+        },
+        {
+          "category": "Tanpa Bongkar Muat",
+          "ton_total": 64855.1,
+          "calls": 110
+        },
+        {
+          "category": "Ekor",
+          "ton_total": 5997.5,
+          "calls": 47
+        }
+      ],
+      "top_commodities": [
+        {
+          "name": "BATU BARA",
+          "ton_total": 764928292.8
+        },
+        {
+          "name": "BATUBARA",
+          "ton_total": 416907924.5
+        },
+        {
+          "name": "NICKEL ORE",
+          "ton_total": 344799973.4
+        },
+        {
+          "name": "PETIKEMAS 20 FULL",
+          "ton_total": 71160083.8
+        },
+        {
+          "name": "COAL",
+          "ton_total": 37834383.2
+        },
+        {
+          "name": "PETIKEMAS 40 FULL",
+          "ton_total": 35574298.9
+        },
+        {
+          "name": "INDONESIAN STEAM COAL IN BULK",
+          "ton_total": 31472276.9
+        },
+        {
+          "name": "CPO",
+          "ton_total": 30785403.0
+        },
+        {
+          "name": "GENERAL CARGO",
+          "ton_total": 29429272.1
+        },
+        {
+          "name": "PERTALITE",
+          "ton_total": 24500525.6
+        }
+      ]
+    },
+    "2026": {
+      "total_ton": 1041818065.0,
+      "treemap_categories": [
+        {
+          "category": "Curah Kering",
+          "ton_total": 694999982.4,
+          "calls": 59464
+        },
+        {
+          "category": "Curah Cair",
+          "ton_total": 142958482.3,
+          "calls": 39757
+        },
+        {
+          "category": "Petikemas Antar Pulau",
+          "ton_total": 55055298.2,
+          "calls": 69046
+        },
+        {
+          "category": "Petikemas Internasional",
+          "ton_total": 44584978.3,
+          "calls": 15369
+        },
+        {
+          "category": "Break Bulk",
+          "ton_total": 38621644.1,
+          "calls": 13515
+        },
+        {
+          "category": "Unitized",
+          "ton_total": 37842205.8,
+          "calls": 148365
+        },
+        {
+          "category": "Bag Cargo",
+          "ton_total": 26138704.8,
+          "calls": 61505
+        },
+        {
+          "category": "Tanpa Bongkar Muat",
+          "ton_total": 32073.0,
+          "calls": 52
+        },
+        {
+          "category": "Ekor",
+          "ton_total": 5956.9,
+          "calls": 36
+        }
+      ],
+      "top_commodities": [
+        {
+          "name": "BATUBARA",
+          "ton_total": 275240424.0
+        },
+        {
+          "name": "BATU BARA",
+          "ton_total": 125861687.7
+        },
+        {
+          "name": "NICKEL ORE",
+          "ton_total": 110472847.3
+        },
+        {
+          "name": "PETIKEMAS 20 FULL",
+          "ton_total": 21896005.0
+        },
+        {
+          "name": "COAL",
+          "ton_total": 15337801.6
+        },
+        {
+          "name": "GENERAL CARGO",
+          "ton_total": 14874137.9
+        },
+        {
+          "name": "PETIKEMAS 40 FULL",
+          "ton_total": 11759617.2
+        },
+        {
+          "name": "CPO",
+          "ton_total": 10703742.6
+        },
+        {
+          "name": "INDONESIAN STEAM COAL IN BULK",
+          "ton_total": 10362371.5
+        },
+        {
+          "name": "CRUDE OIL",
+          "ton_total": 9688007.1
+        }
+      ]
+    }
+  },
+  "_notes": {
+    "source": "cargo_snapshot — raw_row JSON via SQL json_extract",
+    "scope": "BONGKAR + MUAT combined; SELF/foreign/coastal not separated here"
+  }
+}
