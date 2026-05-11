@@ -153,204 +153,220 @@
     <!-- Cargo & Fleet (PR-1 placeholder; treemap + donut + age bars land in PR-4) -->
     <!-- 🚢 Fleet (split out of the former Cargo & Fleet tab) -->
     <section id="tab-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
-      <div class="mb-3">
-        <h2 class="text-2xl font-bold text-slate-800">🚢 선박 데이터 대시보드</h2>
-        <p class="text-xs text-slate-500">
-          <span id="fl-source-label">kapal.dephub.go.id · loading…</span>
-        </p>
-        <p class="text-[10px] text-slate-400 mt-0.5">
-          📡 Source: <a href="https://kapal.dephub.go.id/ditkapel_service/data_kapal/" class="underline hover:text-slate-600" target="_blank" rel="noopener">kapal.dephub.go.id/ditkapel_service/data_kapal/</a>
-          · Direktorat Jenderal Perhubungan Laut · benchmark: <a href="https://jang1117.github.io/vessels/" class="underline hover:text-slate-600" target="_blank" rel="noopener">jang1117.github.io/vessels</a>
-        </p>
+      <!-- Header (jang1117 style: dashboard title + row badge) -->
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-800 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-md text-sm">⚓</span>
+            선박 데이터 대시보드
+          </h2>
+          <p class="text-[11px] text-slate-500 font-mono" id="fl-source-label">kapal.dephub.go.id · loading…</p>
+        </div>
+        <span class="hbadge text-[11px] font-mono px-3 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600" id="fl-hbadge">— rows</span>
       </div>
 
-      <!-- 2-column layout: left sticky sidebar + right content (jang1117 mirror) -->
-      <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
+      <!-- Top collapsible filter panel -->
+      <div class="bg-white rounded-xl shadow mb-4 overflow-hidden" data-source="docs/derived/fleet_vessels.json">
+        <button id="fl-fhead" type="button" class="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50">
+          <span class="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            필터 <span class="fcount text-[11px] font-mono px-2 py-0.5 rounded-full bg-blue-600 text-white" id="fl-fcount" style="display:none">0</span>
+          </span>
+          <span class="text-[11px] text-slate-500" id="fl-ftoggle">▼ 펼치기</span>
+        </button>
+        <div id="fl-fbody" class="hidden border-t border-slate-200 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
 
-      <!-- ─── Left sidebar (single column of filters, jang1117 order) ─── -->
-      <aside class="bg-white rounded-xl shadow p-3 lg:sticky lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto" data-source="docs/derived/fleet_vessels.json">
-        <div class="flex items-baseline justify-between mb-2">
-          <h3 class="font-semibold text-sm">필터 <span id="fl-active-count" class="text-[10px] text-slate-500 font-normal">0</span></h3>
-          <button id="fl-reset" type="button" class="text-[11px] px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">필터 초기화</button>
-        </div>
-
-        <div class="space-y-3">
-
-          <!-- 1. Vessel Type (체크박스 선택 또는 차트 클릭) + 제외 모드 -->
-          <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-xs font-semibold text-slate-600">Vessel Type</label>
-              <label class="text-[10px] text-slate-600 inline-flex items-center gap-1 cursor-pointer" title="체크된 type 만 제외하고 나머지 표시">
-                <input id="fl-f-jenis-exclude" type="checkbox" class="cursor-pointer">
-                제외 모드
-              </label>
+          <!-- Vessel Type — spans 2 cols -->
+          <div class="md:col-span-2 lg:col-span-2 flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Vessel Type (체크박스 선택 또는 차트 클릭)</div>
+            <input id="fl-f-jenis-search" type="text" placeholder="종류 검색..." class="px-2 py-1 text-xs border border-slate-200 rounded mb-1">
+            <div id="fl-f-jenis-list" class="border border-slate-200 rounded bg-slate-50 max-h-32 overflow-y-auto p-1 text-[11px]">
+              <!-- populated by JS -->
             </div>
-            <p class="text-[10px] text-slate-400 mb-1">체크박스 선택 또는 차트 클릭 · <span id="fl-f-jenis-total">125</span>종 · <span id="fl-f-jenis-selected">선택 0</span></p>
-            <input id="fl-f-jenis-search" type="text" placeholder="🔎 검색 (Barge, Fishing, …)" class="w-full px-2 py-1 text-xs border border-slate-200 rounded mb-1">
-            <div id="fl-f-jenis-list" class="border border-slate-200 rounded bg-slate-50 p-1 max-h-56 overflow-y-auto text-[11px]">
-              <!-- type rows populated by JS -->
-            </div>
+            <label class="flex items-center gap-2 mt-1 text-[11px] cursor-pointer">
+              <span class="relative inline-block w-9 h-4">
+                <input id="fl-f-jenis-exclude" type="checkbox" class="peer sr-only">
+                <span class="absolute inset-0 bg-slate-200 rounded-full peer-checked:bg-rose-200 transition-colors"></span>
+                <span class="absolute left-0.5 top-0.5 w-3 h-3 rounded-full bg-slate-500 peer-checked:bg-rose-500 peer-checked:translate-x-5 transition-transform"></span>
+              </span>
+              <span class="text-slate-600">제외 모드 — 선택 항목을 제외하고 보기</span>
+            </label>
           </div>
 
-          <!-- 2. 건조 연도 -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">건조 연도</label>
+          <!-- 건조 연도 -->
+          <div class="flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">건조 연도</div>
             <div class="flex gap-1 items-center">
-              <input id="fl-f-yr-min" type="number" placeholder="from" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
-              <span class="text-slate-400">~</span>
-              <input id="fl-f-yr-max" type="number" placeholder="to" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
+              <input id="fl-f-yr-min" type="number" placeholder="From" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
+              <span class="text-slate-400 text-xs">~</span>
+              <input id="fl-f-yr-max" type="number" placeholder="To" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
             </div>
           </div>
 
-          <!-- 3. Gross Tonnage -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">Gross Tonnage</label>
+          <!-- Gross Tonnage -->
+          <div class="flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Gross Tonnage</div>
             <div class="flex gap-1 items-center">
-              <input id="fl-f-gt-min" type="number" placeholder="min" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
-              <span class="text-slate-400">~</span>
-              <input id="fl-f-gt-max" type="number" placeholder="max" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
+              <input id="fl-f-gt-min" type="number" placeholder="Min" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
+              <span class="text-slate-400 text-xs">~</span>
+              <input id="fl-f-gt-max" type="number" placeholder="Max" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
             </div>
           </div>
 
-          <!-- 4. LOA -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">LOA (m)</label>
+          <!-- LOA -->
+          <div class="flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">LOA (m)</div>
             <div class="flex gap-1 items-center">
-              <input id="fl-f-loa-min" type="number" placeholder="min" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
-              <span class="text-slate-400">~</span>
-              <input id="fl-f-loa-max" type="number" placeholder="max" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
+              <input id="fl-f-loa-min" type="number" placeholder="Min" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
+              <span class="text-slate-400 text-xs">~</span>
+              <input id="fl-f-loa-max" type="number" placeholder="Max" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
             </div>
           </div>
 
-          <!-- 5. Width -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">Width (m)</label>
+          <!-- Width -->
+          <div class="flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Width (m)</div>
             <div class="flex gap-1 items-center">
-              <input id="fl-f-w-min" type="number" placeholder="min" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
-              <span class="text-slate-400">~</span>
-              <input id="fl-f-w-max" type="number" placeholder="max" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
+              <input id="fl-f-w-min" type="number" placeholder="Min" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
+              <span class="text-slate-400 text-xs">~</span>
+              <input id="fl-f-w-max" type="number" placeholder="Max" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
             </div>
           </div>
 
-          <!-- 6. Depth -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1">Depth (m)</label>
+          <!-- Depth -->
+          <div class="flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Depth (m)</div>
             <div class="flex gap-1 items-center">
-              <input id="fl-f-d-min" type="number" placeholder="min" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
-              <span class="text-slate-400">~</span>
-              <input id="fl-f-d-max" type="number" placeholder="max" class="w-1/2 px-2 py-1 text-xs border border-slate-200 rounded">
+              <input id="fl-f-d-min" type="number" placeholder="Min" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
+              <span class="text-slate-400 text-xs">~</span>
+              <input id="fl-f-d-max" type="number" placeholder="Max" class="flex-1 min-w-0 px-2 py-1 text-xs border border-slate-200 rounded">
             </div>
           </div>
 
-          <!-- 7. 선박명 -->
-          <div>
-            <label class="text-xs font-semibold text-slate-600 block mb-1" for="fl-f-name">선박명</label>
-            <input id="fl-f-name" type="text" placeholder="GRESIK SAMUDERA, 부분 문자열…" class="w-full px-2 py-1 text-xs border border-slate-200 rounded">
+          <!-- 선박명 -->
+          <div class="flex flex-col gap-1">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">선박명</div>
+            <input id="fl-f-name" type="text" placeholder="선박명 검색..." class="px-2 py-1 text-xs border border-slate-200 rounded">
           </div>
 
-        </div>
-      </aside>
-
-      <!-- ─── Right main column (KPI · 평균 제원 · 6 charts · table) ─── -->
-      <main class="min-w-0 space-y-4">
-
-        <!-- KPI 4 cards -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <div class="text-[11px] text-slate-500">선박 수</div>
-            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-count">—</div>
-            <div class="text-[10px] text-slate-400" id="fl-kpi-pct">— / —</div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <div class="text-[11px] text-slate-500">Vessel Type</div>
-            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-jenis">—</div>
-            <div class="text-[10px] text-slate-400">고유 종류 수</div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <div class="text-[11px] text-slate-500">평균 GT</div>
-            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-avggt">—</div>
-            <div class="text-[10px] text-slate-400" id="fl-kpi-sumgt">총 GT —</div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3 text-center">
-            <div class="text-[11px] text-slate-500">평균 건조연도</div>
-            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-avgyr">—</div>
-            <div class="text-[10px] text-slate-400" id="fl-kpi-avgage">선령 —</div>
+          <!-- Action row -->
+          <div class="md:col-span-2 lg:col-span-4 flex items-center gap-3 pt-2 border-t border-slate-100 flex-wrap">
+            <button id="fl-reset" type="button" class="px-3 py-1.5 text-xs rounded border border-slate-300 text-slate-600 hover:border-rose-500 hover:text-rose-600 transition-colors">필터 초기화</button>
+            <span class="text-[11px] font-mono text-slate-500" id="fl-active-filters"></span>
           </div>
         </div>
-
-        <!-- 평균 제원 (4 sub-cards, jang1117 mirror) -->
-        <div class="bg-white rounded-xl shadow p-3">
-          <div class="text-xs font-semibold text-slate-600 mb-2">평균 제원 <span class="text-[10px] font-normal text-slate-400">(0 제외)</span></div>
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
-            <div class="text-center">
-              <div class="text-[10px] text-slate-400">Gross Tonnage avg</div>
-              <div class="text-base font-bold text-slate-700 font-mono" id="fl-avg-gt">—</div>
-            </div>
-            <div class="text-center">
-              <div class="text-[10px] text-slate-400">LOA (m) avg</div>
-              <div class="text-base font-bold text-slate-700 font-mono" id="fl-avg-loa">—</div>
-            </div>
-            <div class="text-center">
-              <div class="text-[10px] text-slate-400">Width (m) avg</div>
-              <div class="text-base font-bold text-slate-700 font-mono" id="fl-avg-w">—</div>
-            </div>
-            <div class="text-center">
-              <div class="text-[10px] text-slate-400">Depth (m) avg</div>
-              <div class="text-base font-bold text-slate-700 font-mono" id="fl-avg-d">—</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 6 chart grid (jang1117 titles) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <div class="bg-white rounded-xl shadow p-3">
-            <h4 class="text-xs font-semibold text-slate-600 mb-1">건조 연도별 추이</h4>
-            <div id="fl-ch-year" style="height:260px"></div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3">
-            <h4 class="text-xs font-semibold text-slate-600 mb-1">Vessel Type TOP 15 <span class="text-[10px] text-slate-400 font-normal">(클릭 필터)</span></h4>
-            <div id="fl-ch-type" style="height:340px"></div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3">
-            <h4 class="text-xs font-semibold text-slate-600 mb-1">엔진 타입 분포</h4>
-            <div id="fl-ch-engine-type" style="height:280px"></div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3">
-            <h4 class="text-xs font-semibold text-slate-600 mb-1">엔진명 TOP 12</h4>
-            <div id="fl-ch-engine-name" style="height:280px"></div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3">
-            <h4 class="text-xs font-semibold text-slate-600 mb-1">국적(Flag State) TOP 12</h4>
-            <div id="fl-ch-flag" style="height:280px"></div>
-          </div>
-          <div class="bg-white rounded-xl shadow p-3">
-            <h4 class="text-xs font-semibold text-slate-600 mb-1">Gross Tonnage 분포</h4>
-            <div id="fl-ch-gt-hist" style="height:280px"></div>
-          </div>
-        </div>
-
-        <!-- Sortable table -->
-        <div class="bg-white rounded-xl shadow p-3" data-source="docs/derived/fleet_vessels.json">
-          <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-            <h3 class="font-semibold text-sm">선박 목록 <span class="text-[10px] text-slate-400 font-normal">(헤더 클릭 시 정렬)</span></h3>
-            <div class="flex items-center gap-2 text-[11px]">
-              <span class="text-slate-500" id="fl-list-info">—</span>
-              <button id="fl-csv" type="button" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">📥 CSV (필터 전체)</button>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table id="fl-table" class="min-w-full text-[11px]">
-              <thead class="bg-slate-50 sticky top-0">
-                <tr id="fl-thead-row"></tr>
-              </thead>
-              <tbody id="fl-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </main>
       </div>
+
+      <!-- 4-card KPI strip with color-accent top stripes (jang1117 .sc.cb/.ct/.ca/.cg) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">선박 수</div>
+          <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-count">—</div>
+          <div class="text-[11px] text-slate-500" id="fl-kpi-pct">—</div>
+        </div>
+        <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-0.5 bg-teal-500"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Vessel Type</div>
+          <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-jenis">—</div>
+          <div class="text-[11px] text-slate-500">고유 종류 수</div>
+        </div>
+        <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-0.5 bg-amber-500"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">평균 GT</div>
+          <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-avggt">—</div>
+          <div class="text-[11px] text-slate-500">gross_tonnage avg</div>
+        </div>
+        <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-0.5 bg-green-500"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">평균 건조연도</div>
+          <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-avgyr">—</div>
+          <div class="text-[11px] text-slate-500" id="fl-kpi-avgage">—</div>
+        </div>
+      </div>
+
+      <!-- 치수 요약 (필터 결과 기준 평균값, 0 제외) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="text-[11px] font-mono text-slate-600 mb-3">치수 요약 (필터 결과 기준 평균값, 0 제외)</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <div class="bg-slate-50 rounded-md px-3 py-2 text-center">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Gross Tonnage</div>
+            <div class="text-base font-light font-mono text-slate-700" id="fl-avg-gt">—</div>
+            <div class="text-[10px] text-slate-500">avg</div>
+          </div>
+          <div class="bg-slate-50 rounded-md px-3 py-2 text-center">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">LOA</div>
+            <div class="text-base font-light font-mono text-slate-700" id="fl-avg-loa">—</div>
+            <div class="text-[10px] text-slate-500">m avg</div>
+          </div>
+          <div class="bg-slate-50 rounded-md px-3 py-2 text-center">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Width</div>
+            <div class="text-base font-light font-mono text-slate-700" id="fl-avg-w">—</div>
+            <div class="text-[10px] text-slate-500">m avg</div>
+          </div>
+          <div class="bg-slate-50 rounded-md px-3 py-2 text-center">
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Depth</div>
+            <div class="text-base font-light font-mono text-slate-700" id="fl-avg-d">—</div>
+            <div class="text-[10px] text-slate-500">m avg</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2-col chart grid (only 4 visible by default; engine charts hidden) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="text-xs font-mono text-slate-700 mb-2">건조 연도별 추이</div>
+          <div id="fl-ch-year" style="height:300px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="text-xs font-mono text-slate-700 mb-2">Vessel Type TOP 15 <span class="text-[10px] text-slate-400">(클릭 필터)</span></div>
+          <div id="fl-ch-type" style="height:300px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="text-xs font-mono text-slate-700 mb-2">국적(Flag State) TOP 12</div>
+          <div id="fl-ch-flag" style="height:260px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="text-xs font-mono text-slate-700 mb-2">Gross Tonnage 분포</div>
+          <div id="fl-ch-gt-hist" style="height:260px"></div>
+        </div>
+        <!-- Engine charts hidden by default (jang1117 parity) -->
+        <div class="bg-white rounded-xl shadow p-4 hidden" id="fl-engine-card-type">
+          <div class="text-xs font-mono text-slate-700 mb-2">엔진 타입 분포</div>
+          <div id="fl-ch-engine-type" style="height:260px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 hidden" id="fl-engine-card-name">
+          <div class="text-xs font-mono text-slate-700 mb-2">엔진명 TOP 12</div>
+          <div id="fl-ch-engine-name" style="height:260px"></div>
+        </div>
+      </div>
+
+      <!-- Table with pagination -->
+      <div class="bg-white rounded-xl shadow overflow-hidden mb-6" data-source="docs/derived/fleet_vessels.json">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+          <span class="text-xs font-mono text-slate-700">선박 목록 (헤더 클릭 시 정렬)</span>
+          <div class="flex items-center gap-3 text-[11px]">
+            <span class="font-mono text-slate-500" id="fl-list-info">—</span>
+            <button id="fl-csv" type="button" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">📥 CSV</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table id="fl-table" class="min-w-full text-[11px]">
+            <thead class="bg-slate-50">
+              <tr id="fl-thead-row"></tr>
+            </thead>
+            <tbody id="fl-tbody"></tbody>
+          </table>
+        </div>
+        <div id="fl-pgn" class="flex items-center justify-center gap-2 p-3 border-t border-slate-200 text-[11px]"></div>
+      </div>
+
+      <p class="text-[10px] text-slate-400">
+        📡 Source: <a href="https://kapal.dephub.go.id/ditkapel_service/data_kapal/" class="underline hover:text-slate-600" target="_blank" rel="noopener">kapal.dephub.go.id/ditkapel_service/data_kapal/</a>
+        · 레이아웃 벤치마크: <a href="https://jang1117.github.io/vessels/" class="underline hover:text-slate-600" target="_blank" rel="noopener">jang1117.github.io/vessels</a>
+      </p>
     </section>
+
 
 
     <!-- 📦 Cargo (split out of the former Cargo & Fleet tab) -->
