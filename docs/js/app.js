@@ -1595,26 +1595,441 @@ function fillMapInsights() {
 // pulls `owner_profile.json` for top-owner views; Cargo additionally
 // pulls `route_facts.json` for OD lanes and `timeseries.json` for the
 // sector trend.
+// PR — Fleet tab rewired as a filter+list view sourced from
+// fleet_vessels.json (kapal.dephub.go.id registry, per-vessel rows).
+// State is held on the section element so re-renders are cheap.
+const FLEET_CLASSES = ["Container", "Bulk Carrier", "Tanker", "General Cargo", "Other Cargo"];
+const FLEET_AGE_BUCKETS = [
+  { key: "0-4",   label: "0–4년",    lo: 0,  hi: 5  },
+  { key: "5-14",  label: "5–14년",   lo: 5,  hi: 15 },
+  { key: "15-24", label: "15–24년",  lo: 15, hi: 25 },
+  { key: "25+",   label: "25년+",    lo: 25, hi: 200 },
+];
+const FLEET_TANKER_SUBS = [
+  "Crude Oil", "Product", "Chemical", "LPG", "LNG",
+  "FAME / Vegetable Oil", "Water", "UNKNOWN",
+];
+
 async function renderFleet() {
   setupSourceLabels(document.getElementById("tab-fleet"));
-  let cargoFleet, fleetOwners;
-  try { cargoFleet = await loadDerived("cargo_fleet.json"); }
-  catch (e) {
-    const host = document.getElementById("fl-class-donut");
-    if (host) host.innerHTML = errorState(`cargo_fleet.json 로드 실패: ${e.message}`);
+
+  // Parallel load: vessel rows (heavy) + owner rankings (light, fixed bar).
+  let fv, fo;
+  try {
+    [fv, fo] = await Promise.all([
+      loadDerived("fleet_vessels.json"),
+      loadDerived("fleet_owners.json"),
+    ]);
+  } catch (e) {
+    const host = document.getElementById("fl-tbody");
+    if (host) host.innerHTML =
+      `<tr><td colspan="10">${errorState(`fleet payload 로드 실패: ${e.message}`)}</td></tr>`;
     return;
   }
-  // Fleet now sourced from fleet_owners.json (kapal.dephub.go.id vessel
-  // registry, full cargo fleet) — replacing the tanker-only owner_profile
-  // backing of the previous Top owners card.
-  try { fleetOwners = await loadDerived("fleet_owners.json"); }
-  catch (e) { fleetOwners = { owners: [], totals: {} }; }
 
-  drawFleetClassDonut(cargoFleet.class_counts || []);
-  drawFleetAgeBars(cargoFleet.age_bins?.bins || []);
-  drawFleetOwnerBars(fleetOwners.owners || []);
-  drawFleetOwnerClassmix(fleetOwners.owners || []);
-  fillFleetCaptions(cargoFleet, fleetOwners);
+  // Stash payloads on the tab element so filter handlers can re-read.
+  const tabEl = document.getElementById("tab-fleet");
+  tabEl._fleetVessels = fv;
+  tabEl._fleetOwners = fo;
+
+  // Initial state object
+  if (!tabEl._fleetState) {
+    tabEl._fleetState = {
+      classes: new Set(),         // empty == all
+      subclasses: new Set(),
+      ages: new Set(),
+      owner: "",
+      name: "",
+      flag: "",
+      gtMin: null, gtMax: null,
+      yrMin: null, yrMax: null,
+      loaMin: null, loaMax: null,
+      sortCol: "gt",
+      sortDir: "desc",
+    };
+  }
+
+  _buildFleetFilters(fv);
+  _wireFleetFilters();
+  drawFleetOwnerBars(fo.owners || []);   // always full registry (PR-static)
+  _renderFleetView();
+}
+
+function _idxOf(fv, name) { return (fv.cols || []).indexOf(name); }
+
+function _buildFleetFilters(fv) {
+  const cls = document.getElementById("fl-f-class");
+  if (cls && !cls.dataset.wired) {
+    cls.dataset.wired = "1";
+    cls.innerHTML = FLEET_CLASSES.map(c => _pillBtn(c, c, false)).join("");
+  }
+  const sub = document.getElementById("fl-f-subclass");
+  if (sub && !sub.dataset.wired) {
+    sub.dataset.wired = "1";
+    sub.innerHTML = FLEET_TANKER_SUBS.map(s => _pillBtn(s, s, false, "fl-sub")).join("");
+  }
+  const age = document.getElementById("fl-f-age");
+  if (age && !age.dataset.wired) {
+    age.dataset.wired = "1";
+    age.innerHTML = FLEET_AGE_BUCKETS.map(b => _pillBtn(b.label, b.key, false, "fl-age")).join("");
+  }
+  // Flag select: derive from data once
+  const flag = document.getElementById("fl-f-flag");
+  if (flag && !flag.dataset.wired) {
+    const flagIdx = _idxOf(fv, "flag");
+    const flags = new Map();
+    for (const r of fv.rows) {
+      const f = r[flagIdx] || "Indonesia";
+      flags.set(f, (flags.get(f) || 0) + 1);
+    }
+    const sorted = [...flags.entries()].sort((a, b) => b[1] - a[1]);
+    flag.innerHTML = `<option value="">(전체)</option>` +
+      sorted.map(([f, n]) => `<option value="${f}">${f} (${n.toLocaleString()})</option>`).join("");
+    flag.dataset.wired = "1";
+  }
+  // Table header
+  const th = document.getElementById("fl-thead-row");
+  if (th && !th.dataset.wired) {
+    th.dataset.wired = "1";
+    const cols = [
+      ["nama", "선박명"], ["owner", "선주"], ["vc", "Class"], ["ts", "Subclass"],
+      ["gt", "GT"], ["loa", "LOA"], ["tahun", "건조"], ["age", "선령"],
+      ["flag", "국적"], ["imo", "IMO"], ["call_sign", "Call Sign"],
+    ];
+    th.innerHTML = cols.map(([k, l]) =>
+      `<th data-col="${k}" class="px-2 py-1 text-left font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">${l} <span class="text-slate-300" data-sort-marker></span></th>`
+    ).join("");
+    th.querySelectorAll("th[data-col]").forEach(h => {
+      h.addEventListener("click", () => {
+        const st = document.getElementById("tab-fleet")._fleetState;
+        const col = h.dataset.col;
+        if (st.sortCol === col) st.sortDir = st.sortDir === "asc" ? "desc" : "asc";
+        else { st.sortCol = col; st.sortDir = "asc"; }
+        _renderFleetView();
+      });
+    });
+  }
+}
+
+function _pillBtn(label, key, active, group = "fl-cls") {
+  const cls = active
+    ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
+    : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
+  return `<button type="button" data-group="${group}" data-key="${key}" class="${cls}">${label}</button>`;
+}
+
+function _wireFleetFilters() {
+  const tabEl = document.getElementById("tab-fleet");
+  const st = tabEl._fleetState;
+
+  // Pill toggle (class / subclass / age)
+  for (const id of ["fl-f-class", "fl-f-subclass", "fl-f-age"]) {
+    const host = document.getElementById(id);
+    if (!host || host.dataset.bound) continue;
+    host.dataset.bound = "1";
+    host.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-key]");
+      if (!btn) return;
+      const set = id === "fl-f-class"    ? st.classes
+                 : id === "fl-f-subclass" ? st.subclasses
+                 :                          st.ages;
+      const key = btn.dataset.key;
+      if (set.has(key)) set.delete(key); else set.add(key);
+      // Toggle styling
+      btn.className = set.has(key)
+        ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
+        : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
+      _renderFleetView();
+    });
+  }
+
+  const debouncedRender = _fleetDebounce(_renderFleetView, 150);
+  const text = (id, key) => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.bound) return;
+    el.dataset.bound = "1";
+    el.addEventListener("input", () => {
+      st[key] = el.value.trim();
+      debouncedRender();
+    });
+  };
+  text("fl-f-owner", "owner");
+  text("fl-f-name",  "name");
+
+  const flag = document.getElementById("fl-f-flag");
+  if (flag && !flag.dataset.bound) {
+    flag.dataset.bound = "1";
+    flag.addEventListener("change", () => {
+      st.flag = flag.value;
+      _renderFleetView();
+    });
+  }
+
+  const num = (id, key) => {
+    const el = document.getElementById(id);
+    if (!el || el.dataset.bound) return;
+    el.dataset.bound = "1";
+    el.addEventListener("input", () => {
+      const v = el.value === "" ? null : Number(el.value);
+      st[key] = (v != null && !Number.isNaN(v)) ? v : null;
+      debouncedRender();
+    });
+  };
+  num("fl-f-gt-min",  "gtMin"); num("fl-f-gt-max",  "gtMax");
+  num("fl-f-yr-min",  "yrMin"); num("fl-f-yr-max",  "yrMax");
+  num("fl-f-loa-min", "loaMin"); num("fl-f-loa-max", "loaMax");
+
+  const reset = document.getElementById("fl-reset");
+  if (reset && !reset.dataset.bound) {
+    reset.dataset.bound = "1";
+    reset.addEventListener("click", () => {
+      st.classes.clear(); st.subclasses.clear(); st.ages.clear();
+      st.owner = ""; st.name = ""; st.flag = "";
+      st.gtMin = st.gtMax = st.yrMin = st.yrMax = st.loaMin = st.loaMax = null;
+      // Reset UI controls
+      document.querySelectorAll("#fl-f-class button, #fl-f-subclass button, #fl-f-age button")
+        .forEach(b => { b.className = "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]"; });
+      document.getElementById("fl-f-owner").value = "";
+      document.getElementById("fl-f-name").value = "";
+      document.getElementById("fl-f-flag").value = "";
+      for (const id of ["fl-f-gt-min", "fl-f-gt-max", "fl-f-yr-min",
+                         "fl-f-yr-max", "fl-f-loa-min", "fl-f-loa-max"]) {
+        document.getElementById(id).value = "";
+      }
+      _renderFleetView();
+    });
+  }
+
+  const csv = document.getElementById("fl-csv");
+  if (csv && !csv.dataset.bound) {
+    csv.dataset.bound = "1";
+    csv.addEventListener("click", _fleetCsvDownload);
+  }
+}
+
+function _fleetDebounce(fn, delay) {
+  let t = null;
+  return (...args) => {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
+  };
+}
+
+function _ageBucketKey(age) {
+  if (age == null) return null;
+  for (const b of FLEET_AGE_BUCKETS) {
+    if (age >= b.lo && age < b.hi) return b.key;
+  }
+  return null;
+}
+
+function _applyFleetFilters() {
+  const tabEl = document.getElementById("tab-fleet");
+  const fv = tabEl._fleetVessels;
+  const st = tabEl._fleetState;
+  const cols = fv.cols;
+  const I = {};
+  for (const c of cols) I[c] = cols.indexOf(c);
+
+  const nameQ  = (st.name || "").toUpperCase();
+  const ownerQ = (st.owner || "").toUpperCase();
+
+  const filtered = fv.rows.filter(r => {
+    const vc = r[I.vc];
+    if (st.classes.size && !st.classes.has(vc)) return false;
+    if (vc === "Tanker" && st.subclasses.size && !st.subclasses.has(r[I.ts])) return false;
+    const ageB = _ageBucketKey(r[I.age]);
+    if (st.ages.size && !st.ages.has(ageB)) return false;
+    if (st.gtMin != null && r[I.gt] < st.gtMin) return false;
+    if (st.gtMax != null && r[I.gt] > st.gtMax) return false;
+    if (st.loaMin != null && r[I.loa] < st.loaMin) return false;
+    if (st.loaMax != null && r[I.loa] > st.loaMax) return false;
+    if (st.yrMin != null && (r[I.tahun] == null || r[I.tahun] < st.yrMin)) return false;
+    if (st.yrMax != null && (r[I.tahun] == null || r[I.tahun] > st.yrMax)) return false;
+    if (st.flag) {
+      const rowFlag = r[I.flag] || "Indonesia";
+      if (rowFlag !== st.flag) return false;
+    }
+    if (nameQ && !(r[I.nama] || "").toUpperCase().includes(nameQ)) return false;
+    if (ownerQ && !(r[I.owner] || "").toUpperCase().includes(ownerQ)) return false;
+    return true;
+  });
+
+  // Sort
+  const sortI = I[st.sortCol] != null ? I[st.sortCol] : I.gt;
+  const dir = st.sortDir === "asc" ? 1 : -1;
+  filtered.sort((a, b) => {
+    const av = a[sortI], bv = b[sortI];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+    return String(av).localeCompare(String(bv), "ko") * dir;
+  });
+  return { rows: filtered, I };
+}
+
+function _renderFleetView() {
+  const tabEl = document.getElementById("tab-fleet");
+  const fv = tabEl._fleetVessels;
+  if (!fv) return;
+  const { rows, I } = _applyFleetFilters();
+  const totalRows = fv.rows.length;
+  const st = tabEl._fleetState;
+
+  // KPI
+  document.getElementById("fl-kpi-count").textContent = fmtCount(rows.length);
+  document.getElementById("fl-kpi-pct").textContent =
+    `${fmtCount(rows.length)} / ${fmtCount(totalRows)}` +
+    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : "");
+
+  let sumGt = 0, nGt = 0, sumAgeGt = 0;
+  let counts = {}, ageBuckets = {};
+  for (const b of FLEET_AGE_BUCKETS) ageBuckets[b.label] = 0;
+  for (const r of rows) {
+    const gt = r[I.gt] || 0;
+    if (gt > 0) { sumGt += gt; nGt++; }
+    const age = r[I.age];
+    if (age != null && gt > 0) { sumAgeGt += age * gt; }
+    const vc = r[I.vc] || "Other Cargo";
+    counts[vc] = (counts[vc] || 0) + 1;
+    const ab = _ageBucketKey(age);
+    if (ab) {
+      const label = FLEET_AGE_BUCKETS.find(b => b.key === ab).label;
+      ageBuckets[label]++;
+    }
+  }
+  const avgGt = nGt > 0 ? (sumGt / nGt) : 0;
+  const avgAge = sumGt > 0 ? (sumAgeGt / sumGt) : null;
+  document.getElementById("fl-kpi-avggt").textContent = avgGt ? fmtCount(Math.round(avgGt)) : "—";
+  document.getElementById("fl-kpi-sumgt").textContent = fmtTon(sumGt);
+  document.getElementById("fl-kpi-avgage").textContent = avgAge ? `${avgAge.toFixed(1)}년` : "—";
+
+  // Donut + age bars (responsive to filter)
+  _drawFleetClassDonutCounts(counts);
+  _drawFleetAgeBarsCounts(ageBuckets);
+
+  // Render list (cap at 500)
+  _renderFleetTable(rows, I);
+
+  const info = document.getElementById("fl-list-info");
+  if (info) {
+    const shown = Math.min(rows.length, 500);
+    info.textContent = `${shown.toLocaleString()} of ${rows.length.toLocaleString()} shown · sort: ${st.sortCol} ${st.sortDir}`;
+  }
+  // Sort marker on header
+  document.querySelectorAll("#fl-thead-row th[data-col]").forEach(h => {
+    const m = h.querySelector("[data-sort-marker]");
+    if (!m) return;
+    m.textContent = h.dataset.col === st.sortCol ? (st.sortDir === "asc" ? "▲" : "▼") : "";
+  });
+}
+
+function _renderFleetTable(rows, I) {
+  const body = document.getElementById("fl-tbody");
+  if (!body) return;
+  const top = rows.slice(0, 500);
+  body.innerHTML = top.map(r => {
+    const flag = r[I.flag] || "Indonesia";
+    const ts = r[I.ts] ? `<span class="text-[10px] text-slate-500">${r[I.ts]}</span>` : "";
+    return `<tr class="hover:bg-slate-50 border-b border-slate-100">
+      <td class="px-2 py-1 font-medium text-slate-800">${_esc(r[I.nama])}</td>
+      <td class="px-2 py-1 text-slate-600">${_esc(r[I.owner])}</td>
+      <td class="px-2 py-1">${_esc(r[I.vc])}</td>
+      <td class="px-2 py-1">${ts}</td>
+      <td class="px-2 py-1 text-right font-mono">${(r[I.gt] || 0).toLocaleString()}</td>
+      <td class="px-2 py-1 text-right font-mono">${(r[I.loa] || 0).toFixed(1)}</td>
+      <td class="px-2 py-1 text-right">${r[I.tahun] || "—"}</td>
+      <td class="px-2 py-1 text-right">${r[I.age] != null ? r[I.age] : "—"}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(flag)}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.imo])}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.call_sign])}</td>
+    </tr>`;
+  }).join("");
+}
+
+function _esc(s) {
+  if (s == null) return "";
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function _fleetCsvDownload() {
+  const tabEl = document.getElementById("tab-fleet");
+  const fv = tabEl._fleetVessels;
+  if (!fv) return;
+  const { rows, I } = _applyFleetFilters();
+  const header = ["nama_kapal", "nama_pemilik", "vessel_class", "tanker_subclass",
+                  "gt", "loa", "tahun", "age", "flag", "imo", "call_sign"];
+  const lines = [header.join(",")];
+  const cidx = header.map(h => {
+    const map = {nama_kapal: "nama", nama_pemilik: "owner", vessel_class: "vc",
+                 tanker_subclass: "ts", gt: "gt", loa: "loa", tahun: "tahun",
+                 age: "age", flag: "flag", imo: "imo", call_sign: "call_sign"};
+    return I[map[h]];
+  });
+  for (const r of rows) {
+    lines.push(cidx.map(i => {
+      const v = r[i];
+      if (v == null) return "";
+      const s = String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(","));
+  }
+  // BOM for Excel + UTF-8
+  const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `fleet_filtered_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+const _FLEET_CLASS_COLORS = {
+  "Container":     "#0284c7",
+  "Bulk Carrier":  "#7c3aed",
+  "Tanker":        "#1A3A6B",
+  "General Cargo": "#0891b2",
+  "Other Cargo":   "#65a30d",
+  "Other":         "#94a3b8",
+};
+function _drawFleetClassDonutCounts(counts) {
+  const labels = Object.keys(counts);
+  const values = labels.map(l => counts[l]);
+  if (!labels.length) {
+    Plotly.purge("fl-class-donut");
+    return;
+  }
+  Plotly.newPlot("fl-class-donut", [{
+    values, labels, type: "pie", hole: 0.55,
+    marker: { colors: labels.map(l => _FLEET_CLASS_COLORS[l] || "#94a3b8") },
+    textinfo: "label+percent",
+    textposition: "inside",
+    hovertemplate: "<b>%{label}</b><br>%{value:,} 척 (%{percent})<extra></extra>",
+  }], {
+    margin: { t: 5, l: 5, r: 5, b: 5 },
+    showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function _drawFleetAgeBarsCounts(buckets) {
+  const labels = Object.keys(buckets);
+  const values = labels.map(l => buckets[l]);
+  Plotly.newPlot("fl-age-bars", [{
+    x: labels, y: values, type: "bar",
+    marker: { color: labels.map(l => l === "25년+" ? "#dc2626" : "#1A3A6B") },
+    text: values.map(v => v.toLocaleString()),
+    textposition: "outside",
+    cliponaxis: false,
+    hovertemplate: "<b>%{x}</b><br>%{y:,} 척<extra></extra>",
+  }], {
+    margin: { t: 20, l: 40, r: 10, b: 30 },
+    xaxis: { tickfont: { size: 10 } },
+    yaxis: { tickfont: { size: 10 } },
+  }, { displayModeBar: false, responsive: true });
 }
 
 async function renderCargo() {

@@ -156,46 +156,140 @@
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">🚢 Fleet</h2>
         <p class="text-sm text-slate-500">
-          화물선 등록부 (어선 · 여객선 제외) — Class 비율 · 선령 분포 · 상위 선주 + Class mix.
+          화물선 등록부 — 필터링 · 정렬 가능한 리스트 중심.
+          어선 · 여객선 · 예인선 등 제외 (CARGO sector only).
         </p>
         <p class="text-[11px] text-slate-400 mt-1">
           📡 Source: <a href="https://kapal.dephub.go.id/ditkapel_service/data_kapal/" class="underline hover:text-slate-600" target="_blank" rel="noopener">kapal.dephub.go.id/ditkapel_service/data_kapal/</a>
-          — Direktorat Jenderal Perhubungan Laut 선박 등록 데이터 (LK3 물동량과 별개).
-          <span id="fl-source-totals" class="ml-2 text-slate-500"></span>
+          — Direktorat Jenderal Perhubungan Laut (LK3 물동량과 별개).
         </p>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
-          <h3 class="font-semibold mb-2">선박 Class 비율</h3>
-          <div id="fl-class-donut" style="height:320px"><div class="skeleton-block" style="height:320px"></div></div>
-          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-class-caption">&nbsp;</p>
+      <!-- Filter bar -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/derived/fleet_vessels.json">
+        <div class="flex items-baseline justify-between mb-2">
+          <h3 class="font-semibold">🔍 필터</h3>
+          <button id="fl-reset" type="button" class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">필터 초기화</button>
         </div>
 
-        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
-          <h3 class="font-semibold mb-2">선령 분포 (5년 단위, 25년+ 강조)</h3>
-          <div id="fl-age-bars" style="height:320px"><div class="skeleton-block" style="height:320px"></div></div>
-          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-age-caption">&nbsp;</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Vessel Class -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Vessel Class (다중 선택)</label>
+            <div id="fl-f-class" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- Tanker subclass (only meaningful when Tanker selected) -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Tanker Subclass (Tanker 활성 시)</label>
+            <div id="fl-f-subclass" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- Age bucket -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">선령 버킷</label>
+            <div id="fl-f-age" class="flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <!-- Owner / Name search -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1" for="fl-f-owner">선주 검색</label>
+            <input id="fl-f-owner" type="text" placeholder="PT. PERTAMINA, BLT, …" class="w-full px-2 py-1 text-sm border border-slate-200 rounded">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1" for="fl-f-name">선박명 검색</label>
+            <input id="fl-f-name" type="text" placeholder="GRESIK SAMUDERA, 부분 문자열…" class="w-full px-2 py-1 text-sm border border-slate-200 rounded">
+          </div>
+
+          <!-- Flag -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">국적 (Flag)</label>
+            <div class="flex gap-1.5">
+              <select id="fl-f-flag" class="text-sm border border-slate-200 rounded px-2 py-1 flex-1">
+                <option value="">(전체)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- GT range -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">GT 범위</label>
+            <div class="flex gap-1 items-center">
+              <input id="fl-f-gt-min" type="number" placeholder="min" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+              <span class="text-slate-400">~</span>
+              <input id="fl-f-gt-max" type="number" placeholder="max" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+            </div>
+          </div>
+
+          <!-- Year range -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">건조연도 범위</label>
+            <div class="flex gap-1 items-center">
+              <input id="fl-f-yr-min" type="number" placeholder="from" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+              <span class="text-slate-400">~</span>
+              <input id="fl-f-yr-max" type="number" placeholder="to" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+            </div>
+          </div>
+
+          <!-- LOA range -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">LOA (m) 범위</label>
+            <div class="flex gap-1 items-center">
+              <input id="fl-f-loa-min" type="number" placeholder="min" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+              <span class="text-slate-400">~</span>
+              <input id="fl-f-loa-max" type="number" placeholder="max" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/fleet_owners.json">
-        <h3 class="font-semibold mb-2">Top 25 선주 (화물선 전체 · 척수 + 총 GT)</h3>
-        <p class="text-xs text-slate-500 mb-2">
-          전체 화물선 등록부에서 보유 척수 기준 상위 25개 선주.
-          막대 길이 = 척수, 색상 = 총 GT (진할수록 큰 선대), 호버 시 GT 가중 평균 선령 · 국적 · Class mix 표시.
-        </p>
-        <div id="fl-owner-bars" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-owner-caption">&nbsp;</p>
+      <!-- KPI status + context charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center text-center lg:col-span-1">
+          <div class="text-xs text-slate-500">필터 후 선박 수</div>
+          <div class="text-3xl font-bold text-slate-800 mt-1" id="fl-kpi-count">—</div>
+          <div class="text-xs text-slate-500 mt-1" id="fl-kpi-pct">— / —</div>
+          <div class="text-xs text-slate-500 mt-2">
+            평균 GT <span id="fl-kpi-avggt" class="font-mono text-slate-700">—</span> ·
+            총 GT <span id="fl-kpi-sumgt" class="font-mono text-slate-700">—</span><br>
+            평균 선령 <span id="fl-kpi-avgage" class="font-mono text-slate-700">—</span>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-1">
+          <h4 class="text-xs font-semibold text-slate-600 mb-1">Class 비율 (필터 결과)</h4>
+          <div id="fl-class-donut" style="height:200px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-1">
+          <h4 class="text-xs font-semibold text-slate-600 mb-1">선령 분포 (필터 결과)</h4>
+          <div id="fl-age-bars" style="height:200px"></div>
+        </div>
       </div>
 
+      <!-- Vessel list (centerpiece) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/fleet_vessels.json">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <h3 class="font-semibold">📋 선박 리스트</h3>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-slate-500" id="fl-list-info">—</span>
+            <button id="fl-csv" type="button" class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">📥 CSV (필터 전체)</button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mb-2">컬럼 헤더 클릭 시 정렬 (오름차/내림차 토글). 표시는 상위 500개까지 — CSV로 전체 추출.</p>
+        <div class="overflow-x-auto">
+          <table id="fl-table" class="min-w-full text-xs">
+            <thead class="bg-slate-50 sticky top-0">
+              <tr id="fl-thead-row"></tr>
+            </thead>
+            <tbody id="fl-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top owners summary (kept compact, links to fleet_owners.json) -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/fleet_owners.json">
-        <h3 class="font-semibold mb-2">Top 8 선주 — Vessel Class 구성</h3>
-        <p class="text-xs text-slate-500 mb-2">
-          상위 8개 선주 별 Container / Bulk / Tanker / General Cargo / Other Cargo 분포 (척수, 누적 막대).
-          단일 클래스 집중 vs 다양화 선주 비교.
-        </p>
-        <div id="fl-owner-classmix" style="height:420px"><div class="skeleton-block" style="height:420px"></div></div>
+        <h3 class="font-semibold mb-2">Top 25 선주 (필터와 무관 · 전체 등록부 기준)</h3>
+        <p class="text-xs text-slate-500 mb-2">참조용 — 위 필터는 리스트만 좁히고 이 막대는 항상 전체.</p>
+        <div id="fl-owner-bars" style="height:480px"></div>
       </div>
     </section>
 
