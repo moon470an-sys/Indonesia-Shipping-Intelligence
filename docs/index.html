@@ -77,7 +77,7 @@
       <!-- 4.2 Main map (PR-2: d3 + topojson + SVG particle animation) -->
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
         <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 화물 흐름 지도 <span class="text-xs text-slate-500 font-normal">(24M 누계)</span></h3>
+          <h3 class="font-semibold">인도네시아 화물 흐름 지도 <span class="text-xs text-slate-500 font-normal" id="home-map-period">(loading…)</span></h3>
           <div class="flex flex-wrap gap-3 text-xs" id="home-map-controls">
             <div class="flex items-center gap-1">
               <span class="text-slate-500 mr-1">카테고리</span>
@@ -342,9 +342,9 @@
 
       <!-- 5.2 Subclass scatter (market structure) -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/subclass_facts.json">
-        <h3 class="font-semibold mb-1">시장 구조 (24M CAGR × 평균 선령)</h3>
+        <h3 class="font-semibold mb-1">시장 구조 — 2년 CAGR × 평균 선령 <span class="text-xs text-slate-500 font-normal" id="ts-scatter-period">(loading…)</span></h3>
         <p class="text-xs text-slate-500 mb-2" id="ts-scatter-caption">
-          각 점은 subclass의 24개월 변화율(x), GT 가중 평균 선령(y), 12M ton(크기). 영역 라벨 없음.
+          x = 2년간 누적 성장률 (CAGR), y = GT 가중 평균 선령, 점 크기 = 직전 12개월 ton. 2년 풀데이터(24개월)가 있어야 CAGR 산출 가능.
         </p>
         <div id="ts-scatter" style="height:340px"></div>
       </div>
@@ -352,7 +352,7 @@
       <!-- 5.3 Subclass monthly stacked area -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_subclass.json">
         <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
-          <h3 class="font-semibold">Subclass 월별 추이 (24M)</h3>
+          <h3 class="font-semibold">Subclass 월별 추이 <span class="text-xs text-slate-500 font-normal" id="ts-monthly-period">(loading…)</span></h3>
           <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="ts-monthly-mode">
             <button data-key="abs" class="px-2 py-1 bg-slate-800 text-white">절대값</button>
             <button data-key="yoy" class="px-2 py-1 bg-white hover:bg-slate-100">YoY %</button>
@@ -363,7 +363,7 @@
 
       <!-- 5.4 Top commodities horizontal bars -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_top.json">
-        <h3 class="font-semibold mb-2">Top 10 코모디티 (12M ton 기준)</h3>
+        <h3 class="font-semibold mb-2">Top 10 코모디티 <span class="text-xs text-slate-500 font-normal" id="ts-commodity-period">(직전 12개월 ton 기준)</span></h3>
         <div id="ts-commodity-bars" style="height:380px"></div>
       </div>
 

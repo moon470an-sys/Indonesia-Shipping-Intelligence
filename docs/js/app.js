@@ -333,6 +333,24 @@ async function renderTankerSector() {
   if (!tsState.activeYear) tsState.activeYear = _pickTankerSectorYear(tsState.tankerSubclass);
   buildTankerYearPills(tsState.tankerSubclass);
 
+  // PR-34: surface honest period ranges on the chart headers so users see
+  // exactly which months/years a 12M or 24M window covers.
+  const periods = tsState.tankerSubclass?.monthly?.periods || [];
+  const periodRange = periods.length
+    ? `(${periods[0]} ~ ${periods[periods.length - 1]}, ${periods.length}개월)`
+    : "";
+  const scatterPeriodEl = document.getElementById("ts-scatter-period");
+  if (scatterPeriodEl) scatterPeriodEl.textContent = periodRange;
+  const monthlyPeriodEl = document.getElementById("ts-monthly-period");
+  if (monthlyPeriodEl) monthlyPeriodEl.textContent = periodRange;
+  // Commodity bar is the trailing 12 months
+  const last12 = periods.slice(-12);
+  const commodityPeriodEl = document.getElementById("ts-commodity-period");
+  if (commodityPeriodEl && last12.length) {
+    commodityPeriodEl.textContent =
+      `(직전 12개월 ton 기준 · ${last12[0]} ~ ${last12[last12.length - 1]})`;
+  }
+
   drawTankerCards();
   drawTankerScatter();
   drawTankerMonthly();
@@ -562,8 +580,40 @@ function drawTankerMonthly() {
         : `<b>%{x}</b><br>${s.subclass}: %{y:.1f}%<extra></extra>`,
     };
   });
+
+  // PR-34: drop a vertical dashed line + label at each Jan-01 boundary so
+  // calendar-year edges are visible at a glance, complementing the year
+  // pills above the subclass cards.
+  const boundaries = [];
+  for (let i = 0; i < periods.length; i++) {
+    const p = periods[i];
+    if (p && p.endsWith("-01") && i > 0) {
+      boundaries.push({
+        type: "line",
+        x0: p, x1: p, xref: "x",
+        y0: 0, y1: 1, yref: "paper",
+        line: { color: "#94a3b8", width: 1, dash: "dash" },
+      });
+    }
+  }
+  // Year labels just above the top axis
+  const yearLabels = [];
+  const seenYears = new Set();
+  for (const p of periods) {
+    const y = p ? p.slice(0, 4) : null;
+    if (y && !seenYears.has(y)) {
+      seenYears.add(y);
+      yearLabels.push({
+        x: `${y}-01`, y: 1.03, xref: "x", yref: "paper",
+        text: `<b>${y}년</b>`,
+        showarrow: false,
+        font: { size: 10, color: "#475569" },
+      });
+    }
+  }
+
   Plotly.newPlot("ts-monthly", traces, {
-    margin: { t: 10, l: 60, r: 20, b: 50 },
+    margin: { t: 28, l: 60, r: 20, b: 50 },
     xaxis: { tickangle: -40 },
     yaxis: {
       title: tsState.monthlyMode === "abs" ? "ton" : "YoY %",
@@ -571,6 +621,8 @@ function drawTankerMonthly() {
     },
     legend: { orientation: "h", y: -0.2 },
     hovermode: "x unified",
+    shapes: boundaries,
+    annotations: yearLabels,
   }, { displayModeBar: false, responsive: true });
 }
 
@@ -949,6 +1001,19 @@ async function renderHome() {
   bindMapControls();
   drawHomeMap();
   fillSectorStrip(kpis?.sector_breakdown || []);
+  // PR-34: surface the actual 24-month period range on the map title so
+  // "(24M 누계)" becomes "(2024-06 ~ 2026-05, 24개월 누계)" — honest about
+  // the rolling window the data covers.
+  const homeMapPeriodEl = document.getElementById("home-map-period");
+  if (homeMapPeriodEl) {
+    const ps = ts?.periods || [];
+    if (ps.length) {
+      homeMapPeriodEl.textContent =
+        `(${ps[0]} ~ ${ps[ps.length - 1]}, ${ps.length}개월 누계)`;
+    } else {
+      homeMapPeriodEl.textContent = "(24개월 누계)";
+    }
+  }
   fillForeignSidebar();
   fillMapInsights();
 }
