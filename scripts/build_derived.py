@@ -474,6 +474,57 @@ def build_cargo_yearly() -> dict:
     except FileNotFoundError:
         pass
 
+    # PR-37: supplement the tanker-focused map_flow.ports list with dry-bulk,
+    # nickel, and palm hubs that dominate non-tanker OD flow. Without these
+    # the year-cut OD map drops many top routes (e.g. SAMARINDA, MOLAWE,
+    # KUALA TANJUNG), skewing the category mix toward Product/BBM.
+    # Coordinates picked from public geographic sources, accurate to ~1km
+    # which is plenty for an archipelago-scale map. Don't add entries
+    # already present in map_flow.json (would just be overwritten with the
+    # same value).
+    _EXTRA_PORT_COORDS: dict[str, tuple[float, float]] = {
+        # ----- Kalimantan coal export hubs -----
+        "SAMARINDA":       (-0.50,  117.15),   # E. Kalimantan
+        "BANJARMASIN":     (-3.32,  114.59),   # S. Kalimantan
+        "TANJUNG BARA":    (-0.42,  117.55),   # KPC coal terminal
+        "KOTABARU":        (-3.30,  116.20),   # S. Kalimantan
+        "BONTANG":         ( 0.13,  117.49),   # E. Kalimantan LNG + coal
+        "MUARA SATUI":     (-3.85,  115.50),
+        "TANAH GROGOT":    (-1.91,  116.20),
+        "BATULICIN":       (-3.30,  116.20),
+        "TARJUN":          (-3.65,  116.04),
+        "SANGATTA":        ( 0.38,  117.55),
+        # ----- Sulawesi nickel hubs -----
+        "WEDA":            ( 0.36,  127.93),   # Halmahera (technically Maluku Utara)
+        "MOLAWE":          (-3.96,  121.95),   # Konawe nickel
+        "POMALAA":         (-4.18,  121.62),
+        "MOROWALI":        (-2.85,  121.85),
+        "OBI ISLAND":      (-1.42,  127.85),   # N. Maluku nickel
+        "OBI":             (-1.42,  127.85),
+        "KENDARI":         (-3.97,  122.52),
+        "KOLAKA":          (-4.04,  121.60),
+        "KONAWE":          (-3.96,  122.60),
+        # ----- Sumatra palm + nickel + coal export -----
+        "KUALA TANJUNG":   ( 3.40,   99.45),   # N. Sumatra deepsea
+        "LUBUK GAUNG":     ( 1.65,  101.40),   # Riau palm
+        "SUNGAI PAKNING":  ( 1.39,  102.13),
+        # ----- Java + general additions -----
+        "TANJUNG PERAK":   (-7.20,  112.74),   # Surabaya (alias)
+        "PROBOLINGGO":     (-7.74,  113.21),
+        "PASURUAN":        (-7.65,  112.91),
+        "CILACAP":         (-7.73,  109.02),
+        # ----- Papua / Maluku -----
+        "TANGGUH":         (-2.13,  133.51),   # W. Papua LNG
+        "AMAMAPARE":       (-4.83,  136.88),   # Freeport Indonesia (copper)
+        "TIMIKA":          (-4.55,  136.89),
+        "MERAUKE":         (-8.49,  140.39),
+        # ----- Sumbawa nickel / mining -----
+        "BENETE":          (-9.00,  116.83),   # Newmont (Sumbawa)
+        "MEKAR PUTIH":     (-8.59,  116.43),
+    }
+    for name, (lat, lon) in _EXTRA_PORT_COORDS.items():
+        port_coords.setdefault(name, (lat, lon))
+
     with sqlite3.connect(DB) as con:
         cur = con.cursor()
 

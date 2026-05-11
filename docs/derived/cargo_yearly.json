@@ -105,6 +105,36 @@
       ],
       "top_routes": [
         {
+          "origin": "MOLAWE",
+          "destination": "MOROWALI",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 6339293.8,
+          "calls": 1251,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 6339293.8
+          }
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "MOLAWE",
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 5202516.3,
+          "calls": 1109,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 5202516.3
+          }
+        },
+        {
           "origin": "PATIMBAN",
           "destination": "KABIL",
           "lat_o": -6.31,
@@ -135,6 +165,82 @@
           }
         },
         {
+          "origin": "MOROWALI",
+          "destination": "WEDA",
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 3361012.5,
+          "calls": 316,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3361012.5
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "OBI ISLAND",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 2143894.9,
+          "calls": 219,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2143804.9,
+            "LPG / LNG": 90.0
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOROWALI",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 2135579.3,
+          "calls": 222,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2135579.3
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "WEDA",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 2065147.4,
+          "calls": 283,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2065147.4
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOLAWE",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 1777739.3,
+          "calls": 196,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1777739.3
+          }
+        },
+        {
           "origin": "PATIMBAN",
           "destination": "TANJUNG PRIOK",
           "lat_o": -6.31,
@@ -147,6 +253,21 @@
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 1629009.1
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "WEDA",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 1534668.4,
+          "calls": 243,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1534668.4
           }
         },
         {
@@ -231,6 +352,21 @@
             "Product / BBM": 1155275.2,
             "FAME / Edible": 144.0,
             "LPG / LNG": 84.0
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "OBI ISLAND",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 1130074.1,
+          "calls": 117,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1130074.1
           }
         },
         {
@@ -433,6 +569,21 @@
             "Product / BBM": 803574.9,
             "Crude": 118976.0
           }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "MOROWALI",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 879357.9,
+          "calls": 98,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 879357.9
+          }
         }
       ],
       "top_sts": [
@@ -459,8 +610,8 @@
         },
         {
           "port": "WEDA",
-          "lat": null,
-          "lon": null,
+          "lat": 0.36,
+          "lon": 127.93,
           "ton": 32577298.4,
           "calls": 3179
         },
@@ -473,15 +624,15 @@
         },
         {
           "port": "MOLAWE",
-          "lat": null,
-          "lon": null,
+          "lat": -3.96,
+          "lon": 121.95,
           "ton": 25207586.6,
           "calls": 5088
         },
         {
           "port": "MOROWALI",
-          "lat": null,
-          "lon": null,
+          "lat": -2.85,
+          "lon": 121.85,
           "ton": 23239265.7,
           "calls": 4729
         },
@@ -636,6 +787,112 @@
       ],
       "top_routes": [
         {
+          "origin": "MOLAWE",
+          "destination": "MOROWALI",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 11080616.7,
+          "calls": 2100,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 11080616.7
+          }
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "MOLAWE",
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 9702294.0,
+          "calls": 1991,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 9702294.0
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOROWALI",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 6871315.4,
+          "calls": 774,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 6871315.4
+          }
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "WEDA",
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 5768916.2,
+          "calls": 697,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 5768916.2
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "WEDA",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 5505092.1,
+          "calls": 502,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 5505092.1
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "OBI ISLAND",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 4344222.3,
+          "calls": 521,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 4344211.3,
+            "LPG / LNG": 11.0
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOLAWE",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 4261024.8,
+          "calls": 479,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 4261024.8
+          }
+        },
+        {
           "origin": "TANJUNG PERAK",
           "destination": "BITUNG",
           "lat_o": -7.2,
@@ -689,6 +946,66 @@
           }
         },
         {
+          "origin": "MOLAWE",
+          "destination": "OBI ISLAND",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 3052260.1,
+          "calls": 387,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3052260.1
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "WEDA",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 3023039.5,
+          "calls": 404,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3023039.5
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "MOROWALI",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 2966687.8,
+          "calls": 387,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2966687.8
+          }
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "OBI ISLAND",
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 2858844.0,
+          "calls": 432,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2858844.0
+          }
+        },
+        {
           "origin": "TANJUNG PERAK",
           "destination": "TANJUNG PRIOK",
           "lat_o": -7.2,
@@ -704,6 +1021,21 @@
             "FAME / Edible": 29213.4,
             "Crude": 17518.9,
             "LPG / LNG": 36.0
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "POMALAA",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -4.18,
+          "lon_d": 121.62,
+          "ton": 2548384.3,
+          "calls": 277,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2548384.3
           }
         },
         {
@@ -737,6 +1069,36 @@
             "Product / BBM": 2357442.3,
             "FAME / Edible": 15036.9,
             "LPG / LNG": 4000.0
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "MOLAWE",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 2162873.6,
+          "calls": 287,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2162873.6
+          }
+        },
+        {
+          "origin": "KOLAKA",
+          "destination": "MOLAWE",
+          "lat_o": -4.04,
+          "lon_o": 121.6,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 1856140.4,
+          "calls": 351,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1856140.4
           }
         },
         {
@@ -834,8 +1196,8 @@
         },
         {
           "port": "WEDA",
-          "lat": null,
-          "lon": null,
+          "lat": 0.36,
+          "lon": 127.93,
           "ton": 89562299.4,
           "calls": 7975
         },
@@ -855,15 +1217,15 @@
         },
         {
           "port": "MOROWALI",
-          "lat": null,
-          "lon": null,
+          "lat": -2.85,
+          "lon": 121.85,
           "ton": 46426495.1,
           "calls": 8930
         },
         {
           "port": "MOLAWE",
-          "lat": null,
-          "lon": null,
+          "lat": -3.96,
+          "lon": 121.95,
           "ton": 42072230.5,
           "calls": 8009
         },
@@ -1025,31 +1387,15 @@
       ],
       "top_routes": [
         {
-          "origin": "TANGKIANG",
-          "destination": "TANJUNG PERAK",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": -7.2,
-          "lon_d": 112.74,
-          "ton": 9273260.5,
-          "calls": 512,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 9273001.4,
-            "FAME / Edible": 259.2
-          }
-        },
-        {
           "origin": "WEDA",
           "destination": "OBI ISLAND",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
           "ton": 6516215.5,
           "calls": 300,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 6516215.5
@@ -1058,13 +1404,13 @@
         {
           "origin": "MOLAWE",
           "destination": "MOROWALI",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
           "ton": 3528077.3,
           "calls": 688,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 3528077.3
@@ -1072,134 +1418,59 @@
         },
         {
           "origin": "WEDA",
-          "destination": "BAHODOPI",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2870462.8,
-          "calls": 61,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2870462.8
-          }
-        },
-        {
-          "origin": "BAHODOPI",
-          "destination": "WEDA",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2810399.7,
-          "calls": 53,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2810399.7
-          }
-        },
-        {
-          "origin": "WEDA",
           "destination": "MOLAWE",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
           "ton": 2780424.3,
           "calls": 336,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 2780424.3
           }
         },
         {
-          "origin": "TANJUNG PERAK",
-          "destination": "CILEGON",
-          "lat_o": -7.2,
-          "lon_o": 112.74,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2779945.5,
-          "calls": 85,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2779945.5
-          }
-        },
-        {
           "origin": "WEDA",
           "destination": "MOROWALI",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
           "ton": 2711353.4,
           "calls": 275,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 2711353.4
           }
         },
         {
-          "origin": "KOLONODALE",
-          "destination": "MOROWALI",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2697906.1,
-          "calls": 472,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2697906.1
-          }
-        },
-        {
           "origin": "MOROWALI",
           "destination": "MOLAWE",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
           "ton": 2686500.6,
           "calls": 551,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 2686500.6
           }
         },
         {
-          "origin": "MOLAWE",
-          "destination": "LAMERURU",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2644869.0,
-          "calls": 571,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2644869.0
-          }
-        },
-        {
           "origin": "OBI ISLAND",
           "destination": "WEDA",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
           "ton": 2457466.0,
           "calls": 297,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 2457465.9
@@ -1207,29 +1478,14 @@
         },
         {
           "origin": "MOROWALI",
-          "destination": "KOLONODALE",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2300630.0,
-          "calls": 402,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2300630.0
-          }
-        },
-        {
-          "origin": "MOROWALI",
           "destination": "WEDA",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
           "ton": 2169119.3,
           "calls": 299,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 2169119.3
@@ -1253,51 +1509,6 @@
           }
         },
         {
-          "origin": "SAMARINDA",
-          "destination": "MUARA BERAU",
-          "lat_o": -0.5,
-          "lon_o": 117.15,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 2080984.4,
-          "calls": 645,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 2080984.4
-          }
-        },
-        {
-          "origin": "TANJUNG PERAK",
-          "destination": "SINGAPORE",
-          "lat_o": -7.2,
-          "lon_o": 112.74,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1993586.9,
-          "calls": 145,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1993586.9
-          }
-        },
-        {
-          "origin": "SINGAPORE",
-          "destination": "TANJUNG PERAK",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": -7.2,
-          "lon_d": 112.74,
-          "ton": 1784612.5,
-          "calls": 308,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1784612.5
-          }
-        },
-        {
           "origin": "TANJUNG PERAK",
           "destination": "TANJUNG PRIOK",
           "lat_o": -7.2,
@@ -1315,143 +1526,18 @@
           }
         },
         {
-          "origin": "HONG KONG",
-          "destination": "QINZHOU PT",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1672160.0,
-          "calls": 33,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1672160.0
-          }
-        },
-        {
-          "origin": "MUARA JAWA",
-          "destination": "KUALA SEMBOJA",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1519192.4,
-          "calls": 10,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1519192.4
-          }
-        },
-        {
           "origin": "MOLAWE",
           "destination": "WEDA",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
           "ton": 1513292.4,
           "calls": 270,
-          "mappable": false,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 1513292.4
-          }
-        },
-        {
-          "origin": "TANJUNG PERAK",
-          "destination": "TERNATE",
-          "lat_o": -7.2,
-          "lon_o": 112.74,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1490676.1,
-          "calls": 453,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1463282.1,
-            "Chemical": 96.0,
-            "FAME / Edible": 27288.0,
-            "LPG / LNG": 10.0
-          }
-        },
-        {
-          "origin": "HONG KONG",
-          "destination": "ZHUHAI PT",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1469189.0,
-          "calls": 21,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1469189.0
-          }
-        },
-        {
-          "origin": "PORT KLANG",
-          "destination": "SINGAPORE",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1441282.5,
-          "calls": 273,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1409683.3,
-            "Crude": 14999.2,
-            "FAME / Edible": 3000.0
-          }
-        },
-        {
-          "origin": "MOLAWE",
-          "destination": "KOLONODALE",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1434961.1,
-          "calls": 276,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1434961.1
-          }
-        },
-        {
-          "origin": "CHATTOGRAM",
-          "destination": "NAVLAKHI",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1422025.0,
-          "calls": 25,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1422025.0
-          }
-        },
-        {
-          "origin": "KOLONODALE",
-          "destination": "MOLAWE",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1376924.8,
-          "calls": 231,
-          "mappable": false,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 1376924.8
           }
         },
         {
@@ -1471,20 +1557,176 @@
           }
         },
         {
-          "origin": "SINGAPORE",
-          "destination": "TANJUNG PELEPAS",
-          "lat_o": null,
-          "lon_o": null,
-          "lat_d": null,
-          "lon_d": null,
-          "ton": 1339956.0,
-          "calls": 145,
-          "mappable": false,
+          "origin": "TANJUNG PRIOK",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 1224651.8,
+          "calls": 649,
+          "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1150760.7,
-            "Crude": 29204.0,
-            "FAME / Edible": 159991.3
+            "Product / BBM": 1196463.5,
+            "FAME / Edible": 12820.0,
+            "Crude": 11733.5,
+            "LPG / LNG": 235.0
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "MOLAWE",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 1037353.2,
+          "calls": 98,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1037353.2
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "MOROWALI",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 954319.1,
+          "calls": 134,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 954319.1
+          }
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "OBI ISLAND",
+          "lat_o": -2.85,
+          "lon_o": 121.85,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 903971.0,
+          "calls": 140,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 903971.0
+          }
+        },
+        {
+          "origin": "MARUNDA",
+          "destination": "SAMARINDA",
+          "lat_o": -6.1,
+          "lon_o": 106.96,
+          "lat_d": -0.5,
+          "lon_d": 117.15,
+          "ton": 848748.0,
+          "calls": 12,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 848748.0
+          }
+        },
+        {
+          "origin": "BANJARMASIN",
+          "destination": "SAMARINDA",
+          "lat_o": -3.32,
+          "lon_o": 114.59,
+          "lat_d": -0.5,
+          "lon_d": 117.15,
+          "ton": 719451.9,
+          "calls": 64,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 714451.9,
+            "FAME / Edible": 4000.0,
+            "LPG / LNG": 1000.0
+          }
+        },
+        {
+          "origin": "LHOKSEUMAWE",
+          "destination": "BELAWAN",
+          "lat_o": 5.18,
+          "lon_o": 97.15,
+          "lat_d": 3.78,
+          "lon_d": 98.69,
+          "ton": 677179.6,
+          "calls": 62,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 677179.6
+          }
+        },
+        {
+          "origin": "BONTANG",
+          "destination": "TANJUNG BARA",
+          "lat_o": 0.13,
+          "lon_o": 117.49,
+          "lat_d": -0.42,
+          "lon_d": 117.55,
+          "ton": 609112.0,
+          "calls": 9,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 609112.0
+          }
+        },
+        {
+          "origin": "TANJUNG PRIOK",
+          "destination": "MAKASSAR",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -5.13,
+          "lon_d": 119.41,
+          "ton": 587025.5,
+          "calls": 234,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 571125.5,
+            "FAME / Edible": 15900.0
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "OBI ISLAND",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 558957.3,
+          "calls": 90,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 558957.3
+          }
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "TANAH GROGOT",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": -1.91,
+          "lon_d": 116.2,
+          "ton": 525671.1,
+          "calls": 45,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 501215.8,
+            "FAME / Edible": 15455.3,
+            "Crude": 8000.0
           }
         }
       ],
@@ -1498,8 +1740,8 @@
         },
         {
           "port": "WEDA",
-          "lat": null,
-          "lon": null,
+          "lat": 0.36,
+          "lon": 127.93,
           "ton": 29501346.5,
           "calls": 2118
         },
@@ -1526,15 +1768,15 @@
         },
         {
           "port": "MOROWALI",
-          "lat": null,
-          "lon": null,
+          "lat": -2.85,
+          "lon": 121.85,
           "ton": 13295351.7,
           "calls": 2549
         },
         {
           "port": "MOLAWE",
-          "lat": null,
-          "lon": null,
+          "lat": -3.96,
+          "lon": 121.95,
           "ton": 12410538.4,
           "calls": 2331
         },
