@@ -153,26 +153,29 @@
     <!-- Cargo & Fleet (PR-1 placeholder; treemap + donut + age bars land in PR-4) -->
     <!-- 🚢 Fleet (split out of the former Cargo & Fleet tab) -->
     <section id="tab-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
-      <div class="mb-4">
+      <div class="mb-3">
         <h2 class="text-2xl font-bold text-slate-800">🚢 Fleet</h2>
-        <p class="text-sm text-slate-500">
-          전체 선박 등록부 — 필터링 · 정렬 가능한 리스트 중심.
-          화물선 · 어선 · 여객선 · 예인/특수선 · 정부선 모두 포함.
+        <p class="text-xs text-slate-500">
+          전체 선박 등록부 (CARGO · PASSENGER · FISHING · OFFSHORE_SUPPORT · NON_COMMERCIAL).
+          좌측 사이드바에서 필터, 우측에서 KPI · 차트 · 리스트 확인.
         </p>
-        <p class="text-[11px] text-slate-400 mt-1">
+        <p class="text-[10px] text-slate-400 mt-0.5">
           📡 Source: <a href="https://kapal.dephub.go.id/ditkapel_service/data_kapal/" class="underline hover:text-slate-600" target="_blank" rel="noopener">kapal.dephub.go.id/ditkapel_service/data_kapal/</a>
-          — Direktorat Jenderal Perhubungan Laut (LK3 물동량과 별개).
+          · Direktorat Jenderal Perhubungan Laut · benchmark: jang1117.github.io/vessels
         </p>
       </div>
 
-      <!-- Filter bar -->
-      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/derived/fleet_vessels.json">
+      <!-- Two-column layout: left sidebar (filters) + right content (KPI · charts · table) -->
+      <div class="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
+
+      <!-- Sticky sidebar — all filters live here (jang1117-style) -->
+      <aside class="bg-white rounded-xl shadow p-3 lg:sticky lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto" data-source="docs/derived/fleet_vessels.json">
         <div class="flex items-baseline justify-between mb-2">
-          <h3 class="font-semibold">🔍 필터</h3>
-          <button id="fl-reset" type="button" class="text-xs px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">필터 초기화</button>
+          <h3 class="font-semibold text-sm">🔍 필터 <span id="fl-active-count" class="text-[10px] text-slate-500 font-normal"></span></h3>
+          <button id="fl-reset" type="button" class="text-[11px] px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">초기화</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="space-y-3">
           <!-- PR — Sector (top-level) pills: 6 values + 전체 -->
           <div>
             <label class="text-xs font-semibold text-slate-600 block mb-1">Sector (대분류)</label>
@@ -257,56 +260,110 @@
               <input id="fl-f-loa-max" type="number" placeholder="max" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- KPI status + context charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-        <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center justify-center text-center lg:col-span-1">
-          <div class="text-xs text-slate-500">필터 후 선박 수</div>
-          <div class="text-3xl font-bold text-slate-800 mt-1" id="fl-kpi-count">—</div>
-          <div class="text-xs text-slate-500 mt-1" id="fl-kpi-pct">— / —</div>
-          <div class="text-xs text-slate-500 mt-2">
-            평균 GT <span id="fl-kpi-avggt" class="font-mono text-slate-700">—</span> ·
-            총 GT <span id="fl-kpi-sumgt" class="font-mono text-slate-700">—</span><br>
-            평균 선령 <span id="fl-kpi-avgage" class="font-mono text-slate-700">—</span>
+          <!-- Width (m) -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Width (m) 범위</label>
+            <div class="flex gap-1 items-center">
+              <input id="fl-f-w-min" type="number" placeholder="min" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+              <span class="text-slate-400">~</span>
+              <input id="fl-f-w-max" type="number" placeholder="max" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+            </div>
+          </div>
+
+          <!-- Depth (m) -->
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Depth (m) 범위</label>
+            <div class="flex gap-1 items-center">
+              <input id="fl-f-d-min" type="number" placeholder="min" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+              <span class="text-slate-400">~</span>
+              <input id="fl-f-d-max" type="number" placeholder="max" class="w-24 px-2 py-1 text-sm border border-slate-200 rounded">
+            </div>
           </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-1">
-          <h4 class="text-xs font-semibold text-slate-600 mb-1">Class 비율 (필터 결과)</h4>
-          <div id="fl-class-donut" style="height:200px"></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-1">
-          <h4 class="text-xs font-semibold text-slate-600 mb-1">선령 분포 (필터 결과)</h4>
-          <div id="fl-age-bars" style="height:200px"></div>
-        </div>
-      </div>
+      </aside>
 
-      <!-- Vessel list (centerpiece) -->
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/fleet_vessels.json">
-        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-          <h3 class="font-semibold">📋 선박 리스트</h3>
-          <div class="flex items-center gap-2 text-xs">
-            <span class="text-slate-500" id="fl-list-info">—</span>
-            <button id="fl-csv" type="button" class="px-2 py-1 rounded border border-slate-200 hover:bg-slate-50">📥 CSV (필터 전체)</button>
+      <!-- Right content column — KPI · 6 chart grid · sortable table -->
+      <main class="min-w-0 space-y-4">
+
+        <!-- KPI strip (5 compact cards · jang1117 layout) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <div class="text-[11px] text-slate-500">선박 수</div>
+            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-count">—</div>
+            <div class="text-[10px] text-slate-500" id="fl-kpi-pct">— / —</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <div class="text-[11px] text-slate-500">고유 Type</div>
+            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-jenis">—</div>
+            <div class="text-[10px] text-slate-500">JenisDetailKet</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <div class="text-[11px] text-slate-500">평균 GT</div>
+            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-avggt">—</div>
+            <div class="text-[10px] text-slate-500" id="fl-kpi-sumgt">총 GT —</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <div class="text-[11px] text-slate-500">평균 건조연도</div>
+            <div class="text-2xl font-bold text-slate-800" id="fl-kpi-avgyr">—</div>
+            <div class="text-[10px] text-slate-500" id="fl-kpi-avgage">선령 —</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3 text-center">
+            <div class="text-[11px] text-slate-500">평균 제원 (0 제외)</div>
+            <div class="text-xs font-mono text-slate-800 mt-1" id="fl-kpi-dim-loa">LOA —</div>
+            <div class="text-xs font-mono text-slate-800" id="fl-kpi-dim-w">W —</div>
+            <div class="text-xs font-mono text-slate-800" id="fl-kpi-dim-d">D —</div>
           </div>
         </div>
-        <p class="text-xs text-slate-500 mb-2">컬럼 헤더 클릭 시 정렬 (오름차/내림차 토글). 표시는 상위 500개까지 — CSV로 전체 추출.</p>
-        <div class="overflow-x-auto">
-          <table id="fl-table" class="min-w-full text-xs">
-            <thead class="bg-slate-50 sticky top-0">
-              <tr id="fl-thead-row"></tr>
-            </thead>
-            <tbody id="fl-tbody"></tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Top owners summary (kept compact, links to fleet_owners.json) -->
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/fleet_owners.json">
-        <h3 class="font-semibold mb-2">Top 25 선주 (필터와 무관 · 전체 등록부 기준)</h3>
-        <p class="text-xs text-slate-500 mb-2">참조용 — 위 필터는 리스트만 좁히고 이 막대는 항상 전체.</p>
-        <div id="fl-owner-bars" style="height:480px"></div>
+        <!-- 6-chart grid (jang1117-style: 2 cols × 3 rows) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div class="bg-white rounded-xl shadow p-3">
+            <h4 class="text-xs font-semibold text-slate-600 mb-1">📈 건조 연도별 추이</h4>
+            <div id="fl-ch-year" style="height:260px"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3">
+            <h4 class="text-xs font-semibold text-slate-600 mb-1">🚢 Vessel Type Top 15 <span class="text-[10px] text-slate-400 font-normal">(bar 클릭 → 필터)</span></h4>
+            <div id="fl-ch-type" style="height:340px"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3">
+            <h4 class="text-xs font-semibold text-slate-600 mb-1">⚙️ 엔진 타입 분포 Top 10</h4>
+            <div id="fl-ch-engine-type" style="height:280px"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3">
+            <h4 class="text-xs font-semibold text-slate-600 mb-1">🏭 엔진명 Top 12</h4>
+            <div id="fl-ch-engine-name" style="height:280px"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3">
+            <h4 class="text-xs font-semibold text-slate-600 mb-1">🇮🇩 국적(Flag) Top 12 <span class="text-[10px] text-slate-400 font-normal">(bar 클릭 → 필터)</span></h4>
+            <div id="fl-ch-flag" style="height:280px"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-3">
+            <h4 class="text-xs font-semibold text-slate-600 mb-1">📊 GT 분포 (log scale)</h4>
+            <div id="fl-ch-gt-hist" style="height:280px"></div>
+          </div>
+        </div>
+
+        <!-- Sortable table -->
+        <div class="bg-white rounded-xl shadow p-3" data-source="docs/derived/fleet_vessels.json">
+          <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+            <h3 class="font-semibold text-sm">📋 선박 목록 <span class="text-[10px] text-slate-400 font-normal">(헤더 클릭 시 정렬)</span></h3>
+            <div class="flex items-center gap-2 text-[11px]">
+              <span class="text-slate-500" id="fl-list-info">—</span>
+              <button id="fl-csv" type="button" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">📥 CSV (필터 전체)</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table id="fl-table" class="min-w-full text-[11px]">
+              <thead class="bg-slate-50 sticky top-0">
+                <tr id="fl-thead-row"></tr>
+              </thead>
+              <tbody id="fl-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
       </div>
     </section>
 
