@@ -1956,21 +1956,26 @@ function _renderFleetView() {
   const avgGt = nGt > 0 ? sumGt / nGt : 0;
   const avgAge = sumGt > 0 ? sumAgeGt / sumGt : null;
   const avgYr = sumGt > 0 ? sumYrW / sumGt : null;
-  document.getElementById("fl-kpi-count").textContent = fmtCount(rows.length);
-  document.getElementById("fl-kpi-pct").textContent =
+  // jang1117 KPI writes — every setter guarded so a missing element
+  // can't kill the render. Existence-checked once at the top to keep
+  // hot path lean.
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  set("fl-kpi-count", fmtCount(rows.length));
+  set("fl-kpi-pct",
     `${fmtCount(rows.length)} / ${fmtCount(totalRows)}` +
-    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : "");
-  document.getElementById("fl-kpi-jenis").textContent = fmtCount(jenisSet.size);
-  document.getElementById("fl-kpi-avggt").textContent = avgGt ? fmtCount(Math.round(avgGt)) : "—";
-  document.getElementById("fl-kpi-sumgt").textContent = `총 GT ${fmtTon(sumGt)}`;
-  document.getElementById("fl-kpi-avgyr").textContent = avgYr ? `${avgYr.toFixed(0)}` : "—";
-  document.getElementById("fl-kpi-avgage").textContent =
-    avgAge != null ? `선령 ${avgAge.toFixed(1)}년` : "선령 —";
-  // 평균 제원 strip (jang1117 mirror — 4 sub-values)
-  document.getElementById("fl-avg-gt").textContent  = avgGt ? fmtCount(Math.round(avgGt)) : "—";
-  document.getElementById("fl-avg-loa").textContent = nLoa ? (sumLoa / nLoa).toFixed(1) : "—";
-  document.getElementById("fl-avg-w").textContent   = nW   ? (sumW   / nW).toFixed(1)   : "—";
-  document.getElementById("fl-avg-d").textContent   = nD   ? (sumD   / nD).toFixed(1)   : "—";
+    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : ""));
+  set("fl-kpi-jenis", fmtCount(jenisSet.size));
+  set("fl-kpi-avggt", avgGt ? fmtCount(Math.round(avgGt)) : "—");
+  set("fl-kpi-avgyr", avgYr ? `${avgYr.toFixed(0)}` : "—");
+  set("fl-kpi-avgage", avgAge != null ? `선령 ${avgAge.toFixed(1)}년` : "선령 —");
+  // 평균 제원 (치수 요약) — 4 sub-values
+  set("fl-avg-gt",  avgGt ? fmtCount(Math.round(avgGt)) : "—");
+  set("fl-avg-loa", nLoa ? (sumLoa / nLoa).toFixed(1) : "—");
+  set("fl-avg-w",   nW   ? (sumW   / nW).toFixed(1)   : "—");
+  set("fl-avg-d",   nD   ? (sumD   / nD).toFixed(1)   : "—");
 
   // ---- charts (each guarded — missing target = no-op, no throw) ----
   try { _drawFlChartYear(rows, I); }       catch (e) { console.error("Year chart:", e); }
