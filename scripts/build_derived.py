@@ -730,14 +730,21 @@ def build_cargo_yearly() -> dict:
             }
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,                                          # PR-38
         "snapshot_month": snap,
         "years": [y for y, _ in years_meta],
         "months_per_year": {y: m for y, m in years_meta},
+        # PR-38: full 8-category palette so the Home map legend can render
+        # year-mode colors without falling back to map_flow's 5-category set.
+        "categories": [
+            {"name": name, "color": color}
+            for (name, color, _sources) in MAP_CATEGORIES
+        ],
         "by_year": by_year,
         "_notes": {
             "source": "cargo_snapshot — raw_row JSON via SQL json_extract",
             "scope": "BONGKAR + MUAT combined; SELF/foreign/coastal not separated here",
+            "category_set": "PR-38 — 8 categories incl. Coal / Nickel-Mineral / Container",
         },
     }
 
@@ -1198,12 +1205,20 @@ def build_tanker_top() -> dict:
 # Five visual categories rolled up from the granular bucket labels in
 # tanker_flow_map.lanes. Order matters — color key is rendered top-down.
 MAP_CATEGORIES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
-    # (display name, hex color, bucket labels rolled into this category)
-    ("Crude",          "#92400e", ("Crude",)),
-    ("Product / BBM",  "#0284c7", ("Naphtha", "Kerosene", "BBM-가솔린", "BBM-디젤", "BBM-항공유", "BBM-기타", "기타")),
-    ("Chemical",       "#059669", ("Chemical",)),
-    ("LPG / LNG",      "#7c3aed", ("LPG", "LNG")),
-    ("FAME / Edible",  "#65a30d", ("FAME", "기타 식용유", "벙커유", "CPO/팜오일", "콩 식물", "기타 식용유", "아스팔트")),
+    # (display name, hex color, bucket labels rolled into this category).
+    # PR-38: split off Coal, Mineral Ore, Container/Gen Cargo into their own
+    # top-level categories so the Home map colour-codes non-tanker bulk
+    # routes distinctly. "기타" remains in Product/BBM as the last-resort
+    # catch-all for unknown labels.
+    ("Crude",                  "#92400e", ("Crude",)),
+    ("Product / BBM",          "#0284c7", ("Naphtha", "Kerosene", "BBM-가솔린", "BBM-디젤", "BBM-항공유", "BBM-기타", "기타")),
+    ("Chemical",               "#059669", ("Chemical",)),
+    ("LPG / LNG",              "#7c3aed", ("LPG", "LNG")),
+    ("FAME / Edible",          "#65a30d", ("FAME", "기타 식용유", "벙커유", "CPO/팜오일", "팜 파생", "아스팔트")),
+    # PR-38: new bulk + container categories
+    ("Coal",                   "#52525b", ("Coal",)),                                  # dark slate (coal-like)
+    ("Nickel / Mineral Ore",   "#0e7490", ("Nickel", "Bauxite", "Iron Ore")),          # cyan (metal ore)
+    ("Container / Gen Cargo",  "#9333ea", ("Container", "General Cargo", "Cement")),   # violet
 )
 
 

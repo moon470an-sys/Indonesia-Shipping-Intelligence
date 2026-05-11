@@ -1404,9 +1404,16 @@ function drawHomeMap() {
   }
   status.textContent = notes.join(" · ") || "24M 누계 · 모든 카테고리 · Top 30 routes";
 
-  // Category color map (only meaningful in 24M mode; year mode falls back to navy)
+  // Category color map.
+  //   - 24M mode: map_flow.categories (5 tanker-focused)
+  //   - year mode: cargo_yearly.categories (8 incl. Coal / Nickel-Mineral /
+  //     Container) layered on top so non-tanker bulk routes get distinct
+  //     colours.
   const categoryColors = {};
   for (const c of (homeState.mapData.categories || [])) categoryColors[c.name] = c.color;
+  if (isYearMode && homeState.cargoYearly?.categories) {
+    for (const c of homeState.cargoYearly.categories) categoryColors[c.name] = c.color;
+  }
 
   // ---- Layer 2: route paths + animated particles ----
   const routeLayer = svg.append("g").attr("class", "map-routes");
@@ -1510,9 +1517,13 @@ function drawHomeMap() {
     .text(d => d.name);
 
   // ---- Legend (PR-11: clickable to filter routes by category) ----
+  //   PR-38: in year mode, show the broader cargo_yearly category set so
+  //   Coal / Nickel / Mineral legend swatches appear alongside Crude / BBM.
   const legend = document.getElementById("home-map-legend");
   if (legend) {
-    const cats = homeState.mapData.categories || [];
+    const cats = isYearMode && homeState.cargoYearly?.categories
+      ? homeState.cargoYearly.categories
+      : (homeState.mapData.categories || []);
     legend.innerHTML =
       `<div class="font-semibold mb-1 flex items-center justify-between gap-2">
          <span>화물 카테고리</span>

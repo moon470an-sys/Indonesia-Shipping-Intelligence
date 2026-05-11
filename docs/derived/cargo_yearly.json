@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "snapshot_month": "2026-05",
   "years": [
     "2024",
@@ -11,6 +11,40 @@
     "2025": 12,
     "2026": 5
   },
+  "categories": [
+    {
+      "name": "Crude",
+      "color": "#92400e"
+    },
+    {
+      "name": "Product / BBM",
+      "color": "#0284c7"
+    },
+    {
+      "name": "Chemical",
+      "color": "#059669"
+    },
+    {
+      "name": "LPG / LNG",
+      "color": "#7c3aed"
+    },
+    {
+      "name": "FAME / Edible",
+      "color": "#65a30d"
+    },
+    {
+      "name": "Coal",
+      "color": "#52525b"
+    },
+    {
+      "name": "Nickel / Mineral Ore",
+      "color": "#0e7490"
+    },
+    {
+      "name": "Container / Gen Cargo",
+      "color": "#9333ea"
+    }
+  ],
   "by_year": {
     "2024": {
       "total_ton": 1791101602.5,
@@ -114,9 +148,12 @@
           "ton": 6339293.8,
           "calls": 1251,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 6339293.8
+            "Product / BBM": 281266.6,
+            "Container / Gen Cargo": 21854.7,
+            "Coal": 689547.0,
+            "Nickel / Mineral Ore": 5346625.5
           }
         },
         {
@@ -129,9 +166,11 @@
           "ton": 5202516.3,
           "calls": 1109,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 5202516.3
+            "Product / BBM": 130027.8,
+            "Coal": 481592.7,
+            "Nickel / Mineral Ore": 4590895.8
           }
         },
         {
@@ -159,9 +198,10 @@
           "ton": 3396741.9,
           "calls": 569,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 3396726.9
+            "Product / BBM": 275592.8,
+            "Container / Gen Cargo": 3121134.1
           }
         },
         {
@@ -174,9 +214,12 @@
           "ton": 3361012.5,
           "calls": 316,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 3361012.5
+            "Product / BBM": 75705.7,
+            "Container / Gen Cargo": 78860.9,
+            "Coal": 1466081.0,
+            "Nickel / Mineral Ore": 1740365.0
           }
         },
         {
@@ -189,9 +232,11 @@
           "ton": 2143894.9,
           "calls": 219,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2143804.9,
+            "Product / BBM": 45400.1,
+            "Coal": 55000.0,
+            "Nickel / Mineral Ore": 2043404.8,
             "LPG / LNG": 90.0
           }
         },
@@ -205,9 +250,12 @@
           "ton": 2135579.3,
           "calls": 222,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2135579.3
+            "Product / BBM": 161699.6,
+            "Container / Gen Cargo": 38419.2,
+            "Coal": 843665.0,
+            "Nickel / Mineral Ore": 1091795.4
           }
         },
         {
@@ -220,9 +268,12 @@
           "ton": 2065147.4,
           "calls": 283,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2065147.4
+            "Product / BBM": 101562.8,
+            "Coal": 55000.0,
+            "Container / Gen Cargo": 5584.0,
+            "Nickel / Mineral Ore": 1903000.5
           }
         },
         {
@@ -235,9 +286,11 @@
           "ton": 1777739.3,
           "calls": 196,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 1777739.3
+            "Coal": 363223.0,
+            "Nickel / Mineral Ore": 1252004.3,
+            "Product / BBM": 162512.0
           }
         },
         {
@@ -265,9 +318,12 @@
           "ton": 1534668.4,
           "calls": 243,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 1534668.4
+            "Product / BBM": 190609.1,
+            "Coal": 157320.0,
+            "Container / Gen Cargo": 6.0,
+            "Nickel / Mineral Ore": 1186733.3
           }
         },
         {
@@ -280,9 +336,11 @@
           "ton": 1495071.1,
           "calls": 268,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1486271.1,
+            "Product / BBM": 153763.2,
+            "Coal": 28583.1,
+            "Container / Gen Cargo": 1303924.9,
             "FAME / Edible": 8800.0
           }
         },
@@ -296,10 +354,12 @@
           "ton": 1431650.8,
           "calls": 623,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1356512.8,
-            "FAME / Edible": 19529.9,
+            "Product / BBM": 124376.4,
+            "Container / Gen Cargo": 1231916.4,
+            "Coal": 220.0,
+            "FAME / Edible": 59549.6,
             "Crude": 15528.4
           }
         },
@@ -313,10 +373,12 @@
           "ton": 1407393.9,
           "calls": 641,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1316376.7,
-            "FAME / Edible": 38268.5,
+            "Product / BBM": 158146.0,
+            "Container / Gen Cargo": 1154865.7,
+            "Coal": 3365.0,
+            "FAME / Edible": 87518.2,
             "Crude": 3499.0
           }
         },
@@ -332,9 +394,10 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1331637.2,
+            "Product / BBM": 990821.1,
+            "Container / Gen Cargo": 340816.1,
             "Crude": 7003.0,
-            "FAME / Edible": 2305.0
+            "FAME / Edible": 7154.9
           }
         },
         {
@@ -347,10 +410,11 @@
           "ton": 1155503.2,
           "calls": 492,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1155275.2,
+            "Product / BBM": 11771.3,
             "FAME / Edible": 144.0,
+            "Container / Gen Cargo": 1143503.9,
             "LPG / LNG": 84.0
           }
         },
@@ -364,9 +428,11 @@
           "ton": 1130074.1,
           "calls": 117,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 1130074.1
+            "Product / BBM": 14923.0,
+            "Coal": 590800.0,
+            "Nickel / Mineral Ore": 524351.1
           }
         },
         {
@@ -382,7 +448,8 @@
           "category": "Crude",
           "category_ton": {
             "Crude": 621777.6,
-            "Product / BBM": 500297.7,
+            "Product / BBM": 484548.0,
+            "Coal": 15749.7,
             "FAME / Edible": 5919.0
           }
         },
@@ -398,9 +465,10 @@
           "mappable": true,
           "category": "FAME / Edible",
           "category_ton": {
-            "Product / BBM": 92086.6,
-            "FAME / Edible": 949918.6,
-            "Crude": 69094.0
+            "Product / BBM": 84666.2,
+            "FAME / Edible": 958771.6,
+            "Crude": 69094.0,
+            "Container / Gen Cargo": 7420.4
           }
         },
         {
@@ -415,10 +483,12 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1010772.2,
+            "Product / BBM": 485328.5,
+            "Coal": 370211.6,
             "Chemical": 3.0,
             "FAME / Edible": 54403.5,
-            "Crude": 41724.9
+            "Crude": 41724.9,
+            "Container / Gen Cargo": 155232.1
           }
         },
         {
@@ -433,8 +503,10 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1063211.0,
-            "FAME / Edible": 38888.0
+            "Coal": 112264.0,
+            "Container / Gen Cargo": 7150.0,
+            "FAME / Edible": 38888.0,
+            "Product / BBM": 943797.0
           }
         },
         {
@@ -447,10 +519,12 @@
           "ton": 1064164.4,
           "calls": 1495,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1058045.4,
-            "FAME / Edible": 3043.0,
+            "Product / BBM": 247390.0,
+            "Container / Gen Cargo": 804407.3,
+            "FAME / Edible": 5793.0,
+            "Nickel / Mineral Ore": 6248.0,
             "LPG / LNG": 326.0
           }
         },
@@ -466,9 +540,10 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 944159.5,
+            "Product / BBM": 862037.0,
             "Crude": 73475.0,
-            "FAME / Edible": 2478.0
+            "FAME / Edible": 2478.0,
+            "Coal": 82122.5
           }
         },
         {
@@ -483,7 +558,9 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 965854.5,
+            "Product / BBM": 538659.9,
+            "Coal": 298400.5,
+            "Container / Gen Cargo": 128794.0,
             "FAME / Edible": 12840.0,
             "Crude": 6012.0
           }
@@ -516,8 +593,10 @@
           "mappable": true,
           "category": "Crude",
           "category_ton": {
-            "Product / BBM": 71919.9,
-            "FAME / Edible": 23243.3,
+            "Product / BBM": 21493.7,
+            "Coal": 15326.3,
+            "Container / Gen Cargo": 35100.0,
+            "FAME / Edible": 362936.0,
             "Crude": 519828.0
           }
         },
@@ -531,10 +610,11 @@
           "ton": 947747.0,
           "calls": 39,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Crude",
           "category_ton": {
             "Crude": 473328.0,
-            "Product / BBM": 474419.0
+            "Product / BBM": 434545.0,
+            "Container / Gen Cargo": 39874.0
           }
         },
         {
@@ -547,9 +627,11 @@
           "ton": 947662.8,
           "calls": 208,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 936392.8,
+            "Product / BBM": 112333.4,
+            "Coal": 690187.6,
+            "Container / Gen Cargo": 133871.8,
             "Crude": 7020.0,
             "FAME / Edible": 4250.0
           }
@@ -566,8 +648,9 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 803574.9,
-            "Crude": 118976.0
+            "Product / BBM": 714752.0,
+            "Crude": 118976.0,
+            "Coal": 88822.9
           }
         },
         {
@@ -580,9 +663,12 @@
           "ton": 879357.9,
           "calls": 98,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 879357.9
+            "Product / BBM": 33796.2,
+            "Coal": 214002.1,
+            "Nickel / Mineral Ore": 616952.6,
+            "Container / Gen Cargo": 14607.0
           }
         }
       ],
@@ -796,9 +882,12 @@
           "ton": 11080616.7,
           "calls": 2100,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 11080616.7
+            "Product / BBM": 863142.6,
+            "Coal": 1081600.3,
+            "Nickel / Mineral Ore": 9122757.3,
+            "Container / Gen Cargo": 13116.6
           }
         },
         {
@@ -811,9 +900,12 @@
           "ton": 9702294.0,
           "calls": 1991,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 9702294.0
+            "Product / BBM": 496209.9,
+            "Coal": 891908.0,
+            "Nickel / Mineral Ore": 8286603.1,
+            "Container / Gen Cargo": 27573.0
           }
         },
         {
@@ -826,9 +918,12 @@
           "ton": 6871315.4,
           "calls": 774,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 6871315.4
+            "Product / BBM": 448386.9,
+            "Coal": 1525222.6,
+            "Nickel / Mineral Ore": 4784199.3,
+            "Container / Gen Cargo": 113506.7
           }
         },
         {
@@ -841,9 +936,12 @@
           "ton": 5768916.2,
           "calls": 697,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 5768916.2
+            "Product / BBM": 406062.4,
+            "Container / Gen Cargo": 191082.5,
+            "Coal": 1691810.0,
+            "Nickel / Mineral Ore": 3479961.3
           }
         },
         {
@@ -856,9 +954,12 @@
           "ton": 5505092.1,
           "calls": 502,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 5505092.1
+            "Coal": 315200.0,
+            "Product / BBM": 265484.4,
+            "Container / Gen Cargo": 16680.5,
+            "Nickel / Mineral Ore": 4907727.2
           }
         },
         {
@@ -871,9 +972,12 @@
           "ton": 4344222.3,
           "calls": 521,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 4344211.3,
+            "Product / BBM": 312564.1,
+            "Coal": 260050.0,
+            "Nickel / Mineral Ore": 3766572.2,
+            "Container / Gen Cargo": 5025.0,
             "LPG / LNG": 11.0
           }
         },
@@ -887,9 +991,12 @@
           "ton": 4261024.8,
           "calls": 479,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 4261024.8
+            "Product / BBM": 69890.8,
+            "Coal": 592951.0,
+            "Nickel / Mineral Ore": 3593973.0,
+            "Container / Gen Cargo": 4210.0
           }
         },
         {
@@ -904,8 +1011,9 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 3873581.3,
-            "FAME / Edible": 4275.9,
+            "Container / Gen Cargo": 1826469.7,
+            "Product / BBM": 2047111.7,
+            "FAME / Edible": 4818.9,
             "Crude": 3504.0
           }
         },
@@ -919,10 +1027,11 @@
           "ton": 3292953.6,
           "calls": 341,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 3234141.3,
-            "FAME / Edible": 18650.3,
+            "Product / BBM": 259663.0,
+            "Container / Gen Cargo": 2974478.3,
+            "FAME / Edible": 42868.3,
             "Crude": 15944.0
           }
         },
@@ -936,11 +1045,13 @@
           "ton": 3113328.7,
           "calls": 1478,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 3025886.5,
+            "Product / BBM": 478642.2,
+            "Container / Gen Cargo": 2546825.2,
+            "Coal": 419.0,
             "Chemical": 6.0,
-            "FAME / Edible": 44347.0,
+            "FAME / Edible": 69845.8,
             "Crude": 17530.5,
             "LPG / LNG": 60.0
           }
@@ -955,9 +1066,11 @@
           "ton": 3052260.1,
           "calls": 387,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 3052260.1
+            "Product / BBM": 700446.9,
+            "Coal": 465126.0,
+            "Nickel / Mineral Ore": 1886687.2
           }
         },
         {
@@ -970,9 +1083,12 @@
           "ton": 3023039.5,
           "calls": 404,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 3023039.5
+            "Product / BBM": 119807.1,
+            "Coal": 391620.0,
+            "Nickel / Mineral Ore": 2511000.0,
+            "Container / Gen Cargo": 612.3
           }
         },
         {
@@ -985,9 +1101,12 @@
           "ton": 2966687.8,
           "calls": 387,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2966687.8
+            "Product / BBM": 255152.1,
+            "Coal": 625554.0,
+            "Nickel / Mineral Ore": 2071717.2,
+            "Container / Gen Cargo": 14264.5
           }
         },
         {
@@ -1000,9 +1119,12 @@
           "ton": 2858844.0,
           "calls": 432,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2858844.0
+            "Product / BBM": 438775.0,
+            "Coal": 289704.0,
+            "Nickel / Mineral Ore": 2091297.9,
+            "Container / Gen Cargo": 39067.0
           }
         },
         {
@@ -1015,10 +1137,13 @@
           "ton": 2609151.8,
           "calls": 1356,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 2528557.7,
-            "FAME / Edible": 29213.4,
+            "Product / BBM": 267135.1,
+            "Container / Gen Cargo": 2261198.8,
+            "Nickel / Mineral Ore": 21.8,
+            "Coal": 202.0,
+            "FAME / Edible": 63034.2,
             "Crude": 17518.9,
             "LPG / LNG": 36.0
           }
@@ -1035,7 +1160,9 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 2548384.3
+            "Product / BBM": 1633600.9,
+            "Nickel / Mineral Ore": 906783.4,
+            "Container / Gen Cargo": 8000.0
           }
         },
         {
@@ -1048,10 +1175,11 @@
           "ton": 2527560.8,
           "calls": 553,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 2526313.1,
-            "FAME / Edible": 1247.7
+            "Product / BBM": 11723.9,
+            "FAME / Edible": 1247.7,
+            "Container / Gen Cargo": 2514589.2
           }
         },
         {
@@ -1064,10 +1192,11 @@
           "ton": 2376479.3,
           "calls": 821,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 2357442.3,
+            "Product / BBM": 110383.6,
             "FAME / Edible": 15036.9,
+            "Container / Gen Cargo": 2247058.7,
             "LPG / LNG": 4000.0
           }
         },
@@ -1081,9 +1210,12 @@
           "ton": 2162873.6,
           "calls": 287,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2162873.6
+            "Coal": 507144.0,
+            "Nickel / Mineral Ore": 1620167.9,
+            "Container / Gen Cargo": 62.0,
+            "Product / BBM": 35499.6
           }
         },
         {
@@ -1096,9 +1228,10 @@
           "ton": 1856140.4,
           "calls": 351,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 1856140.4
+            "Product / BBM": 11280.0,
+            "Nickel / Mineral Ore": 1844860.4
           }
         },
         {
@@ -1111,10 +1244,12 @@
           "ton": 1669165.6,
           "calls": 945,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 1590041.6,
-            "FAME / Edible": 57217.0,
+            "Product / BBM": 587344.3,
+            "Coal": 592227.3,
+            "Container / Gen Cargo": 410470.0,
+            "FAME / Edible": 62917.0,
             "Crude": 16207.0
           }
         },
@@ -1128,9 +1263,11 @@
           "ton": 1544797.5,
           "calls": 433,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 1524255.9,
+            "Product / BBM": 296098.2,
+            "Container / Gen Cargo": 158292.9,
+            "Coal": 1069864.8,
             "FAME / Edible": 20541.6
           }
         },
@@ -1148,7 +1285,8 @@
           "category_ton": {
             "Crude": 148354.5,
             "FAME / Edible": 19465.0,
-            "Product / BBM": 1331082.2
+            "Product / BBM": 1247363.9,
+            "Coal": 83718.2
           }
         },
         {
@@ -1164,8 +1302,9 @@
           "category": "Product / BBM",
           "category_ton": {
             "Crude": 462013.0,
-            "Product / BBM": 941474.9,
+            "Product / BBM": 902259.0,
             "FAME / Edible": 66659.2,
+            "Coal": 39215.9,
             "LPG / LNG": 1700.0
           }
         },
@@ -1179,9 +1318,10 @@
           "ton": 1354084.6,
           "calls": 1104,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1338584.7,
+            "Product / BBM": 99774.0,
+            "Container / Gen Cargo": 1238810.7,
             "FAME / Edible": 15500.0
           }
         }
@@ -1396,9 +1536,12 @@
           "ton": 6516215.5,
           "calls": 300,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 6516215.5
+            "Product / BBM": 77567.7,
+            "Coal": 108000.0,
+            "Container / Gen Cargo": 20.0,
+            "Nickel / Mineral Ore": 6330627.8
           }
         },
         {
@@ -1411,9 +1554,12 @@
           "ton": 3528077.3,
           "calls": 688,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 3528077.3
+            "Product / BBM": 152135.9,
+            "Coal": 397954.0,
+            "Nickel / Mineral Ore": 2958843.4,
+            "Container / Gen Cargo": 19144.0
           }
         },
         {
@@ -1426,9 +1572,10 @@
           "ton": 2780424.3,
           "calls": 336,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2780424.3
+            "Product / BBM": 52215.0,
+            "Nickel / Mineral Ore": 2728209.3
           }
         },
         {
@@ -1441,9 +1588,12 @@
           "ton": 2711353.4,
           "calls": 275,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2711353.4
+            "Product / BBM": 183188.4,
+            "Coal": 597248.0,
+            "Nickel / Mineral Ore": 1911601.0,
+            "Container / Gen Cargo": 19316.0
           }
         },
         {
@@ -1456,9 +1606,12 @@
           "ton": 2686500.6,
           "calls": 551,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2686500.6
+            "Coal": 282520.5,
+            "Product / BBM": 109739.6,
+            "Nickel / Mineral Ore": 2286496.6,
+            "Container / Gen Cargo": 7744.0
           }
         },
         {
@@ -1471,9 +1624,12 @@
           "ton": 2457466.0,
           "calls": 297,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2457465.9
+            "Coal": 104402.1,
+            "Nickel / Mineral Ore": 2303663.6,
+            "Product / BBM": 44523.3,
+            "Container / Gen Cargo": 4877.0
           }
         },
         {
@@ -1486,9 +1642,12 @@
           "ton": 2169119.3,
           "calls": 299,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 2169119.3
+            "Coal": 566164.0,
+            "Product / BBM": 120608.1,
+            "Container / Gen Cargo": 54670.9,
+            "Nickel / Mineral Ore": 1427676.3
           }
         },
         {
@@ -1503,9 +1662,11 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 2138119.6,
+            "Product / BBM": 1424974.8,
+            "Container / Gen Cargo": 709040.2,
             "Crude": 3510.0,
-            "FAME / Edible": 835.0
+            "Nickel / Mineral Ore": 4104.7,
+            "FAME / Edible": 1106.0
           }
         },
         {
@@ -1520,8 +1681,10 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1723010.5,
-            "FAME / Edible": 33936.0,
+            "Product / BBM": 1057162.1,
+            "Container / Gen Cargo": 665808.5,
+            "Coal": 40.0,
+            "FAME / Edible": 36636.0,
             "Crude": 18154.2
           }
         },
@@ -1535,9 +1698,11 @@
           "ton": 1513292.4,
           "calls": 270,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 1513292.4
+            "Product / BBM": 32285.7,
+            "Container / Gen Cargo": 7297.8,
+            "Nickel / Mineral Ore": 1473708.9
           }
         },
         {
@@ -1550,9 +1715,11 @@
           "ton": 1361275.4,
           "calls": 100,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 1358271.4,
+            "Product / BBM": 26557.0,
+            "Coal": 1330458.4,
+            "Container / Gen Cargo": 1256.0,
             "Crude": 3004.0
           }
         },
@@ -1566,10 +1733,11 @@
           "ton": 1224651.8,
           "calls": 649,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 1196463.5,
-            "FAME / Edible": 12820.0,
+            "Product / BBM": 307445.0,
+            "Container / Gen Cargo": 889018.5,
+            "FAME / Edible": 16219.8,
             "Crude": 11733.5,
             "LPG / LNG": 235.0
           }
@@ -1584,9 +1752,11 @@
           "ton": 1037353.2,
           "calls": 98,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 1037353.2
+            "Coal": 313350.0,
+            "Product / BBM": 59447.6,
+            "Nickel / Mineral Ore": 664555.6
           }
         },
         {
@@ -1599,9 +1769,12 @@
           "ton": 954319.1,
           "calls": 134,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 954319.1
+            "Product / BBM": 48813.9,
+            "Coal": 260100.0,
+            "Nickel / Mineral Ore": 642593.3,
+            "Container / Gen Cargo": 2812.0
           }
         },
         {
@@ -1614,9 +1787,12 @@
           "ton": 903971.0,
           "calls": 140,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 903971.0
+            "Product / BBM": 75998.7,
+            "Coal": 102000.0,
+            "Nickel / Mineral Ore": 720632.3,
+            "Container / Gen Cargo": 5340.0
           }
         },
         {
@@ -1631,7 +1807,8 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 848748.0
+            "Product / BBM": 848740.0,
+            "Container / Gen Cargo": 8.0
           }
         },
         {
@@ -1644,10 +1821,12 @@
           "ton": 719451.9,
           "calls": 64,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 714451.9,
+            "Product / BBM": 35797.2,
+            "Coal": 664020.0,
             "FAME / Edible": 4000.0,
+            "Container / Gen Cargo": 14634.6,
             "LPG / LNG": 1000.0
           }
         },
@@ -1663,7 +1842,8 @@
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 677179.6
+            "Product / BBM": 660034.6,
+            "Container / Gen Cargo": 17145.0
           }
         },
         {
@@ -1676,9 +1856,9 @@
           "ton": 609112.0,
           "calls": 9,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 609112.0
+            "Coal": 609112.0
           }
         },
         {
@@ -1691,9 +1871,10 @@
           "ton": 587025.5,
           "calls": 234,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 571125.5,
+            "Product / BBM": 79180.0,
+            "Container / Gen Cargo": 491945.5,
             "FAME / Edible": 15900.0
           }
         },
@@ -1707,9 +1888,11 @@
           "ton": 558957.3,
           "calls": 90,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 558957.3
+            "Coal": 119904.0,
+            "Product / BBM": 36565.4,
+            "Nickel / Mineral Ore": 402487.8
           }
         },
         {
@@ -1722,10 +1905,11 @@
           "ton": 525671.1,
           "calls": 45,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 501215.8,
-            "FAME / Edible": 15455.3,
+            "Product / BBM": 8320.8,
+            "Coal": 492895.0,
+            "FAME / Edible": 16455.3,
             "Crude": 8000.0
           }
         }
@@ -1841,6 +2025,7 @@
   },
   "_notes": {
     "source": "cargo_snapshot — raw_row JSON via SQL json_extract",
-    "scope": "BONGKAR + MUAT combined; SELF/foreign/coastal not separated here"
+    "scope": "BONGKAR + MUAT combined; SELF/foreign/coastal not separated here",
+    "category_set": "PR-38 — 8 categories incl. Coal / Nickel-Mineral / Container"
   }
 }

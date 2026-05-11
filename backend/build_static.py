@@ -1301,6 +1301,7 @@ def _flow_classify_kom(label) -> str:
     if not label:
         return "기타"
     s = str(label).upper()
+    # ----- Tanker liquids (existing buckets, order matters) -----
     if "CRUDE" in s or "MENTAH" in s:                                 return "Crude"
     if "CPO" in s or "PALM OIL" in s or "MINYAK SAWIT" in s:          return "CPO/팜오일"
     if "LNG" in s or "NATURAL GAS" in s or "GAS ALAM" in s:           return "LNG"
@@ -1321,6 +1322,20 @@ def _flow_classify_kom(label) -> str:
     if "FUEL OIL" in s or "BUNKER" in s:                              return "벙커유"
     if "NAPHTHA" in s or "NAFTA" in s:                                return "Naphtha"
     if "KEROSEN" in s:                                                return "Kerosene"
+    # ----- PR-38: dry-bulk + minerals + container (new buckets) -----
+    # Coal — handles both Indonesian (BATU BARA, BATUBARA) and English
+    # variants plus the common "STEAM COAL" / "STEAM COAL IN BULK".
+    if any(k in s for k in ("BATU BARA", "BATUBARA", "STEAM COAL", "COAL")):
+        return "Coal"
+    if any(k in s for k in ("NICKEL", "NIKEL", "BIJIH NIKEL")):       return "Nickel"
+    if any(k in s for k in ("BAUXITE", "BAUKSIT", "BIJIH BAUKSIT")):  return "Bauxite"
+    if any(k in s for k in ("IRON ORE", "BIJIH BESI", "BESI BIJIH")): return "Iron Ore"
+    if any(k in s for k in ("PETIKEMAS", "KONTAINER", "CONTAINER", "TEU")):
+        return "Container"
+    if any(k in s for k in ("CEMENT", "SEMEN", "KLINKER", "CLINKER")):
+        return "Cement"
+    if any(k in s for k in ("GENERAL CARGO", "GEN CARGO", "MUATAN UMUM", "BARANG UMUM")):
+        return "General Cargo"
     return "기타"
 
 
