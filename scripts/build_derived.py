@@ -315,6 +315,123 @@ def build_subclass_facts() -> dict:
 # ----------------------------------------------------------------------
 # Renewal v2: cargo_fleet.json (PR-4) — treemap + commodity bars + class donut + age bars
 # ----------------------------------------------------------------------
+def build_fleet_vessels(snapshot_month: str) -> dict:
+    """Full per-vessel registry export for the Fleet tab's filter-list view.
+
+    Each cargo vessel becomes one row in a compact array-of-arrays format
+    (so the JSON payload stays around 1/3 the size of an object-per-row
+    encoding). Frontend rebuilds objects via the `cols` schema.
+
+    Columns (positional):
+      nama        — vessel name
+      owner       — NamaPemilik (truncated to keep payload compact)
+      vc          — vessel class (Container / Bulk / Tanker / General / Other)
+      ts          — tanker subclass (when vc=Tanker, else "")
+      gt          — gross tonnage (number)
+      loa         — length overall in metres (number, 0 if missing)
+      tahun       — build year (int, null if missing)
+      age         — current year - tahun (int, null)
+      flag        — bendera asal (empty string ≈ Indonesia)
+      imo         — IMO number (string, may be empty)
+      call_sign   — call sign
+
+    Source: kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessels_snapshot).
+    """
+    from backend.taxonomy import (
+        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
+        SECTOR_CARGO, classify_tanker_subclass, classify_vessel_type,
+    )
+    visual_map = {
+        CLS_CONTAINER: "Container",
+        CLS_BULK:      "Bulk Carrier",
+        CLS_TANKER:    "Tanker",
+        CLS_GENERAL:   "General Cargo",
+        CLS_OTHER_CARGO: "Other Cargo",
+    }
+
+    cur_year = datetime.now(timezone.utc).year
+    rows: list[list] = []
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT
+              nama_kapal,
+              json_extract(raw_data, '$.NamaPemilik')      AS pemilik,
+              json_extract(raw_data, '$.JenisDetailKet')   AS jenis,
+              gt,
+              json_extract(raw_data, '$.LengthOfAll')      AS loa,
+              panjang,
+              json_extract(raw_data, '$.TahunPembuatan')   AS tahun,
+              json_extract(raw_data, '$.BenderaAsal')      AS bendera,
+              imo,
+              call_sign
+            FROM vessels_snapshot
+            WHERE snapshot_month = ?
+              AND raw_data IS NOT NULL
+            """,
+            (snapshot_month,),
+        )
+        for (nama, pemilik, jenis, gt, loa, panjang,
+             tahun, bendera, imo, call_sign) in cur:
+            if not jenis:
+                continue
+            sector, vclass = classify_vessel_type(jenis)
+            if sector != SECTOR_CARGO:
+                continue
+            vc = visual_map.get(vclass, "Other Cargo")
+            ts = classify_tanker_subclass(jenis) if vclass == CLS_TANKER else ""
+            try:
+                gt_v = round(float(gt), 1) if gt is not None else 0.0
+            except (TypeError, ValueError):
+                gt_v = 0.0
+            try:
+                loa_v = float(loa) if loa is not None else None
+                if not loa_v or loa_v <= 0:
+                    loa_v = float(panjang) if panjang is not None else 0.0
+                loa_v = round(loa_v, 1)
+            except (TypeError, ValueError):
+                loa_v = 0.0
+            try:
+                tahun_v = int(tahun) if tahun is not None else None
+                if tahun_v and (tahun_v < 1900 or tahun_v > 2100):
+                    tahun_v = None
+            except (TypeError, ValueError):
+                tahun_v = None
+            age_v = (cur_year - tahun_v) if tahun_v is not None else None
+            flag_v = "" if not bendera or str(bendera).strip() == "Indonesia" \
+                       else str(bendera).strip()
+            owner_v = (str(pemilik).strip() if pemilik else "(미상)")[:60]
+            rows.append([
+                (nama or "").strip(),
+                owner_v,
+                vc,
+                ts or "",
+                gt_v,
+                loa_v,
+                tahun_v,
+                age_v,
+                flag_v,
+                (imo or "").strip(),
+                (call_sign or "").strip(),
+            ])
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snapshot_month,
+        "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/",
+        "current_year": cur_year,
+        "cols": ["nama", "owner", "vc", "ts", "gt", "loa",
+                  "tahun", "age", "flag", "imo", "call_sign"],
+        "rows": rows,
+        "_notes": {
+            "scope": "CARGO sector only via backend.taxonomy",
+            "flag_default": "empty string == Indonesia (>99% of fleet)",
+            "row_count": len(rows),
+        },
+    }
+
+
 def build_fleet_owners(snapshot_month: str, top_n: int = 25) -> dict:
     """Top owners across the FULL cargo fleet (not just tankers).
 
@@ -1888,6 +2005,16 @@ def main() -> None:
     bytes_total += _write_json(DERIVED / "fleet_owners.json", fo)
     print(f"  fleet_owners.json — {fo['totals']['cargo_vessels']:,} cargo vessels · "
           f"{fo['totals']['unique_owners']:,} unique owners (top {len(fo['owners'])})")
+
+    # Per-vessel registry export — drives the Fleet tab's filter+list view.
+    fv = build_fleet_vessels(_snap)
+    # The vessel-list file is much larger than other derived JSONs; emit
+    # compact (no indentation) to halve its size.
+    _path = DERIVED / "fleet_vessels.json"
+    _text = json.dumps(fv, ensure_ascii=False, separators=(",", ":"), default=str)
+    _path.write_text(_text, encoding="utf-8")
+    bytes_total += len(_text)
+    print(f"  fleet_vessels.json — {len(fv['rows']):,} vessels (compact)")
     if unmatched:
         log_path = DERIVED / "unmatched.log"
         log_path.write_text("\n".join(unmatched) + "\n", encoding="utf-8")
