@@ -710,6 +710,52 @@ def build_home_kpi() -> dict:
     tank_prev12 = sum(period_ton[p] for p in sorted_periods[-24:-12])
     tank_yoy = ((tank_last12 - tank_prev12) / tank_prev12 * 100) if tank_prev12 > 0 else None
 
+    # ---- PR-32: per-calendar-year cuts so KPI cards can display
+    # "2025년 총 물동량" instead of rolling "12M 총 물동량".  Reuses the
+    # already-loaded series/period_ton dicts — no extra DB query. ----
+    def _by_year(items: list, key_period: str, key_ton: str) -> tuple[dict, dict]:
+        """Group items by year[:4] -> (total_ton_by_year, months_per_year)."""
+        ton_by_year: dict[str, float] = defaultdict(float)
+        months_by_year: dict[str, set] = defaultdict(set)
+        for r in items:
+            p = r.get(key_period)
+            if not p or len(str(p)) < 7:
+                continue
+            y = str(p)[:4]
+            ton_by_year[y] += float(r.get(key_ton) or 0)
+            months_by_year[y].add(str(p)[:7])
+        return (
+            {y: round(t, 1) for y, t in ton_by_year.items()},
+            {y: len(s) for y, s in months_by_year.items()},
+        )
+
+    total_by_year, total_months = _by_year(series_eff, "period", "ton")
+    tanker_period_items = [{"period": p, "ton": v} for p, v in period_ton.items()]
+    if kpi.get("latest_period_is_partial_data_dropped") and sorted_periods:
+        # Drop the last partial period from tanker as well
+        partial_p = max(period_ton.keys())
+        tanker_period_items = [r for r in tanker_period_items if r["period"] != partial_p]
+    tanker_by_year, _ = _by_year(tanker_period_items, "period", "ton")
+
+    def _yoy(by_year: dict[str, float]) -> dict[str, float | None]:
+        """YoY % per year vs the previous year — null when either side missing."""
+        sorted_ys = sorted(by_year.keys())
+        out: dict[str, float | None] = {}
+        for i, y in enumerate(sorted_ys):
+            if i == 0:
+                out[y] = None
+                continue
+            prev = by_year.get(sorted_ys[i - 1])
+            cur = by_year[y]
+            if prev and prev > 0:
+                out[y] = round((cur - prev) / prev * 100, 1)
+            else:
+                out[y] = None
+        return out
+
+    total_yoy_by_year = _yoy(total_by_year)
+    tanker_yoy_by_year = _yoy(tanker_by_year)
+
     # ---- Tanker fleet (count + GT-weighted avg age) ----
     age_stats, fleet_summary = build_tanker_age_stats(src_meta.get("latest"))
 
@@ -739,6 +785,11 @@ def build_home_kpi() -> dict:
                 "window": [last12[0]["period"] if last12 else None,
                            last12[-1]["period"] if last12 else None],
                 "source": "monitoring-inaportnet.dephub.go.id (LK3)",
+                # PR-32: per-calendar-year drill-down so the card label can
+                # become "2025년 총 물동량" via the Home year selector.
+                "by_year": total_by_year,
+                "yoy_by_year": total_yoy_by_year,
+                "months_per_year": total_months,
             },
             {
                 "id": "tanker_12m_ton",
@@ -748,6 +799,9 @@ def build_home_kpi() -> dict:
                 "window": [sorted_periods[-12] if len(sorted_periods) >= 12 else None,
                            sorted_periods[-1] if sorted_periods else None],
                 "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)",
+                "by_year": tanker_by_year,
+                "yoy_by_year": tanker_yoy_by_year,
+                "months_per_year": total_months,
             },
             {
                 "id": "tanker_fleet",

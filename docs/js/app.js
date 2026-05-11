@@ -921,32 +921,115 @@ function fillSectorStrip(rows) {
   }).join("");
 }
 
-// ---------- PR-3: Home KPI 4 (large numerics) ----------
+// ---------- PR-3 / PR-32: Home KPI 4 (year-aware) ----------
+// PR-32 turns the two cargo-tonnage cards into year-based readouts driven by
+// the new `kpis[*].by_year` payload. The selected year is tracked on the
+// container element so the year-pill onclick handlers can re-render cheaply.
+function _pickHomeYear(payload) {
+  // Prefer most-recent FULL (12mo) year; else most-recent year available.
+  let totalK = (payload.kpis || []).find(k => k.id === "total_12m_ton");
+  if (!totalK || !totalK.by_year) return null;
+  const ys = Object.keys(totalK.by_year).sort();
+  if (!ys.length) return null;
+  const mpy = totalK.months_per_year || {};
+  const fullYears = ys.filter(y => mpy[y] === 12);
+  return fullYears.length ? fullYears[fullYears.length - 1] : ys[ys.length - 1];
+}
+
+function _buildHomeYearPills(payload, activeYear) {
+  const host = document.getElementById("home-year-pills");
+  const banner = document.getElementById("home-year-banner");
+  if (!host) return;
+  const totalK = (payload.kpis || []).find(k => k.id === "total_12m_ton");
+  if (!totalK || !totalK.by_year) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    if (banner) banner.textContent = "";
+    return;
+  }
+  const ys = Object.keys(totalK.by_year).sort();
+  const mpy = totalK.months_per_year || {};
+  host.innerHTML = ys.map(y => {
+    const isActive = y === activeYear;
+    const isPartial = (mpy[y] || 0) < 12;
+    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
+  }).join("");
+  host.querySelectorAll("button[data-year]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const y = btn.dataset.year;
+      const el = document.getElementById("home-kpi");
+      if (el) el.dataset.activeYear = y;
+      renderHomeKpi(payload);
+      _buildHomeYearPills(payload, y);
+    });
+  });
+  if (banner) {
+    const isPartial = (mpy[activeYear] || 0) < 12;
+    banner.textContent = isPartial
+      ? `⚠️ ${activeYear}년은 부분 연도 (${mpy[activeYear]}mo) — YoY 비교 시 주의.`
+      : `${activeYear}년 (12개월).`;
+  }
+}
+
 function renderHomeKpi(payload) {
   const host = document.getElementById("home-kpi");
   if (!host || !payload) return;
+
+  // Resolve active year (URL state wins, else default = most-recent full year).
+  let activeYear = host.dataset.activeYear;
+  if (!activeYear) activeYear = _pickHomeYear(payload);
+  if (activeYear) host.dataset.activeYear = activeYear;
+
   const trend = (yoy) => {
     if (yoy == null) return `<span class="text-slate-400 text-sm">YoY —</span>`;
     const cls = yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down";
     const arrow = yoy >= 0 ? "↑" : "↓";
     return `<span class="${cls} text-sm font-semibold">${arrow} ${Math.abs(yoy).toFixed(1)}%</span>`;
   };
+
+  // Year-specific value resolver — falls back to the legacy 12M fields
+  // when by_year is absent (older payloads).
+  const yearValue = (k) => {
+    if (k.by_year && activeYear in k.by_year) {
+      return {
+        ton: k.by_year[activeYear],
+        yoy: (k.yoy_by_year || {})[activeYear],
+        months: (k.months_per_year || {})[activeYear] || 0,
+      };
+    }
+    return { ton: k.value_ton, yoy: k.yoy_pct, months: 12 };
+  };
+
+  // Build the pills row even when activeYear is null — graceful empty state.
+  _buildHomeYearPills(payload, activeYear);
+
+  const yearLabel = activeYear
+    ? `${activeYear}년${(payload.kpis.find(k => k.id === "total_12m_ton")?.months_per_year?.[activeYear] || 12) < 12 ? " (부분)" : ""}`
+    : "12M";
+
   const cards = payload.kpis.map(k => {
     if (k.id === "total_12m_ton") {
+      const v = yearValue(k);
+      const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">12M 총 물동량</div>
+        <div class="kpi-label">${yearLabel} 총 물동량 (인도네시아)</div>
         <div>
-          <div class="kpi-value-large">${fmtTon(k.value_ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
-          <div class="kpi-sub-large">${trend(k.yoy_pct)} <span class="text-slate-400">· ${k.window?.[0] || ""} → ${k.window?.[1] || ""}</span></div>
+          <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
+          <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
         </div>
       </div>`;
     }
     if (k.id === "tanker_12m_ton") {
+      const v = yearValue(k);
+      const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">12M 탱커 물동량</div>
+        <div class="kpi-label">${yearLabel} 탱커 물동량</div>
         <div>
-          <div class="kpi-value-large">${fmtTon(k.value_ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
-          <div class="kpi-sub-large">${trend(k.yoy_pct)} <span class="text-slate-400">· ${k.window?.[0] || ""} → ${k.window?.[1] || ""}</span></div>
+          <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
+          <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
         </div>
       </div>`;
     }

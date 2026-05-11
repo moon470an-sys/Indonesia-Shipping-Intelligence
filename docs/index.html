@@ -59,9 +59,17 @@
       </div>
 
       <!-- 4.1 Header KPI 4 (PR-3 fills; PR-7 skeleton until JS swaps) -->
+      <!-- PR-32: year selector — replaces "12M" labeling with calendar-year cuts. -->
+      <div class="flex flex-wrap items-center gap-3 mb-3" data-source="docs/derived/home_kpi.json">
+        <span class="text-xs font-semibold text-slate-600">기준 연도</span>
+        <div class="flex rounded border border-slate-200 overflow-hidden bg-white" id="home-year-pills" role="tablist" aria-label="Home KPI 연도 선택">
+          <button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>loading…</button>
+        </div>
+        <span class="text-[11px] text-slate-500" id="home-year-banner"></span>
+      </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="home-kpi" data-source="docs/derived/home_kpi.json">
-        <div class="kpi-card-large"><div class="kpi-label">12M 총 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
-        <div class="kpi-card-large"><div class="kpi-label">탱커 12M 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">총 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">탱커 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">탱커 등록 척수</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">데이터 기준일</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
       </div>
