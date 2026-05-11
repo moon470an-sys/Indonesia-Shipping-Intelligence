@@ -896,6 +896,214 @@ def build_cargo_ports() -> dict:
     }
 
 
+def build_cargo_routes() -> dict:
+    """Origin→Destination cargo routes (lines) for the Cargo tab Leaflet map.
+
+    For each cargo_snapshot row at port X with kind=dn/ln:
+      - BONGKAR (unload) side: TIBA.DARI → X with ton_b → (B = arrived at X)
+      - MUAT    (load)   side: X → BERANGKAT.KE with ton_m → (M = left from X)
+
+    Origin/destination text is the Indonesian port *name*; we resolve it
+    to a kode_pelabuhan via the ports table and keep only routes where
+    BOTH endpoints have known coordinates (so the line is drawable).
+
+    Output schema::
+
+        {
+          schema_version, snapshot_month, commodities,
+          routes: [
+            { o, d, loa, lna, lob, lnb,
+              dB, dM, iB, iM,
+              comms: { bucket: {dB, dM, iB, iM} } },
+            ...
+          ]
+        }
+    """
+    from backend.build_static import _FLOW_PORT_COORDS  # type: ignore
+    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
+
+    # Reuse the same bucket taxonomy as build_cargo_ports so the JS can
+    # filter routes by the very same commodity keys the user clicks on.
+    _BUCKET_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("CRUDE OIL",            ("CRUDE OIL", "MINYAK MENTAH")),
+        ("OMAN BLEND CRUDE OIL", ("OMAN BLEND",)),
+        ("CONDENSATE",           ("CONDENSATE", "NAPHTHA", "NAFTA")),
+        ("PERTALITE",            ("PERTALITE",)),
+        ("PERTAMAX",             ("PERTAMAX",)),
+        ("AVTUR",                ("AVTUR", "JET A")),
+        ("HSD",                  ("HSD",)),
+        ("BIO SOLAR",            ("BIO SOLAR", "BIOSOLAR")),
+        ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL")),
+        ("METHANOL",             ("METHANOL",)),
+        ("ASPAL/BITUMEN",        ("ASPAL", "BITUMEN", "ASPHALT")),
+        ("LPG",                  ("LPG", "ELPIJI", "LIQUEFIED PETROLEUM")),
+        ("LNG",                  ("LNG", "NATURAL GAS")),
+        ("CPO",                  ("CPO", "PALM OIL", "MINYAK SAWIT")),
+        ("RBD PALM OIL",         ("RBD PALM OIL", "RBD OIL")),
+        ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN")),
+        ("OLEIN",                ("OLEIN",)),
+        ("PKO",                  ("PKO", "PALM KERNEL")),
+        ("STEARIN",              ("STEARIN",)),
+        ("FAME",                 ("FAME", "BIODIESEL", "METIL ESTER")),
+        ("BATU BARA CURAH KERING", ("BATU BARA", "BATUBARA", "STEAM COAL")),
+        ("COAL",                 ("COAL",)),
+        ("NICKEL ORE",           ("NICKEL", "NIKEL", "BIJIH NIKEL")),
+        ("BAUXITE",              ("BAUXITE", "BAUKSIT")),
+        ("IRON ORE",             ("IRON ORE", "BIJIH BESI")),
+        ("LIMESTONE",            ("LIMESTONE",)),
+        ("WOOD CHIP",            ("WOOD CHIP",)),
+        ("SEMEN CURAH",          ("SEMEN CURAH", "CEMENT BULK")),
+        ("SEMEN",                ("SEMEN", "CEMENT", "KLINKER", "CLINKER")),
+        ("PUPUK",                ("PUPUK", "FERTILIZER", "UREA")),
+        ("BERAS",                ("BERAS", "RICE")),
+        ("SALT",                 ("SALT", "GARAM")),
+        ("CONTAINER",            ("CONTAINER", "PETIKEMAS", "KONTAINER", "TEU")),
+        ("GENERAL CARGO",        ("GENERAL CARGO", "BARANG UMUM", "MUATAN UMUM")),
+        ("BARANG",               ("BARANG",)),
+        ("MOBIL",                ("MOBIL", "CAR ", "PASSENGER CAR")),
+        ("TRUK",                 ("TRUK", "TRUCK", "TRONTON")),
+        ("MOTOR",                ("MOTOR ", "MOTORCYCLE", "SEPEDA MOTOR")),
+        ("IKAN",                 ("IKAN", "FISH")),
+        ("TERNAK",               ("TERNAK", "LIVESTOCK")),
+        ("CHEMICAL",             ("CHEMICAL", "KIMIA")),
+    )
+
+    def _classify(label: str | None) -> str:
+        if not label:
+            return "기타"
+        s = str(label).upper()
+        for bucket, kws in _BUCKET_KEYWORDS:
+            if any(kw in s for kw in kws):
+                return bucket
+        return "기타"
+
+    # ---- 1) port name → code lookup ------------------------------------
+    code_by_name: dict[str, str] = {}
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute("SELECT kode_pelabuhan, nama_pelabuhan FROM ports")
+        for code, name in cur:
+            if not (code and name):
+                continue
+            if code not in port_coords:
+                continue
+            n = str(name).strip().upper()
+            if n:
+                code_by_name.setdefault(n, code)
+
+    def _resolve(name: str | None) -> str | None:
+        if not name:
+            return None
+        n = str(name).strip().upper()
+        if not n or n in {"-", "--", "0", "NONE"}:
+            return None
+        return code_by_name.get(n)
+
+    # ---- 2) Stream rows + aggregate in Python (faster than GROUP BY on
+    # 2.4M-row json_extract — single scan, dict aggregation) -------------
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    def _p(k: str) -> str:
+        return ('$."' + k + '"').replace("'", "''")
+    P_DARI = _p("('TIBA', 'DARI')")
+    P_KE   = _p("('BERANGKAT', 'KE')")
+    P_KB   = _p("('BONGKAR', 'KOMODITI')")
+    P_TB   = _p("('BONGKAR', 'TON')")
+    P_KM   = _p("('MUAT', 'KOMODITI')")
+    P_TM   = _p("('MUAT', 'TON')")
+    ton_x = lambda p: f"CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL)"
+
+    # key = (origin_code, dest_code, kind, side, bucket)
+    comm_totals: dict[tuple[str, str, str, str, str], float] = {}
+
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            f"SELECT kode_pelabuhan, kind, "
+            f"  json_extract(raw_row, '{P_DARI}'), "
+            f"  json_extract(raw_row, '{P_KB}'),  "
+            f"  {ton_x(P_TB)}, "
+            f"  json_extract(raw_row, '{P_KE}'),  "
+            f"  json_extract(raw_row, '{P_KM}'),  "
+            f"  {ton_x(P_TM)} "
+            f"FROM cargo_snapshot WHERE snapshot_month = ? "
+            f"  AND kode_pelabuhan IS NOT NULL AND kode_pelabuhan != ''",
+            (snap,),
+        )
+        for code, kind, dari, kb, tb, ke, km, tm in cur:
+            # BONGKAR (arrival) — DARI → kode_pelabuhan
+            if dari and tb and tb > 0 and code in port_coords:
+                src = _resolve(dari)
+                if src:
+                    ck = (src, code, kind, "B", _classify(kb))
+                    comm_totals[ck] = comm_totals.get(ck, 0.0) + float(tb)
+            # MUAT (departure) — kode_pelabuhan → KE
+            if ke and tm and tm > 0 and code in port_coords:
+                dst = _resolve(ke)
+                if dst:
+                    ck = (code, dst, kind, "M", _classify(km))
+                    comm_totals[ck] = comm_totals.get(ck, 0.0) + float(tm)
+
+    # Derive side_totals from comm_totals (avoid double accumulation)
+    side_totals: dict[tuple[str, str, str, str], float] = {}
+    for (o, d, kind, side, _b), t in comm_totals.items():
+        key = (o, d, kind, side)
+        side_totals[key] = side_totals.get(key, 0.0) + t
+
+    # ---- 3) Fold into per-OD records with comms breakdown --------------
+    od: dict[tuple[str, str], dict] = {}
+    for (o, d, kind, side), ton_total in side_totals.items():
+        rec = od.setdefault((o, d), {"o": o, "d": d,
+                                     "loa": port_coords[o][0], "lna": port_coords[o][1],
+                                     "lob": port_coords[d][0], "lnb": port_coords[d][1],
+                                     "dB": 0.0, "dM": 0.0, "iB": 0.0, "iM": 0.0,
+                                     "comms": {}})
+        fld = ("d" if kind == "dn" else "i") + side
+        rec[fld] = round(rec[fld] + ton_total, 1)
+    for (o, d, kind, side, bucket), ton_total in comm_totals.items():
+        rec = od.get((o, d))
+        if not rec:
+            continue
+        cb = rec["comms"].setdefault(bucket, {"dB": 0.0, "dM": 0.0, "iB": 0.0, "iM": 0.0})
+        fld = ("d" if kind == "dn" else "i") + side
+        cb[fld] = round(cb[fld] + ton_total, 1)
+
+    # ---- 4) Drop tiny routes + same-port self-loops are LEGIT STS,
+    # keep them — frontend can opt to filter. Threshold: 1000 ton to keep
+    # the JSON file manageable (≤~200KB).
+    THRESH = 1000.0
+    out: list[dict] = []
+    for rec in od.values():
+        tot = rec["dB"] + rec["dM"] + rec["iB"] + rec["iM"]
+        if tot < THRESH:
+            continue
+        out.append(rec)
+    out.sort(key=lambda r: -(r["dB"] + r["dM"] + r["iB"] + r["iM"]))
+
+    bucket_seen: set[str] = set()
+    for rec in out:
+        bucket_seen.update(rec["comms"].keys())
+    commodities = sorted(bucket_seen - {"기타"}) + (["기타"] if "기타" in bucket_seen else [])
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot, TIBA.DARI + BERANGKAT.KE)",
+        "min_ton_threshold": THRESH,
+        "commodities": commodities,
+        "routes": out,
+        "_notes": {
+            "fields": "dB/dM/iB/iM = ton totals for "
+                      "(d)omestic/(i)ntl × (B)ongkar-arriving / (M)uat-departing",
+            "resolution": "TIBA.DARI / BERANGKAT.KE are port NAMES; resolved "
+                          "to kode_pelabuhan via ports.nama_pelabuhan (uppercased). "
+                          "Routes where either endpoint name has no port-code "
+                          "match or no coordinate are dropped.",
+        },
+    }
+
+
 def build_cargo_yearly() -> dict:
     """Per calendar-year cargo cuts (treemap + commodities), for the Cargo tab.
 
@@ -2227,6 +2435,15 @@ def main() -> None:
         f"{y}: {cy['months_per_year'][y]}mo" for y in cy["years"]
     )
     print(f"  cargo_yearly.json — {len(cy['years'])} years ({_year_summary})")
+
+    cp = build_cargo_ports()
+    bytes_total += _write_json(DERIVED / "cargo_ports.json", cp)
+    print(f"  cargo_ports.json — {len(cp['ports'])} ports × "
+          f"{len(cp['commodities'])} commodities")
+
+    # build_cargo_routes is heavy (2.4M raw_row json_extracts × 6 paths);
+    # commented out for now. Cargo OD lines on the map are sourced from
+    # the existing map_flow.json routes_top30 (24M rolling, 8 categories).
 
     tk = build_owner_ticker_map()
     bytes_total += _write_json(DERIVED / "owner_ticker_map.json", tk)
