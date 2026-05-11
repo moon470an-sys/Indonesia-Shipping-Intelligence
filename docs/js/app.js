@@ -328,12 +328,53 @@ async function renderTankerSector() {
     });
   }
 
+  // PR-33: default Tanker Sector to the most-recent FULL year so cards
+  // align with the Cargo + Home year selectors.
+  if (!tsState.activeYear) tsState.activeYear = _pickTankerSectorYear(tsState.tankerSubclass);
+  buildTankerYearPills(tsState.tankerSubclass);
+
   drawTankerCards();
   drawTankerScatter();
   drawTankerMonthly();
   drawTankerCommodityBars();
   drawTankerOperatorBars();
   drawTankerOperatorDonut();
+}
+
+function _pickTankerSectorYear(payload) {
+  const mpy = payload?.months_per_year || {};
+  const years = Object.keys(mpy).sort();
+  if (!years.length) return null;
+  const full = years.filter(y => mpy[y] === 12);
+  return full.length ? full[full.length - 1] : years[years.length - 1];
+}
+
+function buildTankerYearPills(payload) {
+  const host = document.getElementById("ts-year-pills");
+  if (!host) return;
+  const mpy = payload?.months_per_year || {};
+  const years = Object.keys(mpy).sort();
+  if (!years.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    return;
+  }
+  const active = tsState.activeYear;
+  host.innerHTML = years.map(y => {
+    const isActive = y === active;
+    const isPartial = (mpy[y] || 0) < 12;
+    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
+  }).join("");
+  host.querySelectorAll("button[data-year]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tsState.activeYear = btn.dataset.year;
+      buildTankerYearPills(payload);
+      drawTankerCards();   // only the cards depend on the active year right now
+    });
+  });
 }
 
 function drawTankerCards() {
@@ -346,10 +387,25 @@ function drawTankerCards() {
   for (const s of (tsState.tankerSubclass?.monthly?.series || [])) {
     monthlyBySub[s.subclass] = s.ton_by_period || [];
   }
+  // PR-33: year-aware value resolver. When tsState.activeYear is set and
+  // the card has ton_by_year, prefer those values; else fall back to the
+  // legacy 12M fields. The card label flips accordingly.
+  const mpy = tsState.tankerSubclass?.months_per_year || {};
+  const activeYear = tsState.activeYear;
+  const yearMonths = activeYear ? (mpy[activeYear] || 0) : 12;
+  const yearLabel = activeYear
+    ? `${activeYear}년${yearMonths < 12 ? ` (${yearMonths}mo)` : ""}`
+    : "12M";
   host.innerHTML = cards.map(c => {
     const color = SUBCLASS_PALETTE[c.subclass] || "#64748b";
-    const tonStr = fmtTon(c.ton_last_12m);
-    const yoy = c.yoy_pct;
+    let tonVal = c.ton_last_12m;
+    let yoy = c.yoy_pct;
+    if (activeYear && c.ton_by_year && activeYear in c.ton_by_year) {
+      tonVal = c.ton_by_year[activeYear];
+      // Suppress YoY on partial years (misleading vs full 12 months)
+      yoy = yearMonths === 12 ? (c.yoy_by_year || {})[activeYear] : null;
+    }
+    const tonStr = fmtTon(tonVal);
     const trend = yoy == null
       ? `<span class="text-slate-400 text-sm">YoY —</span>`
       : `<span class="${yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} text-base font-semibold">${yoy >= 0 ? "↑" : "↓"} ${Math.abs(yoy).toFixed(1)}%</span>`;
@@ -381,7 +437,7 @@ function drawTankerCards() {
       <div class="flex items-end justify-between gap-2 mb-2">
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
-          <span class="text-xs text-slate-500">tons (12M)</span>
+          <span class="text-xs text-slate-500">tons (${yearLabel})</span>
         </div>
         <div title="24M monthly ton trend">${sparkline(monthlyBySub[c.subclass] || [], { color, width: 80, height: 24 })}</div>
       </div>

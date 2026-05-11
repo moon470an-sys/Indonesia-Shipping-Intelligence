@@ -941,6 +941,38 @@ def build_tanker_subclass() -> dict:
     top_operators = _top_operator_per_subclass(tf.get("fleet_owners", []))
 
     # ---- Card data per subclass (fact card §5.1) ----
+    #
+    # PR-33: also derive ton_by_year / yoy_by_year from the monthly_subclass
+    # series so the Tanker Sector cards can render "2025년 ton" instead of
+    # rolling 12M. The series is positionally aligned with `periods`, so
+    # year folding is just a sum on period[:4].
+    monthly_rows = tf.get("monthly_subclass", [])
+    sub_year_ton: dict[tuple[str, str], float] = defaultdict(float)
+    year_months: dict[str, set] = defaultdict(set)
+    for r in monthly_rows:
+        sub = r.get("subclass") or "UNKNOWN"
+        if sub == "UNKNOWN":
+            continue
+        p = r.get("period") or ""
+        if len(p) < 7:
+            continue
+        y = p[:4]
+        sub_year_ton[(sub, y)] += float(r.get("ton_total") or 0)
+        year_months[y].add(p[:7])
+    months_per_year = {y: len(s) for y, s in year_months.items()}
+
+    def _yoy_dict(sub: str) -> tuple[dict, dict]:
+        years_sorted = sorted({y for (s, y) in sub_year_ton if s == sub})
+        ton = {y: round(sub_year_ton[(sub, y)], 1) for y in years_sorted}
+        yoy: dict[str, float | None] = {}
+        for i, y in enumerate(years_sorted):
+            if i == 0:
+                yoy[y] = None
+            else:
+                prev = ton[years_sorted[i - 1]]
+                yoy[y] = round((ton[y] - prev) / prev * 100, 1) if prev > 0 else None
+        return ton, yoy
+
     cards = []
     for r in sub_facts.get("subclasses", []):
         sub = r["subclass"]
@@ -949,10 +981,13 @@ def build_tanker_subclass() -> dict:
         ton_last = r.get("ton_last_12m") or 0
         ton_prev = r.get("ton_prev_12m") or 0
         delta_pct = ((ton_last - ton_prev) / ton_prev * 100) if ton_prev > 0 else None
+        ton_by_year, yoy_by_year = _yoy_dict(sub)
         cards.append({
             "subclass": sub,
             "ton_last_12m": ton_last,
             "yoy_pct": round(delta_pct, 1) if delta_pct is not None else None,
+            "ton_by_year": ton_by_year,           # PR-33
+            "yoy_by_year": yoy_by_year,           # PR-33
             "avg_age_gt_weighted": r.get("avg_age_gt_weighted"),
             "operator_count": r.get("operator_count"),
             "vessel_count": r.get("vessel_count"),
@@ -989,8 +1024,11 @@ def build_tanker_subclass() -> dict:
         "snapshot_month": tf.get("snapshot_month"),
         "cards": cards,
         "monthly": {"periods": sorted_periods, "series": series},
+        "months_per_year": months_per_year,  # PR-33: feeds the year selector
         "_notes": {
-            "yoy_basis": "12M-vs-prev-12M % (cagr_24m_pct also exposed if available)",
+            "yoy_basis": "ton_by_year: calendar-year sums from monthly_subclass; "
+                         "yoy_by_year: same-year vs previous-year (null if prev missing or zero); "
+                         "ton_last_12m: legacy rolling 12M kept for backwards-compat",
             "top_route_per_subclass": "deferred — needs per-subclass OD aggregation",
         },
     }
