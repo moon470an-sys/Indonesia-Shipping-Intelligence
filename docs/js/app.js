@@ -74,7 +74,14 @@ function fmtPct(v, opts = {}) {
 const state = {
   meta: null,
   financials: null,
+  scope: null,         // Cycle 1: cached docs/derived/scope_audit.json
   loaded: new Set(),
+};
+
+// Cycle 1: cargo scope filter. When true (default), Fleet/Supply hides
+// scope=excluded rows. Toggle in #fl-scope-show-excluded.
+const scopeState = {
+  hideExcluded: true,
 };
 
 async function loadJson(name) {
@@ -847,13 +854,16 @@ function renderFinancials() {
 }
 
 // ---------- Tabs ----------
-// PR-13: tab name -> document.title suffix
+// Cycle 1: 5탭 → 4탭 재편. data-tab id는 기존 호환을 위해 유지하되
+// 화면 라벨은 Demand / Supply / Balance / Explorer.
 const TAB_TITLES = {
-  "overview":      "Home",
-  "tanker-sector": "Tanker Sector",
-  "fleet":         "Fleet",
-  "cargo":         "Cargo",
-  "financials":    "Listed Operators",
+  "overview":      "Demand",
+  "fleet":         "Supply",
+  "tanker-sector": "Balance",
+  "explorer":      "Explorer",
+  // legacy ids — accessible via deep-link only, hidden from nav
+  "cargo":         "Cargo (legacy)",
+  "financials":    "Listed Operators (legacy)",
 };
 
 async function showTab(name) {
@@ -920,18 +930,44 @@ async function ensureLoaded(tab) {
       renderFinancials();
       state.loaded.add("financials");
     }
+    if (tab === "explorer" && !state.loaded.has("explorer")) {
+      renderExplorer();
+      state.loaded.add("explorer");
+    }
     // Home (overview) renders eagerly in boot(), no lazy load.
   } catch (e) {
     console.error(e);
   }
 }
 
+// Cycle 1: Explorer tab — placeholder wiring. Cross-tab jump links and the
+// "show excluded" toggle are interactive; the data widgets land in Cycle 2-3.
+function renderExplorer() {
+  document.querySelectorAll("#tab-explorer .ex-jumplink").forEach(a => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const dst = a.dataset.tab;
+      if (dst) showTab(dst);
+    });
+  });
+  const tog = document.getElementById("ex-show-excluded");
+  const host = document.getElementById("ex-excluded-host");
+  if (tog && host) {
+    tog.addEventListener("change", () => {
+      host.classList.toggle("hidden", !tog.checked);
+    });
+  }
+}
+
 // ---------- Boot ----------
 async function boot() {
-  // Renewal v2: light-weight boot. Home, Cargo & Fleet, Tanker Sector and
-  // Listed Operators all render lazily from docs/derived/* on demand.
-  // legacy docs/data/{meta,overview,kpi_summary,...}.json reads removed.
+  // Renewal v2: light-weight boot. Demand (overview), Supply (fleet),
+  // Balance (tanker-sector) and Explorer render lazily from docs/derived/*
+  // on demand. legacy docs/data/{meta,overview,kpi_summary,...}.json reads removed.
   try { state.meta = await loadDerived("meta.json"); } catch (e) { state.meta = null; }
+  // Cycle 1: scope_audit drives the meta-strip on every tab.
+  try { state.scope = await loadDerived("scope_audit.json"); } catch (e) { state.scope = null; }
+  populateScopeStrips();
   await renderHome();
   document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => showTab(t.dataset.tab)));
   bindTabKeyboardNav();
@@ -939,6 +975,31 @@ async function boot() {
   loadGlobalFooter();
   setupSourceLabels();
   decorateGlossary(document);
+}
+
+// Cycle 1: populate every scope meta-strip from docs/derived/scope_audit.json.
+// Single source of truth — each tab's strip pulls its counts from state.scope.
+function populateScopeStrips() {
+  const s = state.scope?.totals || {};
+  const ids = {
+    "scope-n-cargo":  s.cargo,
+    "scope-n-aux":    s.auxiliary,
+    "scope-n-excl":   s.excluded,
+    "scope-n-unc":    s.unclassified,
+    "fl-scope-cargo": s.cargo,
+    "fl-scope-aux":   s.auxiliary,
+    "fl-scope-excl":  s.excluded,
+    "bl-scope-cargo": s.cargo,
+    "bl-scope-aux":   s.auxiliary,
+    "ex-scope-cargo": s.cargo,
+    "ex-scope-aux":   s.auxiliary,
+    "ex-scope-excl":  s.excluded,
+    "ex-scope-unc":   s.unclassified,
+  };
+  for (const [id, v] of Object.entries(ids)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = v == null ? "—" : Number(v).toLocaleString();
+  }
 }
 
 
@@ -1670,7 +1731,25 @@ async function renderFleet() {
 
   _buildFleetFilters(fv);
   _wireFleetFilters();
+  _wireFleetScopeToggle();
   _renderFleetView();
+}
+
+// Cycle 1 — wire the "제외 선종도 표시" toggle. Default OFF (cargo+aux only).
+function _wireFleetScopeToggle() {
+  const cb = document.getElementById("fl-scope-show-excluded");
+  if (!cb || cb.dataset.wired) return;
+  cb.dataset.wired = "1";
+  cb.checked = !scopeState.hideExcluded;
+  cb.addEventListener("change", () => {
+    scopeState.hideExcluded = !cb.checked;
+    const tabEl = document.getElementById("tab-fleet");
+    if (tabEl) {
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+      _renderFleetJenisList(tabEl._fleetVessels);
+    }
+  });
 }
 
 function _idxOf(fv, name) { return (fv.cols || []).indexOf(name); }
@@ -1906,6 +1985,12 @@ function _applyFleetFilters() {
   const nameQ = (st.name || "").toUpperCase();
 
   const filtered = fv.rows.filter(r => {
+    // Cycle 1 — cargo scope filter (default: hide excluded + unclassified).
+    // r[I.scope] is the 18th col added in fleet_vessels schema_version 5.
+    if (scopeState.hideExcluded && I.scope != null) {
+      const scope = r[I.scope];
+      if (scope === "excluded" || scope === "unclassified") return false;
+    }
     // Vessel Type filter — selected set + 제외 모드 (exclude vs include)
     if (st.jenis.size) {
       const matched = st.jenis.has(r[I.jenis] || "(blank)");

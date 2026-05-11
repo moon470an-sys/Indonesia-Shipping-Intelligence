@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "totals": {
+    "excluded": 50580,
+    "cargo": 29574,
+    "auxiliary": 11561,
+    "unclassified": 92
+  },
+  "all_vessels": 91807,
+  "unclassified_pct": 0.1,
+  "definition": "docs/cargo_scope_definition.md",
+  "_notes": {
+    "cargo": "메인 차트 노출 — Container/Bulk/Tanker/General Cargo/Other Cargo",
+    "auxiliary": "메인 차트 노출 (Tug 단일 라벨) — 주력 공급에는 미합산",
+    "excluded": "메인 차트 미표시 — Passenger/Fishing/Patrol/Yacht/Dredger/OSV",
+    "unclassified": "UNMAPPED 라벨 + LK3 화물 실적 없음 (감사 대상)"
+  }
+}

@@ -345,6 +345,7 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
         CLS_TANKER, CLS_TUG_OSV, CLS_UNMAPPED,
         classify_tanker_subclass, classify_vessel_type,
     )
+    from backend.cargo_scope import cargo_scope
     # Visual-class labels — keeps stable display names independent of the
     # underlying taxonomy constants, so future renames don't break the UI.
     visual_map = {
@@ -397,6 +398,10 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
             # Keep ALL sectors — the frontend filter handles narrowing
             vc = visual_map.get(vclass, "UNMAPPED")
             ts = classify_tanker_subclass(jenis) if vclass == CLS_TANKER else ""
+            # Cargo scope (cargo / auxiliary / excluded / unclassified) — the
+            # primary visibility filter for the renewed 4-tab site. See
+            # docs/cargo_scope_definition.md for the rule set.
+            scope, _scope_ui = cargo_scope(jenis, sector=sector, vessel_class=vclass)
             try:
                 gt_v = round(float(gt), 1) if gt is not None else 0.0
             except (TypeError, ValueError):
@@ -448,6 +453,7 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
                 mesin_type_v,                   # PR — engine type
                 (imo or "").strip(),
                 (call_sign or "").strip(),
+                scope,                          # Cycle 1 — cargo / auxiliary / excluded / unclassified
             ])
 
     # Pre-compute headline totals so the frontend doesn't need to scan rows
@@ -456,14 +462,15 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
     from collections import Counter as _Counter, defaultdict as _dd
     sector_totals = _Counter(r[2] for r in rows)
     vc_totals = _Counter(r[3] for r in rows)
+    scope_totals = _Counter(r[17] for r in rows)
     jenis_agg: dict[str, dict] = {}
     for r in rows:
         jn = r[4] or "(blank)"
-        d = jenis_agg.setdefault(jn, {"count": 0, "sector": r[2], "vc": r[3]})
+        d = jenis_agg.setdefault(jn, {"count": 0, "sector": r[2], "vc": r[3], "scope": r[17]})
         d["count"] += 1
 
     return {
-        "schema_version": 4,                # PR — lebar/dalam/mesin/mesin_type
+        "schema_version": 5,                # Cycle 1 — adds `scope` column
         "snapshot_month": snapshot_month,
         "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/",
         "current_year": cur_year,
@@ -471,12 +478,14 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
                   "gt", "loa", "lebar", "dalam",
                   "tahun", "age", "flag",
                   "mesin", "mesin_type",
-                  "imo", "call_sign"],
+                  "imo", "call_sign",
+                  "scope"],                  # Cycle 1 — cargo scope (see docs/cargo_scope_definition.md)
         "rows": rows,
         "totals": {
             "all_vessels": len(rows),
             "by_sector": dict(sector_totals),
             "by_class":  dict(vc_totals),
+            "by_scope":  dict(scope_totals),
             "by_jenis":  jenis_agg,
         },
         "_notes": {
@@ -2476,6 +2485,31 @@ def main() -> None:
     _path.write_text(_text, encoding="utf-8")
     bytes_total += len(_text)
     print(f"  fleet_vessels.json — {len(fv['rows']):,} vessels (compact)")
+
+    # Cycle 1 — scope audit summary. Small standalone file consumed by every
+    # tab's meta-strip ("화물선 n / 보조선 k / 제외 m / 분류 미정 u").
+    sa = {
+        "schema_version": 1,
+        "snapshot_month": _snap,
+        "totals": fv["totals"]["by_scope"],
+        "all_vessels": fv["totals"]["all_vessels"],
+        "unclassified_pct": round(
+            fv["totals"]["by_scope"].get("unclassified", 0) /
+            max(1, fv["totals"]["all_vessels"]) * 100.0, 3),
+        "definition": "docs/cargo_scope_definition.md",
+        "_notes": {
+            "cargo":        "메인 차트 노출 — Container/Bulk/Tanker/General Cargo/Other Cargo",
+            "auxiliary":    "메인 차트 노출 (Tug 단일 라벨) — 주력 공급에는 미합산",
+            "excluded":     "메인 차트 미표시 — Passenger/Fishing/Patrol/Yacht/Dredger/OSV",
+            "unclassified": "UNMAPPED 라벨 + LK3 화물 실적 없음 (감사 대상)",
+        },
+    }
+    bytes_total += _write_json(DERIVED / "scope_audit.json", sa)
+    print(f"  scope_audit.json — cargo:{sa['totals'].get('cargo',0):,} / "
+          f"auxiliary:{sa['totals'].get('auxiliary',0):,} / "
+          f"excluded:{sa['totals'].get('excluded',0):,} / "
+          f"unclassified:{sa['totals'].get('unclassified',0):,} "
+          f"(unclassified {sa['unclassified_pct']}%)")
     if unmatched:
         log_path = DERIVED / "unmatched.log"
         log_path.write_text("\n".join(unmatched) + "\n", encoding="utf-8")

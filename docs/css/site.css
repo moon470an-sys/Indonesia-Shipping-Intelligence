@@ -350,6 +350,21 @@ table tbody tr:hover { background:#fef3c7; }
 
 .source-label { display: none; }
 
+/* Cycle 1 — cargo scope meta-strip (Demand/Supply/Balance/Explorer 공통).
+   화물선 / 보조선 / 제외 / 분류 미정 카운트 칩. 색상은
+   backend.cargo_scope.SCOPE_PALETTE 와 일치시킨다. */
+.scope-strip { padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+.scope-chip { display: inline-flex; align-items: center; gap: 4px;
+              padding: 3px 9px; border-radius: 999px;
+              font-weight: 500; line-height: 1.4;
+              border: 1px solid transparent; }
+.scope-chip strong { font-weight: 700; font-variant-numeric: tabular-nums; }
+.scope-cargo        { background: #e0e7ff; color: #1e3a8a; border-color: #c7d2fe; }
+.scope-aux          { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.scope-excluded     { background: #fafaf9; color: #78716c; border-color: #e7e5e4; }
+.scope-unclassified { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+.scope-chip em      { font-style: normal; }
+
 /* PR-B: persistent disclaimer footer; visible on screen and print. */
 #global-footer { box-shadow: 0 -1px 2px rgba(0,0,0,0.04); }
 #global-footer p { margin: 0; }
