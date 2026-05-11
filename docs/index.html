@@ -196,8 +196,8 @@
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
-        <h3 class="font-semibold mb-2">🗺️ OD 흐름 지도 (Top 30 항로, 24M)</h3>
-        <p class="text-xs text-slate-500 mb-2">버블 = 항구별 24M 총 톤, 선 두께 ∝ 항로 톤, 색상 = 화물 카테고리. 카테고리 범례 클릭으로 토글 가능.</p>
+        <h3 class="font-semibold mb-2"><span id="cg-od-map-title">🗺️ OD 흐름 지도</span></h3>
+        <p class="text-xs text-slate-500 mb-2">버블 = 항구별 총 톤, 선 두께 ∝ 항로 톤. 선택 연도가 있으면 해당 연도 데이터, 없으면 24M 카테고리 색상.</p>
         <div id="cg-od-map" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-od-map-caption">&nbsp;</p>
       </div>
@@ -231,8 +231,8 @@
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/route_facts.json">
-        <h3 class="font-semibold mb-2">Top 항로 (OD · 24M 톤)</h3>
-        <p class="text-xs text-slate-500 mb-2">상위 25개 OD 항로 — origin → destination · 24개월 총 톤 · 선박 수 · self-loop (STS) 표시.</p>
+        <h3 class="font-semibold mb-2"><span id="cg-routes-title">Top 항로 (OD)</span></h3>
+        <p class="text-xs text-slate-500 mb-2">상위 25개 OD 항로 — origin → destination · 총 톤 · self-loop (STS) 표시. 연도 선택에 따라 데이터 변경.</p>
         <div class="mb-2 flex flex-wrap gap-3 text-xs">
           <label class="inline-flex items-center gap-1">
             <input type="checkbox" id="cg-routes-hide-self" checked> self-loop (STS) 숨김
@@ -243,8 +243,8 @@
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/route_facts.json">
-        <h3 class="font-semibold mb-2">Top STS / 자체 환적 (origin = destination)</h3>
-        <p class="text-xs text-slate-500 mb-2">자체 환적이 일어나는 항구 — 정유 단지 · 터미널 인근 STS 활동 신호.</p>
+        <h3 class="font-semibold mb-2"><span id="cg-sts-title">Top STS / 자체 환적 (origin = destination)</span></h3>
+        <p class="text-xs text-slate-500 mb-2">자체 환적이 일어나는 항구 — 정유 단지 · 터미널 · 환적 활동 신호. 연도 선택에 따라 데이터 변경.</p>
         <div id="cg-sts-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-sts-caption">&nbsp;</p>
       </div>
