@@ -1598,16 +1598,13 @@ function fillMapInsights() {
 // pulls `owner_profile.json` for top-owner views; Cargo additionally
 // pulls `route_facts.json` for OD lanes and `timeseries.json` for the
 // sector trend.
-// PR — Fleet tab filter:
-//   Sector pills (6 + 전체) narrow the candidate jenis pool.
-//   Vessel Type list (raw JenisDetailKet, 125 distinct) is a searchable
-//   scrollable multi-select — no taxonomy bucketing, every type is its
-//   own filter item with count.
-// State is held on the section element so re-renders are cheap.
-const FLEET_SECTORS = [
-  "CARGO", "PASSENGER", "FISHING",
-  "OFFSHORE_SUPPORT", "NON_COMMERCIAL", "UNMAPPED",
-];
+// PR — Fleet tab faithfully mirrors jang1117.github.io/vessels:
+//   Sidebar: Vessel Type (체크박스 + 제외 모드) + 건조연도 + GT + LOA +
+//            Width + Depth + 선박명 + 초기화.
+//   Right:   4 KPI cards + 평균 제원 strip + 6 charts + sortable table.
+// All custom filters (Sector pills / Subclass / 선령 buckets / 선주 /
+// 국적 select) from previous PRs have been stripped to keep parity with
+// the reference site.
 const FLEET_AGE_BUCKETS = [
   { key: "0-4",   label: "0–4년",    lo: 0,  hi: 5  },
   { key: "5-14",  label: "5–14년",   lo: 5,  hi: 15 },
@@ -1641,18 +1638,13 @@ async function renderFleet() {
   tabEl._fleetVessels = fv;
   tabEl._fleetOwners = fo;
 
-  // Initial state object — PR-X: classes → sectors + jenis (raw type).
-  // PR — jang1117 layout adds width/depth ranges + chart-click filters.
+  // Initial state object — jang1117 parity (no sector/subclass/age/owner/flag).
   if (!tabEl._fleetState) {
     tabEl._fleetState = {
-      sectors: new Set(),         // empty == all sectors
-      jenis: new Set(),           // empty == all jenis types
-      jenisQuery: "",             // search box content
-      subclasses: new Set(),
-      ages: new Set(),
-      owner: "",
-      name: "",
-      flag: "",
+      jenis: new Set(),                // checkbox selection of JenisDetailKet
+      jenisQuery: "",                  // search box content
+      jenisExclude: false,             // 제외 모드 toggle
+      name: "",                        // 선박명 substring
       gtMin: null, gtMax: null,
       yrMin: null, yrMax: null,
       loaMin: null, loaMax: null,
@@ -1672,55 +1664,30 @@ async function renderFleet() {
 function _idxOf(fv, name) { return (fv.cols || []).indexOf(name); }
 
 function _buildFleetFilters(fv) {
-  // PR-X: Sector pill row (6 + 전체). Replaces the old Vessel Class pill row.
-  const sectorHost = document.getElementById("fl-f-sector");
-  if (sectorHost && !sectorHost.dataset.wired) {
-    sectorHost.dataset.wired = "1";
-    const allPill = `<button type="button" data-group="fl-sector" data-key="__ALL__"
-      class="px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
-      title="모든 sector 표시">전체</button>`;
-    sectorHost.innerHTML = allPill + FLEET_SECTORS.map(s =>
-      _pillBtn(s, s, false, "fl-sector")
-    ).join("");
+  // jang1117 mirror: only build the Vessel Type list + table header.
+  // (No sector/subclass/age/flag controls — removed.)
+  _renderFleetJenisList(fv);
+
+  // Header source label ("kapal.dephub.go.id · NN,NNN rows · 전체 NN,NNN")
+  const sourceLabel = document.getElementById("fl-source-label");
+  if (sourceLabel) {
+    sourceLabel.textContent =
+      `kapal.dephub.go.id · ${fv.rows.length.toLocaleString()} rows · 전체 ${fv.rows.length.toLocaleString()}`;
   }
 
-  // PR-X: Searchable Vessel Type list. Built once from totals.by_jenis,
-  // re-rendered when Sector or search query changes.
-  _renderFleetJenisList(fv);
-  const sub = document.getElementById("fl-f-subclass");
-  if (sub && !sub.dataset.wired) {
-    sub.dataset.wired = "1";
-    sub.innerHTML = FLEET_TANKER_SUBS.map(s => _pillBtn(s, s, false, "fl-sub")).join("");
-  }
-  const age = document.getElementById("fl-f-age");
-  if (age && !age.dataset.wired) {
-    age.dataset.wired = "1";
-    age.innerHTML = FLEET_AGE_BUCKETS.map(b => _pillBtn(b.label, b.key, false, "fl-age")).join("");
-  }
-  // Flag select: derive from data once
-  const flag = document.getElementById("fl-f-flag");
-  if (flag && !flag.dataset.wired) {
-    const flagIdx = _idxOf(fv, "flag");
-    const flags = new Map();
-    for (const r of fv.rows) {
-      const f = r[flagIdx] || "Indonesia";
-      flags.set(f, (flags.get(f) || 0) + 1);
-    }
-    const sorted = [...flags.entries()].sort((a, b) => b[1] - a[1]);
-    flag.innerHTML = `<option value="">(전체)</option>` +
-      sorted.map(([f, n]) => `<option value="${f}">${f} (${n.toLocaleString()})</option>`).join("");
-    flag.dataset.wired = "1";
-  }
   // Table header
   const th = document.getElementById("fl-thead-row");
   if (th && !th.dataset.wired) {
     th.dataset.wired = "1";
     const cols = [
-      ["nama", "선박명"], ["owner", "선주"], ["sector", "Sector"],
-      ["jenis", "Vessel Type"],             // PR-X: raw JenisDetailKet
-      ["ts", "Subclass"],
-      ["gt", "GT"], ["loa", "LOA"], ["tahun", "건조"], ["age", "선령"],
-      ["flag", "국적"], ["imo", "IMO"], ["call_sign", "Call Sign"],
+      ["nama", "선박명"], ["owner", "선주"],
+      ["jenis", "Vessel Type"],
+      ["gt", "GT"], ["loa", "LOA (m)"],
+      ["lebar", "Width (m)"], ["dalam", "Depth (m)"],
+      ["tahun", "건조"], ["age", "선령"],
+      ["flag", "국적"],
+      ["mesin", "엔진"], ["mesin_type", "엔진 타입"],
+      ["imo", "IMO"], ["call_sign", "Call Sign"],
     ];
     th.innerHTML = cols.map(([k, l]) =>
       `<th data-col="${k}" class="px-2 py-1 text-left font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">${l} <span class="text-slate-300" data-sort-marker></span></th>`
@@ -1747,53 +1714,9 @@ function _pillBtn(label, key, active, group = "fl-cls") {
 function _wireFleetFilters() {
   const tabEl = document.getElementById("tab-fleet");
   const st = tabEl._fleetState;
+  const debouncedRender = _fleetDebounce(_renderFleetView, 150);
 
-  // Pill toggle (sector / subclass / age). PR-X: the sector group has a
-  // special "__ALL__" pill that clears the selection.
-  for (const id of ["fl-f-sector", "fl-f-subclass", "fl-f-age"]) {
-    const host = document.getElementById(id);
-    if (!host || host.dataset.bound) continue;
-    host.dataset.bound = "1";
-    host.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-key]");
-      if (!btn) return;
-      const set = id === "fl-f-sector"   ? st.sectors
-                 : id === "fl-f-subclass" ? st.subclasses
-                 :                          st.ages;
-      const key = btn.dataset.key;
-      if (key === "__ALL__") {
-        // Clear the sector set + reset all sector pills
-        set.clear();
-        host.querySelectorAll("button[data-key]").forEach(b => {
-          b.className = b.dataset.key === "__ALL__"
-            ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
-            : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
-        });
-        // Sector changes shift the candidate jenis pool — re-render the list.
-        if (id === "fl-f-sector") {
-          _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
-        }
-        _renderFleetView();
-        return;
-      }
-      if (set.has(key)) set.delete(key); else set.add(key);
-      btn.className = set.has(key)
-        ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
-        : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
-      if (id === "fl-f-sector") {
-        const allBtn = host.querySelector('button[data-key="__ALL__"]');
-        if (allBtn) {
-          allBtn.className = set.size === 0
-            ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
-            : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
-        }
-        _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
-      }
-      _renderFleetView();
-    });
-  }
-
-  // PR-X: jenis search + clear-all wiring
+  // ── Vessel Type search ──
   const jenisSearch = document.getElementById("fl-f-jenis-search");
   if (jenisSearch && !jenisSearch.dataset.bound) {
     jenisSearch.dataset.bound = "1";
@@ -1802,38 +1725,28 @@ function _wireFleetFilters() {
       _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
     }, 120));
   }
-  const jenisClear = document.getElementById("fl-f-jenis-clear");
-  if (jenisClear && !jenisClear.dataset.bound) {
-    jenisClear.dataset.bound = "1";
-    jenisClear.addEventListener("click", () => {
-      st.jenis.clear();
-      _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
+
+  // ── 제외 모드 (Exclude) toggle — flips the meaning of selected jenis ──
+  const excludeCb = document.getElementById("fl-f-jenis-exclude");
+  if (excludeCb && !excludeCb.dataset.bound) {
+    excludeCb.dataset.bound = "1";
+    excludeCb.addEventListener("change", () => {
+      st.jenisExclude = !!excludeCb.checked;
       _renderFleetView();
     });
   }
 
-  const debouncedRender = _fleetDebounce(_renderFleetView, 150);
-  const text = (id, key) => {
-    const el = document.getElementById(id);
-    if (!el || el.dataset.bound) return;
-    el.dataset.bound = "1";
-    el.addEventListener("input", () => {
-      st[key] = el.value.trim();
+  // ── 선박명 substring ──
+  const name = document.getElementById("fl-f-name");
+  if (name && !name.dataset.bound) {
+    name.dataset.bound = "1";
+    name.addEventListener("input", () => {
+      st.name = name.value.trim();
       debouncedRender();
     });
-  };
-  text("fl-f-owner", "owner");
-  text("fl-f-name",  "name");
-
-  const flag = document.getElementById("fl-f-flag");
-  if (flag && !flag.dataset.bound) {
-    flag.dataset.bound = "1";
-    flag.addEventListener("change", () => {
-      st.flag = flag.value;
-      _renderFleetView();
-    });
   }
 
+  // ── Numeric ranges ──
   const num = (id, key) => {
     const el = document.getElementById(id);
     if (!el || el.dataset.bound) return;
@@ -1850,30 +1763,26 @@ function _wireFleetFilters() {
   num("fl-f-w-min",   "widthMin"); num("fl-f-w-max",   "widthMax");
   num("fl-f-d-min",   "depthMin"); num("fl-f-d-max",   "depthMax");
 
+  // ── Reset all ──
   const reset = document.getElementById("fl-reset");
   if (reset && !reset.dataset.bound) {
     reset.dataset.bound = "1";
     reset.addEventListener("click", () => {
-      st.sectors.clear(); st.jenis.clear(); st.subclasses.clear(); st.ages.clear();
-      st.owner = ""; st.name = ""; st.flag = ""; st.jenisQuery = "";
+      st.jenis.clear();
+      st.jenisQuery = "";
+      st.jenisExclude = false;
+      st.name = "";
       st.gtMin = st.gtMax = st.yrMin = st.yrMax = null;
-      st.loaMin = st.loaMax = st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
-      // Reset UI controls
-      document.querySelectorAll("#fl-f-sector button, #fl-f-subclass button, #fl-f-age button")
-        .forEach(b => {
-          b.className = b.dataset.key === "__ALL__"
-            ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
-            : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
-        });
+      st.loaMin = st.loaMax = null;
+      st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
       const js = document.getElementById("fl-f-jenis-search"); if (js) js.value = "";
-      document.getElementById("fl-f-owner").value = "";
-      document.getElementById("fl-f-name").value = "";
-      document.getElementById("fl-f-flag").value = "";
+      const ex = document.getElementById("fl-f-jenis-exclude"); if (ex) ex.checked = false;
+      const nm = document.getElementById("fl-f-name"); if (nm) nm.value = "";
       for (const id of ["fl-f-gt-min", "fl-f-gt-max", "fl-f-yr-min",
                          "fl-f-yr-max", "fl-f-loa-min", "fl-f-loa-max",
                          "fl-f-w-min", "fl-f-w-max",
                          "fl-f-d-min", "fl-f-d-max"]) {
-        document.getElementById(id).value = "";
+        const el = document.getElementById(id); if (el) el.value = "";
       }
       _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
       _renderFleetView();
@@ -1899,52 +1808,28 @@ function _renderFleetJenisList(fv) {
   const byJenis = (fv.totals && fv.totals.by_jenis) || {};
 
   const q = (st.jenisQuery || "").toUpperCase();
-  const sectorActive = st.sectors.size > 0;
   const items = [];
   for (const [name, meta] of Object.entries(byJenis)) {
-    if (sectorActive && !st.sectors.has(meta.sector)) continue;
     if (q && !name.toUpperCase().includes(q)) continue;
     items.push({ name, ...meta });
   }
   items.sort((a, b) => b.count - a.count);
 
   const totalEl = document.getElementById("fl-f-jenis-total");
-  if (totalEl) {
-    const totalPool = sectorActive
-      ? Object.values(byJenis).filter(m => st.sectors.has(m.sector)).length
-      : Object.keys(byJenis).length;
-    totalEl.textContent = `${items.length} / ${totalPool}종`;
-  }
+  if (totalEl) totalEl.textContent = `${items.length} / ${Object.keys(byJenis).length}`;
   const selEl = document.getElementById("fl-f-jenis-selected");
   if (selEl) selEl.textContent = `선택 ${st.jenis.size}`;
 
   if (!items.length) {
-    host.innerHTML = `<div class="col-span-full text-slate-400 text-[11px] p-1">매치되는 type이 없습니다.</div>`;
+    host.innerHTML = `<div class="text-slate-400 text-[11px] p-1">매치되는 type이 없습니다.</div>`;
     return;
   }
 
-  // Each row: checkbox + name (truncated if too long) + count tag.
-  // Sector chip kept compact (CARGO → C, PASSENGER → P, etc.) so cells
-  // stay narrow.
-  const sectorChip = {
-    CARGO: "C", PASSENGER: "P", FISHING: "F",
-    OFFSHORE_SUPPORT: "O", NON_COMMERCIAL: "N", UNMAPPED: "U",
-  };
-  const sectorBg = {
-    CARGO: "bg-blue-100 text-blue-700",
-    PASSENGER: "bg-teal-100 text-teal-700",
-    FISHING: "bg-amber-100 text-amber-700",
-    OFFSHORE_SUPPORT: "bg-slate-200 text-slate-700",
-    NON_COMMERCIAL: "bg-gray-200 text-gray-700",
-    UNMAPPED: "bg-red-100 text-red-700",
-  };
+  // jang1117 mirror: single column, just [☑] name (count). No sector chip.
   host.innerHTML = items.map(it => {
     const checked = st.jenis.has(it.name) ? "checked" : "";
-    const chipClass = sectorBg[it.sector] || "bg-slate-100 text-slate-600";
-    const chip = `<span class="${chipClass} text-[9px] px-1 rounded font-mono" title="${_esc(it.sector)}">${sectorChip[it.sector] || "?"}</span>`;
-    return `<label class="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-100 cursor-pointer" title="${_esc(it.name)} · ${_esc(it.sector)} / ${_esc(it.vc)}">
+    return `<label class="flex items-center gap-1.5 px-1 py-0.5 rounded hover:bg-slate-100 cursor-pointer" title="${_esc(it.name)}">
       <input type="checkbox" data-jenis="${_esc(it.name)}" ${checked} class="cursor-pointer">
-      ${chip}
       <span class="truncate flex-1">${_esc(it.name)}</span>
       <span class="text-slate-400 text-[10px] font-mono">${it.count.toLocaleString()}</span>
     </label>`;
@@ -1991,17 +1876,14 @@ function _applyFleetFilters() {
   const I = {};
   for (const c of cols) I[c] = cols.indexOf(c);
 
-  const nameQ  = (st.name || "").toUpperCase();
-  const ownerQ = (st.owner || "").toUpperCase();
+  const nameQ = (st.name || "").toUpperCase();
 
   const filtered = fv.rows.filter(r => {
-    // PR-X: filter by Sector + raw jenis (instead of single 12-bucket class)
-    if (st.sectors.size && !st.sectors.has(r[I.sector])) return false;
-    if (st.jenis.size && !st.jenis.has(r[I.jenis] || "(blank)")) return false;
-    const vc = r[I.vc];
-    if (vc === "Tanker" && st.subclasses.size && !st.subclasses.has(r[I.ts])) return false;
-    const ageB = _ageBucketKey(r[I.age]);
-    if (st.ages.size && !st.ages.has(ageB)) return false;
+    // Vessel Type filter — selected set + 제외 모드 (exclude vs include)
+    if (st.jenis.size) {
+      const matched = st.jenis.has(r[I.jenis] || "(blank)");
+      if (st.jenisExclude ? matched : !matched) return false;
+    }
     if (st.gtMin != null && r[I.gt] < st.gtMin) return false;
     if (st.gtMax != null && r[I.gt] > st.gtMax) return false;
     if (st.loaMin != null && r[I.loa] < st.loaMin) return false;
@@ -2012,12 +1894,7 @@ function _applyFleetFilters() {
     if (st.depthMax != null && (r[I.dalam] || 0) > st.depthMax) return false;
     if (st.yrMin != null && (r[I.tahun] == null || r[I.tahun] < st.yrMin)) return false;
     if (st.yrMax != null && (r[I.tahun] == null || r[I.tahun] > st.yrMax)) return false;
-    if (st.flag) {
-      const rowFlag = r[I.flag] || "Indonesia";
-      if (rowFlag !== st.flag) return false;
-    }
     if (nameQ && !(r[I.nama] || "").toUpperCase().includes(nameQ)) return false;
-    if (ownerQ && !(r[I.owner] || "").toUpperCase().includes(ownerQ)) return false;
     return true;
   });
 
@@ -2071,12 +1948,11 @@ function _renderFleetView() {
   document.getElementById("fl-kpi-avgyr").textContent = avgYr ? `${avgYr.toFixed(0)}` : "—";
   document.getElementById("fl-kpi-avgage").textContent =
     avgAge != null ? `선령 ${avgAge.toFixed(1)}년` : "선령 —";
-  document.getElementById("fl-kpi-dim-loa").textContent =
-    `LOA ${nLoa ? (sumLoa / nLoa).toFixed(1) : "—"} m`;
-  document.getElementById("fl-kpi-dim-w").textContent =
-    `W ${nW ? (sumW / nW).toFixed(1) : "—"} m`;
-  document.getElementById("fl-kpi-dim-d").textContent =
-    `D ${nD ? (sumD / nD).toFixed(1) : "—"} m`;
+  // 평균 제원 strip (jang1117 mirror — 4 sub-values)
+  document.getElementById("fl-avg-gt").textContent  = avgGt ? fmtCount(Math.round(avgGt)) : "—";
+  document.getElementById("fl-avg-loa").textContent = nLoa ? (sumLoa / nLoa).toFixed(1) : "—";
+  document.getElementById("fl-avg-w").textContent   = nW   ? (sumW   / nW).toFixed(1)   : "—";
+  document.getElementById("fl-avg-d").textContent   = nD   ? (sumD   / nD).toFixed(1)   : "—";
 
   // ---- 6 charts (jang1117-style grid) ----
   _drawFlChartYear(rows, I);
@@ -2086,21 +1962,16 @@ function _renderFleetView() {
   _drawFlChartFlag(rows, I);
   _drawFlChartGtHist(rows, I);
 
-  // ---- Active filter count badge ----
-  const active = (st.sectors.size > 0)
-    + (st.jenis.size > 0)
-    + (st.subclasses.size > 0)
-    + (st.ages.size > 0)
-    + (st.owner ? 1 : 0)
-    + (st.name  ? 1 : 0)
-    + (st.flag  ? 1 : 0)
+  // ---- Active filter count badge (jang1117 fields only) ----
+  const active = (st.jenis.size > 0 ? 1 : 0)
+    + (st.name ? 1 : 0)
     + ((st.gtMin != null || st.gtMax != null) ? 1 : 0)
     + ((st.yrMin != null || st.yrMax != null) ? 1 : 0)
     + ((st.loaMin != null || st.loaMax != null) ? 1 : 0)
     + ((st.widthMin != null || st.widthMax != null) ? 1 : 0)
     + ((st.depthMin != null || st.depthMax != null) ? 1 : 0);
   const badge = document.getElementById("fl-active-count");
-  if (badge) badge.textContent = active ? `(${active} 활성)` : "";
+  if (badge) badge.textContent = active;
 
   // ---- Sortable table ----
   _renderFleetTable(rows, I);
@@ -2123,18 +1994,19 @@ function _renderFleetTable(rows, I) {
   const top = rows.slice(0, 500);
   body.innerHTML = top.map(r => {
     const flag = r[I.flag] || "Indonesia";
-    const ts = r[I.ts] ? `<span class="text-[10px] text-slate-500">${r[I.ts]}</span>` : "";
     return `<tr class="hover:bg-slate-50 border-b border-slate-100">
       <td class="px-2 py-1 font-medium text-slate-800">${_esc(r[I.nama])}</td>
       <td class="px-2 py-1 text-slate-600">${_esc(r[I.owner])}</td>
-      <td class="px-2 py-1 text-[10px] text-slate-500">${_esc(r[I.sector])}</td>
-      <td class="px-2 py-1" title="${_esc(r[I.vc])}">${_esc(r[I.jenis])}</td>
-      <td class="px-2 py-1">${ts}</td>
+      <td class="px-2 py-1">${_esc(r[I.jenis])}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.gt] || 0).toLocaleString()}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.loa] || 0).toFixed(1)}</td>
+      <td class="px-2 py-1 text-right font-mono">${(r[I.lebar] || 0).toFixed(1)}</td>
+      <td class="px-2 py-1 text-right font-mono">${(r[I.dalam] || 0).toFixed(1)}</td>
       <td class="px-2 py-1 text-right">${r[I.tahun] || "—"}</td>
       <td class="px-2 py-1 text-right">${r[I.age] != null ? r[I.age] : "—"}</td>
       <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(flag)}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.mesin])}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.mesin_type])}</td>
       <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.imo])}</td>
       <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.call_sign])}</td>
     </tr>`;
@@ -2347,20 +2219,8 @@ function _drawFlChartFlag(rows, I) {
     xaxis: { tickfont: { size: 10 } },
     yaxis: { tickfont: { size: 10 } },
   }, { displayModeBar: false, responsive: true });
-  // Click-to-filter on flag bars
-  const host = document.getElementById("fl-ch-flag");
-  if (host && !host.dataset.clickBound) {
-    host.dataset.clickBound = "1";
-    host.on("plotly_click", (ev) => {
-      const lbl = ev?.points?.[0]?.y;
-      if (lbl == null) return;
-      const st = document.getElementById("tab-fleet")._fleetState;
-      st.flag = (st.flag === lbl) ? "" : lbl;
-      const flagEl = document.getElementById("fl-f-flag");
-      if (flagEl) flagEl.value = st.flag;
-      _renderFleetView();
-    });
-  }
+  // Flag chart is informational only in the jang1117 mirror (no
+  // separate flag filter control on the sidebar). No click handler.
 }
 
 function _drawFlChartGtHist(rows, I) {
