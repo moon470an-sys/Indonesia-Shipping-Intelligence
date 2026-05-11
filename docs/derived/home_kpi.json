@@ -43,7 +43,22 @@
         "2025-05",
         "2026-04"
       ],
-      "source": "monitoring-inaportnet.dephub.go.id (LK3)"
+      "source": "monitoring-inaportnet.dephub.go.id (LK3)",
+      "by_year": {
+        "2024": 1791101602.6,
+        "2025": 3060908910.5,
+        "2026": 994815542.5
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 70.9,
+        "2026": -67.5
+      },
+      "months_per_year": {
+        "2024": 7,
+        "2025": 12,
+        "2026": 4
+      }
     },
     {
       "id": "tanker_12m_ton",
@@ -54,7 +69,22 @@
         "2025-05",
         "2026-04"
       ],
-      "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)"
+      "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)",
+      "by_year": {
+        "2024": 242328185.4,
+        "2025": 396355892.3,
+        "2026": 130196752.7
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 63.6,
+        "2026": -67.2
+      },
+      "months_per_year": {
+        "2024": 7,
+        "2025": 12,
+        "2026": 4
+      }
     },
     {
       "id": "tanker_fleet",

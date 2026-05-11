@@ -6,6 +6,16 @@
       "subclass": "Product",
       "ton_last_12m": 282398298.1,
       "yoy_pct": 6.9,
+      "ton_by_year": {
+        "2024": 174210993.9,
+        "2025": 279422487.9,
+        "2026": 97022271.9
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 60.4,
+        "2026": -65.3
+      },
       "avg_age_gt_weighted": 20.94,
       "operator_count": 32,
       "vessel_count": 1950,
@@ -28,6 +38,16 @@
       "subclass": "Chemical",
       "ton_last_12m": 63257756.3,
       "yoy_pct": 17.2,
+      "ton_by_year": {
+        "2024": 35918930.0,
+        "2025": 61631779.6,
+        "2026": 20434980.1
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 71.6,
+        "2026": -66.8
+      },
       "avg_age_gt_weighted": 18.73,
       "operator_count": 16,
       "vessel_count": 246,
@@ -44,6 +64,16 @@
       "subclass": "LPG",
       "ton_last_12m": 28489123.8,
       "yoy_pct": 7.0,
+      "ton_by_year": {
+        "2024": 16890362.4,
+        "2025": 29003049.2,
+        "2026": 9814384.5
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 71.7,
+        "2026": -66.2
+      },
       "avg_age_gt_weighted": 19.65,
       "operator_count": 19,
       "vessel_count": 87,
@@ -66,6 +96,16 @@
       "subclass": "LNG",
       "ton_last_12m": 22095304.2,
       "yoy_pct": 23.2,
+      "ton_by_year": {
+        "2024": 11522590.8,
+        "2025": 21280906.3,
+        "2026": 7577387.7
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 84.7,
+        "2026": -64.4
+      },
       "avg_age_gt_weighted": 28.73,
       "operator_count": 8,
       "vessel_count": 11,
@@ -88,6 +128,16 @@
       "subclass": "FAME / Vegetable Oil",
       "ton_last_12m": 3958622.3,
       "yoy_pct": -15.1,
+      "ton_by_year": {
+        "2024": 3352671.1,
+        "2025": 4179416.9,
+        "2026": 1146019.5
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 24.7,
+        "2026": -72.6
+      },
       "avg_age_gt_weighted": 10.33,
       "operator_count": 1,
       "vessel_count": 94,
@@ -282,8 +332,13 @@
       }
     ]
   },
+  "months_per_year": {
+    "2024": 7,
+    "2025": 12,
+    "2026": 5
+  },
   "_notes": {
-    "yoy_basis": "12M-vs-prev-12M % (cagr_24m_pct also exposed if available)",
+    "yoy_basis": "ton_by_year: calendar-year sums from monthly_subclass; yoy_by_year: same-year vs previous-year (null if prev missing or zero); ton_last_12m: legacy rolling 12M kept for backwards-compat",
     "top_route_per_subclass": "deferred — needs per-subclass OD aggregation"
   }
 }

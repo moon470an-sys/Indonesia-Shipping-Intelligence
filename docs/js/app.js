@@ -328,12 +328,71 @@ async function renderTankerSector() {
     });
   }
 
+  // PR-33: default Tanker Sector to the most-recent FULL year so cards
+  // align with the Cargo + Home year selectors.
+  if (!tsState.activeYear) tsState.activeYear = _pickTankerSectorYear(tsState.tankerSubclass);
+  buildTankerYearPills(tsState.tankerSubclass);
+
+  // PR-34: surface honest period ranges on the chart headers so users see
+  // exactly which months/years a 12M or 24M window covers.
+  const periods = tsState.tankerSubclass?.monthly?.periods || [];
+  const periodRange = periods.length
+    ? `(${periods[0]} ~ ${periods[periods.length - 1]}, ${periods.length}개월)`
+    : "";
+  const scatterPeriodEl = document.getElementById("ts-scatter-period");
+  if (scatterPeriodEl) scatterPeriodEl.textContent = periodRange;
+  const monthlyPeriodEl = document.getElementById("ts-monthly-period");
+  if (monthlyPeriodEl) monthlyPeriodEl.textContent = periodRange;
+  // Commodity bar is the trailing 12 months
+  const last12 = periods.slice(-12);
+  const commodityPeriodEl = document.getElementById("ts-commodity-period");
+  if (commodityPeriodEl && last12.length) {
+    commodityPeriodEl.textContent =
+      `(직전 12개월 ton 기준 · ${last12[0]} ~ ${last12[last12.length - 1]})`;
+  }
+
   drawTankerCards();
   drawTankerScatter();
   drawTankerMonthly();
   drawTankerCommodityBars();
   drawTankerOperatorBars();
   drawTankerOperatorDonut();
+}
+
+function _pickTankerSectorYear(payload) {
+  const mpy = payload?.months_per_year || {};
+  const years = Object.keys(mpy).sort();
+  if (!years.length) return null;
+  const full = years.filter(y => mpy[y] === 12);
+  return full.length ? full[full.length - 1] : years[years.length - 1];
+}
+
+function buildTankerYearPills(payload) {
+  const host = document.getElementById("ts-year-pills");
+  if (!host) return;
+  const mpy = payload?.months_per_year || {};
+  const years = Object.keys(mpy).sort();
+  if (!years.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    return;
+  }
+  const active = tsState.activeYear;
+  host.innerHTML = years.map(y => {
+    const isActive = y === active;
+    const isPartial = (mpy[y] || 0) < 12;
+    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
+  }).join("");
+  host.querySelectorAll("button[data-year]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tsState.activeYear = btn.dataset.year;
+      buildTankerYearPills(payload);
+      drawTankerCards();   // only the cards depend on the active year right now
+    });
+  });
 }
 
 function drawTankerCards() {
@@ -346,10 +405,25 @@ function drawTankerCards() {
   for (const s of (tsState.tankerSubclass?.monthly?.series || [])) {
     monthlyBySub[s.subclass] = s.ton_by_period || [];
   }
+  // PR-33: year-aware value resolver. When tsState.activeYear is set and
+  // the card has ton_by_year, prefer those values; else fall back to the
+  // legacy 12M fields. The card label flips accordingly.
+  const mpy = tsState.tankerSubclass?.months_per_year || {};
+  const activeYear = tsState.activeYear;
+  const yearMonths = activeYear ? (mpy[activeYear] || 0) : 12;
+  const yearLabel = activeYear
+    ? `${activeYear}년${yearMonths < 12 ? ` (${yearMonths}mo)` : ""}`
+    : "12M";
   host.innerHTML = cards.map(c => {
     const color = SUBCLASS_PALETTE[c.subclass] || "#64748b";
-    const tonStr = fmtTon(c.ton_last_12m);
-    const yoy = c.yoy_pct;
+    let tonVal = c.ton_last_12m;
+    let yoy = c.yoy_pct;
+    if (activeYear && c.ton_by_year && activeYear in c.ton_by_year) {
+      tonVal = c.ton_by_year[activeYear];
+      // Suppress YoY on partial years (misleading vs full 12 months)
+      yoy = yearMonths === 12 ? (c.yoy_by_year || {})[activeYear] : null;
+    }
+    const tonStr = fmtTon(tonVal);
     const trend = yoy == null
       ? `<span class="text-slate-400 text-sm">YoY —</span>`
       : `<span class="${yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} text-base font-semibold">${yoy >= 0 ? "↑" : "↓"} ${Math.abs(yoy).toFixed(1)}%</span>`;
@@ -381,7 +455,7 @@ function drawTankerCards() {
       <div class="flex items-end justify-between gap-2 mb-2">
         <div class="flex items-baseline gap-2">
           <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
-          <span class="text-xs text-slate-500">tons (12M)</span>
+          <span class="text-xs text-slate-500">tons (${yearLabel})</span>
         </div>
         <div title="24M monthly ton trend">${sparkline(monthlyBySub[c.subclass] || [], { color, width: 80, height: 24 })}</div>
       </div>
@@ -506,8 +580,40 @@ function drawTankerMonthly() {
         : `<b>%{x}</b><br>${s.subclass}: %{y:.1f}%<extra></extra>`,
     };
   });
+
+  // PR-34: drop a vertical dashed line + label at each Jan-01 boundary so
+  // calendar-year edges are visible at a glance, complementing the year
+  // pills above the subclass cards.
+  const boundaries = [];
+  for (let i = 0; i < periods.length; i++) {
+    const p = periods[i];
+    if (p && p.endsWith("-01") && i > 0) {
+      boundaries.push({
+        type: "line",
+        x0: p, x1: p, xref: "x",
+        y0: 0, y1: 1, yref: "paper",
+        line: { color: "#94a3b8", width: 1, dash: "dash" },
+      });
+    }
+  }
+  // Year labels just above the top axis
+  const yearLabels = [];
+  const seenYears = new Set();
+  for (const p of periods) {
+    const y = p ? p.slice(0, 4) : null;
+    if (y && !seenYears.has(y)) {
+      seenYears.add(y);
+      yearLabels.push({
+        x: `${y}-01`, y: 1.03, xref: "x", yref: "paper",
+        text: `<b>${y}년</b>`,
+        showarrow: false,
+        font: { size: 10, color: "#475569" },
+      });
+    }
+  }
+
   Plotly.newPlot("ts-monthly", traces, {
-    margin: { t: 10, l: 60, r: 20, b: 50 },
+    margin: { t: 28, l: 60, r: 20, b: 50 },
     xaxis: { tickangle: -40 },
     yaxis: {
       title: tsState.monthlyMode === "abs" ? "ton" : "YoY %",
@@ -515,6 +621,8 @@ function drawTankerMonthly() {
     },
     legend: { orientation: "h", y: -0.2 },
     hovermode: "x unified",
+    shapes: boundaries,
+    annotations: yearLabels,
   }, { displayModeBar: false, responsive: true });
 }
 
@@ -869,7 +977,7 @@ const homeState = {
 async function renderHome() {
   setupSourceLabels(document.getElementById("tab-overview"));
 
-  // Parallel: KPI hero, timeseries, map data, world topology.
+  // Parallel: KPI hero, timeseries, map data, world topology, year cuts.
   let topo, kpis, ts;
   try {
     [kpis, ts, homeState.mapData, topo] = await Promise.all([
@@ -887,12 +995,24 @@ async function renderHome() {
     if (status) status.textContent = `Map data load failed: ${e.message}`;
     return;
   }
+  // PR-35: cargo_yearly.json is optional — Home map year buttons gracefully
+  // disappear if it failed to load. The other tabs already handle absence.
+  try { homeState.cargoYearly = await loadDerived("cargo_yearly.json"); }
+  catch (e) { homeState.cargoYearly = null; }
+  homeState.timeseries = ts;   // PR-35: needed by _refreshHomeMapPeriodLabel re-renders
 
   renderHomeKpi(kpis);
   renderHomeTimeseries(ts);
+  // PR-35: inject year buttons into the period control BEFORE binding
+  // so a single bindMapControls() pass wires them all.
+  _injectHomeMapYearButtons();
   bindMapControls();
   drawHomeMap();
   fillSectorStrip(kpis?.sector_breakdown || []);
+  // PR-34/35: surface the active period on the map title. Re-evaluated on
+  // each drawHomeMap() because the period button can switch between rolling
+  // 24M and a calendar year.
+  _refreshHomeMapPeriodLabel(ts);
   fillForeignSidebar();
   fillMapInsights();
 }
@@ -921,32 +1041,115 @@ function fillSectorStrip(rows) {
   }).join("");
 }
 
-// ---------- PR-3: Home KPI 4 (large numerics) ----------
+// ---------- PR-3 / PR-32: Home KPI 4 (year-aware) ----------
+// PR-32 turns the two cargo-tonnage cards into year-based readouts driven by
+// the new `kpis[*].by_year` payload. The selected year is tracked on the
+// container element so the year-pill onclick handlers can re-render cheaply.
+function _pickHomeYear(payload) {
+  // Prefer most-recent FULL (12mo) year; else most-recent year available.
+  let totalK = (payload.kpis || []).find(k => k.id === "total_12m_ton");
+  if (!totalK || !totalK.by_year) return null;
+  const ys = Object.keys(totalK.by_year).sort();
+  if (!ys.length) return null;
+  const mpy = totalK.months_per_year || {};
+  const fullYears = ys.filter(y => mpy[y] === 12);
+  return fullYears.length ? fullYears[fullYears.length - 1] : ys[ys.length - 1];
+}
+
+function _buildHomeYearPills(payload, activeYear) {
+  const host = document.getElementById("home-year-pills");
+  const banner = document.getElementById("home-year-banner");
+  if (!host) return;
+  const totalK = (payload.kpis || []).find(k => k.id === "total_12m_ton");
+  if (!totalK || !totalK.by_year) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    if (banner) banner.textContent = "";
+    return;
+  }
+  const ys = Object.keys(totalK.by_year).sort();
+  const mpy = totalK.months_per_year || {};
+  host.innerHTML = ys.map(y => {
+    const isActive = y === activeYear;
+    const isPartial = (mpy[y] || 0) < 12;
+    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
+  }).join("");
+  host.querySelectorAll("button[data-year]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const y = btn.dataset.year;
+      const el = document.getElementById("home-kpi");
+      if (el) el.dataset.activeYear = y;
+      renderHomeKpi(payload);
+      _buildHomeYearPills(payload, y);
+    });
+  });
+  if (banner) {
+    const isPartial = (mpy[activeYear] || 0) < 12;
+    banner.textContent = isPartial
+      ? `⚠️ ${activeYear}년은 부분 연도 (${mpy[activeYear]}mo) — YoY 비교 시 주의.`
+      : `${activeYear}년 (12개월).`;
+  }
+}
+
 function renderHomeKpi(payload) {
   const host = document.getElementById("home-kpi");
   if (!host || !payload) return;
+
+  // Resolve active year (URL state wins, else default = most-recent full year).
+  let activeYear = host.dataset.activeYear;
+  if (!activeYear) activeYear = _pickHomeYear(payload);
+  if (activeYear) host.dataset.activeYear = activeYear;
+
   const trend = (yoy) => {
     if (yoy == null) return `<span class="text-slate-400 text-sm">YoY —</span>`;
     const cls = yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down";
     const arrow = yoy >= 0 ? "↑" : "↓";
     return `<span class="${cls} text-sm font-semibold">${arrow} ${Math.abs(yoy).toFixed(1)}%</span>`;
   };
+
+  // Year-specific value resolver — falls back to the legacy 12M fields
+  // when by_year is absent (older payloads).
+  const yearValue = (k) => {
+    if (k.by_year && activeYear in k.by_year) {
+      return {
+        ton: k.by_year[activeYear],
+        yoy: (k.yoy_by_year || {})[activeYear],
+        months: (k.months_per_year || {})[activeYear] || 0,
+      };
+    }
+    return { ton: k.value_ton, yoy: k.yoy_pct, months: 12 };
+  };
+
+  // Build the pills row even when activeYear is null — graceful empty state.
+  _buildHomeYearPills(payload, activeYear);
+
+  const yearLabel = activeYear
+    ? `${activeYear}년${(payload.kpis.find(k => k.id === "total_12m_ton")?.months_per_year?.[activeYear] || 12) < 12 ? " (부분)" : ""}`
+    : "12M";
+
   const cards = payload.kpis.map(k => {
     if (k.id === "total_12m_ton") {
+      const v = yearValue(k);
+      const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">12M 총 물동량</div>
+        <div class="kpi-label">${yearLabel} 총 물동량 (인도네시아)</div>
         <div>
-          <div class="kpi-value-large">${fmtTon(k.value_ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
-          <div class="kpi-sub-large">${trend(k.yoy_pct)} <span class="text-slate-400">· ${k.window?.[0] || ""} → ${k.window?.[1] || ""}</span></div>
+          <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
+          <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
         </div>
       </div>`;
     }
     if (k.id === "tanker_12m_ton") {
+      const v = yearValue(k);
+      const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">12M 탱커 물동량</div>
+        <div class="kpi-label">${yearLabel} 탱커 물동량</div>
         <div>
-          <div class="kpi-value-large">${fmtTon(k.value_ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
-          <div class="kpi-sub-large">${trend(k.yoy_pct)} <span class="text-slate-400">· ${k.window?.[0] || ""} → ${k.window?.[1] || ""}</span></div>
+          <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
+          <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
         </div>
       </div>`;
     }
@@ -1046,6 +1249,31 @@ function drawHomeTimeseries() {
   }, { displayModeBar: false, responsive: true });
 }
 
+// PR-35: append year buttons (2024 / 2025 / 2026) to the Home map's period
+// control group. They share the same active-style + click handler as the
+// 12M / 24M buttons; clicking sets homeState.filterPeriod to the 4-digit
+// year string so drawHomeMap() can branch to the year-cut data path.
+function _injectHomeMapYearButtons() {
+  const host = document.getElementById("map-control-period");
+  if (!host) return;
+  const cy = homeState.cargoYearly;
+  if (!cy || !cy.years || !cy.years.length) return;
+  const mpy = cy.months_per_year || {};
+  // Don't double-inject on re-renders
+  if (host.querySelector("button[data-key^='20']")) return;
+  for (const y of cy.years) {
+    const partial = (mpy[y] || 0) < 12;
+    const btn = document.createElement("button");
+    btn.dataset.key = y;
+    btn.className = "px-2 py-1 bg-white hover:bg-slate-100";
+    btn.textContent = `${y}년${partial ? ` (${mpy[y]}mo)` : ""}`;
+    btn.title = partial
+      ? `${y}년 부분 (${mpy[y]}개월) — 카테고리 분리 없음 (단색 표시)`
+      : `${y}년 풀 12개월 — 카테고리 분리 없음 (단색 표시)`;
+    host.appendChild(btn);
+  }
+}
+
 function bindMapControls() {
   const groups = [
     { id: "map-control-cat",    state: "filterCategory" },
@@ -1070,6 +1298,32 @@ function bindMapControls() {
         drawHomeMap();
       });
     });
+  }
+}
+
+// PR-35: tiny helper that refreshes the "(period range)" callout next to
+// the Home map title. Reads homeState.filterPeriod so it works for both
+// rolling 24M and calendar-year picks.
+function _refreshHomeMapPeriodLabel(timeseriesPayload) {
+  const el = document.getElementById("home-map-period");
+  if (!el) return;
+  const period = homeState.filterPeriod || "24m";
+  if (/^\d{4}$/.test(period)) {
+    const mpy = homeState.cargoYearly?.months_per_year || {};
+    const m = mpy[period] || 0;
+    el.textContent = `(${period}년${m && m < 12 ? `, ${m}mo (부분)` : ` 달력연도`})`;
+    return;
+  }
+  const ps = (timeseriesPayload || homeState.timeseries)?.periods || [];
+  if (ps.length) {
+    if (period === "12m") {
+      const last12 = ps.slice(-12);
+      el.textContent = `(${last12[0]} ~ ${last12[last12.length - 1]}, 12개월 누계)`;
+    } else {
+      el.textContent = `(${ps[0]} ~ ${ps[ps.length - 1]}, ${ps.length}개월 누계)`;
+    }
+  } else {
+    el.textContent = "(누계)";
   }
 }
 
@@ -1103,21 +1357,63 @@ function drawHomeMap() {
   // status messages but render the available 24m+all+dn_ln data as fallback. ----
   const status = document.getElementById("home-map-status");
   const notes = [];
-  if (homeState.filterCategory === "bulk") {
-    notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
-  }
-  if (homeState.filterPeriod === "12m") {
-    notes.push("12M OD 미산출 — 24M 누계 표시 중");
-  }
-  if (homeState.filterTraffic === "ln") {
-    notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
+
+  // PR-35: filterPeriod can be "12m" / "24m" (rolling) or a 4-digit year
+  // string (calendar year). Year mode swaps the data source to
+  // cargo_yearly.by_year[Y].top_routes — no category breakdown is carried
+  // there so routes render single-color (navy).
+  const isYearMode = /^\d{4}$/.test(homeState.filterPeriod || "");
+  let routes;
+  let routeTonField;
+  let yearLabel = null;
+  if (isYearMode && homeState.cargoYearly?.by_year?.[homeState.filterPeriod]) {
+    const slice = homeState.cargoYearly.by_year[homeState.filterPeriod];
+    routes = (slice.top_routes || [])
+      .filter(r => r.mappable !== false
+        && r.lat_o != null && r.lon_o != null
+        && r.lat_d != null && r.lon_d != null)
+      .map(r => ({
+        origin: r.origin, destination: r.destination,
+        lat_o: r.lat_o, lon_o: r.lon_o,
+        lat_d: r.lat_d, lon_d: r.lon_d,
+        ton_24m: r.ton,                  // alias for the existing template
+        vessels: 0,
+        calls: r.calls || 0,
+        // PR-36: backend now attaches dominant commodity category so year
+        // mode colour-matches 24M mode.
+        category: r.category || null,
+        category_ton: r.category_ton || {},
+      }));
+    routeTonField = "ton_24m";
+    const mpy = homeState.cargoYearly.months_per_year || {};
+    const partial = (mpy[homeState.filterPeriod] || 0) < 12;
+    yearLabel = `${homeState.filterPeriod}년${partial ? ` (${mpy[homeState.filterPeriod]}mo, 부분)` : ""}`;
+    const cats = new Set(routes.map(r => r.category).filter(Boolean));
+    notes.push(`${yearLabel} 달력연도 cut · 카테고리 ${cats.size}개 색상 분리`);
+  } else {
+    if (homeState.filterCategory === "bulk") {
+      notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
+    }
+    if (homeState.filterPeriod === "12m") {
+      notes.push("12M OD 미산출 — 24M 누계 표시 중");
+    }
+    if (homeState.filterTraffic === "ln") {
+      notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
+    }
+    routes = (homeState.mapData.routes_top30 || []).slice();
   }
   status.textContent = notes.join(" · ") || "24M 누계 · 모든 카테고리 · Top 30 routes";
 
-  let routes = (homeState.mapData.routes_top30 || []).slice();
-  // Category color map
+  // Category color map.
+  //   - 24M mode: map_flow.categories (5 tanker-focused)
+  //   - year mode: cargo_yearly.categories (8 incl. Coal / Nickel-Mineral /
+  //     Container) layered on top so non-tanker bulk routes get distinct
+  //     colours.
   const categoryColors = {};
   for (const c of (homeState.mapData.categories || [])) categoryColors[c.name] = c.color;
+  if (isYearMode && homeState.cargoYearly?.categories) {
+    for (const c of homeState.cargoYearly.categories) categoryColors[c.name] = c.color;
+  }
 
   // ---- Layer 2: route paths + animated particles ----
   const routeLayer = svg.append("g").attr("class", "map-routes");
@@ -1136,6 +1432,10 @@ function drawHomeMap() {
     const cx = mx - (dy / norm) * lift;
     const cy = my + (dx / norm) * lift;
     const d = `M ${start[0]} ${start[1]} Q ${cx} ${cy} ${end[0]} ${end[1]}`;
+    // PR-35/36: categoryColors maps the 5 map_flow.categories names to hex.
+    // Year-mode now has dominant category attached (PR-36) so the SAME
+    // colour map applies; the gray fallback covers routes whose dominant
+    // category fell outside the 5-bucket scheme.
     const color = categoryColors[r.category] || "#6b7280";
     const pathId = `route-path-${i}`;
     const dimmed = hi && r.category !== hi;
@@ -1217,9 +1517,13 @@ function drawHomeMap() {
     .text(d => d.name);
 
   // ---- Legend (PR-11: clickable to filter routes by category) ----
+  //   PR-38: in year mode, show the broader cargo_yearly category set so
+  //   Coal / Nickel / Mineral legend swatches appear alongside Crude / BBM.
   const legend = document.getElementById("home-map-legend");
   if (legend) {
-    const cats = homeState.mapData.categories || [];
+    const cats = isYearMode && homeState.cargoYearly?.categories
+      ? homeState.cargoYearly.categories
+      : (homeState.mapData.categories || []);
     legend.innerHTML =
       `<div class="font-semibold mb-1 flex items-center justify-between gap-2">
          <span>화물 카테고리</span>
@@ -1309,7 +1613,7 @@ async function renderFleet() {
 
 async function renderCargo() {
   setupSourceLabels(document.getElementById("tab-cargo"));
-  let cargoFleet, routeFacts, timeseries, mapFlow;
+  let cargoFleet, routeFacts, timeseries, mapFlow, cargoYearly;
   try { cargoFleet = await loadDerived("cargo_fleet.json"); }
   catch (e) {
     const host = document.getElementById("cg-treemap");
@@ -1322,23 +1626,220 @@ async function renderCargo() {
   catch (e) { timeseries = { periods: [], series: [] }; }
   try { mapFlow = await loadDerived("map_flow.json"); }
   catch (e) { mapFlow = { ports: [], routes_top30: [], categories: [] }; }
+  try { cargoYearly = await loadDerived("cargo_yearly.json"); }
+  catch (e) { cargoYearly = null; }
 
-  drawCargoODMap(mapFlow);
-  drawCargoTreemap(cargoFleet.treemap_categories || []);
+  // PR-29: stash the yearly payload on the tab element so the click handler
+  // can reach it without re-fetching.
+  const tabEl = document.getElementById("tab-cargo");
+  if (tabEl && cargoYearly) tabEl._cargoYearly = cargoYearly;
+
+  // Pick the default year: most-recent full (12-month) year if any, else
+  // most-recent year present in the payload, else fall back to legacy.
+  const defaultYear = _pickDefaultCargoYear(cargoYearly);
+
+  // PR-31: year-aware path renders OD map + routes + STS too. We stash
+  // mapFlow + routeFacts on the tab DOM node so pill clicks re-render with
+  // the same context without re-fetching.
+  if (tabEl) {
+    tabEl._cargoMapFlow = mapFlow;
+    tabEl._cargoRouteFacts = routeFacts;
+  }
   drawCargoYearly(timeseries);
-  drawCargoCommodityBars(cargoFleet.top_commodities || []);
   drawCargoTimeseries(timeseries);
-  drawCargoRoutes(routeFacts.routes || []);
-  drawCargoSTS(routeFacts.routes || []);
   fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow);
 
-  // Wire up the "hide self-loop" checkbox on the Cargo tab
+  // Single render call covers treemap + commodities + map + routes + STS
+  renderCargoYearlyView(cargoYearly, cargoFleet, defaultYear,
+                         { mapFlow, routeFacts });
+  buildCargoYearPills(cargoYearly, defaultYear);
+
+  // "Hide self-loop" toggle — when checked, re-render the routes bar from
+  // the currently-active dataset (year-cut top_routes or legacy 24M).
   const hideSelf = document.getElementById("cg-routes-hide-self");
   if (hideSelf && !hideSelf.dataset.wired) {
     hideSelf.dataset.wired = "1";
     hideSelf.addEventListener("change", () => {
-      drawCargoRoutes(routeFacts.routes || []);
+      const activeYear = (document
+        .querySelector("#cg-year-pills button[aria-selected='true']")
+        || {}).dataset?.year;
+      const cy = tabEl?._cargoYearly;
+      const yearSlice = (cy && activeYear && cy.by_year?.[activeYear]) || null;
+      if (yearSlice && Array.isArray(yearSlice.top_routes)) {
+        const merged = (yearSlice.top_routes || []).concat(
+          (yearSlice.top_sts || []).map(s => ({
+            origin: s.port, destination: s.port,
+            ton: s.ton, calls: s.calls, is_self_loop: true,
+          }))
+        );
+        merged.sort((a, b) => (b.ton || 0) - (a.ton || 0));
+        drawCargoRoutes(merged, { xTitle: `ton (${activeYear}년)` });
+      } else {
+        drawCargoRoutes(routeFacts.routes || [], { xTitle: "ton (24M)" });
+      }
     });
+  }
+}
+
+function _pickDefaultCargoYear(cargoYearly) {
+  if (!cargoYearly || !cargoYearly.years || !cargoYearly.years.length) return null;
+  const mpy = cargoYearly.months_per_year || {};
+  const fullYears = cargoYearly.years.filter(y => mpy[y] === 12);
+  if (fullYears.length) return fullYears[fullYears.length - 1];   // most-recent full year
+  return cargoYearly.years[cargoYearly.years.length - 1];          // else latest available
+}
+
+function buildCargoYearPills(cargoYearly, activeYear) {
+  const host = document.getElementById("cg-year-pills");
+  const banner = document.getElementById("cg-year-banner");
+  if (!host) return;
+  if (!cargoYearly || !cargoYearly.years || !cargoYearly.years.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    if (banner) banner.textContent = "";
+    return;
+  }
+  const mpy = cargoYearly.months_per_year || {};
+  host.innerHTML = cargoYearly.years.map(y => {
+    const isActive = y === activeYear;
+    const isPartial = (mpy[y] || 0) < 12;
+    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
+  }).join("");
+
+  host.querySelectorAll("button[data-year]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const y = btn.dataset.year;
+      const tabEl = document.getElementById("tab-cargo");
+      const cy = (tabEl && tabEl._cargoYearly) || cargoYearly;
+      renderCargoYearlyView(cy, null, y, {
+        mapFlow: tabEl?._cargoMapFlow,
+        routeFacts: tabEl?._cargoRouteFacts,
+      });
+      buildCargoYearPills(cy, y);
+    });
+  });
+
+  if (banner) {
+    const isPartial = (mpy[activeYear] || 0) < 12;
+    banner.textContent = isPartial
+      ? `⚠️ ${activeYear}년은 부분 연도 (${mpy[activeYear]}개월) — 다른 연도와 단순 비교 시 주의.`
+      : `${activeYear}년 (12개월 전체).`;
+  }
+}
+
+function renderCargoYearlyView(cargoYearly, fallbackCargoFleet, year, ctx) {
+  // ctx = { mapFlow, routeFacts } — passed through from renderCargo so the
+  // map/routes/STS charts can swap to year-cut data when a year is picked.
+  ctx = ctx || {};
+
+  let treemap = [];
+  let commodities = [];
+  let yearLabel = "24M";
+  let yearSlice = null;
+  if (cargoYearly && year && cargoYearly.by_year && cargoYearly.by_year[year]) {
+    yearSlice = cargoYearly.by_year[year];
+    treemap = yearSlice.treemap_categories || [];
+    commodities = yearSlice.top_commodities || [];
+    const mpy = (cargoYearly.months_per_year || {})[year] || 0;
+    yearLabel = `${year}년${mpy < 12 ? ` (${mpy}mo)` : ""}`;
+  } else if (fallbackCargoFleet) {
+    treemap = fallbackCargoFleet.treemap_categories || [];
+    commodities = fallbackCargoFleet.top_commodities || [];
+  }
+
+  // ---- Card title swaps ----
+  const tt = document.getElementById("cg-treemap-title");
+  if (tt) tt.textContent = `화물 카테고리 트리맵 — ${yearLabel} (Top ${treemap.length})`;
+  const ct = document.getElementById("cg-commodity-title");
+  if (ct) ct.textContent = `화물 품목 Top 10 — ${yearLabel}`;
+  const mt = document.getElementById("cg-od-map-title");
+  if (mt) mt.textContent = `🗺️ OD 흐름 지도 — ${yearLabel} (Top 30 항로)`;
+  const rt = document.getElementById("cg-routes-title");
+  if (rt) rt.textContent = `Top 항로 (OD) — ${yearLabel}`;
+  const st = document.getElementById("cg-sts-title");
+  if (st) st.textContent = `Top STS / 자체 환적 (origin = destination) — ${yearLabel}`;
+
+  // ---- Treemap + commodities ----
+  drawCargoTreemap(treemap);
+  drawCargoCommodityBars(commodities);
+
+  // ---- OD map + STS + routes (year-cut when available) ----
+  if (yearSlice && Array.isArray(yearSlice.top_routes)) {
+    drawCargoODMapYear(yearSlice.top_routes, ctx.mapFlow?.ports || [], yearLabel);
+    drawCargoRoutes(yearSlice.top_routes, { xTitle: `ton (${yearLabel})` });
+    // Year-cut routes already exclude STS; but provide an STS-aware
+    // overlay with top_sts so the routes bar can show both when the
+    // "hide self-loop" toggle is off. Use top_routes augmented with STS.
+    const merged = (yearSlice.top_routes || []).concat(
+      (yearSlice.top_sts || []).map(s => ({
+        origin: s.port, destination: s.port,
+        ton: s.ton, calls: s.calls, is_self_loop: true,
+      }))
+    );
+    // Re-sort merged so STS hubs interleave by ton
+    merged.sort((a, b) => (b.ton || 0) - (a.ton || 0));
+    // The hide-self toggle in drawCargoRoutes uses `isSelf` after
+    // normalization; pass the merged list.
+    drawCargoRoutes(merged, { xTitle: `ton (${yearLabel})` });
+    drawCargoSTS(yearSlice.top_sts || [],
+                  { yearCut: true, xTitle: `ton (${yearLabel}, self-loop)` });
+  } else {
+    // Legacy 24M view via map_flow + route_facts
+    if (ctx.mapFlow) drawCargoODMap(ctx.mapFlow);
+    if (ctx.routeFacts) {
+      drawCargoRoutes(ctx.routeFacts.routes || [], { xTitle: "ton (24M)" });
+      drawCargoSTS(ctx.routeFacts.routes || [],
+                    { yearCut: false, xTitle: "ton (24M, self-loop)" });
+    }
+  }
+
+  // ---- Captions ----
+  const cap1 = document.getElementById("cg-treemap-caption");
+  if (cap1) {
+    const cats = treemap.slice().sort((a, b) => b.ton_total - a.ton_total);
+    const total = cats.reduce((s, r) => s + (r.ton_total || 0), 0);
+    const top3 = cats.slice(0, 3).reduce((s, r) => s + r.ton_total, 0);
+    cap1.textContent = total > 0
+      ? `${yearLabel} — 상위 3개 카테고리(${cats.slice(0, 3).map(c => c.category).join(" · ")})가 전체 ${cats.length}개의 ${(top3 / total * 100).toFixed(1)}%.`
+      : "데이터 없음";
+  }
+  const cap2 = document.getElementById("cg-commodity-caption");
+  if (cap2 && commodities[0]) {
+    const totC = commodities.reduce((s, r) => s + (r.ton_total || 0), 0);
+    cap2.textContent = totC > 0
+      ? `${yearLabel} — ${commodities[0].name} 단일 품목이 Top 10 누적의 ${(commodities[0].ton_total / totC * 100).toFixed(1)}%.`
+      : "데이터 없음";
+  }
+
+  // Routes + STS captions
+  const capR = document.getElementById("cg-routes-caption");
+  if (capR) {
+    if (yearSlice && Array.isArray(yearSlice.top_routes) && yearSlice.top_routes[0]) {
+      const r = yearSlice.top_routes[0];
+      capR.textContent = `${yearLabel} 최대 항로: ${r.origin} → ${r.destination} (${fmtTon(r.ton)}, ${(r.calls || 0).toLocaleString()}회).`;
+    }
+    // else: leave the legacy 24M caption populated by fillCargoCaptions
+  }
+  const capS = document.getElementById("cg-sts-caption");
+  if (capS) {
+    if (yearSlice && Array.isArray(yearSlice.top_sts) && yearSlice.top_sts[0]) {
+      const s = yearSlice.top_sts[0];
+      const total = (yearSlice.top_sts || []).reduce((sum, r) => sum + (r.ton || 0), 0);
+      capS.textContent = `${yearLabel} — STS Top1: ${s.port} ${fmtTon(s.ton)} · 상위 15개 합계 ${fmtTon(total)}.`;
+    }
+  }
+
+  // Map caption
+  const capM = document.getElementById("cg-od-map-caption");
+  if (capM) {
+    if (yearSlice && Array.isArray(yearSlice.top_routes)) {
+      const mappable = yearSlice.top_routes.filter(r => r.mappable !== false
+        && r.lat_o != null && r.lon_o != null).length;
+      capM.textContent = `${yearLabel} — Top ${yearSlice.top_routes.length} 항로 중 ${mappable}개 좌표 매핑.`;
+    }
   }
 }
 
@@ -1481,6 +1982,83 @@ function fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow) {
       ? `자체 환적 (STS) 허브 ${sts.length}개 — 24개월 합계 ${fmtTon(stsTotal)}.`
       : "데이터 없음";
   }
+}
+
+// Year-cut OD map: renders cargo_yearly.by_year[Y].top_routes as great-circle
+// lines + port bubbles. Falls back gracefully when only a subset of routes
+// have mappable coordinates (build-time port-coord lookup limitation).
+function drawCargoODMapYear(yearRoutes, mapFlowPorts, yearLabel) {
+  const routes = (yearRoutes || []).filter(r => r.mappable !== false
+    && r.lat_o != null && r.lon_o != null && r.lat_d != null && r.lon_d != null);
+  if (!routes.length) {
+    // Show a placeholder explaining why the map is empty for the year
+    const host = document.getElementById("cg-od-map");
+    if (host) {
+      host.innerHTML =
+        `<div class="text-sm text-slate-500 p-4">${yearLabel || ""} — 좌표 매핑 가능한 항로가 없습니다. ` +
+        `(원본 데이터는 Top 항로 표에서 확인 가능)</div>`;
+    }
+    return;
+  }
+
+  // Build port aggregate from routes endpoints
+  const portAgg = new Map();
+  let maxTon = 0;
+  for (const r of routes) {
+    const o = r.origin, d = r.destination;
+    if (!portAgg.has(o)) portAgg.set(o, { name: o, lat: r.lat_o, lon: r.lon_o, ton: 0 });
+    if (!portAgg.has(d)) portAgg.set(d, { name: d, lat: r.lat_d, lon: r.lon_d, ton: 0 });
+    portAgg.get(o).ton += r.ton;
+    portAgg.get(d).ton += r.ton;
+    if (r.ton > maxTon) maxTon = r.ton;
+  }
+  const ports = [...portAgg.values()];
+  const portMaxTon = Math.max(...ports.map(p => p.ton || 0), 1);
+
+  const lineTraces = routes.map(r => {
+    const width = 1.0 + 7.0 * Math.sqrt(r.ton / Math.max(maxTon, 1));
+    return {
+      type: "scattergeo",
+      lon: [r.lon_o, r.lon_d],
+      lat: [r.lat_o, r.lat_d],
+      mode: "lines",
+      line: { width, color: "#1A3A6B" },
+      opacity: 0.72,
+      hoverinfo: "text",
+      text: `<b>${r.origin} → ${r.destination}</b><br>${fmtTon(r.ton)}t · ${(r.calls || 0).toLocaleString()}회`,
+      name: yearLabel || "year",
+      showlegend: false,
+    };
+  });
+  const portTrace = {
+    type: "scattergeo",
+    lon: ports.map(p => p.lon),
+    lat: ports.map(p => p.lat),
+    mode: "markers",
+    marker: {
+      size: ports.map(p => Math.sqrt((p.ton || 0) / portMaxTon) * 26 + 4),
+      color: "#0f172a",
+      opacity: 0.85,
+      line: { width: 0.5, color: "#ffffff" },
+    },
+    text: ports.map(p => `<b>${p.name}</b><br>${fmtTon(p.ton)}t`),
+    hoverinfo: "text",
+    name: `항구 (${yearLabel} ton)`,
+    showlegend: false,
+  };
+
+  Plotly.newPlot("cg-od-map", [...lineTraces, portTrace], {
+    margin: { t: 5, b: 5, l: 5, r: 5 },
+    geo: {
+      scope: "asia", projection: { type: "natural earth" },
+      showcountries: true, showcoastlines: true, showland: true,
+      showocean: true, oceancolor: "#f1f5f9",
+      landcolor: "#fefefe", countrycolor: "#cbd5e1",
+      coastlinecolor: "#94a3b8",
+      lataxis: { range: [-12, 8] },
+      lonaxis: { range: [94, 142] },
+    },
+  }, { displayModeBar: false, responsive: true });
 }
 
 function drawCargoODMap(payload) {
@@ -1716,61 +2294,109 @@ function drawCargoYearly(payload) {
   }, { displayModeBar: false, responsive: true });
 }
 
-function drawCargoRoutes(rows) {
-  if (!rows.length) return;
+// drawCargoRoutes accepts EITHER legacy route_facts rows (with ton_24m,
+// calls_24m, vessels_seen, buckets, is_self_loop) OR year-cut top_routes
+// rows from cargo_yearly (origin, destination, ton, calls). Normalises on
+// the fly so a single chart serves both modes.
+function drawCargoRoutes(rows, opts = {}) {
+  if (!rows.length) {
+    const host = document.getElementById("cg-routes-bar");
+    if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">표시할 항로가 없습니다.</div>`;
+    return;
+  }
+
+  // Normalize to a common shape
+  const normRows = rows.map(r => {
+    const ton = r.ton_24m != null ? r.ton_24m : (r.ton || 0);
+    const calls = r.calls_24m != null ? r.calls_24m : (r.calls || 0);
+    const vessels = r.vessels_seen != null ? r.vessels_seen : (r.vessels || 0);
+    const buckets = r.buckets || [];
+    const isSelf = r.is_self_loop != null
+      ? r.is_self_loop
+      : (r.origin && r.destination && r.origin === r.destination);
+    return {
+      origin: r.origin, destination: r.destination,
+      ton, calls, vessels, buckets, isSelf,
+    };
+  });
+
   const hideSelf = document.getElementById("cg-routes-hide-self");
   const filtered = (hideSelf && hideSelf.checked)
-    ? rows.filter(r => !r.is_self_loop)
-    : rows;
-  const top = filtered.slice(0, 25).reverse();   // top at top
+    ? normRows.filter(r => !r.isSelf)
+    : normRows;
+  const top = filtered.slice(0, 25).reverse();
   if (!top.length) {
     const host = document.getElementById("cg-routes-bar");
     if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">표시할 항로가 없습니다.</div>`;
     return;
   }
+  const xTitle = opts.xTitle || "ton";
   Plotly.newPlot("cg-routes-bar", [{
-    x: top.map(r => r.ton_24m),
-    y: top.map(r => `${r.origin} → ${r.destination}${r.is_self_loop ? " (STS)" : ""}`),
+    x: top.map(r => r.ton),
+    y: top.map(r => `${r.origin} → ${r.destination}${r.isSelf ? " (STS)" : ""}`),
     type: "bar",
     orientation: "h",
     marker: {
-      color: top.map(r => r.is_self_loop ? "#f59e0b" : "#1A3A6B"),
+      color: top.map(r => r.isSelf ? "#f59e0b" : "#1A3A6B"),
       line: { color: "#1e293b", width: 0.5 },
     },
-    text: top.map(r => fmtTon(r.ton_24m)),
+    text: top.map(r => fmtTon(r.ton)),
     textposition: "outside",
     cliponaxis: false,
-    customdata: top.map(r => [r.calls_24m || 0, r.vessels_seen || 0,
-                              (r.buckets || []).slice(0, 3).join(", ")]),
+    customdata: top.map(r => [r.calls, r.vessels, (r.buckets || []).slice(0, 3).join(", ")]),
     hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<br>항해 %{customdata[0]:,} · 선박 %{customdata[1]:,}<br>주요 화물: %{customdata[2]}<extra></extra>",
   }], {
     margin: { t: 10, l: 220, r: 70, b: 40 },
-    xaxis: { title: "ton (24M)" },
+    xaxis: { title: xTitle },
   }, { displayModeBar: false, responsive: true });
 }
 
-function drawCargoSTS(rows) {
-  const sts = (rows || []).filter(r => r.is_self_loop).slice(0, 15).reverse();
+// Accepts legacy 24M route_facts rows OR year-cut top_sts items
+// (port, ton, calls). When `opts.yearCut === true`, the input is the
+// already-filtered top_sts list (no need to filter by is_self_loop).
+function drawCargoSTS(rows, opts = {}) {
+  let sts;
+  if (opts.yearCut) {
+    sts = (rows || []).slice(0, 15).reverse().map(r => ({
+      port: r.port,
+      ton: r.ton,
+      calls: r.calls || 0,
+      vessels: 0,
+      buckets: [],
+    }));
+  } else {
+    sts = (rows || [])
+      .filter(r => r.is_self_loop)
+      .slice(0, 15)
+      .reverse()
+      .map(r => ({
+        port: r.origin,
+        ton: r.ton_24m,
+        calls: r.calls_24m || 0,
+        vessels: r.vessels_seen || 0,
+        buckets: r.buckets || [],
+      }));
+  }
   if (!sts.length) {
     const host = document.getElementById("cg-sts-bar");
     if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">STS 데이터 없음.</div>`;
     return;
   }
+  const xTitle = opts.xTitle || "ton (self-loop)";
   Plotly.newPlot("cg-sts-bar", [{
-    x: sts.map(r => r.ton_24m),
-    y: sts.map(r => r.origin),
+    x: sts.map(r => r.ton),
+    y: sts.map(r => r.port),
     type: "bar",
     orientation: "h",
     marker: { color: "#f59e0b", line: { color: "#1e293b", width: 0.5 } },
-    text: sts.map(r => fmtTon(r.ton_24m)),
+    text: sts.map(r => fmtTon(r.ton)),
     textposition: "outside",
     cliponaxis: false,
-    customdata: sts.map(r => [r.calls_24m || 0, r.vessels_seen || 0,
-                              (r.buckets || []).slice(0, 3).join(", ")]),
+    customdata: sts.map(r => [r.calls, r.vessels, (r.buckets || []).slice(0, 3).join(", ")]),
     hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<br>항해 %{customdata[0]:,} · 선박 %{customdata[1]:,}<br>주요 화물: %{customdata[2]}<extra></extra>",
   }], {
     margin: { t: 10, l: 150, r: 70, b: 40 },
-    xaxis: { title: "ton (24M, self-loop)" },
+    xaxis: { title: xTitle },
   }, { displayModeBar: false, responsive: true });
 }
 

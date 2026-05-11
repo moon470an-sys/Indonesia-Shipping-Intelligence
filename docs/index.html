@@ -59,9 +59,17 @@
       </div>
 
       <!-- 4.1 Header KPI 4 (PR-3 fills; PR-7 skeleton until JS swaps) -->
+      <!-- PR-32: year selector — replaces "12M" labeling with calendar-year cuts. -->
+      <div class="flex flex-wrap items-center gap-3 mb-3" data-source="docs/derived/home_kpi.json">
+        <span class="text-xs font-semibold text-slate-600">기준 연도</span>
+        <div class="flex rounded border border-slate-200 overflow-hidden bg-white" id="home-year-pills" role="tablist" aria-label="Home KPI 연도 선택">
+          <button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>loading…</button>
+        </div>
+        <span class="text-[11px] text-slate-500" id="home-year-banner"></span>
+      </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="home-kpi" data-source="docs/derived/home_kpi.json">
-        <div class="kpi-card-large"><div class="kpi-label">12M 총 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
-        <div class="kpi-card-large"><div class="kpi-label">탱커 12M 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">총 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">탱커 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">탱커 등록 척수</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">데이터 기준일</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
       </div>
@@ -69,7 +77,7 @@
       <!-- 4.2 Main map (PR-2: d3 + topojson + SVG particle animation) -->
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
         <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 화물 흐름 지도 <span class="text-xs text-slate-500 font-normal">(24M 누계)</span></h3>
+          <h3 class="font-semibold">인도네시아 화물 흐름 지도 <span class="text-xs text-slate-500 font-normal" id="home-map-period">(loading…)</span></h3>
           <div class="flex flex-wrap gap-3 text-xs" id="home-map-controls">
             <div class="flex items-center gap-1">
               <span class="text-slate-500 mr-1">카테고리</span>
@@ -82,8 +90,9 @@
             <div class="flex items-center gap-1">
               <span class="text-slate-500 mr-1">기간</span>
               <div class="flex rounded border border-slate-200 overflow-hidden" id="map-control-period">
-                <button data-key="12m" class="px-2 py-1 bg-white hover:bg-slate-100">12M</button>
-                <button data-key="24m" class="px-2 py-1 bg-slate-800 text-white">24M</button>
+                <button data-key="12m" class="px-2 py-1 bg-white hover:bg-slate-100" title="최근 12개월 롤링">12M</button>
+                <button data-key="24m" class="px-2 py-1 bg-slate-800 text-white" title="24개월 누계 (카테고리 색상 분리)">24M</button>
+                <!-- PR-35: year buttons populated by JS so partial years get an (Nmo) suffix -->
               </div>
             </div>
             <div class="flex items-center gap-1">
@@ -181,18 +190,29 @@
     <section id="tab-cargo" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">📦 Cargo</h2>
-        <p class="text-sm text-slate-500">🗺️ OD 흐름 지도 · 카테고리 트리맵 · 품목 Top 10 · 24개월 sector 추이 · Top OD 항로 (self-loop 별도 표기).</p>
+        <p class="text-sm text-slate-500">🗺️ OD 흐름 지도 · 연도별 카테고리 트리맵 · 품목 Top 10 · 월별 sector 추이 · Top OD 항로 (self-loop 별도 표기).</p>
+      </div>
+
+      <!-- PR-29: year selector — drives the treemap + commodity bars below.
+           Defaults to the most recent full (12-month) calendar year. -->
+      <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-3" data-source="docs/derived/cargo_yearly.json">
+        <span class="text-xs font-semibold text-slate-600">분석 연도</span>
+        <div class="flex rounded border border-slate-200 overflow-hidden" id="cg-year-pills" role="tablist" aria-label="연도 선택">
+          <!-- buttons populated dynamically in renderCargo() so partial-year suffixes are data-driven -->
+          <button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>loading…</button>
+        </div>
+        <span class="text-[11px] text-slate-500" id="cg-year-banner"></span>
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
-        <h3 class="font-semibold mb-2">🗺️ OD 흐름 지도 (Top 30 항로, 24M)</h3>
-        <p class="text-xs text-slate-500 mb-2">버블 = 항구별 24M 총 톤, 선 두께 ∝ 항로 톤, 색상 = 화물 카테고리. 카테고리 범례 클릭으로 토글 가능.</p>
+        <h3 class="font-semibold mb-2"><span id="cg-od-map-title">🗺️ OD 흐름 지도</span></h3>
+        <p class="text-xs text-slate-500 mb-2">버블 = 항구별 총 톤, 선 두께 ∝ 항로 톤. 선택 연도가 있으면 해당 연도 데이터, 없으면 24M 카테고리 색상.</p>
         <div id="cg-od-map" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-od-map-caption">&nbsp;</p>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/cargo_fleet.json">
-        <h3 class="font-semibold mb-2">화물 카테고리 트리맵 (Top 15)</h3>
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/cargo_yearly.json">
+        <h3 class="font-semibold mb-2"><span id="cg-treemap-title">화물 카테고리 트리맵</span></h3>
         <div id="cg-treemap" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-treemap-caption">&nbsp;</p>
       </div>
@@ -205,8 +225,8 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
-          <h3 class="font-semibold mb-2">화물 품목 Top 10</h3>
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_yearly.json">
+          <h3 class="font-semibold mb-2"><span id="cg-commodity-title">화물 품목 Top 10</span></h3>
           <div id="cg-commodity-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
           <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-commodity-caption">&nbsp;</p>
         </div>
@@ -220,8 +240,8 @@
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/route_facts.json">
-        <h3 class="font-semibold mb-2">Top 항로 (OD · 24M 톤)</h3>
-        <p class="text-xs text-slate-500 mb-2">상위 25개 OD 항로 — origin → destination · 24개월 총 톤 · 선박 수 · self-loop (STS) 표시.</p>
+        <h3 class="font-semibold mb-2"><span id="cg-routes-title">Top 항로 (OD)</span></h3>
+        <p class="text-xs text-slate-500 mb-2">상위 25개 OD 항로 — origin → destination · 총 톤 · self-loop (STS) 표시. 연도 선택에 따라 데이터 변경.</p>
         <div class="mb-2 flex flex-wrap gap-3 text-xs">
           <label class="inline-flex items-center gap-1">
             <input type="checkbox" id="cg-routes-hide-self" checked> self-loop (STS) 숨김
@@ -232,8 +252,8 @@
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/route_facts.json">
-        <h3 class="font-semibold mb-2">Top STS / 자체 환적 (origin = destination)</h3>
-        <p class="text-xs text-slate-500 mb-2">자체 환적이 일어나는 항구 — 정유 단지 · 터미널 인근 STS 활동 신호.</p>
+        <h3 class="font-semibold mb-2"><span id="cg-sts-title">Top STS / 자체 환적 (origin = destination)</span></h3>
+        <p class="text-xs text-slate-500 mb-2">자체 환적이 일어나는 항구 — 정유 단지 · 터미널 · 환적 활동 신호. 연도 선택에 따라 데이터 변경.</p>
         <div id="cg-sts-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-sts-caption">&nbsp;</p>
       </div>
@@ -294,7 +314,7 @@
     <section id="tab-tanker-sector" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">🛢️ Tanker Sector</h2>
-        <p class="text-sm text-slate-500">탱커 시장 심화 — Subclass 카드 · 시장 구조 · 24M 추이 · Top 코모디티 · Top 운영사.</p>
+        <p class="text-sm text-slate-500">탱커 시장 심화 — Subclass 카드 (연도 선택) · 시장 구조 · 월별 추이 · Top 코모디티 · Top 운영사.</p>
       </div>
 
       <!-- Regulatory box (collapsible) -->
@@ -308,8 +328,14 @@
       </details>
 
       <!-- 5.1 Subclass cards -->
-      <div class="mb-2 flex items-baseline justify-between">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-3">
         <h3 class="font-semibold">Subclass 비교</h3>
+        <div class="flex items-center gap-2 ml-auto">
+          <span class="text-xs font-semibold text-slate-600">기준 연도</span>
+          <div class="flex rounded border border-slate-200 overflow-hidden bg-white" id="ts-year-pills" role="tablist" aria-label="Tanker Sector 연도 선택">
+            <button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>loading…</button>
+          </div>
+        </div>
         <span class="text-xs text-slate-500" id="ts-active-filter">전체</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8" id="ts-cards"
@@ -317,9 +343,9 @@
 
       <!-- 5.2 Subclass scatter (market structure) -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/subclass_facts.json">
-        <h3 class="font-semibold mb-1">시장 구조 (24M CAGR × 평균 선령)</h3>
+        <h3 class="font-semibold mb-1">시장 구조 — 2년 CAGR × 평균 선령 <span class="text-xs text-slate-500 font-normal" id="ts-scatter-period">(loading…)</span></h3>
         <p class="text-xs text-slate-500 mb-2" id="ts-scatter-caption">
-          각 점은 subclass의 24개월 변화율(x), GT 가중 평균 선령(y), 12M ton(크기). 영역 라벨 없음.
+          x = 2년간 누적 성장률 (CAGR), y = GT 가중 평균 선령, 점 크기 = 직전 12개월 ton. 2년 풀데이터(24개월)가 있어야 CAGR 산출 가능.
         </p>
         <div id="ts-scatter" style="height:340px"></div>
       </div>
@@ -327,7 +353,7 @@
       <!-- 5.3 Subclass monthly stacked area -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_subclass.json">
         <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
-          <h3 class="font-semibold">Subclass 월별 추이 (24M)</h3>
+          <h3 class="font-semibold">Subclass 월별 추이 <span class="text-xs text-slate-500 font-normal" id="ts-monthly-period">(loading…)</span></h3>
           <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="ts-monthly-mode">
             <button data-key="abs" class="px-2 py-1 bg-slate-800 text-white">절대값</button>
             <button data-key="yoy" class="px-2 py-1 bg-white hover:bg-slate-100">YoY %</button>
@@ -338,7 +364,7 @@
 
       <!-- 5.4 Top commodities horizontal bars -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_top.json">
-        <h3 class="font-semibold mb-2">Top 10 코모디티 (12M ton 기준)</h3>
+        <h3 class="font-semibold mb-2">Top 10 코모디티 <span class="text-xs text-slate-500 font-normal" id="ts-commodity-period">(직전 12개월 ton 기준)</span></h3>
         <div id="ts-commodity-bars" style="height:380px"></div>
       </div>
 

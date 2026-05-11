@@ -407,6 +407,348 @@ def build_fleet_age_bins(snapshot_month: str, current_year: int | None = None) -
     }
 
 
+def build_cargo_yearly() -> dict:
+    """Per calendar-year cargo cuts (treemap + commodities), for the Cargo tab.
+
+    Replaces the "rolling 24M" framing with explicit (2024 / 2025 / 2026)
+    buckets. Queries `cargo_snapshot` directly via JSON-extract on the
+    BONGKAR/MUAT/KOMODITI/JENIS keys (Indonesian tuple-stringified MultiIndex).
+
+    Partial years (12개월 미만) are flagged via `months_per_year` so the
+    client can render a hatched pattern on those bars and avoid spurious
+    YoY comparisons.
+
+    Returned shape:
+        {
+          schema_version, snapshot_month,
+          years: [str, ...],
+          months_per_year: {year: int_month_count},
+          by_year: {
+              year: {
+                  total_ton: float,
+                  treemap_categories: [{category, ton_total, calls}, ...],
+                  top_commodities:    [{name,     ton_total}, ...],
+              }
+          }
+        }
+    """
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    # Embed-safe JSON path encoder for keys like ('BONGKAR', 'TON')
+    def _path(key: str) -> str:
+        return ('$."' + key + '"').replace("'", "''")
+
+    P_J_B = _path("('BONGKAR', 'JENIS')")
+    P_T_B = _path("('BONGKAR', 'TON')")
+    P_K_B = _path("('BONGKAR', 'KOMODITI')")
+    P_J_M = _path("('MUAT', 'JENIS')")
+    P_T_M = _path("('MUAT', 'TON')")
+    P_K_M = _path("('MUAT', 'KOMODITI')")
+    P_ORIG = _path("('TIBA', 'DARI')")
+    P_DEST = _path("('BERANGKAT', 'KE')")
+    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    # ---- Port-coord lookup from previously-built map_flow.json --------------
+    # We re-use the 60 normalized ports + lat/lon already produced by the
+    # tanker_flow_map pipeline. Anything we cannot resolve simply drops out of
+    # the map (kept in the table view via the raw origin/destination strings).
+    try:
+        from backend.build_static import _flow_normalize_port  # type: ignore
+    except Exception:
+        # Fallback: trivial normalizer if build_static can't be imported.
+        def _flow_normalize_port(s):
+            if not s:
+                return None
+            t = str(s).upper().strip()
+            t = t.split("(", 1)[0].split("/", 1)[0].split(",", 1)[0].strip()
+            return t if len(t) >= 3 else None
+
+    port_coords: dict[str, tuple[float, float]] = {}
+    try:
+        mf = _load_json(DERIVED / "map_flow.json")
+        for p in mf.get("ports", []):
+            nm = p.get("name")
+            if nm and p.get("lat") is not None and p.get("lon") is not None:
+                port_coords[nm.upper()] = (float(p["lat"]), float(p["lon"]))
+    except FileNotFoundError:
+        pass
+
+    # PR-37: supplement the tanker-focused map_flow.ports list with dry-bulk,
+    # nickel, and palm hubs that dominate non-tanker OD flow. Without these
+    # the year-cut OD map drops many top routes (e.g. SAMARINDA, MOLAWE,
+    # KUALA TANJUNG), skewing the category mix toward Product/BBM.
+    # Coordinates picked from public geographic sources, accurate to ~1km
+    # which is plenty for an archipelago-scale map. Don't add entries
+    # already present in map_flow.json (would just be overwritten with the
+    # same value).
+    _EXTRA_PORT_COORDS: dict[str, tuple[float, float]] = {
+        # ----- Kalimantan coal export hubs -----
+        "SAMARINDA":       (-0.50,  117.15),   # E. Kalimantan
+        "BANJARMASIN":     (-3.32,  114.59),   # S. Kalimantan
+        "TANJUNG BARA":    (-0.42,  117.55),   # KPC coal terminal
+        "KOTABARU":        (-3.30,  116.20),   # S. Kalimantan
+        "BONTANG":         ( 0.13,  117.49),   # E. Kalimantan LNG + coal
+        "MUARA SATUI":     (-3.85,  115.50),
+        "TANAH GROGOT":    (-1.91,  116.20),
+        "BATULICIN":       (-3.30,  116.20),
+        "TARJUN":          (-3.65,  116.04),
+        "SANGATTA":        ( 0.38,  117.55),
+        # ----- Sulawesi nickel hubs -----
+        "WEDA":            ( 0.36,  127.93),   # Halmahera (technically Maluku Utara)
+        "MOLAWE":          (-3.96,  121.95),   # Konawe nickel
+        "POMALAA":         (-4.18,  121.62),
+        "MOROWALI":        (-2.85,  121.85),
+        "OBI ISLAND":      (-1.42,  127.85),   # N. Maluku nickel
+        "OBI":             (-1.42,  127.85),
+        "KENDARI":         (-3.97,  122.52),
+        "KOLAKA":          (-4.04,  121.60),
+        "KONAWE":          (-3.96,  122.60),
+        # ----- Sumatra palm + nickel + coal export -----
+        "KUALA TANJUNG":   ( 3.40,   99.45),   # N. Sumatra deepsea
+        "LUBUK GAUNG":     ( 1.65,  101.40),   # Riau palm
+        "SUNGAI PAKNING":  ( 1.39,  102.13),
+        # ----- Java + general additions -----
+        "TANJUNG PERAK":   (-7.20,  112.74),   # Surabaya (alias)
+        "PROBOLINGGO":     (-7.74,  113.21),
+        "PASURUAN":        (-7.65,  112.91),
+        "CILACAP":         (-7.73,  109.02),
+        # ----- Papua / Maluku -----
+        "TANGGUH":         (-2.13,  133.51),   # W. Papua LNG
+        "AMAMAPARE":       (-4.83,  136.88),   # Freeport Indonesia (copper)
+        "TIMIKA":          (-4.55,  136.89),
+        "MERAUKE":         (-8.49,  140.39),
+        # ----- Sumbawa nickel / mining -----
+        "BENETE":          (-9.00,  116.83),   # Newmont (Sumbawa)
+        "MEKAR PUTIH":     (-8.59,  116.43),
+    }
+    for name, (lat, lon) in _EXTRA_PORT_COORDS.items():
+        port_coords.setdefault(name, (lat, lon))
+
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+
+        # Year scaffolding (years + months covered per year)
+        cur.execute(
+            "SELECT data_year, COUNT(DISTINCT data_month) "
+            "FROM cargo_snapshot WHERE snapshot_month=? "
+            "GROUP BY data_year ORDER BY 1",
+            (snap,),
+        )
+        years_meta = [(str(int(y)), int(n)) for y, n in cur if y is not None]
+
+        by_year: dict[str, dict] = {}
+
+        for y, _mc in years_meta:
+            yr_int = int(y)
+
+            # Total ton (BONGKAR + MUAT)
+            cur.execute(
+                f"SELECT SUM({ton(P_T_B)}) + SUM({ton(P_T_M)}) "
+                f"FROM cargo_snapshot WHERE snapshot_month=? AND data_year=?",
+                (snap, yr_int),
+            )
+            row = cur.fetchone()
+            total = float((row[0] if row and row[0] is not None else 0.0))
+
+            # Treemap categories (jenis) — combine BONGKAR + MUAT, top 15
+            cur.execute(
+                f"SELECT j, SUM(t) AS ton, COUNT(*) AS calls FROM ("
+                f"  SELECT json_extract(raw_row, '{P_J_B}') AS j, {ton(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f"  UNION ALL "
+                f"  SELECT json_extract(raw_row, '{P_J_M}') AS j, {ton(P_T_M)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f") WHERE j IS NOT NULL AND j != '' AND j != '-' AND t > 0 "
+                f"GROUP BY j ORDER BY ton DESC LIMIT 15",
+                (snap, yr_int, snap, yr_int),
+            )
+            treemap_rows = [
+                {"category": j, "ton_total": round(float(t), 1), "calls": int(c)}
+                for j, t, c in cur
+            ]
+
+            # Top commodities (komoditi) — combine BONGKAR + MUAT, top 10
+            cur.execute(
+                f"SELECT k, SUM(t) AS ton FROM ("
+                f"  SELECT json_extract(raw_row, '{P_K_B}') AS k, {ton(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f"  UNION ALL "
+                f"  SELECT json_extract(raw_row, '{P_K_M}') AS k, {ton(P_T_M)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f") WHERE k IS NOT NULL AND k != '' AND k != '-' AND t > 0 "
+                f"GROUP BY k ORDER BY ton DESC LIMIT 10",
+                (snap, yr_int, snap, yr_int),
+            )
+            commodity_rows = [
+                {"name": k, "ton_total": round(float(t), 1)}
+                for k, t in cur
+            ]
+
+            # Per-(origin, destination) ton + calls for this year. The raw
+            # strings are kept; coord lookup happens after normalization.
+            cur.execute(
+                f"SELECT json_extract(raw_row, '{P_ORIG}') AS o, "
+                f"       json_extract(raw_row, '{P_DEST}') AS d, "
+                f"       SUM({ton(P_T_B)} + {ton(P_T_M)}) AS t, "
+                f"       COUNT(*) AS c "
+                f"FROM cargo_snapshot "
+                f"WHERE snapshot_month=? AND data_year=? "
+                f"AND o IS NOT NULL AND o != '' AND o != '-' "
+                f"AND d IS NOT NULL AND d != '' AND d != '-' "
+                f"GROUP BY o, d HAVING t > 0",
+                (snap, yr_int),
+            )
+            od_rows_raw = cur.fetchall()
+
+            # PR-36: per-(o, d, komoditi) ton so we can attach a dominant
+            # category to each year-cut route. The Home map's year-mode then
+            # regains color parity with 24M mode.
+            cur.execute(
+                f"SELECT o, d, kom, SUM(t) AS s FROM ( "
+                f"  SELECT json_extract(raw_row, '{P_ORIG}') AS o, "
+                f"         json_extract(raw_row, '{P_DEST}') AS d, "
+                f"         json_extract(raw_row, '{P_K_B}') AS kom, "
+                f"         {ton(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f"  UNION ALL "
+                f"  SELECT json_extract(raw_row, '{P_ORIG}') AS o, "
+                f"         json_extract(raw_row, '{P_DEST}') AS d, "
+                f"         json_extract(raw_row, '{P_K_M}') AS kom, "
+                f"         {ton(P_T_M)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f") WHERE o IS NOT NULL AND o != '' AND o != '-' "
+                f"  AND d IS NOT NULL AND d != '' AND d != '-' "
+                f"  AND kom IS NOT NULL AND kom != '' AND kom != '-' "
+                f"  AND t > 0 "
+                f"GROUP BY o, d, kom",
+                (snap, yr_int, snap, yr_int),
+            )
+            od_kom_raw = cur.fetchall()
+
+            # Normalize, look up coords, split into top routes vs STS hubs.
+            od_agg: dict = {}
+            sts_agg: dict = {}
+            for o, d, t, c in od_rows_raw:
+                on = _flow_normalize_port(o)
+                dn = _flow_normalize_port(d)
+                if not on or not dn:
+                    continue
+                t = float(t or 0); c = int(c)
+                if on == dn:
+                    if on not in sts_agg:
+                        sts_agg[on] = [0.0, 0]
+                    sts_agg[on][0] += t
+                    sts_agg[on][1] += c
+                else:
+                    key = (on, dn)
+                    if key not in od_agg:
+                        od_agg[key] = [0.0, 0]
+                    od_agg[key][0] += t
+                    od_agg[key][1] += c
+
+            # PR-36: fold (o, d, kom) into normalized (on, dn) -> category_ton
+            # so each route can be tagged with its dominant commodity category.
+            try:
+                from backend.build_static import _flow_classify_kom  # type: ignore
+            except Exception:
+                def _flow_classify_kom(label):
+                    if not label:
+                        return "기타"
+                    s = str(label).upper()
+                    if "CRUDE" in s or "MENTAH" in s:
+                        return "Crude"
+                    if "CPO" in s or "PALM OIL" in s or "MINYAK SAWIT" in s:
+                        return "CPO/팜오일"
+                    if "LNG" in s or "NATURAL GAS" in s:
+                        return "LNG"
+                    if "LPG" in s or "ELPIJI" in s:
+                        return "LPG"
+                    return "기타"
+
+            od_cat: dict[tuple[str, str], dict[str, float]] = {}
+            for o, d, kom, t in od_kom_raw:
+                on = _flow_normalize_port(o)
+                dn = _flow_normalize_port(d)
+                if not on or not dn:
+                    continue
+                bucket = _flow_classify_kom(kom)
+                category = _bucket_to_category(bucket)
+                if not category:
+                    continue
+                key = (on, dn)
+                if key not in od_cat:
+                    od_cat[key] = {}
+                od_cat[key][category] = od_cat[key].get(category, 0.0) + float(t or 0)
+
+            # Top 30 OD routes (mappable preferred — keep all then sort)
+            route_rows = []
+            for (on, dn), (tv, cv) in sorted(
+                od_agg.items(), key=lambda kv: -kv[1][0])[:120]:
+                op = port_coords.get(on)
+                dp = port_coords.get(dn)
+                # PR-36: dominant commodity category for this OD pair
+                cats = od_cat.get((on, dn), {})
+                dominant = max(cats, key=cats.get) if cats else None
+                category_ton = {c: round(t, 1) for c, t in cats.items()}
+                route_rows.append({
+                    "origin": on,
+                    "destination": dn,
+                    "lat_o": op[0] if op else None,
+                    "lon_o": op[1] if op else None,
+                    "lat_d": dp[0] if dp else None,
+                    "lon_d": dp[1] if dp else None,
+                    "ton": round(tv, 1),
+                    "calls": cv,
+                    "mappable": bool(op and dp),
+                    "category": dominant,
+                    "category_ton": category_ton,
+                })
+            # Prefer mappable routes for the headline Top 30; fall back to
+            # non-mappable if mappable count is short.
+            mappable_routes = [r for r in route_rows if r["mappable"]][:30]
+            top_routes = mappable_routes if len(mappable_routes) >= 10 else route_rows[:30]
+
+            top_sts = []
+            for p, (tv, cv) in sorted(
+                sts_agg.items(), key=lambda kv: -kv[1][0])[:15]:
+                lp = port_coords.get(p)
+                top_sts.append({
+                    "port": p,
+                    "lat": lp[0] if lp else None,
+                    "lon": lp[1] if lp else None,
+                    "ton": round(tv, 1),
+                    "calls": cv,
+                })
+
+            by_year[y] = {
+                "total_ton": round(total, 1),
+                "treemap_categories": treemap_rows,
+                "top_commodities": commodity_rows,
+                "top_routes": top_routes,
+                "top_sts": top_sts,
+            }
+
+    return {
+        "schema_version": 2,                                          # PR-38
+        "snapshot_month": snap,
+        "years": [y for y, _ in years_meta],
+        "months_per_year": {y: m for y, m in years_meta},
+        # PR-38: full 8-category palette so the Home map legend can render
+        # year-mode colors without falling back to map_flow's 5-category set.
+        "categories": [
+            {"name": name, "color": color}
+            for (name, color, _sources) in MAP_CATEGORIES
+        ],
+        "by_year": by_year,
+        "_notes": {
+            "source": "cargo_snapshot — raw_row JSON via SQL json_extract",
+            "scope": "BONGKAR + MUAT combined; SELF/foreign/coastal not separated here",
+            "category_set": "PR-38 — 8 categories incl. Coal / Nickel-Mineral / Container",
+        },
+    }
+
+
 def build_cargo_fleet() -> dict:
     """Renewal v2 PR-4: treemap + commodity bars + class donut + age bars."""
     cargo = _load_json(DATA / "cargo.json")
@@ -491,6 +833,52 @@ def build_home_kpi() -> dict:
     tank_prev12 = sum(period_ton[p] for p in sorted_periods[-24:-12])
     tank_yoy = ((tank_last12 - tank_prev12) / tank_prev12 * 100) if tank_prev12 > 0 else None
 
+    # ---- PR-32: per-calendar-year cuts so KPI cards can display
+    # "2025년 총 물동량" instead of rolling "12M 총 물동량".  Reuses the
+    # already-loaded series/period_ton dicts — no extra DB query. ----
+    def _by_year(items: list, key_period: str, key_ton: str) -> tuple[dict, dict]:
+        """Group items by year[:4] -> (total_ton_by_year, months_per_year)."""
+        ton_by_year: dict[str, float] = defaultdict(float)
+        months_by_year: dict[str, set] = defaultdict(set)
+        for r in items:
+            p = r.get(key_period)
+            if not p or len(str(p)) < 7:
+                continue
+            y = str(p)[:4]
+            ton_by_year[y] += float(r.get(key_ton) or 0)
+            months_by_year[y].add(str(p)[:7])
+        return (
+            {y: round(t, 1) for y, t in ton_by_year.items()},
+            {y: len(s) for y, s in months_by_year.items()},
+        )
+
+    total_by_year, total_months = _by_year(series_eff, "period", "ton")
+    tanker_period_items = [{"period": p, "ton": v} for p, v in period_ton.items()]
+    if kpi.get("latest_period_is_partial_data_dropped") and sorted_periods:
+        # Drop the last partial period from tanker as well
+        partial_p = max(period_ton.keys())
+        tanker_period_items = [r for r in tanker_period_items if r["period"] != partial_p]
+    tanker_by_year, _ = _by_year(tanker_period_items, "period", "ton")
+
+    def _yoy(by_year: dict[str, float]) -> dict[str, float | None]:
+        """YoY % per year vs the previous year — null when either side missing."""
+        sorted_ys = sorted(by_year.keys())
+        out: dict[str, float | None] = {}
+        for i, y in enumerate(sorted_ys):
+            if i == 0:
+                out[y] = None
+                continue
+            prev = by_year.get(sorted_ys[i - 1])
+            cur = by_year[y]
+            if prev and prev > 0:
+                out[y] = round((cur - prev) / prev * 100, 1)
+            else:
+                out[y] = None
+        return out
+
+    total_yoy_by_year = _yoy(total_by_year)
+    tanker_yoy_by_year = _yoy(tanker_by_year)
+
     # ---- Tanker fleet (count + GT-weighted avg age) ----
     age_stats, fleet_summary = build_tanker_age_stats(src_meta.get("latest"))
 
@@ -520,6 +908,11 @@ def build_home_kpi() -> dict:
                 "window": [last12[0]["period"] if last12 else None,
                            last12[-1]["period"] if last12 else None],
                 "source": "monitoring-inaportnet.dephub.go.id (LK3)",
+                # PR-32: per-calendar-year drill-down so the card label can
+                # become "2025년 총 물동량" via the Home year selector.
+                "by_year": total_by_year,
+                "yoy_by_year": total_yoy_by_year,
+                "months_per_year": total_months,
             },
             {
                 "id": "tanker_12m_ton",
@@ -529,6 +922,9 @@ def build_home_kpi() -> dict:
                 "window": [sorted_periods[-12] if len(sorted_periods) >= 12 else None,
                            sorted_periods[-1] if sorted_periods else None],
                 "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)",
+                "by_year": tanker_by_year,
+                "yoy_by_year": tanker_yoy_by_year,
+                "months_per_year": total_months,
             },
             {
                 "id": "tanker_fleet",
@@ -668,6 +1064,38 @@ def build_tanker_subclass() -> dict:
     top_operators = _top_operator_per_subclass(tf.get("fleet_owners", []))
 
     # ---- Card data per subclass (fact card §5.1) ----
+    #
+    # PR-33: also derive ton_by_year / yoy_by_year from the monthly_subclass
+    # series so the Tanker Sector cards can render "2025년 ton" instead of
+    # rolling 12M. The series is positionally aligned with `periods`, so
+    # year folding is just a sum on period[:4].
+    monthly_rows = tf.get("monthly_subclass", [])
+    sub_year_ton: dict[tuple[str, str], float] = defaultdict(float)
+    year_months: dict[str, set] = defaultdict(set)
+    for r in monthly_rows:
+        sub = r.get("subclass") or "UNKNOWN"
+        if sub == "UNKNOWN":
+            continue
+        p = r.get("period") or ""
+        if len(p) < 7:
+            continue
+        y = p[:4]
+        sub_year_ton[(sub, y)] += float(r.get("ton_total") or 0)
+        year_months[y].add(p[:7])
+    months_per_year = {y: len(s) for y, s in year_months.items()}
+
+    def _yoy_dict(sub: str) -> tuple[dict, dict]:
+        years_sorted = sorted({y for (s, y) in sub_year_ton if s == sub})
+        ton = {y: round(sub_year_ton[(sub, y)], 1) for y in years_sorted}
+        yoy: dict[str, float | None] = {}
+        for i, y in enumerate(years_sorted):
+            if i == 0:
+                yoy[y] = None
+            else:
+                prev = ton[years_sorted[i - 1]]
+                yoy[y] = round((ton[y] - prev) / prev * 100, 1) if prev > 0 else None
+        return ton, yoy
+
     cards = []
     for r in sub_facts.get("subclasses", []):
         sub = r["subclass"]
@@ -676,10 +1104,13 @@ def build_tanker_subclass() -> dict:
         ton_last = r.get("ton_last_12m") or 0
         ton_prev = r.get("ton_prev_12m") or 0
         delta_pct = ((ton_last - ton_prev) / ton_prev * 100) if ton_prev > 0 else None
+        ton_by_year, yoy_by_year = _yoy_dict(sub)
         cards.append({
             "subclass": sub,
             "ton_last_12m": ton_last,
             "yoy_pct": round(delta_pct, 1) if delta_pct is not None else None,
+            "ton_by_year": ton_by_year,           # PR-33
+            "yoy_by_year": yoy_by_year,           # PR-33
             "avg_age_gt_weighted": r.get("avg_age_gt_weighted"),
             "operator_count": r.get("operator_count"),
             "vessel_count": r.get("vessel_count"),
@@ -716,8 +1147,11 @@ def build_tanker_subclass() -> dict:
         "snapshot_month": tf.get("snapshot_month"),
         "cards": cards,
         "monthly": {"periods": sorted_periods, "series": series},
+        "months_per_year": months_per_year,  # PR-33: feeds the year selector
         "_notes": {
-            "yoy_basis": "12M-vs-prev-12M % (cagr_24m_pct also exposed if available)",
+            "yoy_basis": "ton_by_year: calendar-year sums from monthly_subclass; "
+                         "yoy_by_year: same-year vs previous-year (null if prev missing or zero); "
+                         "ton_last_12m: legacy rolling 12M kept for backwards-compat",
             "top_route_per_subclass": "deferred — needs per-subclass OD aggregation",
         },
     }
@@ -771,12 +1205,20 @@ def build_tanker_top() -> dict:
 # Five visual categories rolled up from the granular bucket labels in
 # tanker_flow_map.lanes. Order matters — color key is rendered top-down.
 MAP_CATEGORIES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
-    # (display name, hex color, bucket labels rolled into this category)
-    ("Crude",          "#92400e", ("Crude",)),
-    ("Product / BBM",  "#0284c7", ("Naphtha", "Kerosene", "BBM-가솔린", "BBM-디젤", "BBM-항공유", "BBM-기타", "기타")),
-    ("Chemical",       "#059669", ("Chemical",)),
-    ("LPG / LNG",      "#7c3aed", ("LPG", "LNG")),
-    ("FAME / Edible",  "#65a30d", ("FAME", "기타 식용유", "벙커유", "CPO/팜오일", "콩 식물", "기타 식용유", "아스팔트")),
+    # (display name, hex color, bucket labels rolled into this category).
+    # PR-38: split off Coal, Mineral Ore, Container/Gen Cargo into their own
+    # top-level categories so the Home map colour-codes non-tanker bulk
+    # routes distinctly. "기타" remains in Product/BBM as the last-resort
+    # catch-all for unknown labels.
+    ("Crude",                  "#92400e", ("Crude",)),
+    ("Product / BBM",          "#0284c7", ("Naphtha", "Kerosene", "BBM-가솔린", "BBM-디젤", "BBM-항공유", "BBM-기타", "기타")),
+    ("Chemical",               "#059669", ("Chemical",)),
+    ("LPG / LNG",              "#7c3aed", ("LPG", "LNG")),
+    ("FAME / Edible",          "#65a30d", ("FAME", "기타 식용유", "벙커유", "CPO/팜오일", "팜 파생", "아스팔트")),
+    # PR-38: new bulk + container categories
+    ("Coal",                   "#52525b", ("Coal",)),                                  # dark slate (coal-like)
+    ("Nickel / Mineral Ore",   "#0e7490", ("Nickel", "Bauxite", "Iron Ore")),          # cyan (metal ore)
+    ("Container / Gen Cargo",  "#9333ea", ("Container", "General Cargo", "Cement")),   # violet
 )
 
 
@@ -1261,6 +1703,13 @@ def main() -> None:
     print(f"  cargo_fleet.json — {len(cf['treemap_categories'])} treemap + "
           f"{len(cf['top_commodities'])} commodities + {len(cf['class_counts'])} classes + "
           f"{len(cf['age_bins']['bins'])} age bins")
+
+    cy = build_cargo_yearly()
+    bytes_total += _write_json(DERIVED / "cargo_yearly.json", cy)
+    _year_summary = ", ".join(
+        f"{y}: {cy['months_per_year'][y]}mo" for y in cy["years"]
+    )
+    print(f"  cargo_yearly.json — {len(cy['years'])} years ({_year_summary})")
 
     tk = build_owner_ticker_map()
     bytes_total += _write_json(DERIVED / "owner_ticker_map.json", tk)
