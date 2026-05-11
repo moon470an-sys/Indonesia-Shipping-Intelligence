@@ -977,7 +977,7 @@ const homeState = {
 async function renderHome() {
   setupSourceLabels(document.getElementById("tab-overview"));
 
-  // Parallel: KPI hero, timeseries, map data, world topology.
+  // Parallel: KPI hero, timeseries, map data, world topology, year cuts.
   let topo, kpis, ts;
   try {
     [kpis, ts, homeState.mapData, topo] = await Promise.all([
@@ -995,25 +995,24 @@ async function renderHome() {
     if (status) status.textContent = `Map data load failed: ${e.message}`;
     return;
   }
+  // PR-35: cargo_yearly.json is optional — Home map year buttons gracefully
+  // disappear if it failed to load. The other tabs already handle absence.
+  try { homeState.cargoYearly = await loadDerived("cargo_yearly.json"); }
+  catch (e) { homeState.cargoYearly = null; }
+  homeState.timeseries = ts;   // PR-35: needed by _refreshHomeMapPeriodLabel re-renders
 
   renderHomeKpi(kpis);
   renderHomeTimeseries(ts);
+  // PR-35: inject year buttons into the period control BEFORE binding
+  // so a single bindMapControls() pass wires them all.
+  _injectHomeMapYearButtons();
   bindMapControls();
   drawHomeMap();
   fillSectorStrip(kpis?.sector_breakdown || []);
-  // PR-34: surface the actual 24-month period range on the map title so
-  // "(24M 누계)" becomes "(2024-06 ~ 2026-05, 24개월 누계)" — honest about
-  // the rolling window the data covers.
-  const homeMapPeriodEl = document.getElementById("home-map-period");
-  if (homeMapPeriodEl) {
-    const ps = ts?.periods || [];
-    if (ps.length) {
-      homeMapPeriodEl.textContent =
-        `(${ps[0]} ~ ${ps[ps.length - 1]}, ${ps.length}개월 누계)`;
-    } else {
-      homeMapPeriodEl.textContent = "(24개월 누계)";
-    }
-  }
+  // PR-34/35: surface the active period on the map title. Re-evaluated on
+  // each drawHomeMap() because the period button can switch between rolling
+  // 24M and a calendar year.
+  _refreshHomeMapPeriodLabel(ts);
   fillForeignSidebar();
   fillMapInsights();
 }
@@ -1250,6 +1249,31 @@ function drawHomeTimeseries() {
   }, { displayModeBar: false, responsive: true });
 }
 
+// PR-35: append year buttons (2024 / 2025 / 2026) to the Home map's period
+// control group. They share the same active-style + click handler as the
+// 12M / 24M buttons; clicking sets homeState.filterPeriod to the 4-digit
+// year string so drawHomeMap() can branch to the year-cut data path.
+function _injectHomeMapYearButtons() {
+  const host = document.getElementById("map-control-period");
+  if (!host) return;
+  const cy = homeState.cargoYearly;
+  if (!cy || !cy.years || !cy.years.length) return;
+  const mpy = cy.months_per_year || {};
+  // Don't double-inject on re-renders
+  if (host.querySelector("button[data-key^='20']")) return;
+  for (const y of cy.years) {
+    const partial = (mpy[y] || 0) < 12;
+    const btn = document.createElement("button");
+    btn.dataset.key = y;
+    btn.className = "px-2 py-1 bg-white hover:bg-slate-100";
+    btn.textContent = `${y}년${partial ? ` (${mpy[y]}mo)` : ""}`;
+    btn.title = partial
+      ? `${y}년 부분 (${mpy[y]}개월) — 카테고리 분리 없음 (단색 표시)`
+      : `${y}년 풀 12개월 — 카테고리 분리 없음 (단색 표시)`;
+    host.appendChild(btn);
+  }
+}
+
 function bindMapControls() {
   const groups = [
     { id: "map-control-cat",    state: "filterCategory" },
@@ -1274,6 +1298,32 @@ function bindMapControls() {
         drawHomeMap();
       });
     });
+  }
+}
+
+// PR-35: tiny helper that refreshes the "(period range)" callout next to
+// the Home map title. Reads homeState.filterPeriod so it works for both
+// rolling 24M and calendar-year picks.
+function _refreshHomeMapPeriodLabel(timeseriesPayload) {
+  const el = document.getElementById("home-map-period");
+  if (!el) return;
+  const period = homeState.filterPeriod || "24m";
+  if (/^\d{4}$/.test(period)) {
+    const mpy = homeState.cargoYearly?.months_per_year || {};
+    const m = mpy[period] || 0;
+    el.textContent = `(${period}년${m && m < 12 ? `, ${m}mo (부분)` : ` 달력연도`})`;
+    return;
+  }
+  const ps = (timeseriesPayload || homeState.timeseries)?.periods || [];
+  if (ps.length) {
+    if (period === "12m") {
+      const last12 = ps.slice(-12);
+      el.textContent = `(${last12[0]} ~ ${last12[last12.length - 1]}, 12개월 누계)`;
+    } else {
+      el.textContent = `(${ps[0]} ~ ${ps[ps.length - 1]}, ${ps.length}개월 누계)`;
+    }
+  } else {
+    el.textContent = "(누계)";
   }
 }
 
@@ -1307,19 +1357,50 @@ function drawHomeMap() {
   // status messages but render the available 24m+all+dn_ln data as fallback. ----
   const status = document.getElementById("home-map-status");
   const notes = [];
-  if (homeState.filterCategory === "bulk") {
-    notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
-  }
-  if (homeState.filterPeriod === "12m") {
-    notes.push("12M OD 미산출 — 24M 누계 표시 중");
-  }
-  if (homeState.filterTraffic === "ln") {
-    notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
+
+  // PR-35: filterPeriod can be "12m" / "24m" (rolling) or a 4-digit year
+  // string (calendar year). Year mode swaps the data source to
+  // cargo_yearly.by_year[Y].top_routes — no category breakdown is carried
+  // there so routes render single-color (navy).
+  const isYearMode = /^\d{4}$/.test(homeState.filterPeriod || "");
+  let routes;
+  let routeTonField;
+  let yearLabel = null;
+  if (isYearMode && homeState.cargoYearly?.by_year?.[homeState.filterPeriod]) {
+    const slice = homeState.cargoYearly.by_year[homeState.filterPeriod];
+    routes = (slice.top_routes || [])
+      .filter(r => r.mappable !== false
+        && r.lat_o != null && r.lon_o != null
+        && r.lat_d != null && r.lon_d != null)
+      .map(r => ({
+        origin: r.origin, destination: r.destination,
+        lat_o: r.lat_o, lon_o: r.lon_o,
+        lat_d: r.lat_d, lon_d: r.lon_d,
+        ton_24m: r.ton,        // alias for the existing template that reads ton_24m
+        vessels: 0,
+        calls: r.calls || 0,
+        category: null,
+      }));
+    routeTonField = "ton_24m";
+    const mpy = homeState.cargoYearly.months_per_year || {};
+    const partial = (mpy[homeState.filterPeriod] || 0) < 12;
+    yearLabel = `${homeState.filterPeriod}년${partial ? ` (${mpy[homeState.filterPeriod]}mo, 부분)` : ""}`;
+    notes.push(`${yearLabel} 달력연도 cut · 카테고리 분리 없음 (단색)`);
+  } else {
+    if (homeState.filterCategory === "bulk") {
+      notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
+    }
+    if (homeState.filterPeriod === "12m") {
+      notes.push("12M OD 미산출 — 24M 누계 표시 중");
+    }
+    if (homeState.filterTraffic === "ln") {
+      notes.push("국제 OD 미분리 — 전체(국내+국제) 표시 중");
+    }
+    routes = (homeState.mapData.routes_top30 || []).slice();
   }
   status.textContent = notes.join(" · ") || "24M 누계 · 모든 카테고리 · Top 30 routes";
 
-  let routes = (homeState.mapData.routes_top30 || []).slice();
-  // Category color map
+  // Category color map (only meaningful in 24M mode; year mode falls back to navy)
   const categoryColors = {};
   for (const c of (homeState.mapData.categories || [])) categoryColors[c.name] = c.color;
 
@@ -1340,9 +1421,11 @@ function drawHomeMap() {
     const cx = mx - (dy / norm) * lift;
     const cy = my + (dx / norm) * lift;
     const d = `M ${start[0]} ${start[1]} Q ${cx} ${cy} ${end[0]} ${end[1]}`;
-    const color = categoryColors[r.category] || "#6b7280";
+    // PR-35: navy default in year mode (no per-route category); legacy gray
+    // when a 24M route lacks a category.
+    const color = categoryColors[r.category] || (isYearMode ? "#1A3A6B" : "#6b7280");
     const pathId = `route-path-${i}`;
-    const dimmed = hi && r.category !== hi;
+    const dimmed = !isYearMode && hi && r.category !== hi;
     const baseStroke = Math.max(1, 4 * r.ton_24m / tonMax);
     const path = routeLayer.append("path")
       .attr("id", pathId)

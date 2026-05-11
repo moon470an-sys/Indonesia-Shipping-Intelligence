@@ -90,8 +90,9 @@
             <div class="flex items-center gap-1">
               <span class="text-slate-500 mr-1">기간</span>
               <div class="flex rounded border border-slate-200 overflow-hidden" id="map-control-period">
-                <button data-key="12m" class="px-2 py-1 bg-white hover:bg-slate-100">12M</button>
-                <button data-key="24m" class="px-2 py-1 bg-slate-800 text-white">24M</button>
+                <button data-key="12m" class="px-2 py-1 bg-white hover:bg-slate-100" title="최근 12개월 롤링">12M</button>
+                <button data-key="24m" class="px-2 py-1 bg-slate-800 text-white" title="24개월 누계 (카테고리 색상 분리)">24M</button>
+                <!-- PR-35: year buttons populated by JS so partial years get an (Nmo) suffix -->
               </div>
             </div>
             <div class="flex items-center gap-1">
