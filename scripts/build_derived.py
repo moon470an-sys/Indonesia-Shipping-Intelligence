@@ -445,7 +445,34 @@ def build_cargo_yearly() -> dict:
     P_J_M = _path("('MUAT', 'JENIS')")
     P_T_M = _path("('MUAT', 'TON')")
     P_K_M = _path("('MUAT', 'KOMODITI')")
+    P_ORIG = _path("('TIBA', 'DARI')")
+    P_DEST = _path("('BERANGKAT', 'KE')")
     ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    # ---- Port-coord lookup from previously-built map_flow.json --------------
+    # We re-use the 60 normalized ports + lat/lon already produced by the
+    # tanker_flow_map pipeline. Anything we cannot resolve simply drops out of
+    # the map (kept in the table view via the raw origin/destination strings).
+    try:
+        from backend.build_static import _flow_normalize_port  # type: ignore
+    except Exception:
+        # Fallback: trivial normalizer if build_static can't be imported.
+        def _flow_normalize_port(s):
+            if not s:
+                return None
+            t = str(s).upper().strip()
+            t = t.split("(", 1)[0].split("/", 1)[0].split(",", 1)[0].strip()
+            return t if len(t) >= 3 else None
+
+    port_coords: dict[str, tuple[float, float]] = {}
+    try:
+        mf = _load_json(DERIVED / "map_flow.json")
+        for p in mf.get("ports", []):
+            nm = p.get("name")
+            if nm and p.get("lat") is not None and p.get("lon") is not None:
+                port_coords[nm.upper()] = (float(p["lat"]), float(p["lon"]))
+    except FileNotFoundError:
+        pass
 
     with sqlite3.connect(DB) as con:
         cur = con.cursor()
@@ -507,10 +534,83 @@ def build_cargo_yearly() -> dict:
                 for k, t in cur
             ]
 
+            # Per-(origin, destination) ton + calls for this year. The raw
+            # strings are kept; coord lookup happens after normalization.
+            cur.execute(
+                f"SELECT json_extract(raw_row, '{P_ORIG}') AS o, "
+                f"       json_extract(raw_row, '{P_DEST}') AS d, "
+                f"       SUM({ton(P_T_B)} + {ton(P_T_M)}) AS t, "
+                f"       COUNT(*) AS c "
+                f"FROM cargo_snapshot "
+                f"WHERE snapshot_month=? AND data_year=? "
+                f"AND o IS NOT NULL AND o != '' AND o != '-' "
+                f"AND d IS NOT NULL AND d != '' AND d != '-' "
+                f"GROUP BY o, d HAVING t > 0",
+                (snap, yr_int),
+            )
+            od_rows_raw = cur.fetchall()
+
+            # Normalize, look up coords, split into top routes vs STS hubs.
+            od_agg: dict = {}
+            sts_agg: dict = {}
+            for o, d, t, c in od_rows_raw:
+                on = _flow_normalize_port(o)
+                dn = _flow_normalize_port(d)
+                if not on or not dn:
+                    continue
+                t = float(t or 0); c = int(c)
+                if on == dn:
+                    if on not in sts_agg:
+                        sts_agg[on] = [0.0, 0]
+                    sts_agg[on][0] += t
+                    sts_agg[on][1] += c
+                else:
+                    key = (on, dn)
+                    if key not in od_agg:
+                        od_agg[key] = [0.0, 0]
+                    od_agg[key][0] += t
+                    od_agg[key][1] += c
+
+            # Top 30 OD routes (mappable preferred — keep all then sort)
+            route_rows = []
+            for (on, dn), (tv, cv) in sorted(
+                od_agg.items(), key=lambda kv: -kv[1][0])[:120]:
+                op = port_coords.get(on)
+                dp = port_coords.get(dn)
+                route_rows.append({
+                    "origin": on,
+                    "destination": dn,
+                    "lat_o": op[0] if op else None,
+                    "lon_o": op[1] if op else None,
+                    "lat_d": dp[0] if dp else None,
+                    "lon_d": dp[1] if dp else None,
+                    "ton": round(tv, 1),
+                    "calls": cv,
+                    "mappable": bool(op and dp),
+                })
+            # Prefer mappable routes for the headline Top 30; fall back to
+            # non-mappable if mappable count is short.
+            mappable_routes = [r for r in route_rows if r["mappable"]][:30]
+            top_routes = mappable_routes if len(mappable_routes) >= 10 else route_rows[:30]
+
+            top_sts = []
+            for p, (tv, cv) in sorted(
+                sts_agg.items(), key=lambda kv: -kv[1][0])[:15]:
+                lp = port_coords.get(p)
+                top_sts.append({
+                    "port": p,
+                    "lat": lp[0] if lp else None,
+                    "lon": lp[1] if lp else None,
+                    "ton": round(tv, 1),
+                    "calls": cv,
+                })
+
             by_year[y] = {
                 "total_ton": round(total, 1),
                 "treemap_categories": treemap_rows,
                 "top_commodities": commodity_rows,
+                "top_routes": top_routes,
+                "top_sts": top_sts,
             }
 
     return {

@@ -102,6 +102,335 @@
           "name": "PERTALITE",
           "ton_total": 14829286.5
         }
+      ],
+      "top_routes": [
+        {
+          "origin": "PATIMBAN",
+          "destination": "KABIL",
+          "lat_o": -6.31,
+          "lon_o": 107.91,
+          "lat_d": 1.06,
+          "lon_d": 104.1,
+          "ton": 4741335.0,
+          "calls": 55,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PRIOK",
+          "destination": "MAKASSAR",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -5.13,
+          "lon_d": 119.41,
+          "ton": 3396741.9,
+          "calls": 569,
+          "mappable": true
+        },
+        {
+          "origin": "PATIMBAN",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -6.31,
+          "lon_o": 107.91,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 1629009.1,
+          "calls": 21,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG EMAS",
+          "destination": "BANJARMASIN",
+          "lat_o": -6.96,
+          "lon_o": 110.42,
+          "lat_d": -3.32,
+          "lon_d": 114.59,
+          "ton": 1495071.1,
+          "calls": 268,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 1431650.8,
+          "calls": 623,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PRIOK",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 1407393.9,
+          "calls": 641,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "BITUNG",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": 1.44,
+          "lon_d": 125.18,
+          "ton": 1346066.8,
+          "calls": 1892,
+          "mappable": true
+        },
+        {
+          "origin": "BAU-BAU",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -5.47,
+          "lon_o": 122.62,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 1155503.2,
+          "calls": 492,
+          "mappable": true
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "BALIKPAPAN",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": -1.27,
+          "lon_d": 116.83,
+          "ton": 1127994.3,
+          "calls": 47,
+          "mappable": true
+        },
+        {
+          "origin": "KUMAI",
+          "destination": "SAMPIT",
+          "lat_o": -2.74,
+          "lon_o": 111.74,
+          "lat_d": -2.54,
+          "lon_d": 112.94,
+          "ton": 1119952.2,
+          "calls": 156,
+          "mappable": true
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "BALIKPAPAN",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": -1.27,
+          "lon_d": 116.83,
+          "ton": 1106903.7,
+          "calls": 678,
+          "mappable": true
+        },
+        {
+          "origin": "BOOM BARU",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -2.99,
+          "lon_o": 104.76,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 1102099.0,
+          "calls": 106,
+          "mappable": true
+        },
+        {
+          "origin": "MAKASSAR",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -5.13,
+          "lon_o": 119.41,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 1064164.4,
+          "calls": 1495,
+          "mappable": true
+        },
+        {
+          "origin": "CILACAP",
+          "destination": "TUBAN",
+          "lat_o": -7.73,
+          "lon_o": 109.02,
+          "lat_d": -6.9,
+          "lon_d": 112.05,
+          "ton": 1020112.5,
+          "calls": 47,
+          "mappable": true
+        },
+        {
+          "origin": "BALIKPAPAN",
+          "destination": "SAMARINDA",
+          "lat_o": -1.27,
+          "lon_o": 116.83,
+          "lat_d": -0.5,
+          "lon_d": 117.15,
+          "ton": 984706.5,
+          "calls": 666,
+          "mappable": true
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "CILACAP",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": -7.73,
+          "lon_d": 109.02,
+          "ton": 966812.8,
+          "calls": 42,
+          "mappable": true
+        },
+        {
+          "origin": "KABIL",
+          "destination": "BELAWAN",
+          "lat_o": 1.06,
+          "lon_o": 104.1,
+          "lat_d": 3.78,
+          "lon_d": 98.69,
+          "ton": 954683.9,
+          "calls": 72,
+          "mappable": true
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "DUMAI",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": 1.67,
+          "lon_d": 101.45,
+          "ton": 947747.0,
+          "calls": 39,
+          "mappable": true
+        },
+        {
+          "origin": "BANJARMASIN",
+          "destination": "SAMARINDA",
+          "lat_o": -3.32,
+          "lon_o": 114.59,
+          "lat_d": -0.5,
+          "lon_d": 117.15,
+          "ton": 947662.8,
+          "calls": 208,
+          "mappable": true
+        },
+        {
+          "origin": "BALIKPAPAN",
+          "destination": "TUBAN",
+          "lat_o": -1.27,
+          "lon_o": 116.83,
+          "lat_d": -6.9,
+          "lon_d": 112.05,
+          "ton": 922550.9,
+          "calls": 66,
+          "mappable": true
+        }
+      ],
+      "top_sts": [
+        {
+          "port": "SAMARINDA",
+          "lat": -0.5,
+          "lon": 117.15,
+          "ton": 47705524.7,
+          "calls": 18944
+        },
+        {
+          "port": "BANJARMASIN",
+          "lat": -3.32,
+          "lon": 114.59,
+          "ton": 45993999.6,
+          "calls": 13052
+        },
+        {
+          "port": "SINGAPORE",
+          "lat": null,
+          "lon": null,
+          "ton": 35885561.2,
+          "calls": 18959
+        },
+        {
+          "port": "WEDA",
+          "lat": null,
+          "lon": null,
+          "ton": 32577298.4,
+          "calls": 3179
+        },
+        {
+          "port": "BALIKPAPAN",
+          "lat": -1.27,
+          "lon": 116.83,
+          "ton": 29016380.0,
+          "calls": 12362
+        },
+        {
+          "port": "MOLAWE",
+          "lat": null,
+          "lon": null,
+          "ton": 25207586.6,
+          "calls": 5088
+        },
+        {
+          "port": "MOROWALI",
+          "lat": null,
+          "lon": null,
+          "ton": 23239265.7,
+          "calls": 4729
+        },
+        {
+          "port": "TANJUNG PERAK",
+          "lat": -7.2,
+          "lon": 112.74,
+          "ton": 19608574.6,
+          "calls": 16332
+        },
+        {
+          "port": "TANJUNG PRIOK",
+          "lat": -6.1,
+          "lon": 106.88,
+          "ton": 13434631.5,
+          "calls": 14622
+        },
+        {
+          "port": "KOLONODALE",
+          "lat": null,
+          "lon": null,
+          "ton": 11759950.7,
+          "calls": 2314
+        },
+        {
+          "port": "KUALA SEMBOJA",
+          "lat": null,
+          "lon": null,
+          "ton": 10076307.2,
+          "calls": 1810
+        },
+        {
+          "port": "BOOM BARU",
+          "lat": -2.99,
+          "lon": 104.76,
+          "ton": 8930973.7,
+          "calls": 3119
+        },
+        {
+          "port": "TARAKAN",
+          "lat": null,
+          "lon": null,
+          "ton": 8225912.2,
+          "calls": 10071
+        },
+        {
+          "port": "PONTIANAK",
+          "lat": -0.03,
+          "lon": 109.34,
+          "ton": 7653638.2,
+          "calls": 4457
+        },
+        {
+          "port": "KIJANG",
+          "lat": null,
+          "lon": null,
+          "ton": 7042074.5,
+          "calls": 1807
+        }
       ]
     },
     "2025": {
@@ -194,6 +523,236 @@
           "name": "PERTALITE",
           "ton_total": 24500525.6
         }
+      ],
+      "top_routes": [
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "BITUNG",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": 1.44,
+          "lon_d": 125.18,
+          "ton": 3881904.3,
+          "calls": 2860,
+          "mappable": true
+        },
+        {
+          "origin": "PONTIANAK",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -0.03,
+          "lon_o": 109.34,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 3292953.6,
+          "calls": 341,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PRIOK",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 3113328.7,
+          "calls": 1478,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 2609151.8,
+          "calls": 1356,
+          "mappable": true
+        },
+        {
+          "origin": "BAU-BAU",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -5.47,
+          "lon_o": 122.62,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 2527560.8,
+          "calls": 553,
+          "mappable": true
+        },
+        {
+          "origin": "TANJUNG PRIOK",
+          "destination": "MAKASSAR",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -5.13,
+          "lon_d": 119.41,
+          "ton": 2376479.3,
+          "calls": 821,
+          "mappable": true
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "BALIKPAPAN",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": -1.27,
+          "lon_d": 116.83,
+          "ton": 1669165.6,
+          "calls": 945,
+          "mappable": true
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "BANJARMASIN",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": -3.32,
+          "lon_d": 114.59,
+          "ton": 1544797.5,
+          "calls": 433,
+          "mappable": true
+        },
+        {
+          "origin": "CILACAP",
+          "destination": "TUBAN",
+          "lat_o": -7.73,
+          "lon_o": 109.02,
+          "lat_d": -6.9,
+          "lon_d": 112.05,
+          "ton": 1498901.6,
+          "calls": 71,
+          "mappable": true
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "BALIKPAPAN",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": -1.27,
+          "lon_d": 116.83,
+          "ton": 1471847.1,
+          "calls": 81,
+          "mappable": true
+        },
+        {
+          "origin": "MAKASSAR",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -5.13,
+          "lon_o": 119.41,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 1354084.6,
+          "calls": 1104,
+          "mappable": true
+        }
+      ],
+      "top_sts": [
+        {
+          "port": "SAMARINDA",
+          "lat": -0.5,
+          "lon": 117.15,
+          "ton": 92035440.1,
+          "calls": 34403
+        },
+        {
+          "port": "WEDA",
+          "lat": null,
+          "lon": null,
+          "ton": 89562299.4,
+          "calls": 7975
+        },
+        {
+          "port": "BANJARMASIN",
+          "lat": -3.32,
+          "lon": 114.59,
+          "ton": 85132005.8,
+          "calls": 22604
+        },
+        {
+          "port": "SINGAPORE",
+          "lat": null,
+          "lon": null,
+          "ton": 65806356.8,
+          "calls": 18159
+        },
+        {
+          "port": "MOROWALI",
+          "lat": null,
+          "lon": null,
+          "ton": 46426495.1,
+          "calls": 8930
+        },
+        {
+          "port": "MOLAWE",
+          "lat": null,
+          "lon": null,
+          "ton": 42072230.5,
+          "calls": 8009
+        },
+        {
+          "port": "BALIKPAPAN",
+          "lat": -1.27,
+          "lon": 116.83,
+          "ton": 39615416.5,
+          "calls": 16835
+        },
+        {
+          "port": "TANJUNG PRIOK",
+          "lat": -6.1,
+          "lon": 106.88,
+          "ton": 23710959.0,
+          "calls": 26031
+        },
+        {
+          "port": "TANJUNG PERAK",
+          "lat": -7.2,
+          "lon": 112.74,
+          "ton": 21815882.7,
+          "calls": 26611
+        },
+        {
+          "port": "KOLONODALE",
+          "lat": null,
+          "lon": null,
+          "ton": 21768389.5,
+          "calls": 4330
+        },
+        {
+          "port": "KUALA SEMBOJA",
+          "lat": null,
+          "lon": null,
+          "ton": 21395202.8,
+          "calls": 2966
+        },
+        {
+          "port": "PORT KLANG",
+          "lat": null,
+          "lon": null,
+          "ton": 21254613.7,
+          "calls": 4357
+        },
+        {
+          "port": "BOOM BARU",
+          "lat": -2.99,
+          "lon": 104.76,
+          "ton": 16852680.2,
+          "calls": 6075
+        },
+        {
+          "port": "PONTIANAK",
+          "lat": -0.03,
+          "lon": 109.34,
+          "ton": 14482418.1,
+          "calls": 7566
+        },
+        {
+          "port": "TARAKAN",
+          "lat": null,
+          "lon": null,
+          "ton": 13914107.8,
+          "calls": 14977
+        }
       ]
     },
     "2026": {
@@ -285,6 +844,445 @@
         {
           "name": "CRUDE OIL",
           "ton_total": 9688007.1
+        }
+      ],
+      "top_routes": [
+        {
+          "origin": "TANGKIANG",
+          "destination": "TANJUNG PERAK",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 9273260.5,
+          "calls": 512,
+          "mappable": false
+        },
+        {
+          "origin": "WEDA",
+          "destination": "OBI ISLAND",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 6516215.5,
+          "calls": 300,
+          "mappable": false
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "MOROWALI",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 3528077.3,
+          "calls": 688,
+          "mappable": false
+        },
+        {
+          "origin": "WEDA",
+          "destination": "BAHODOPI",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2870462.8,
+          "calls": 61,
+          "mappable": false
+        },
+        {
+          "origin": "BAHODOPI",
+          "destination": "WEDA",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2810399.7,
+          "calls": 53,
+          "mappable": false
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOLAWE",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2780424.3,
+          "calls": 336,
+          "mappable": false
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "CILEGON",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2779945.5,
+          "calls": 85,
+          "mappable": false
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOROWALI",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2711353.4,
+          "calls": 275,
+          "mappable": false
+        },
+        {
+          "origin": "KOLONODALE",
+          "destination": "MOROWALI",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2697906.1,
+          "calls": 472,
+          "mappable": false
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "MOLAWE",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2686500.6,
+          "calls": 551,
+          "mappable": false
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "LAMERURU",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2644869.0,
+          "calls": 571,
+          "mappable": false
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "WEDA",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2457466.0,
+          "calls": 297,
+          "mappable": false
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "KOLONODALE",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2300630.0,
+          "calls": 402,
+          "mappable": false
+        },
+        {
+          "origin": "MOROWALI",
+          "destination": "WEDA",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2169119.3,
+          "calls": 299,
+          "mappable": false
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "BITUNG",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": 1.44,
+          "lon_d": 125.18,
+          "ton": 2142746.6,
+          "calls": 1043,
+          "mappable": true
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "MUARA BERAU",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 2080984.4,
+          "calls": 645,
+          "mappable": false
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "SINGAPORE",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1993586.9,
+          "calls": 145,
+          "mappable": false
+        },
+        {
+          "origin": "SINGAPORE",
+          "destination": "TANJUNG PERAK",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 1784612.5,
+          "calls": 308,
+          "mappable": false
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 1777800.8,
+          "calls": 669,
+          "mappable": true
+        },
+        {
+          "origin": "HONG KONG",
+          "destination": "QINZHOU PT",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1672160.0,
+          "calls": 33,
+          "mappable": false
+        },
+        {
+          "origin": "MUARA JAWA",
+          "destination": "KUALA SEMBOJA",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1519192.4,
+          "calls": 10,
+          "mappable": false
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "WEDA",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1513292.4,
+          "calls": 270,
+          "mappable": false
+        },
+        {
+          "origin": "TANJUNG PERAK",
+          "destination": "TERNATE",
+          "lat_o": -7.2,
+          "lon_o": 112.74,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1490676.1,
+          "calls": 453,
+          "mappable": false
+        },
+        {
+          "origin": "HONG KONG",
+          "destination": "ZHUHAI PT",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1469189.0,
+          "calls": 21,
+          "mappable": false
+        },
+        {
+          "origin": "PORT KLANG",
+          "destination": "SINGAPORE",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1441282.5,
+          "calls": 273,
+          "mappable": false
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "KOLONODALE",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1434961.1,
+          "calls": 276,
+          "mappable": false
+        },
+        {
+          "origin": "CHATTOGRAM",
+          "destination": "NAVLAKHI",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1422025.0,
+          "calls": 25,
+          "mappable": false
+        },
+        {
+          "origin": "KOLONODALE",
+          "destination": "MOLAWE",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1376924.8,
+          "calls": 231,
+          "mappable": false
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "BONTANG",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": 0.13,
+          "lon_d": 117.49,
+          "ton": 1361275.4,
+          "calls": 100,
+          "mappable": true
+        },
+        {
+          "origin": "SINGAPORE",
+          "destination": "TANJUNG PELEPAS",
+          "lat_o": null,
+          "lon_o": null,
+          "lat_d": null,
+          "lon_d": null,
+          "ton": 1339956.0,
+          "calls": 145,
+          "mappable": false
+        }
+      ],
+      "top_sts": [
+        {
+          "port": "SAMARINDA",
+          "lat": -0.5,
+          "lon": 117.15,
+          "ton": 32750094.8,
+          "calls": 10863
+        },
+        {
+          "port": "WEDA",
+          "lat": null,
+          "lon": null,
+          "ton": 29501346.5,
+          "calls": 2118
+        },
+        {
+          "port": "BANJARMASIN",
+          "lat": -3.32,
+          "lon": 114.59,
+          "ton": 27934191.9,
+          "calls": 7175
+        },
+        {
+          "port": "SINGAPORE",
+          "lat": null,
+          "lon": null,
+          "ton": 26700768.8,
+          "calls": 7804
+        },
+        {
+          "port": "BALIKPAPAN",
+          "lat": -1.27,
+          "lon": 116.83,
+          "ton": 25016152.5,
+          "calls": 8210
+        },
+        {
+          "port": "MOROWALI",
+          "lat": null,
+          "lon": null,
+          "ton": 13295351.7,
+          "calls": 2549
+        },
+        {
+          "port": "MOLAWE",
+          "lat": null,
+          "lon": null,
+          "ton": 12410538.4,
+          "calls": 2331
+        },
+        {
+          "port": "KUALA SEMBOJA",
+          "lat": null,
+          "lon": null,
+          "ton": 12131468.2,
+          "calls": 2266
+        },
+        {
+          "port": "PORT KLANG",
+          "lat": null,
+          "lon": null,
+          "ton": 11701776.7,
+          "calls": 1661
+        },
+        {
+          "port": "KOLONODALE",
+          "lat": null,
+          "lon": null,
+          "ton": 8153498.8,
+          "calls": 1632
+        },
+        {
+          "port": "TANJUNG PRIOK",
+          "lat": -6.1,
+          "lon": 106.88,
+          "ton": 6163776.9,
+          "calls": 8517
+        },
+        {
+          "port": "KENDAWANGAN",
+          "lat": null,
+          "lon": null,
+          "ton": 5467876.0,
+          "calls": 772
+        },
+        {
+          "port": "TANJUNG PERAK",
+          "lat": -7.2,
+          "lon": 112.74,
+          "ton": 5233297.0,
+          "calls": 8338
+        },
+        {
+          "port": "KELANIS",
+          "lat": null,
+          "lon": null,
+          "ton": 4870382.0,
+          "calls": 765
+        },
+        {
+          "port": "TARAKAN",
+          "lat": null,
+          "lon": null,
+          "ton": 4586185.1,
+          "calls": 6279
         }
       ]
     }
