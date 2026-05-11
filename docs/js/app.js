@@ -1155,14 +1155,17 @@ function renderHomeKpi(payload) {
     }
     if (k.id === "tanker_fleet") {
       const age = k.avg_age_gt_weighted == null ? "—" : `${k.avg_age_gt_weighted.toFixed(1)}년`;
-      const tankerSub = k.tanker_count != null
-        ? `<span class="text-slate-400">그중 탱커 ${fmt(k.tanker_count)}척</span> · `
+      const subParts = [];
+      if (k.cargo_count != null)  subParts.push(`화물 ${fmt(k.cargo_count)}`);
+      if (k.tanker_count != null) subParts.push(`탱커 ${fmt(k.tanker_count)}`);
+      const subBreakdown = subParts.length
+        ? `<span class="text-slate-400">그중 ${subParts.join(" · ")}척</span> · `
         : "";
       return `<div class="kpi-card-large" title="Source: kapal.dephub.go.id/ditkapel_service/data_kapal/">
-        <div class="kpi-label">화물선 등록 척수 <span class="text-[10px] text-slate-400 font-normal">(kapal.dephub.go.id)</span></div>
+        <div class="kpi-label">선박 등록 척수 <span class="text-[10px] text-slate-400 font-normal">(kapal.dephub.go.id)</span></div>
         <div>
           <div class="kpi-value-large">${fmt(k.value_count || 0)}<span class="text-base text-slate-400 ml-1">척</span></div>
-          <div class="kpi-sub-large">${tankerSub}<span class="text-slate-600">평균 선령</span> ${age} <span class="text-slate-400">(GT 가중, 탱커 기준)</span></div>
+          <div class="kpi-sub-large">${subBreakdown}<span class="text-slate-600">평균 선령</span> ${age} <span class="text-slate-400">(GT 가중, 탱커 기준)</span></div>
         </div>
       </div>`;
     }
@@ -1598,7 +1601,19 @@ function fillMapInsights() {
 // PR — Fleet tab rewired as a filter+list view sourced from
 // fleet_vessels.json (kapal.dephub.go.id registry, per-vessel rows).
 // State is held on the section element so re-renders are cheap.
-const FLEET_CLASSES = ["Container", "Bulk Carrier", "Tanker", "General Cargo", "Other Cargo"];
+// PR-X: includes ALL sectors (cargo + passenger + fishing + offshore +
+// non-commercial) — "전체" pill clears the multi-select; other pills
+// narrow.
+const FLEET_CLASSES = [
+  "Container", "Bulk Carrier", "Tanker", "General Cargo", "Other Cargo",
+  "Passenger Ship", "Ferry",
+  "Fishing Vessel",
+  "Tug/OSV/AHTS", "Dredger/Special",
+  "Government/Navy/Other", "UNMAPPED",
+];
+const FLEET_CARGO_CLASSES = new Set([
+  "Container", "Bulk Carrier", "Tanker", "General Cargo", "Other Cargo",
+]);
 const FLEET_AGE_BUCKETS = [
   { key: "0-4",   label: "0–4년",    lo: 0,  hi: 5  },
   { key: "5-14",  label: "5–14년",   lo: 5,  hi: 15 },
@@ -1661,7 +1676,13 @@ function _buildFleetFilters(fv) {
   const cls = document.getElementById("fl-f-class");
   if (cls && !cls.dataset.wired) {
     cls.dataset.wired = "1";
-    cls.innerHTML = FLEET_CLASSES.map(c => _pillBtn(c, c, false)).join("");
+    // PR — "전체" pill at start acts as a clear-all-classes shortcut.
+    // It visually highlights when no class is currently selected.
+    const allPill = `<button type="button" data-group="fl-cls" data-key="__ALL__"
+      class="px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
+      title="모든 클래스 표시 (필터 해제)">전체</button>`;
+    const classPills = FLEET_CLASSES.map(c => _pillBtn(c, c, false)).join("");
+    cls.innerHTML = allPill + classPills;
   }
   const sub = document.getElementById("fl-f-subclass");
   if (sub && !sub.dataset.wired) {
@@ -1692,7 +1713,8 @@ function _buildFleetFilters(fv) {
   if (th && !th.dataset.wired) {
     th.dataset.wired = "1";
     const cols = [
-      ["nama", "선박명"], ["owner", "선주"], ["vc", "Class"], ["ts", "Subclass"],
+      ["nama", "선박명"], ["owner", "선주"], ["sector", "Sector"], ["vc", "Class"],
+      ["ts", "Subclass"],
       ["gt", "GT"], ["loa", "LOA"], ["tahun", "건조"], ["age", "선령"],
       ["flag", "국적"], ["imo", "IMO"], ["call_sign", "Call Sign"],
     ];
@@ -1722,7 +1744,9 @@ function _wireFleetFilters() {
   const tabEl = document.getElementById("tab-fleet");
   const st = tabEl._fleetState;
 
-  // Pill toggle (class / subclass / age)
+  // Pill toggle (class / subclass / age). PR-X: a special "__ALL__" key
+  // on the class group means "clear all selections" (no individual class
+  // restriction).
   for (const id of ["fl-f-class", "fl-f-subclass", "fl-f-age"]) {
     const host = document.getElementById(id);
     if (!host || host.dataset.bound) continue;
@@ -1734,11 +1758,31 @@ function _wireFleetFilters() {
                  : id === "fl-f-subclass" ? st.subclasses
                  :                          st.ages;
       const key = btn.dataset.key;
+      if (key === "__ALL__") {
+        // Clear the class set + reset all class pills
+        set.clear();
+        host.querySelectorAll("button[data-key]").forEach(b => {
+          b.className = b.dataset.key === "__ALL__"
+            ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
+            : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
+        });
+        _renderFleetView();
+        return;
+      }
       if (set.has(key)) set.delete(key); else set.add(key);
       // Toggle styling
       btn.className = set.has(key)
         ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
         : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
+      // De-select the 전체 pill when any individual class becomes active
+      if (id === "fl-f-class") {
+        const allBtn = host.querySelector('button[data-key="__ALL__"]');
+        if (allBtn) {
+          allBtn.className = set.size === 0
+            ? "px-2 py-0.5 rounded border border-slate-700 bg-slate-700 text-white text-[11px]"
+            : "px-2 py-0.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px]";
+        }
+      }
       _renderFleetView();
     });
   }
@@ -1935,6 +1979,7 @@ function _renderFleetTable(rows, I) {
     return `<tr class="hover:bg-slate-50 border-b border-slate-100">
       <td class="px-2 py-1 font-medium text-slate-800">${_esc(r[I.nama])}</td>
       <td class="px-2 py-1 text-slate-600">${_esc(r[I.owner])}</td>
+      <td class="px-2 py-1 text-[10px] text-slate-500">${_esc(r[I.sector])}</td>
       <td class="px-2 py-1">${_esc(r[I.vc])}</td>
       <td class="px-2 py-1">${ts}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.gt] || 0).toLocaleString()}</td>
@@ -1960,11 +2005,13 @@ function _fleetCsvDownload() {
   const fv = tabEl._fleetVessels;
   if (!fv) return;
   const { rows, I } = _applyFleetFilters();
-  const header = ["nama_kapal", "nama_pemilik", "vessel_class", "tanker_subclass",
-                  "gt", "loa", "tahun", "age", "flag", "imo", "call_sign"];
+  const header = ["nama_kapal", "nama_pemilik", "sector", "vessel_class",
+                  "tanker_subclass", "gt", "loa", "tahun", "age",
+                  "flag", "imo", "call_sign"];
   const lines = [header.join(",")];
   const cidx = header.map(h => {
-    const map = {nama_kapal: "nama", nama_pemilik: "owner", vessel_class: "vc",
+    const map = {nama_kapal: "nama", nama_pemilik: "owner",
+                 sector: "sector", vessel_class: "vc",
                  tanker_subclass: "ts", gt: "gt", loa: "loa", tahun: "tahun",
                  age: "age", flag: "flag", imo: "imo", call_sign: "call_sign"};
     return I[map[h]];
@@ -1989,12 +2036,21 @@ function _fleetCsvDownload() {
 }
 
 const _FLEET_CLASS_COLORS = {
-  "Container":     "#0284c7",
-  "Bulk Carrier":  "#7c3aed",
-  "Tanker":        "#1A3A6B",
-  "General Cargo": "#0891b2",
-  "Other Cargo":   "#65a30d",
-  "Other":         "#94a3b8",
+  // Cargo classes
+  "Container":             "#0284c7",
+  "Bulk Carrier":          "#7c3aed",
+  "Tanker":                "#1A3A6B",
+  "General Cargo":         "#0891b2",
+  "Other Cargo":           "#65a30d",
+  // PR-X: non-cargo classes
+  "Passenger Ship":        "#0d9488",
+  "Ferry":                 "#14b8a6",
+  "Fishing Vessel":        "#d97706",
+  "Tug/OSV/AHTS":          "#475569",
+  "Dredger/Special":       "#78716c",
+  "Government/Navy/Other": "#6b7280",
+  "UNMAPPED":              "#dc2626",
+  "Other":                 "#94a3b8",
 };
 function _drawFleetClassDonutCounts(counts) {
   const labels = Object.keys(counts);

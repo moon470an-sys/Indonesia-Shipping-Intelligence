@@ -88,8 +88,9 @@
     },
     {
       "id": "tanker_fleet",
-      "label": "화물선 등록 척수",
-      "value_count": 29568,
+      "label": "선박 등록 척수",
+      "value_count": 92021,
+      "cargo_count": 29568,
       "tanker_count": 2415,
       "avg_age_gt_weighted": 21.08,
       "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessel registry)"
