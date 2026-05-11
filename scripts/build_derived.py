@@ -318,35 +318,48 @@ def build_subclass_facts() -> dict:
 def build_fleet_vessels(snapshot_month: str) -> dict:
     """Full per-vessel registry export for the Fleet tab's filter-list view.
 
-    Each cargo vessel becomes one row in a compact array-of-arrays format
-    (so the JSON payload stays around 1/3 the size of an object-per-row
-    encoding). Frontend rebuilds objects via the `cols` schema.
+    Includes **all sectors** (cargo + passenger + fishing + offshore +
+    non-commercial) so the frontend filter can offer "전체" / "나머지 전부"
+    selections. Each row uses a compact array format keyed off the
+    `cols` schema.
 
     Columns (positional):
       nama        — vessel name
-      owner       — NamaPemilik (truncated to keep payload compact)
-      vc          — vessel class (Container / Bulk / Tanker / General / Other)
-      ts          — tanker subclass (when vc=Tanker, else "")
+      owner       — NamaPemilik (truncated)
+      sector      — taxonomy sector (CARGO / PASSENGER / FISHING / OFFSHORE_SUPPORT / NON_COMMERCIAL / UNMAPPED)
+      vc          — vessel class (11 classes — see _VC_LABELS below)
+      ts          — tanker subclass (Tanker only, else "")
       gt          — gross tonnage (number)
-      loa         — length overall in metres (number, 0 if missing)
-      tahun       — build year (int, null if missing)
-      age         — current year - tahun (int, null)
-      flag        — bendera asal (empty string ≈ Indonesia)
-      imo         — IMO number (string, may be empty)
+      loa         — length overall (m)
+      tahun       — build year (int|null)
+      age         — current year − tahun
+      flag        — bendera asal ("" ≈ Indonesia)
+      imo         — IMO (string, may be empty)
       call_sign   — call sign
 
     Source: kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessels_snapshot).
     """
     from backend.taxonomy import (
-        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
-        SECTOR_CARGO, classify_tanker_subclass, classify_vessel_type,
+        CLS_BULK, CLS_CONTAINER, CLS_DREDGER_SPECIAL, CLS_FERRY, CLS_FISHING,
+        CLS_GENERAL, CLS_NONCOMM, CLS_OTHER_CARGO, CLS_PASSENGER_SHIP,
+        CLS_TANKER, CLS_TUG_OSV, CLS_UNMAPPED,
+        classify_tanker_subclass, classify_vessel_type,
     )
+    # Visual-class labels — keeps stable display names independent of the
+    # underlying taxonomy constants, so future renames don't break the UI.
     visual_map = {
-        CLS_CONTAINER: "Container",
-        CLS_BULK:      "Bulk Carrier",
-        CLS_TANKER:    "Tanker",
-        CLS_GENERAL:   "General Cargo",
-        CLS_OTHER_CARGO: "Other Cargo",
+        CLS_CONTAINER:       "Container",
+        CLS_BULK:            "Bulk Carrier",
+        CLS_TANKER:          "Tanker",
+        CLS_GENERAL:         "General Cargo",
+        CLS_OTHER_CARGO:     "Other Cargo",
+        CLS_PASSENGER_SHIP:  "Passenger Ship",
+        CLS_FERRY:           "Ferry",
+        CLS_FISHING:         "Fishing Vessel",
+        CLS_TUG_OSV:         "Tug/OSV/AHTS",
+        CLS_DREDGER_SPECIAL: "Dredger/Special",
+        CLS_NONCOMM:         "Government/Navy/Other",
+        CLS_UNMAPPED:        "UNMAPPED",
     }
 
     cur_year = datetime.now(timezone.utc).year
@@ -377,9 +390,8 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
             if not jenis:
                 continue
             sector, vclass = classify_vessel_type(jenis)
-            if sector != SECTOR_CARGO:
-                continue
-            vc = visual_map.get(vclass, "Other Cargo")
+            # Keep ALL sectors — the frontend filter handles narrowing
+            vc = visual_map.get(vclass, "UNMAPPED")
             ts = classify_tanker_subclass(jenis) if vclass == CLS_TANKER else ""
             try:
                 gt_v = round(float(gt), 1) if gt is not None else 0.0
@@ -405,6 +417,7 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
             rows.append([
                 (nama or "").strip(),
                 owner_v,
+                sector,
                 vc,
                 ts or "",
                 gt_v,
@@ -416,16 +429,28 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
                 (call_sign or "").strip(),
             ])
 
+    # Pre-compute headline totals so the frontend doesn't need to scan rows
+    # before drawing the KPI strip.
+    from collections import Counter as _Counter
+    sector_totals = _Counter(r[2] for r in rows)
+    vc_totals = _Counter(r[3] for r in rows)
+
     return {
-        "schema_version": 1,
+        "schema_version": 2,                # PR — added `sector` column
         "snapshot_month": snapshot_month,
         "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/",
         "current_year": cur_year,
-        "cols": ["nama", "owner", "vc", "ts", "gt", "loa",
+        "cols": ["nama", "owner", "sector", "vc", "ts", "gt", "loa",
                   "tahun", "age", "flag", "imo", "call_sign"],
         "rows": rows,
+        "totals": {
+            "all_vessels": len(rows),
+            "by_sector": dict(sector_totals),
+            "by_class":  dict(vc_totals),
+        },
         "_notes": {
-            "scope": "CARGO sector only via backend.taxonomy",
+            "scope": "ALL sectors — CARGO + PASSENGER + FISHING + "
+                     "OFFSHORE_SUPPORT + NON_COMMERCIAL + UNMAPPED",
             "flag_default": "empty string == Indonesia (>99% of fleet)",
             "row_count": len(rows),
         },
@@ -1131,10 +1156,11 @@ def build_home_kpi() -> dict:
     # ---- Tanker fleet (count + GT-weighted avg age) ----
     age_stats, fleet_summary = build_tanker_age_stats(src_meta.get("latest"))
 
-    # Total cargo fleet count (kapal.dephub.go.id registry) — used by the
-    # Home KPI card sub-line. Cheap single query, separate from the tanker
-    # breakdown so the label can read "화물선 등록 척수 / 그중 탱커".
+    # Vessel-registry counts (kapal.dephub.go.id). Returns total fleet
+    # across ALL sectors plus the CARGO subset, so the Home KPI can read
+    # "선박 등록 척수 N / 그중 화물선 M · 그중 탱커 K".
     cargo_fleet_count = 0
+    all_fleet_count = 0
     try:
         from backend.taxonomy import SECTOR_CARGO, classify_vessel_type
         with sqlite3.connect(DB) as _con:
@@ -1147,12 +1173,14 @@ def build_home_kpi() -> dict:
             )
             for j, n in _cur:
                 if not j:
+                    all_fleet_count += int(n)
                     continue
                 sector, _vc = classify_vessel_type(j)
+                all_fleet_count += int(n)
                 if sector == SECTOR_CARGO:
                     cargo_fleet_count += int(n)
     except Exception:
-        cargo_fleet_count = 0
+        pass
 
     # ---- PR-16: 5-sector breakdown for Home sidebar mini-bars ----
     top_sectors = kpi.get("top_sectors") or []
@@ -1200,8 +1228,9 @@ def build_home_kpi() -> dict:
             },
             {
                 "id": "tanker_fleet",
-                "label": "화물선 등록 척수",       # PR — repurposed from tanker-only
-                "value_count": cargo_fleet_count,  # full cargo fleet count
+                "label": "선박 등록 척수",         # PR — full registry (all sectors)
+                "value_count": all_fleet_count,   # total registry count
+                "cargo_count": cargo_fleet_count,
                 "tanker_count": fleet_summary["vessel_count"],
                 "avg_age_gt_weighted": fleet_summary["avg_age_gt_weighted"],
                 "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessel registry)",
