@@ -90,26 +90,8 @@ async function loadDerived(name) {
   return await r.json();
 }
 
-// addSourceLabel(elOrId, source): append a small "Source: ..." caption to a
-// chart/table container. Used by PR-C/D/E and the auto-scanner below.
-function addSourceLabel(elOrId, source) {
-  const el = typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
-  if (!el || !source) return;
-  if (el.querySelector(":scope > .source-label")) return;
-  const tag = document.createElement("small");
-  tag.className = "source-label";
-  tag.textContent = `Source: ${source}`;
-  el.appendChild(tag);
-}
-
-// Walk every container with [data-source] and inject the label once.
-// Containers in HTML annotate themselves with data-source="..."; this
-// function is called after each tab render (and once at boot).
-function setupSourceLabels(root = document) {
-  root.querySelectorAll("[data-source]").forEach(el => {
-    addSourceLabel(el, el.getAttribute("data-source"));
-  });
-}
+function addSourceLabel(_elOrId, _source) {}
+function setupSourceLabels(_root = document) {}
 
 // Read derived/meta.json and populate both:
 //   - the global disclaimer footer (full freshness line)
@@ -1665,12 +1647,6 @@ function _buildFleetFilters(fv) {
   // (No sector/subclass/age/flag controls — removed.)
   _renderFleetJenisList(fv);
 
-  // Header source label + hbadge (jang1117 mirror)
-  const sourceLabel = document.getElementById("fl-source-label");
-  if (sourceLabel) {
-    sourceLabel.textContent =
-      `kapal.dephub.go.id · ${fv.rows.length.toLocaleString()} rows`;
-  }
   const hbadge = document.getElementById("fl-hbadge");
   if (hbadge) hbadge.textContent = `${fv.rows.length.toLocaleString()} rows`;
 
