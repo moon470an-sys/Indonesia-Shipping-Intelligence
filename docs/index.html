@@ -25,6 +25,9 @@
   <!-- Renewal v2 (PR-2): d3 + topojson power the Home flow map -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7" charset="utf-8"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3" charset="utf-8"></script>
+  <!-- Leaflet for the Cargo tab's port infographic (jang1117/shipping_volume mirror) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" charset="utf-8"></script>
   <link rel="stylesheet" href="./css/site.css" />
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -370,77 +373,165 @@
 
 
     <!-- 📦 Cargo (split out of the former Cargo & Fleet tab) -->
+    <!-- 📦 Cargo — port volume infographic, mirrors jang1117.github.io/shipping_volume -->
     <section id="tab-cargo" class="tab-panel hidden" role="tabpanel" tabindex="-1">
-      <div class="mb-4">
-        <h2 class="text-2xl font-bold text-slate-800">📦 Cargo</h2>
-        <p class="text-sm text-slate-500">🗺️ OD 흐름 지도 · 연도별 카테고리 트리맵 · 품목 Top 10 · 월별 sector 추이 · Top OD 항로 (self-loop 별도 표기).</p>
-      </div>
+      <style>
+        /* Scoped to #tab-cargo so jang1117's CSS doesn't leak into other tabs. */
+        #tab-cargo .cv-app{
+          --cv-bg:#F4F6FA; --cv-surface:#FFFFFF; --cv-s2:#F0F2F7;
+          --cv-b1:rgba(0,0,0,.08); --cv-b2:rgba(0,0,0,.13);
+          --cv-text:#0F172A; --cv-muted:#374151;
+          --cv-green:#065F46; --cv-blue:#1E3A8A; --cv-purple:#4C1D95;
+          --cv-map-bg:#E8EFF7;
+          --cv-tt-bg:#FFFFFF; --cv-tt-border:rgba(0,0,0,.12); --cv-tt-cell:#F4F6FA; --cv-tt-cl:#374151;
+          --cv-bar-bg:rgba(0,0,0,.06);
+          --cv-sel-port-bg:rgba(109,79,187,.06);
+          --cv-comm-sel-bg:rgba(0,0,0,.03);
+          font-family:'IBM Plex Sans KR',-apple-system,'Pretendard',sans-serif;
+        }
+        #tab-cargo .cv-app{display:flex;flex-direction:column;border:1px solid var(--cv-b1);border-radius:12px;overflow:hidden;background:var(--cv-bg);color:var(--cv-text);height:calc(100vh - 160px);min-height:600px}
+        #tab-cargo .cv-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--cv-b1);background:var(--cv-surface);flex-shrink:0;gap:12px}
+        #tab-cargo .cv-hdr h3{font-size:14px;font-weight:600;letter-spacing:-.3px;margin:0}
+        #tab-cargo .cv-hdr p{font-size:10px;color:var(--cv-muted);margin-top:2px}
+        #tab-cargo .cv-stats{display:flex;gap:18px;align-items:center;flex-shrink:0;font-family:'IBM Plex Mono',monospace}
+        #tab-cargo .cv-stats .lbl{font-size:9px;color:var(--cv-muted);font-family:'IBM Plex Sans KR',sans-serif}
+        #tab-cargo .cv-stats .val{font-size:12px;font-weight:600}
+        #tab-cargo .cv-main{display:flex;flex:1;overflow:hidden}
+        #tab-cargo .cv-panel{width:248px;flex-shrink:0;background:var(--cv-surface);border-right:1px solid var(--cv-b1);display:flex;flex-direction:column;overflow:hidden}
+        #tab-cargo .cv-panel-top{padding:10px 12px;border-bottom:1px solid var(--cv-b1);flex-shrink:0}
+        #tab-cargo .cv-sec-ttl{font-size:9px;color:var(--cv-text);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px}
+        #tab-cargo .cv-btn-row{display:flex;gap:4px;margin-bottom:6px}
+        #tab-cargo .cv-btn-row:last-child{margin-bottom:0}
+        #tab-cargo .cv-rbtn{flex:1;font-size:11px;font-weight:600;padding:4px 0;border-radius:14px;border:1px solid var(--cv-b2);background:transparent;color:var(--cv-muted);cursor:pointer;transition:all .15s}
+        #tab-cargo .cv-rbtn:hover{color:var(--cv-text);border-color:rgba(0,0,0,.22)}
+        #tab-cargo .cv-rbtn.on-t{background:rgba(109,79,187,.12);border-color:var(--cv-purple);color:var(--cv-purple)}
+        #tab-cargo .cv-rbtn.on-s{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.22);color:#1A2035}
+        #tab-cargo .cv-multi-row{display:flex;align-items:center;border-bottom:1px solid var(--cv-b1);flex-shrink:0;gap:6px;padding:8px 12px}
+        #tab-cargo .cv-multi-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;flex:1}
+        #tab-cargo .cv-toggle-track{width:28px;height:16px;border-radius:8px;background:rgba(0,0,0,.1);border:1px solid var(--cv-b2);position:relative;transition:background .2s;flex-shrink:0}
+        #tab-cargo .cv-toggle-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--cv-muted);transition:all .2s}
+        #tab-cargo .cv-toggle-track.on{background:rgba(109,79,187,.35);border-color:var(--cv-purple)}
+        #tab-cargo .cv-toggle-track.on .cv-toggle-thumb{left:14px;background:var(--cv-purple)}
+        #tab-cargo .cv-toggle-label{font-size:11px;font-weight:600;color:var(--cv-muted)}
+        #tab-cargo .cv-toggle-track.on ~ .cv-toggle-label{color:var(--cv-purple)}
+        #tab-cargo .cv-preset-btn{font-size:10px;font-weight:600;padding:4px 10px;border-radius:12px;border:1px solid var(--cv-b2);background:transparent;color:var(--cv-muted);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+        #tab-cargo .cv-preset-btn:hover{color:var(--cv-text);border-color:rgba(0,0,0,.22)}
+        #tab-cargo .cv-comm-wrap{flex:1;overflow-y:auto;padding:8px 10px}
+        #tab-cargo .cv-comm-wrap::-webkit-scrollbar{width:3px}
+        #tab-cargo .cv-comm-wrap::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
+        #tab-cargo .cv-comm-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;transition:background .1s;margin-bottom:2px;border:1px solid transparent;user-select:none}
+        #tab-cargo .cv-comm-row:hover{background:var(--cv-s2)}
+        #tab-cargo .cv-comm-row.selected{background:var(--cv-comm-sel-bg);border-color:var(--cv-b2)}
+        #tab-cargo .cv-comm-row.disabled{opacity:.35}
+        #tab-cargo .cv-chk{width:13px;height:13px;border-radius:3px;border:1.5px solid var(--cv-b2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+        #tab-cargo .cv-comm-row.selected .cv-chk{border-color:currentColor}
+        #tab-cargo .cv-chk-svg{display:none;width:9px;height:9px}
+        #tab-cargo .cv-comm-row.selected .cv-chk-svg{display:block}
+        #tab-cargo .cv-sw{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        #tab-cargo .cv-comm-name{flex:1;font-size:11px;font-weight:600;color:var(--cv-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        #tab-cargo .cv-comm-vol{font-size:9px;font-weight:600;color:var(--cv-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+        #tab-cargo .cv-legend{padding:7px 12px;border-top:1px solid var(--cv-b1);display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap}
+        #tab-cargo .cv-leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--cv-muted)}
+        #tab-cargo .cv-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        #tab-cargo .cv-map{flex:1;background:var(--cv-map-bg)}
+        #tab-cargo .cv-sidebar{width:230px;flex-shrink:0;overflow-y:auto;background:var(--cv-surface);border-left:1px solid var(--cv-b1)}
+        #tab-cargo .cv-sidebar::-webkit-scrollbar{width:3px}
+        #tab-cargo .cv-sidebar::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
+        #tab-cargo .cv-sidebar-hd{padding:10px 13px 7px;border-bottom:1px solid var(--cv-b1);font-size:9px;color:var(--cv-text);font-weight:700;text-transform:uppercase;letter-spacing:.7px;position:sticky;top:0;background:var(--cv-surface);z-index:1}
+        #tab-cargo .cv-port-row{display:flex;align-items:center;padding:6px 13px;border-bottom:1px solid var(--cv-b1);cursor:pointer;transition:background .1s;gap:7px}
+        #tab-cargo .cv-port-row:hover{background:var(--cv-s2)}
+        #tab-cargo .cv-port-row.sel{background:var(--cv-sel-port-bg);border-left:2px solid var(--cv-purple)}
+        #tab-cargo .cv-rank{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cv-muted);width:18px;flex-shrink:0;text-align:right}
+        #tab-cargo .cv-pinfo{flex:1;min-width:0}
+        #tab-cargo .cv-pname{font-size:11px;font-weight:600;color:var(--cv-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        #tab-cargo .cv-pbar-wrap{height:2px;background:var(--cv-bar-bg);border-radius:1px;margin-top:4px}
+        #tab-cargo .cv-pbar{height:2px;border-radius:1px;transition:width .3s}
+        #tab-cargo .cv-ptotal{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--cv-text);flex-shrink:0}
+        /* Leaflet tooltip override (scoped) */
+        #tab-cargo .leaflet-tooltip.cv-tt{background:var(--cv-tt-bg);border:1px solid var(--cv-tt-border);border-radius:10px;padding:11px 13px;font-family:'IBM Plex Sans KR',sans-serif;color:var(--cv-text);box-shadow:0 8px 28px rgba(0,0,0,.15);min-width:185px}
+        #tab-cargo .leaflet-tooltip.cv-tt::before{display:none}
+        #tab-cargo .cv-tt-name{font-size:12px;font-weight:700;margin-bottom:6px}
+        #tab-cargo .cv-tt-tags{margin-bottom:7px}
+        #tab-cargo .cv-tt-tag{display:inline-block;font-size:9px;padding:2px 5px;border-radius:8px;font-weight:500;margin:0 2px 3px 0}
+        #tab-cargo .cv-tt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+        #tab-cargo .cv-tt-cell{background:var(--cv-tt-cell);border-radius:5px;padding:5px 7px}
+        #tab-cargo .cv-tt-cl{font-size:9px;font-weight:600;color:var(--cv-tt-cl);margin-bottom:1px}
+        #tab-cargo .cv-tt-cv{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+        #tab-cargo .cv-tt-sep{border:none;border-top:1px solid var(--cv-b1);margin:6px 0}
+        #tab-cargo .cv-tt-foot{display:flex;justify-content:space-between;align-items:center}
+        #tab-cargo .cv-tt-fl{font-size:10px;color:var(--cv-muted)}
+        #tab-cargo .cv-tt-fv{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--cv-purple)}
+        #tab-cargo .cv-empty{padding:32px;text-align:center;color:var(--cv-muted)}
+      </style>
 
-      <!-- PR-29: year selector — drives the treemap + commodity bars below.
-           Defaults to the most recent full (12-month) calendar year. -->
-      <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-3" data-source="docs/derived/cargo_yearly.json">
-        <span class="text-xs font-semibold text-slate-600">분석 연도</span>
-        <div class="flex rounded border border-slate-200 overflow-hidden" id="cg-year-pills" role="tablist" aria-label="연도 선택">
-          <!-- buttons populated dynamically in renderCargo() so partial-year suffixes are data-driven -->
-          <button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>loading…</button>
+      <div class="cv-app" data-source="docs/derived/cargo_ports.json">
+        <div class="cv-hdr">
+          <div>
+            <h3>🛢 인도네시아 항만별 물동량</h3>
+            <p>화물 선택에 따라 원 크기 · 순위가 실시간 반영됩니다</p>
+          </div>
+          <div class="cv-stats">
+            <div><div class="lbl">Domestic</div><div class="val" id="cv-st-dom" style="color:var(--cv-green)">—</div></div>
+            <div><div class="lbl">International</div><div class="val" id="cv-st-intl" style="color:var(--cv-blue)">—</div></div>
+            <div><div class="lbl">표시 항만</div><div class="val" id="cv-st-cnt" style="color:var(--cv-muted)">—</div></div>
+          </div>
         </div>
-        <span class="text-[11px] text-slate-500" id="cg-year-banner"></span>
-      </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
-        <h3 class="font-semibold mb-2"><span id="cg-od-map-title">🗺️ OD 흐름 지도</span></h3>
-        <p class="text-xs text-slate-500 mb-2">버블 = 항구별 총 톤, 선 두께 ∝ 항로 톤. 선택 연도가 있으면 해당 연도 데이터, 없으면 24M 카테고리 색상.</p>
-        <div id="cg-od-map" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-od-map-caption">&nbsp;</p>
-      </div>
+        <div class="cv-main">
+          <!-- Left commodity panel -->
+          <div class="cv-panel">
+            <div class="cv-panel-top">
+              <div class="cv-sec-ttl">표시 기준</div>
+              <div class="cv-btn-row">
+                <button class="cv-rbtn on-t" data-mode="total">전체</button>
+                <button class="cv-rbtn"      data-mode="domestic">Domestic</button>
+                <button class="cv-rbtn"      data-mode="international">Intl</button>
+              </div>
+              <div class="cv-btn-row">
+                <button class="cv-rbtn on-s" data-sub="both">전체</button>
+                <button class="cv-rbtn"      data-sub="unloading">하역</button>
+                <button class="cv-rbtn"      data-sub="loading">선적</button>
+              </div>
+            </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/cargo_yearly.json">
-        <h3 class="font-semibold mb-2"><span id="cg-treemap-title">화물 카테고리 트리맵</span></h3>
-        <div id="cg-treemap" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-treemap-caption">&nbsp;</p>
-      </div>
+            <div class="cv-multi-row">
+              <div class="cv-multi-toggle" id="cv-multi-toggle">
+                <div class="cv-toggle-track" id="cv-multi-track"><div class="cv-toggle-thumb"></div></div>
+                <span class="cv-toggle-label" id="cv-multi-label">다중 선택</span>
+              </div>
+              <button class="cv-preset-btn" id="cv-og-btn">O&amp;G 선택</button>
+              <button class="cv-preset-btn" id="cv-all-btn">전체 선택</button>
+            </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/timeseries.json">
-        <h3 class="font-semibold mb-2">📅 연도별 sector 톤수 (2024 / 2025 / 2026)</h3>
-        <p class="text-xs text-slate-500 mb-1">달력 연도(Calendar Year) 단위 합계. 부분 연도(12개월 미만)는 막대에 빗금 패턴.</p>
-        <div id="cg-yearly" style="height:420px"><div class="skeleton-block" style="height:420px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-yearly-caption">&nbsp;</p>
-      </div>
+            <div class="cv-comm-wrap">
+              <div id="cv-comm-list"></div>
+            </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_yearly.json">
-          <h3 class="font-semibold mb-2"><span id="cg-commodity-title">화물 품목 Top 10</span></h3>
-          <div id="cg-commodity-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
-          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-commodity-caption">&nbsp;</p>
+            <div class="cv-legend">
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-green)"></span>Domestic</div>
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-blue)"></span>International</div>
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-purple)"></span>혼합</div>
+            </div>
+          </div>
+
+          <!-- Center Leaflet map -->
+          <div class="cv-map" id="cv-map"></div>
+
+          <!-- Right sidebar — port ranking -->
+          <div class="cv-sidebar">
+            <div class="cv-sidebar-hd">항만 순위 (물동량 기준)</div>
+            <div id="cv-port-list"></div>
+          </div>
         </div>
-
-        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/timeseries.json">
-          <h3 class="font-semibold mb-2">월별 sector 톤수 추이</h3>
-          <p class="text-xs text-slate-500 mb-1">월 단위 누적 area. 빠른 추세 시각화용.</p>
-          <div id="cg-timeseries" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
-          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-timeseries-caption">&nbsp;</p>
-        </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/route_facts.json">
-        <h3 class="font-semibold mb-2"><span id="cg-routes-title">Top 항로 (OD)</span></h3>
-        <p class="text-xs text-slate-500 mb-2">상위 25개 OD 항로 — origin → destination · 총 톤 · self-loop (STS) 표시. 연도 선택에 따라 데이터 변경.</p>
-        <div class="mb-2 flex flex-wrap gap-3 text-xs">
-          <label class="inline-flex items-center gap-1">
-            <input type="checkbox" id="cg-routes-hide-self" checked> self-loop (STS) 숨김
-          </label>
-        </div>
-        <div id="cg-routes-bar" style="height:560px"><div class="skeleton-block" style="height:560px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-routes-caption">&nbsp;</p>
-      </div>
-
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/route_facts.json">
-        <h3 class="font-semibold mb-2"><span id="cg-sts-title">Top STS / 자체 환적 (origin = destination)</span></h3>
-        <p class="text-xs text-slate-500 mb-2">자체 환적이 일어나는 항구 — 정유 단지 · 터미널 · 환적 활동 신호. 연도 선택에 따라 데이터 변경.</p>
-        <div id="cg-sts-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-sts-caption">&nbsp;</p>
-      </div>
+      <p class="text-[10px] text-slate-400 mt-2">
+        📡 Source: <a href="https://monitoring-inaportnet.dephub.go.id/" class="underline hover:text-slate-600" target="_blank" rel="noopener">monitoring-inaportnet.dephub.go.id (LK3 cargo_snapshot)</a>
+        · 레이아웃 벤치마크: <a href="https://jang1117.github.io/shipping_volume/" class="underline hover:text-slate-600" target="_blank" rel="noopener">jang1117.github.io/shipping_volume</a>
+        · 좌표 매핑 가능 항만만 표시 (전체 항만 코드 중 부분 집합)
+      </p>
     </section>
+
 
     <!-- Listed Operators -->
     <section id="tab-financials" class="tab-panel hidden" role="tabpanel" tabindex="-1">

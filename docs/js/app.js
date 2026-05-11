@@ -2392,806 +2392,379 @@ function _drawFleetAgeBarsCounts(buckets) {
   }, { displayModeBar: false, responsive: true });
 }
 
+// ─────────────────────────────────────────────────────────────
+// Cargo tab — mirrors jang1117.github.io/shipping_volume infographic
+// Data: docs/derived/cargo_ports.json
+//   { commodities: [...], ports: { code: { n, lat, lng, dU, dS, iU, iS, comms: {...} } } }
+// ─────────────────────────────────────────────────────────────
+const CV_OG_KEYS = [
+  "CPO", "PERTALITE", "LPG", "CRUDE OIL", "FAME", "BIO SOLAR",
+  "AVTUR", "RBD PALM OLEIN", "PERTAMAX", "RBD PALM OIL", "MFO/HSFO",
+  "CONDENSATE", "METHANOL", "HSD", "ASPAL/BITUMEN", "OLEIN",
+  "OMAN BLEND CRUDE OIL", "PKO",
+];
+const CV_ETC_EXCLUDE = ["PERTAMAX","HSD","ASPAL/BITUMEN","LPG","METHANOL","MFO/HSFO","FAME","AVTUR","CONDENSATE"];
+let _cvState = null;     // shared state, lazily initialised in renderCargo
+
+function _cvColorForIndex(i, total) {
+  const hue = Math.round((i * 360 / Math.max(total, 1)) % 360);
+  return `hsl(${hue} 72% 45%)`;
+}
+
 async function renderCargo() {
   setupSourceLabels(document.getElementById("tab-cargo"));
-  let cargoFleet, routeFacts, timeseries, mapFlow, cargoYearly;
-  try { cargoFleet = await loadDerived("cargo_fleet.json"); }
-  catch (e) {
-    const host = document.getElementById("cg-treemap");
-    if (host) host.innerHTML = errorState(`cargo_fleet.json 로드 실패: ${e.message}`);
+  let payload;
+  try {
+    payload = await loadDerived("cargo_ports.json");
+  } catch (e) {
+    const host = document.getElementById("cv-map");
+    if (host) host.innerHTML =
+      `<div class="cv-empty">cargo_ports.json 로드 실패: ${e.message}</div>`;
     return;
   }
-  try { routeFacts = await loadDerived("route_facts.json"); }
-  catch (e) { routeFacts = { routes: [] }; }
-  try { timeseries = await loadDerived("timeseries.json"); }
-  catch (e) { timeseries = { periods: [], series: [] }; }
-  try { mapFlow = await loadDerived("map_flow.json"); }
-  catch (e) { mapFlow = { ports: [], routes_top30: [], categories: [] }; }
-  try { cargoYearly = await loadDerived("cargo_yearly.json"); }
-  catch (e) { cargoYearly = null; }
-
-  // PR-29: stash the yearly payload on the tab element so the click handler
-  // can reach it without re-fetching.
-  const tabEl = document.getElementById("tab-cargo");
-  if (tabEl && cargoYearly) tabEl._cargoYearly = cargoYearly;
-
-  // Pick the default year: most-recent full (12-month) year if any, else
-  // most-recent year present in the payload, else fall back to legacy.
-  const defaultYear = _pickDefaultCargoYear(cargoYearly);
-
-  // PR-31: year-aware path renders OD map + routes + STS too. We stash
-  // mapFlow + routeFacts on the tab DOM node so pill clicks re-render with
-  // the same context without re-fetching.
-  if (tabEl) {
-    tabEl._cargoMapFlow = mapFlow;
-    tabEl._cargoRouteFacts = routeFacts;
-  }
-  drawCargoYearly(timeseries);
-  drawCargoTimeseries(timeseries);
-  fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow);
-
-  // Single render call covers treemap + commodities + map + routes + STS
-  renderCargoYearlyView(cargoYearly, cargoFleet, defaultYear,
-                         { mapFlow, routeFacts });
-  buildCargoYearPills(cargoYearly, defaultYear);
-
-  // "Hide self-loop" toggle — when checked, re-render the routes bar from
-  // the currently-active dataset (year-cut top_routes or legacy 24M).
-  const hideSelf = document.getElementById("cg-routes-hide-self");
-  if (hideSelf && !hideSelf.dataset.wired) {
-    hideSelf.dataset.wired = "1";
-    hideSelf.addEventListener("change", () => {
-      const activeYear = (document
-        .querySelector("#cg-year-pills button[aria-selected='true']")
-        || {}).dataset?.year;
-      const cy = tabEl?._cargoYearly;
-      const yearSlice = (cy && activeYear && cy.by_year?.[activeYear]) || null;
-      if (yearSlice && Array.isArray(yearSlice.top_routes)) {
-        const merged = (yearSlice.top_routes || []).concat(
-          (yearSlice.top_sts || []).map(s => ({
-            origin: s.port, destination: s.port,
-            ton: s.ton, calls: s.calls, is_self_loop: true,
-          }))
-        );
-        merged.sort((a, b) => (b.ton || 0) - (a.ton || 0));
-        drawCargoRoutes(merged, { xTitle: `ton (${activeYear}년)` });
-      } else {
-        drawCargoRoutes(routeFacts.routes || [], { xTitle: "ton (24M)" });
-      }
-    });
-  }
-}
-
-function _pickDefaultCargoYear(cargoYearly) {
-  if (!cargoYearly || !cargoYearly.years || !cargoYearly.years.length) return null;
-  const mpy = cargoYearly.months_per_year || {};
-  const fullYears = cargoYearly.years.filter(y => mpy[y] === 12);
-  if (fullYears.length) return fullYears[fullYears.length - 1];   // most-recent full year
-  return cargoYearly.years[cargoYearly.years.length - 1];          // else latest available
-}
-
-function buildCargoYearPills(cargoYearly, activeYear) {
-  const host = document.getElementById("cg-year-pills");
-  const banner = document.getElementById("cg-year-banner");
-  if (!host) return;
-  if (!cargoYearly || !cargoYearly.years || !cargoYearly.years.length) {
-    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
-    if (banner) banner.textContent = "";
-    return;
-  }
-  const mpy = cargoYearly.months_per_year || {};
-  host.innerHTML = cargoYearly.years.map(y => {
-    const isActive = y === activeYear;
-    const isPartial = (mpy[y] || 0) < 12;
-    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
-    const cls = isActive
-      ? "px-2 py-1 bg-slate-800 text-white text-xs"
-      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
-    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
-  }).join("");
-
-  host.querySelectorAll("button[data-year]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const y = btn.dataset.year;
-      const tabEl = document.getElementById("tab-cargo");
-      const cy = (tabEl && tabEl._cargoYearly) || cargoYearly;
-      renderCargoYearlyView(cy, null, y, {
-        mapFlow: tabEl?._cargoMapFlow,
-        routeFacts: tabEl?._cargoRouteFacts,
-      });
-      buildCargoYearPills(cy, y);
-    });
-  });
-
-  if (banner) {
-    const isPartial = (mpy[activeYear] || 0) < 12;
-    banner.textContent = isPartial
-      ? `⚠️ ${activeYear}년은 부분 연도 (${mpy[activeYear]}개월) — 다른 연도와 단순 비교 시 주의.`
-      : `${activeYear}년 (12개월 전체).`;
-  }
-}
-
-function renderCargoYearlyView(cargoYearly, fallbackCargoFleet, year, ctx) {
-  // ctx = { mapFlow, routeFacts } — passed through from renderCargo so the
-  // map/routes/STS charts can swap to year-cut data when a year is picked.
-  ctx = ctx || {};
-
-  let treemap = [];
-  let commodities = [];
-  let yearLabel = "24M";
-  let yearSlice = null;
-  if (cargoYearly && year && cargoYearly.by_year && cargoYearly.by_year[year]) {
-    yearSlice = cargoYearly.by_year[year];
-    treemap = yearSlice.treemap_categories || [];
-    commodities = yearSlice.top_commodities || [];
-    const mpy = (cargoYearly.months_per_year || {})[year] || 0;
-    yearLabel = `${year}년${mpy < 12 ? ` (${mpy}mo)` : ""}`;
-  } else if (fallbackCargoFleet) {
-    treemap = fallbackCargoFleet.treemap_categories || [];
-    commodities = fallbackCargoFleet.top_commodities || [];
-  }
-
-  // ---- Card title swaps ----
-  const tt = document.getElementById("cg-treemap-title");
-  if (tt) tt.textContent = `화물 카테고리 트리맵 — ${yearLabel} (Top ${treemap.length})`;
-  const ct = document.getElementById("cg-commodity-title");
-  if (ct) ct.textContent = `화물 품목 Top 10 — ${yearLabel}`;
-  const mt = document.getElementById("cg-od-map-title");
-  if (mt) mt.textContent = `🗺️ OD 흐름 지도 — ${yearLabel} (Top 30 항로)`;
-  const rt = document.getElementById("cg-routes-title");
-  if (rt) rt.textContent = `Top 항로 (OD) — ${yearLabel}`;
-  const st = document.getElementById("cg-sts-title");
-  if (st) st.textContent = `Top STS / 자체 환적 (origin = destination) — ${yearLabel}`;
-
-  // ---- Treemap + commodities ----
-  drawCargoTreemap(treemap);
-  drawCargoCommodityBars(commodities);
-
-  // ---- OD map + STS + routes (year-cut when available) ----
-  if (yearSlice && Array.isArray(yearSlice.top_routes)) {
-    drawCargoODMapYear(yearSlice.top_routes, ctx.mapFlow?.ports || [], yearLabel);
-    drawCargoRoutes(yearSlice.top_routes, { xTitle: `ton (${yearLabel})` });
-    // Year-cut routes already exclude STS; but provide an STS-aware
-    // overlay with top_sts so the routes bar can show both when the
-    // "hide self-loop" toggle is off. Use top_routes augmented with STS.
-    const merged = (yearSlice.top_routes || []).concat(
-      (yearSlice.top_sts || []).map(s => ({
-        origin: s.port, destination: s.port,
-        ton: s.ton, calls: s.calls, is_self_loop: true,
-      }))
-    );
-    // Re-sort merged so STS hubs interleave by ton
-    merged.sort((a, b) => (b.ton || 0) - (a.ton || 0));
-    // The hide-self toggle in drawCargoRoutes uses `isSelf` after
-    // normalization; pass the merged list.
-    drawCargoRoutes(merged, { xTitle: `ton (${yearLabel})` });
-    drawCargoSTS(yearSlice.top_sts || [],
-                  { yearCut: true, xTitle: `ton (${yearLabel}, self-loop)` });
-  } else {
-    // Legacy 24M view via map_flow + route_facts
-    if (ctx.mapFlow) drawCargoODMap(ctx.mapFlow);
-    if (ctx.routeFacts) {
-      drawCargoRoutes(ctx.routeFacts.routes || [], { xTitle: "ton (24M)" });
-      drawCargoSTS(ctx.routeFacts.routes || [],
-                    { yearCut: false, xTitle: "ton (24M, self-loop)" });
-    }
-  }
-
-  // ---- Captions ----
-  const cap1 = document.getElementById("cg-treemap-caption");
-  if (cap1) {
-    const cats = treemap.slice().sort((a, b) => b.ton_total - a.ton_total);
-    const total = cats.reduce((s, r) => s + (r.ton_total || 0), 0);
-    const top3 = cats.slice(0, 3).reduce((s, r) => s + r.ton_total, 0);
-    cap1.textContent = total > 0
-      ? `${yearLabel} — 상위 3개 카테고리(${cats.slice(0, 3).map(c => c.category).join(" · ")})가 전체 ${cats.length}개의 ${(top3 / total * 100).toFixed(1)}%.`
-      : "데이터 없음";
-  }
-  const cap2 = document.getElementById("cg-commodity-caption");
-  if (cap2 && commodities[0]) {
-    const totC = commodities.reduce((s, r) => s + (r.ton_total || 0), 0);
-    cap2.textContent = totC > 0
-      ? `${yearLabel} — ${commodities[0].name} 단일 품목이 Top 10 누적의 ${(commodities[0].ton_total / totC * 100).toFixed(1)}%.`
-      : "데이터 없음";
-  }
-
-  // Routes + STS captions
-  const capR = document.getElementById("cg-routes-caption");
-  if (capR) {
-    if (yearSlice && Array.isArray(yearSlice.top_routes) && yearSlice.top_routes[0]) {
-      const r = yearSlice.top_routes[0];
-      capR.textContent = `${yearLabel} 최대 항로: ${r.origin} → ${r.destination} (${fmtTon(r.ton)}, ${(r.calls || 0).toLocaleString()}회).`;
-    }
-    // else: leave the legacy 24M caption populated by fillCargoCaptions
-  }
-  const capS = document.getElementById("cg-sts-caption");
-  if (capS) {
-    if (yearSlice && Array.isArray(yearSlice.top_sts) && yearSlice.top_sts[0]) {
-      const s = yearSlice.top_sts[0];
-      const total = (yearSlice.top_sts || []).reduce((sum, r) => sum + (r.ton || 0), 0);
-      capS.textContent = `${yearLabel} — STS Top1: ${s.port} ${fmtTon(s.ton)} · 상위 15개 합계 ${fmtTon(total)}.`;
-    }
-  }
-
-  // Map caption
-  const capM = document.getElementById("cg-od-map-caption");
-  if (capM) {
-    if (yearSlice && Array.isArray(yearSlice.top_routes)) {
-      const mappable = yearSlice.top_routes.filter(r => r.mappable !== false
-        && r.lat_o != null && r.lon_o != null).length;
-      capM.textContent = `${yearLabel} — Top ${yearSlice.top_routes.length} 항로 중 ${mappable}개 좌표 매핑.`;
-    }
-  }
-}
-
-function fillFleetCaptions(cargoFleet, fleetOwners) {
-  // Class donut — share of largest class
-  const classes = (cargoFleet.class_counts || []).slice().sort((a, b) => b.count - a.count);
-  const totCls = classes.reduce((s, r) => s + (r.count || 0), 0);
-  const cap1 = document.getElementById("fl-class-caption");
-  if (cap1 && classes[0]) {
-    cap1.textContent = totCls > 0
-      ? `${classes[0]["class"]}이(가) 등록 화물선 ${fmtCount(totCls)}척 중 ${(classes[0].count / totCls * 100).toFixed(1)}%로 가장 큰 비중입니다.`
-      : "데이터 없음";
-  }
-
-  // Age bars — % of fleet that is 25+
-  const bins = (cargoFleet.age_bins?.bins || []);
-  const totAge = bins.reduce((s, b) => s + (b.count || 0), 0);
-  const olderCount = bins.filter(b => b.older).reduce((s, b) => s + (b.count || 0), 0);
-  const cap2 = document.getElementById("fl-age-caption");
-  if (cap2) {
-    cap2.textContent = totAge > 0
-      ? `등록 화물선의 ${(olderCount / totAge * 100).toFixed(1)}%가 25년 이상 (${fmtCount(olderCount)}척 / ${fmtCount(totAge)}척).`
-      : "데이터 없음";
-  }
-
-  // Source-totals strip below the Fleet tab header (kapal.dephub.go.id totals)
-  const totalsEl = document.getElementById("fl-source-totals");
-  if (totalsEl && fleetOwners?.totals) {
-    const t = fleetOwners.totals;
-    totalsEl.textContent =
-      `· 전체 화물선 ${fmtCount(t.cargo_vessels || 0)}척 · 고유 선주 ${fmtCount(t.unique_owners || 0)}개`;
-  }
-
-  // Owner bars — Top-3 by vessel count + total cargo fleet headline
-  const owners = (fleetOwners?.owners || []).slice();
-  const top3 = owners.slice(0, 3);
-  const cap3 = document.getElementById("fl-owner-caption");
-  if (cap3 && top3[0]) {
-    const top1 = top3[0];
-    const mixParts = Object.entries(top1.class_mix || {})
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 2)
-      .map(([k, v]) => `${k} ${v}`);
-    cap3.textContent =
-      `Top-1: ${top1.owner} — ${top1.vessels}척 · GT ${fmtCount(Math.round(top1.sum_gt || 0))}`
-      + (mixParts.length ? ` · 주력: ${mixParts.join(" · ")}` : "");
-  }
-}
-
-function fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow) {
-  // 0) OD map — top route share + intl/domestic totals
-  const capMap = document.getElementById("cg-od-map-caption");
-  if (capMap && mapFlow) {
-    const routes = (mapFlow.routes_top30 || []);
-    const totals = mapFlow.totals || {};
-    const dom = totals.domestic_ton || 0;
-    const intl = totals.intl_ton || 0;
-    const unk = totals.unknown_ton || 0;
-    const all = dom + intl + unk;
-    const top1 = routes[0];
-    if (top1) {
-      capMap.textContent = `최대 항로: ${top1.origin} → ${top1.destination} (${fmtTon(top1.ton_24m)}, ${top1.category || ""}). `
-        + `전체 24M: 국내 ${fmtTon(dom)} · 국제 ${fmtTon(intl)} (${all > 0 ? (intl / all * 100).toFixed(1) : 0}%).`;
-    }
-  }
-
-
-  // 1) Treemap — top-3 category share
-  const cats = (cargoFleet.treemap_categories || []).slice().sort((a, b) => b.ton_total - a.ton_total);
-  const totCats = cats.reduce((s, r) => s + (r.ton_total || 0), 0);
-  const top3 = cats.slice(0, 3).reduce((s, r) => s + r.ton_total, 0);
-  const cap1 = document.getElementById("cg-treemap-caption");
-  if (cap1) {
-    cap1.textContent = totCats > 0
-      ? `상위 3개 카테고리(${cats.slice(0, 3).map(c => c.category).join(" · ")})가 전체 ${cats.length}개의 ${(top3 / totCats * 100).toFixed(1)}%를 차지합니다.`
-      : "데이터 없음";
-  }
-
-  // 2) Commodity — top single commodity share of top-10 sum
-  const coms = (cargoFleet.top_commodities || []).slice();
-  const totC = coms.reduce((s, r) => s + (r.ton_total || 0), 0);
-  const cap2 = document.getElementById("cg-commodity-caption");
-  if (cap2 && coms[0]) {
-    cap2.textContent = totC > 0
-      ? `${coms[0].name} 단일 품목이 Top 10 누적 ton의 ${(coms[0].ton_total / totC * 100).toFixed(1)}%를 차지합니다.`
-      : "데이터 없음";
-  }
-
-  // 3) Timeseries — most-grown sector (last 6 vs prior 6, positional indices)
-  const series = (timeseries.series || []);
-  const periods = (timeseries.periods || []);
-  const cap3 = document.getElementById("cg-timeseries-caption");
-  if (cap3 && series.length && periods.length >= 12) {
-    const N = periods.length;
-    let best = null;
-    for (const s of series) {
-      let sumR = 0, sumP = 0;
-      for (let i = N - 6; i < N; i++) sumR += _seriesTon(s, i);
-      for (let i = N - 12; i < N - 6; i++) sumP += _seriesTon(s, i);
-      if (sumP <= 0) continue;
-      const growth = (sumR - sumP) / sumP * 100;
-      if (!best || growth > best.growth) best = { name: s.sector, growth };
-    }
-    if (best) {
-      cap3.textContent = `최근 6개월 vs 이전 6개월 — 최대 성장 sector: ${best.name} (${best.growth >= 0 ? "+" : ""}${best.growth.toFixed(1)}%).`;
-    }
-  }
-
-  // 3b) Yearly chart — partial-year flag + biggest year-over-year jump
-  const capY = document.getElementById("cg-yearly-caption");
-  if (capY && series.length && periods.length) {
-    const monthsByYear = {};
-    for (const p of periods) monthsByYear[p.slice(0, 4)] = (monthsByYear[p.slice(0, 4)] || 0) + 1;
-    const ys = Object.keys(monthsByYear).sort();
-    const cargo = series.find(s => s.sector === "CARGO");
-    if (cargo && ys.length >= 2) {
-      const byYear = {};
-      for (let i = 0; i < periods.length; i++) {
-        const y = periods[i].slice(0, 4);
-        byYear[y] = (byYear[y] || 0) + _seriesTon(cargo, i);
-      }
-      // pick the two most-complete adjacent years for the YoY note
-      const fullYears = ys.filter(y => monthsByYear[y] === 12);
-      const refYear = fullYears[0] || ys[ys.length - 2] || ys[0];
-      const prevYear = ys[ys.indexOf(refYear) - 1];
-      const noteParts = [];
-      ys.forEach(y => {
-        const mark = monthsByYear[y] === 12 ? "(full)" : `(${monthsByYear[y]}mo, 부분)`;
-        noteParts.push(`${y} ${mark}: ${fmtTon(byYear[y] || 0)}`);
-      });
-      capY.textContent = `CARGO 부문 연도별 합계 — ${noteParts.join(" · ")}.`;
-    }
-  }
-
-  // 4) Routes caption — share of top-1 OD vs all routes
-  const routes = (routeFacts.routes || []);
-  const cap4 = document.getElementById("cg-routes-caption");
-  if (cap4 && routes.length) {
-    const nonSelf = routes.filter(r => !r.is_self_loop);
-    const totalTon = nonSelf.reduce((s, r) => s + (r.ton_24m || 0), 0);
-    const top1 = nonSelf[0];
-    if (top1 && totalTon > 0) {
-      cap4.textContent = `최대 항로: ${top1.origin} → ${top1.destination} — Top ${nonSelf.length}개 self-loop 제외 항로 중 ${(top1.ton_24m / totalTon * 100).toFixed(1)}% 점유.`;
-    }
-  }
-
-  // 5) STS caption
-  const sts = routes.filter(r => r.is_self_loop);
-  const cap5 = document.getElementById("cg-sts-caption");
-  if (cap5) {
-    const stsTotal = sts.reduce((s, r) => s + (r.ton_24m || 0), 0);
-    cap5.textContent = sts.length
-      ? `자체 환적 (STS) 허브 ${sts.length}개 — 24개월 합계 ${fmtTon(stsTotal)}.`
-      : "데이터 없음";
-  }
-}
-
-// Year-cut OD map: renders cargo_yearly.by_year[Y].top_routes as great-circle
-// lines + port bubbles. Falls back gracefully when only a subset of routes
-// have mappable coordinates (build-time port-coord lookup limitation).
-function drawCargoODMapYear(yearRoutes, mapFlowPorts, yearLabel) {
-  const routes = (yearRoutes || []).filter(r => r.mappable !== false
-    && r.lat_o != null && r.lon_o != null && r.lat_d != null && r.lon_d != null);
-  if (!routes.length) {
-    // Show a placeholder explaining why the map is empty for the year
-    const host = document.getElementById("cg-od-map");
-    if (host) {
-      host.innerHTML =
-        `<div class="text-sm text-slate-500 p-4">${yearLabel || ""} — 좌표 매핑 가능한 항로가 없습니다. ` +
-        `(원본 데이터는 Top 항로 표에서 확인 가능)</div>`;
-    }
+  if (!payload || !payload.commodities || !payload.ports) {
     return;
   }
 
-  // Build port aggregate from routes endpoints
-  const portAgg = new Map();
-  let maxTon = 0;
-  for (const r of routes) {
-    const o = r.origin, d = r.destination;
-    if (!portAgg.has(o)) portAgg.set(o, { name: o, lat: r.lat_o, lon: r.lon_o, ton: 0 });
-    if (!portAgg.has(d)) portAgg.set(d, { name: d, lat: r.lat_d, lon: r.lon_d, ton: 0 });
-    portAgg.get(o).ton += r.ton;
-    portAgg.get(d).ton += r.ton;
-    if (r.ton > maxTon) maxTon = r.ton;
-  }
-  const ports = [...portAgg.values()];
-  const portMaxTon = Math.max(...ports.map(p => p.ton || 0), 1);
-
-  const lineTraces = routes.map(r => {
-    const width = 1.0 + 7.0 * Math.sqrt(r.ton / Math.max(maxTon, 1));
-    return {
-      type: "scattergeo",
-      lon: [r.lon_o, r.lon_d],
-      lat: [r.lat_o, r.lat_d],
-      mode: "lines",
-      line: { width, color: "#1A3A6B" },
-      opacity: 0.72,
-      hoverinfo: "text",
-      text: `<b>${r.origin} → ${r.destination}</b><br>${fmtTon(r.ton)}t · ${(r.calls || 0).toLocaleString()}회`,
-      name: yearLabel || "year",
-      showlegend: false,
-    };
-  });
-  const portTrace = {
-    type: "scattergeo",
-    lon: ports.map(p => p.lon),
-    lat: ports.map(p => p.lat),
-    mode: "markers",
-    marker: {
-      size: ports.map(p => Math.sqrt((p.ton || 0) / portMaxTon) * 26 + 4),
-      color: "#0f172a",
-      opacity: 0.85,
-      line: { width: 0.5, color: "#ffffff" },
-    },
-    text: ports.map(p => `<b>${p.name}</b><br>${fmtTon(p.ton)}t`),
-    hoverinfo: "text",
-    name: `항구 (${yearLabel} ton)`,
-    showlegend: false,
-  };
-
-  Plotly.newPlot("cg-od-map", [...lineTraces, portTrace], {
-    margin: { t: 5, b: 5, l: 5, r: 5 },
-    geo: {
-      scope: "asia", projection: { type: "natural earth" },
-      showcountries: true, showcoastlines: true, showland: true,
-      showocean: true, oceancolor: "#f1f5f9",
-      landcolor: "#fefefe", countrycolor: "#cbd5e1",
-      coastlinecolor: "#94a3b8",
-      lataxis: { range: [-12, 8] },
-      lonaxis: { range: [94, 142] },
-    },
-  }, { displayModeBar: false, responsive: true });
-}
-
-function drawCargoODMap(payload) {
-  const routes = payload.routes_top30 || [];
-  const ports = payload.ports || [];
-  const categories = payload.categories || [];
-  if (!routes.length || !ports.length) {
-    const host = document.getElementById("cg-od-map");
-    if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">지도 데이터 없음.</div>`;
-    return;
-  }
-
-  // Build a name -> color map from the provided palette; fallback grey.
-  const catColor = {};
-  for (const c of categories) catColor[c.name] = c.color || "#64748b";
-
-  // Group routes by category so legend toggling works (one trace per category).
-  const byCat = {};
-  let maxTon = 0;
-  for (const r of routes) {
-    const cat = r.category || "Other";
-    (byCat[cat] = byCat[cat] || []).push(r);
-    if (r.ton_24m > maxTon) maxTon = r.ton_24m;
-  }
-
-  const traces = [];
-
-  // One legend entry per category, with all that category's OD pairs drawn as
-  // separate `lines` sub-traces (Plotly can't vary line width within one trace).
-  for (const cat of Object.keys(byCat)) {
-    const color = catColor[cat] || "#64748b";
-    let first = true;
-    for (const r of byCat[cat]) {
-      const width = 1.0 + 7.0 * Math.sqrt(r.ton_24m / Math.max(maxTon, 1));
-      traces.push({
-        type: "scattergeo",
-        lon: [r.lon_o, r.lon_d],
-        lat: [r.lat_o, r.lat_d],
-        mode: "lines",
-        line: { width: width, color: color },
-        opacity: 0.75,
-        hoverinfo: "text",
-        text: `<b>${cat}</b><br>${r.origin} → ${r.destination}<br>`
-              + `${fmtTon(r.ton_24m)}t · ${r.vessels || 0}척 · ${r.calls || 0}회`,
-        name: cat,
-        legendgroup: cat,
-        showlegend: first,
-      });
-      first = false;
-    }
-  }
-
-  // Port bubbles on top — size by ton, label on hover.
-  const portMaxTon = Math.max(...ports.map(p => p.ton_24m || 0), 1);
-  traces.push({
-    type: "scattergeo",
-    lon: ports.map(p => p.lon),
-    lat: ports.map(p => p.lat),
-    mode: "markers",
-    marker: {
-      size: ports.map(p => Math.sqrt((p.ton_24m || 0) / portMaxTon) * 26 + 4),
-      color: "#0f172a",
-      opacity: 0.85,
-      line: { width: 0.5, color: "#ffffff" },
-    },
-    text: ports.map(p => `<b>${p.name}</b><br>${fmtTon(p.ton_24m || 0)}t`),
-    hoverinfo: "text",
-    name: "항구 (24M ton)",
-    showlegend: true,
-  });
-
-  Plotly.newPlot("cg-od-map", traces, {
-    margin: { t: 5, b: 5, l: 5, r: 5 },
-    legend: {
-      orientation: "h", y: -0.05, x: 0,
-      bgcolor: "rgba(255,255,255,0.9)",
-      bordercolor: "#e2e8f0", borderwidth: 1,
-      font: { size: 11 },
-    },
-    geo: {
-      scope: "asia",
-      projection: { type: "natural earth" },
-      showcountries: true, showcoastlines: true, showland: true,
-      showocean: true,
-      oceancolor: "#f1f5f9",
-      landcolor: "#fefefe",
-      countrycolor: "#cbd5e1",
-      coastlinecolor: "#94a3b8",
-      lataxis: { range: [-12, 8] },
-      lonaxis: { range: [94, 142] },
-    },
-  }, { displayModeBar: false, responsive: true });
-}
-
-function drawCargoTreemap(rows) {
-  if (!rows.length) return;
-  const labels = rows.map(r => r.category);
-  const values = rows.map(r => r.ton_total);
-  const palette = ["#1A3A6B", "#0284c7", "#059669", "#d97706", "#7c3aed",
-                   "#92400e", "#65a30d", "#475569", "#dc2626", "#0891b2",
-                   "#9333ea", "#be185d", "#84cc16", "#ea580c", "#0ea5e9"];
-  Plotly.newPlot("cg-treemap", [{
-    type: "treemap",
-    labels,
-    parents: rows.map(_ => ""),
-    values,
-    marker: { colors: palette.slice(0, rows.length), line: { width: 1, color: "#fff" } },
-    textinfo: "label+value+percent root",
-    texttemplate: "<b>%{label}</b><br>%{value:,.0f} ton<br>%{percentRoot:.1%}",
-    hovertemplate: "<b>%{label}</b><br>%{value:,.0f} tons<extra></extra>",
-  }], {
-    margin: { t: 10, l: 10, r: 10, b: 10 },
-  }, { displayModeBar: false, responsive: true });
-}
-
-function drawCargoCommodityBars(rows) {
-  if (!rows.length) return;
-  const list = rows.slice().reverse();
-  Plotly.newPlot("cg-commodity-bar", [{
-    x: list.map(r => r.ton_total),
-    y: list.map(r => r.name),
-    type: "bar",
-    orientation: "h",
-    marker: {
-      color: list.map((_, i) => i === list.length - 1 ? "#1A3A6B" : "#56C0E0"),
-      line: { color: "#1e293b", width: 0.5 },
-    },
-    text: list.map(r => fmtTon(r.ton_total)),
-    textposition: "outside",
-    cliponaxis: false,
-    hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
-  }], {
-    margin: { t: 10, l: 130, r: 70, b: 40 },
-    xaxis: { title: "ton (24M)" },
-  }, { displayModeBar: false, responsive: true });
-}
-
-// ton_by_period is a list aligned positionally with `periods` (NOT a dict).
-function _seriesTon(s, periodIndex) {
-  const arr = s.ton_by_period;
-  if (!arr) return 0;
-  if (Array.isArray(arr)) return arr[periodIndex] || 0;
-  // legacy: object keyed by period string — left for forward-compat
-  return 0;
-}
-
-function drawCargoTimeseries(payload) {
-  const periods = payload.periods || [];
-  const series = payload.series || [];
-  if (!periods.length || !series.length) return;
-  const traces = series.map(s => ({
-    x: periods,
-    y: periods.map((_p, i) => _seriesTon(s, i)),
-    name: s.sector,
-    type: "scatter",
-    mode: "lines",
-    stackgroup: "one",
-    line: { color: s.color || "#94a3b8" },
-    hovertemplate: `<b>${s.sector}</b><br>%{x}: %{y:,.0f}t<extra></extra>`,
+  // Build commodity meta (key/label/color)
+  const COMMS = (payload.commodities || []).map((key, i) => ({
+    key,
+    lbl: key,
+    col: _cvColorForIndex(i, payload.commodities.length),
   }));
-  Plotly.newPlot("cg-timeseries", traces, {
-    margin: { t: 20, l: 60, r: 20, b: 50 },
-    xaxis: { title: "월" },
-    yaxis: { title: "톤" },
-    legend: { orientation: "h", y: -0.2, font: { size: 10 } },
-  }, { displayModeBar: false, responsive: true });
-}
+  const ALL_PORT_DATA = payload.ports;
 
-// Year-based sector comparison — replaces rolling 12M/24M framing with
-// calendar-year cuts (2024 partial / 2025 full / 2026 partial in this
-// snapshot). Partial-year bars get a hatched marker pattern + an
-// annotation to flag that they're not 12-month totals.
-function drawCargoYearly(payload) {
-  const periods = payload.periods || [];
-  const series = payload.series || [];
-  if (!periods.length || !series.length) return;
-
-  // Count months per year so partial-year flag is data-driven.
-  const monthsByYear = {};
-  for (const p of periods) {
-    const y = p.slice(0, 4);
-    monthsByYear[y] = (monthsByYear[y] || 0) + 1;
-  }
-  const years = Object.keys(monthsByYear).sort();
-
-  // Sum per (sector, year).
-  const cargoSectors = ["CARGO"];   // primary focus per the user's brief
-  const byYear = {};                 // sector -> [yearTon, yearTon, ...]
-  for (const s of series) {
-    const sums = years.map(_ => 0);
-    for (let i = 0; i < periods.length; i++) {
-      const yi = years.indexOf(periods[i].slice(0, 4));
-      sums[yi] += _seriesTon(s, i);
-    }
-    byYear[s.sector] = { color: s.color || "#94a3b8", sums };
-  }
-
-  // Build one bar trace per sector, x = years.
-  const sectorsSorted = Object.keys(byYear).sort((a, b) =>
-    byYear[b].sums.reduce((x, y) => x + y, 0)
-    - byYear[a].sums.reduce((x, y) => x + y, 0));
-
-  const traces = sectorsSorted.map(sec => {
-    const isPartial = years.map(y => monthsByYear[y] < 12);
-    return {
-      x: years.map(y => `${y}년${monthsByYear[y] < 12 ? ` (${monthsByYear[y]}mo)` : ""}`),
-      y: byYear[sec].sums,
-      name: sec,
-      type: "bar",
-      marker: {
-        color: byYear[sec].color,
-        pattern: { shape: isPartial.map(p => p ? "/" : ""), bgcolor: byYear[sec].color },
-        line: { color: "#1e293b", width: 0.4 },
-      },
-      text: byYear[sec].sums.map(v => fmtTon(v)),
-      textposition: "outside",
-      cliponaxis: false,
-      hovertemplate: `<b>${sec} · %{x}</b><br>%{y:,.0f}t<extra></extra>`,
+  if (!_cvState) {
+    const cpoKey = COMMS.find(c => c.key === "CPO") ? "CPO" : (COMMS[0] && COMMS[0].key);
+    _cvState = {
+      mode: "total",                                // total | domestic | international
+      sub:  "both",                                 // both | unloading | loading
+      multi: false,
+      selComms: new Set(cpoKey ? [cpoKey] : []),
+      selPort: null,
+      map: null,
+      circles: [],
+      COMMS,
+      DATA: ALL_PORT_DATA,
     };
-  });
-
-  Plotly.newPlot("cg-yearly", traces, {
-    margin: { t: 30, l: 70, r: 20, b: 60 },
-    barmode: "group",
-    xaxis: { title: "연도" },
-    yaxis: { title: "톤 (합계)" },
-    legend: { orientation: "h", y: -0.18, font: { size: 10 } },
-    annotations: [{
-      x: 0.5, y: 1.12, xref: "paper", yref: "paper",
-      text: "<span style='color:#475569'>※ 빗금 = 부분 연도 (12개월 미만)</span>",
-      showarrow: false, font: { size: 11 },
-    }],
-  }, { displayModeBar: false, responsive: true });
-}
-
-// drawCargoRoutes accepts EITHER legacy route_facts rows (with ton_24m,
-// calls_24m, vessels_seen, buckets, is_self_loop) OR year-cut top_routes
-// rows from cargo_yearly (origin, destination, ton, calls). Normalises on
-// the fly so a single chart serves both modes.
-function drawCargoRoutes(rows, opts = {}) {
-  if (!rows.length) {
-    const host = document.getElementById("cg-routes-bar");
-    if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">표시할 항로가 없습니다.</div>`;
-    return;
-  }
-
-  // Normalize to a common shape
-  const normRows = rows.map(r => {
-    const ton = r.ton_24m != null ? r.ton_24m : (r.ton || 0);
-    const calls = r.calls_24m != null ? r.calls_24m : (r.calls || 0);
-    const vessels = r.vessels_seen != null ? r.vessels_seen : (r.vessels || 0);
-    const buckets = r.buckets || [];
-    const isSelf = r.is_self_loop != null
-      ? r.is_self_loop
-      : (r.origin && r.destination && r.origin === r.destination);
-    return {
-      origin: r.origin, destination: r.destination,
-      ton, calls, vessels, buckets, isSelf,
-    };
-  });
-
-  const hideSelf = document.getElementById("cg-routes-hide-self");
-  const filtered = (hideSelf && hideSelf.checked)
-    ? normRows.filter(r => !r.isSelf)
-    : normRows;
-  const top = filtered.slice(0, 25).reverse();
-  if (!top.length) {
-    const host = document.getElementById("cg-routes-bar");
-    if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">표시할 항로가 없습니다.</div>`;
-    return;
-  }
-  const xTitle = opts.xTitle || "ton";
-  Plotly.newPlot("cg-routes-bar", [{
-    x: top.map(r => r.ton),
-    y: top.map(r => `${r.origin} → ${r.destination}${r.isSelf ? " (STS)" : ""}`),
-    type: "bar",
-    orientation: "h",
-    marker: {
-      color: top.map(r => r.isSelf ? "#f59e0b" : "#1A3A6B"),
-      line: { color: "#1e293b", width: 0.5 },
-    },
-    text: top.map(r => fmtTon(r.ton)),
-    textposition: "outside",
-    cliponaxis: false,
-    customdata: top.map(r => [r.calls, r.vessels, (r.buckets || []).slice(0, 3).join(", ")]),
-    hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<br>항해 %{customdata[0]:,} · 선박 %{customdata[1]:,}<br>주요 화물: %{customdata[2]}<extra></extra>",
-  }], {
-    margin: { t: 10, l: 220, r: 70, b: 40 },
-    xaxis: { title: xTitle },
-  }, { displayModeBar: false, responsive: true });
-}
-
-// Accepts legacy 24M route_facts rows OR year-cut top_sts items
-// (port, ton, calls). When `opts.yearCut === true`, the input is the
-// already-filtered top_sts list (no need to filter by is_self_loop).
-function drawCargoSTS(rows, opts = {}) {
-  let sts;
-  if (opts.yearCut) {
-    sts = (rows || []).slice(0, 15).reverse().map(r => ({
-      port: r.port,
-      ton: r.ton,
-      calls: r.calls || 0,
-      vessels: 0,
-      buckets: [],
-    }));
   } else {
-    sts = (rows || [])
-      .filter(r => r.is_self_loop)
-      .slice(0, 15)
-      .reverse()
-      .map(r => ({
-        port: r.origin,
-        ton: r.ton_24m,
-        calls: r.calls_24m || 0,
-        vessels: r.vessels_seen || 0,
-        buckets: r.buckets || [],
-      }));
+    _cvState.COMMS = COMMS;
+    _cvState.DATA = ALL_PORT_DATA;
   }
-  if (!sts.length) {
-    const host = document.getElementById("cg-sts-bar");
-    if (host) host.innerHTML = `<div class="text-sm text-slate-500 p-4">STS 데이터 없음.</div>`;
-    return;
+
+  _cvInitMap();
+  _cvBuildCommodityList();
+  _cvWireControls();
+  _cvRebuild();
+}
+
+function _cvInitMap() {
+  if (_cvState.map) return;
+  const host = document.getElementById("cv-map");
+  if (!host || !window.L) return;
+  _cvState.map = L.map(host, {
+    center: [-2, 118],
+    zoom: 5,
+    zoomControl: true,
+    attributionControl: true,
+    scrollWheelZoom: true,
+  });
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+    attribution: "&copy; OpenStreetMap &copy; CARTO",
+    subdomains: "abcd",
+    maxZoom: 19,
+  }).addTo(_cvState.map);
+}
+
+// Per-port commodity value resolver — handles 기타 deduction so totals add up.
+function _cvPortCommVol(code, key) {
+  const p = _cvState.DATA[code];
+  if (!p || !p.comms || !p.comms[key]) return null;
+  const base = p.comms[key];
+  if (key !== "기타") return base;
+  const adj = { dU: base.dU || 0, dS: base.dS || 0, iU: base.iU || 0, iS: base.iS || 0 };
+  for (const x of CV_ETC_EXCLUDE) {
+    const ex = p.comms[x];
+    if (!ex) continue;
+    adj.dU -= ex.dU || 0; adj.dS -= ex.dS || 0;
+    adj.iU -= ex.iU || 0; adj.iS -= ex.iS || 0;
   }
-  const xTitle = opts.xTitle || "ton (self-loop)";
-  Plotly.newPlot("cg-sts-bar", [{
-    x: sts.map(r => r.ton),
-    y: sts.map(r => r.port),
-    type: "bar",
-    orientation: "h",
-    marker: { color: "#f59e0b", line: { color: "#1e293b", width: 0.5 } },
-    text: sts.map(r => fmtTon(r.ton)),
-    textposition: "outside",
-    cliponaxis: false,
-    customdata: sts.map(r => [r.calls, r.vessels, (r.buckets || []).slice(0, 3).join(", ")]),
-    hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<br>항해 %{customdata[0]:,} · 선박 %{customdata[1]:,}<br>주요 화물: %{customdata[2]}<extra></extra>",
-  }], {
-    margin: { t: 10, l: 150, r: 70, b: 40 },
-    xaxis: { title: xTitle },
-  }, { displayModeBar: false, responsive: true });
+  adj.dU = Math.max(0, adj.dU); adj.dS = Math.max(0, adj.dS);
+  adj.iU = Math.max(0, adj.iU); adj.iS = Math.max(0, adj.iS);
+  return adj;
+}
+
+function _cvSumPortComms(code, keys) {
+  let dU = 0, dS = 0, iU = 0, iS = 0;
+  for (const k of keys) {
+    const v = _cvPortCommVol(code, k);
+    if (v) { dU += v.dU || 0; dS += v.dS || 0; iU += v.iU || 0; iS += v.iS || 0; }
+  }
+  return { dU, dS, iU, iS };
+}
+
+function _cvBuildPorts(keys) {
+  const allKeys = _cvState.COMMS.map(c => c.key);
+  const isAll = keys.length === allKeys.length;
+  const out = [];
+  for (const code of Object.keys(_cvState.DATA)) {
+    const meta = _cvState.DATA[code];
+    const t = isAll
+      ? { dU: meta.dU, dS: meta.dS, iU: meta.iU, iS: meta.iS }
+      : _cvSumPortComms(code, keys);
+    if ((t.dU + t.dS + t.iU + t.iS) === 0) continue;
+    out.push({ code, name: meta.n, lat: meta.lat, lng: meta.lng, ...t });
+  }
+  return out;
+}
+
+function _cvVol(p) {
+  const sub = _cvState.sub, mode = _cvState.mode;
+  let d = 0, i = 0;
+  if (sub !== "loading")   { d += p.dU || 0; i += p.iU || 0; }
+  if (sub !== "unloading") { d += p.dS || 0; i += p.iS || 0; }
+  if (mode === "domestic")      return d;
+  if (mode === "international") return i;
+  return d + i;
+}
+function _cvDomVol(p)  { return (_cvState.sub === "loading"   ? 0 : (p.dU || 0)) + (_cvState.sub === "unloading" ? 0 : (p.dS || 0)); }
+function _cvIntlVol(p) { return (_cvState.sub === "loading"   ? 0 : (p.iU || 0)) + (_cvState.sub === "unloading" ? 0 : (p.iS || 0)); }
+
+function _cvColor(p) {
+  if (_cvState.mode === "domestic")      return "#065F46";
+  if (_cvState.mode === "international") return "#1E3A8A";
+  const d = _cvDomVol(p), i = _cvIntlVol(p);
+  if (d > 0 && i > 0) return "#4C1D95";
+  return i > d ? "#1E3A8A" : "#065F46";
+}
+
+function _cvCommodityTotals(key) {
+  let dU = 0, dS = 0, iU = 0, iS = 0;
+  for (const p of Object.values(_cvState.DATA)) {
+    const v = p.comms && p.comms[key];
+    if (v) { dU += v.dU || 0; dS += v.dS || 0; iU += v.iU || 0; iS += v.iS || 0; }
+  }
+  return { dU, dS, iU, iS };
+}
+
+function _cvFmt(n) { return (n || 0).toLocaleString("ko-KR"); }
+function _cvFmtM(n) { return ((n || 0) / 1e6).toFixed(2) + "M"; }
+
+function _cvBuildCommodityList() {
+  const list = document.getElementById("cv-comm-list");
+  if (!list) return;
+  list.innerHTML = "";
+  for (const c of _cvState.COMMS) {
+    const nat = _cvCommodityTotals(c.key);
+    const tot = (nat.dU + nat.dS + nat.iU + nat.iS) / 1e6;
+    const on = _cvState.selComms.has(c.key);
+    const row = document.createElement("div");
+    row.className = "cv-comm-row" + (on ? " selected" : "");
+    row.style.color = c.col;
+    row.dataset.key = c.key;
+    row.innerHTML =
+      `<div class="cv-chk"><svg class="cv-chk-svg" viewBox="0 0 10 10" fill="none"><path d="M1.5 5L4 7.5L8.5 2.5" stroke="${c.col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` +
+      `<span class="cv-sw" style="background:${c.col}"></span>` +
+      `<span class="cv-comm-name">${c.lbl}</span>` +
+      `<span class="cv-comm-vol">${tot.toFixed(1)}M</span>`;
+    row.onclick = () => _cvHandleCommClick(c.key);
+    list.appendChild(row);
+  }
+}
+
+function _cvHandleCommClick(key) {
+  if (_cvState.multi) {
+    if (_cvState.selComms.has(key)) {
+      if (_cvState.selComms.size === 1) return;
+      _cvState.selComms.delete(key);
+    } else {
+      _cvState.selComms.add(key);
+    }
+  } else {
+    _cvState.selComms = new Set([key]);
+  }
+  _cvRefreshCommUI();
+  _cvRebuild();
+}
+
+function _cvRefreshCommUI() {
+  document.querySelectorAll("#cv-comm-list .cv-comm-row").forEach(r => {
+    r.classList.toggle("selected", _cvState.selComms.has(r.dataset.key));
+  });
+}
+
+function _cvSetMode(m) {
+  _cvState.mode = m;
+  document.querySelectorAll('#tab-cargo .cv-rbtn[data-mode]').forEach(b => {
+    b.classList.toggle("on-t", b.dataset.mode === m);
+  });
+  _cvRebuild();
+}
+function _cvSetSub(s) {
+  _cvState.sub = s;
+  document.querySelectorAll('#tab-cargo .cv-rbtn[data-sub]').forEach(b => {
+    b.classList.toggle("on-s", b.dataset.sub === s);
+  });
+  _cvRebuild();
+}
+
+function _cvWireControls() {
+  const tab = document.getElementById("tab-cargo");
+  if (tab.dataset.cvWired) return;
+  tab.dataset.cvWired = "1";
+  // Mode + Sub buttons
+  tab.querySelectorAll('.cv-rbtn[data-mode]').forEach(b => {
+    b.addEventListener("click", () => _cvSetMode(b.dataset.mode));
+  });
+  tab.querySelectorAll('.cv-rbtn[data-sub]').forEach(b => {
+    b.addEventListener("click", () => _cvSetSub(b.dataset.sub));
+  });
+  // Multi toggle
+  const mt = document.getElementById("cv-multi-toggle");
+  if (mt) mt.addEventListener("click", () => {
+    _cvState.multi = !_cvState.multi;
+    document.getElementById("cv-multi-track").classList.toggle("on", _cvState.multi);
+    document.getElementById("cv-multi-label").style.color =
+      _cvState.multi ? "var(--cv-purple)" : "";
+  });
+  // Presets
+  const og = document.getElementById("cv-og-btn");
+  if (og) og.addEventListener("click", _cvToggleOG);
+  const all = document.getElementById("cv-all-btn");
+  if (all) all.addEventListener("click", _cvToggleAll);
+}
+
+function _cvToggleOG() {
+  const avail = new Set(_cvState.COMMS.map(c => c.key));
+  const og = CV_OG_KEYS.filter(k => avail.has(k));
+  if (!og.length) return;
+  const isOgOnly = _cvState.selComms.size === og.length
+                    && og.every(k => _cvState.selComms.has(k));
+  if (isOgOnly) {
+    _cvState.selComms = new Set([og[0]]);
+    _cvState.multi = false;
+  } else {
+    _cvState.selComms = new Set(og);
+    _cvState.multi = true;
+  }
+  document.getElementById("cv-multi-track").classList.toggle("on", _cvState.multi);
+  document.getElementById("cv-multi-label").style.color =
+    _cvState.multi ? "var(--cv-purple)" : "";
+  _cvRefreshCommUI();
+  _cvRebuild();
+}
+
+function _cvToggleAll() {
+  const allKeys = _cvState.COMMS.map(c => c.key);
+  if (_cvState.selComms.size === allKeys.length) {
+    _cvState.selComms = new Set([allKeys[0]]);
+    _cvState.multi = false;
+  } else {
+    _cvState.selComms = new Set(allKeys);
+    _cvState.multi = true;
+  }
+  document.getElementById("cv-multi-track").classList.toggle("on", _cvState.multi);
+  document.getElementById("cv-multi-label").style.color =
+    _cvState.multi ? "var(--cv-purple)" : "";
+  _cvRefreshCommUI();
+  _cvRebuild();
+}
+
+function _cvTooltip(p) {
+  const selArr = [..._cvState.selComms];
+  const tags = selArr.slice(0, 8).map(k => {
+    const c = _cvState.COMMS.find(x => x.key === k);
+    if (!c) return "";
+    return `<span class="cv-tt-tag" style="background:${c.col}20;color:${c.col};border:1px solid ${c.col}40">${c.lbl}</span>`;
+  }).join("") + (selArr.length > 8 ? `<span class="cv-tt-tag" style="background:#fff1;color:#7A8FB5">+${selArr.length - 8}</span>` : "");
+  const total = (p.dU || 0) + (p.dS || 0) + (p.iU || 0) + (p.iS || 0);
+  return `
+    <div class="cv-tt-name">🛢 ${p.name} <span style="font-size:9px;color:#7A8FB5;font-weight:400">(${p.code})</span></div>
+    <div class="cv-tt-tags">${tags}</div>
+    <div class="cv-tt-grid">
+      <div class="cv-tt-cell"><div class="cv-tt-cl">🟢 DOM 하역</div><div class="cv-tt-cv" style="color:#065F46">${_cvFmt(p.dU || 0)}</div></div>
+      <div class="cv-tt-cell"><div class="cv-tt-cl">🟢 DOM 선적</div><div class="cv-tt-cv" style="color:#065F46">${_cvFmt(p.dS || 0)}</div></div>
+      <div class="cv-tt-cell"><div class="cv-tt-cl">🔵 INTL 하역</div><div class="cv-tt-cv" style="color:#1E3A8A">${_cvFmt(p.iU || 0)}</div></div>
+      <div class="cv-tt-cell"><div class="cv-tt-cl">🔵 INTL 선적</div><div class="cv-tt-cv" style="color:#1E3A8A">${_cvFmt(p.iS || 0)}</div></div>
+    </div>
+    <hr class="cv-tt-sep">
+    <div class="cv-tt-foot"><span class="cv-tt-fl">선택 화물 전체 합계</span><span class="cv-tt-fv">${_cvFmt(total)} TON</span></div>`;
+}
+
+function _cvRenderCircles(PORTS) {
+  for (const c of _cvState.circles) c.remove();
+  _cvState.circles = [];
+  if (!_cvState.map || !PORTS.length) return;
+  const maxV = Math.max(...PORTS.map(p => _cvVol(p)), 1);
+  [...PORTS].sort((a, b) => _cvVol(a) - _cvVol(b)).forEach(p => {
+    const v = _cvVol(p);
+    if (v === 0) return;
+    const r = 4 + Math.sqrt(v / maxV) * 66;
+    const color = _cvColor(p);
+    const circle = L.circleMarker([p.lat, p.lng], {
+      radius: r, fillColor: color, color: "#fff",
+      weight: 1.5, opacity: 0.9, fillOpacity: 0.55,
+    });
+    circle.bindTooltip(_cvTooltip(p), {
+      className: "cv-tt", sticky: true, offset: [14, 0], opacity: 1,
+    });
+    circle.on("click", () => {
+      _cvState.selPort = p.code;
+      _cvRenderSidebar(PORTS);
+      _cvState.map.setView([p.lat, p.lng], Math.max(_cvState.map.getZoom(), 6), { animate: true });
+    });
+    circle.addTo(_cvState.map);
+    _cvState.circles.push(circle);
+  });
+}
+
+function _cvRenderSidebar(PORTS) {
+  const list = document.getElementById("cv-port-list");
+  if (!list) return;
+  const sorted = [...PORTS].sort((a, b) => _cvVol(b) - _cvVol(a));
+  const maxV = sorted.length ? (_cvVol(sorted[0]) || 1) : 1;
+  list.innerHTML = "";
+  let rank = 0;
+  for (const p of sorted) {
+    const v = _cvVol(p);
+    if (v === 0) continue;
+    rank++;
+    const color = _cvColor(p);
+    const row = document.createElement("div");
+    row.className = "cv-port-row" + (p.code === _cvState.selPort ? " sel" : "");
+    row.innerHTML = `
+      <span class="cv-rank">${rank}</span>
+      <div class="cv-pinfo">
+        <div class="cv-pname">${p.name}</div>
+        <div class="cv-pbar-wrap"><div class="cv-pbar" style="width:${Math.round(v/maxV*100)}%;background:${color}"></div></div>
+      </div>
+      <span class="cv-ptotal">${_cvFmtM(v)}</span>`;
+    row.onclick = () => {
+      _cvState.selPort = p.code;
+      _cvState.map.setView([p.lat, p.lng], Math.max(_cvState.map.getZoom(), 7), { animate: true });
+      _cvRenderSidebar(PORTS);
+    };
+    list.appendChild(row);
+  }
+}
+
+function _cvUpdateStats(PORTS) {
+  let d = 0, i = 0;
+  for (const p of PORTS) { d += _cvDomVol(p); i += _cvIntlVol(p); }
+  const e = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  e("cv-st-dom",  _cvFmtM(d) + " TON");
+  e("cv-st-intl", _cvFmtM(i) + " TON");
+  e("cv-st-cnt",  PORTS.length + "개");
+}
+
+function _cvRebuild() {
+  const keys = [..._cvState.selComms];
+  const PORTS = _cvBuildPorts(keys);
+  // Leaflet inside a hidden tab can mis-size — force invalidate when shown.
+  if (_cvState.map) setTimeout(() => _cvState.map.invalidateSize(), 0);
+  _cvUpdateStats(PORTS);
+  _cvRenderCircles(PORTS);
+  _cvRenderSidebar(PORTS);
 }
 
 function drawFleetClassDonut(rows) {
