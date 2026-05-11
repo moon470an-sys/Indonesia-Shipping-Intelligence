@@ -197,6 +197,13 @@
         <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-treemap-caption">&nbsp;</p>
       </div>
 
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/timeseries.json">
+        <h3 class="font-semibold mb-2">📅 연도별 sector 톤수 (2024 / 2025 / 2026)</h3>
+        <p class="text-xs text-slate-500 mb-1">달력 연도(Calendar Year) 단위 합계. 부분 연도(12개월 미만)는 막대에 빗금 패턴.</p>
+        <div id="cg-yearly" style="height:420px"><div class="skeleton-block" style="height:420px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-yearly-caption">&nbsp;</p>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
           <h3 class="font-semibold mb-2">화물 품목 Top 10</h3>
@@ -205,7 +212,8 @@
         </div>
 
         <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/timeseries.json">
-          <h3 class="font-semibold mb-2">24개월 sector 톤수 추이</h3>
+          <h3 class="font-semibold mb-2">월별 sector 톤수 추이</h3>
+          <p class="text-xs text-slate-500 mb-1">월 단위 누적 area. 빠른 추세 시각화용.</p>
           <div id="cg-timeseries" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
           <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-timeseries-caption">&nbsp;</p>
         </div>

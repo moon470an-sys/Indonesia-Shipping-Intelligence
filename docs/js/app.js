@@ -1325,6 +1325,7 @@ async function renderCargo() {
 
   drawCargoODMap(mapFlow);
   drawCargoTreemap(cargoFleet.treemap_categories || []);
+  drawCargoYearly(timeseries);
   drawCargoCommodityBars(cargoFleet.top_commodities || []);
   drawCargoTimeseries(timeseries);
   drawCargoRoutes(routeFacts.routes || []);
@@ -1413,23 +1414,49 @@ function fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow) {
       : "데이터 없음";
   }
 
-  // 3) Timeseries — most-grown sector (last 6 vs prior 6)
+  // 3) Timeseries — most-grown sector (last 6 vs prior 6, positional indices)
   const series = (timeseries.series || []);
   const periods = (timeseries.periods || []);
   const cap3 = document.getElementById("cg-timeseries-caption");
   if (cap3 && series.length && periods.length >= 12) {
-    const recent = periods.slice(-6), prior = periods.slice(-12, -6);
+    const N = periods.length;
     let best = null;
     for (const s of series) {
-      const byPeriod = s.ton_by_period || {};
-      const sumR = recent.reduce((sum, p) => sum + (byPeriod[p] || 0), 0);
-      const sumP = prior.reduce((sum, p) => sum + (byPeriod[p] || 0), 0);
+      let sumR = 0, sumP = 0;
+      for (let i = N - 6; i < N; i++) sumR += _seriesTon(s, i);
+      for (let i = N - 12; i < N - 6; i++) sumP += _seriesTon(s, i);
       if (sumP <= 0) continue;
       const growth = (sumR - sumP) / sumP * 100;
       if (!best || growth > best.growth) best = { name: s.sector, growth };
     }
     if (best) {
       cap3.textContent = `최근 6개월 vs 이전 6개월 — 최대 성장 sector: ${best.name} (${best.growth >= 0 ? "+" : ""}${best.growth.toFixed(1)}%).`;
+    }
+  }
+
+  // 3b) Yearly chart — partial-year flag + biggest year-over-year jump
+  const capY = document.getElementById("cg-yearly-caption");
+  if (capY && series.length && periods.length) {
+    const monthsByYear = {};
+    for (const p of periods) monthsByYear[p.slice(0, 4)] = (monthsByYear[p.slice(0, 4)] || 0) + 1;
+    const ys = Object.keys(monthsByYear).sort();
+    const cargo = series.find(s => s.sector === "CARGO");
+    if (cargo && ys.length >= 2) {
+      const byYear = {};
+      for (let i = 0; i < periods.length; i++) {
+        const y = periods[i].slice(0, 4);
+        byYear[y] = (byYear[y] || 0) + _seriesTon(cargo, i);
+      }
+      // pick the two most-complete adjacent years for the YoY note
+      const fullYears = ys.filter(y => monthsByYear[y] === 12);
+      const refYear = fullYears[0] || ys[ys.length - 2] || ys[0];
+      const prevYear = ys[ys.indexOf(refYear) - 1];
+      const noteParts = [];
+      ys.forEach(y => {
+        const mark = monthsByYear[y] === 12 ? "(full)" : `(${monthsByYear[y]}mo, 부분)`;
+        noteParts.push(`${y} ${mark}: ${fmtTon(byYear[y] || 0)}`);
+      });
+      capY.textContent = `CARGO 부문 연도별 합계 — ${noteParts.join(" · ")}.`;
     }
   }
 
@@ -1591,13 +1618,22 @@ function drawCargoCommodityBars(rows) {
   }, { displayModeBar: false, responsive: true });
 }
 
+// ton_by_period is a list aligned positionally with `periods` (NOT a dict).
+function _seriesTon(s, periodIndex) {
+  const arr = s.ton_by_period;
+  if (!arr) return 0;
+  if (Array.isArray(arr)) return arr[periodIndex] || 0;
+  // legacy: object keyed by period string — left for forward-compat
+  return 0;
+}
+
 function drawCargoTimeseries(payload) {
   const periods = payload.periods || [];
   const series = payload.series || [];
   if (!periods.length || !series.length) return;
   const traces = series.map(s => ({
     x: periods,
-    y: periods.map(p => (s.ton_by_period || {})[p] || 0),
+    y: periods.map((_p, i) => _seriesTon(s, i)),
     name: s.sector,
     type: "scatter",
     mode: "lines",
@@ -1610,6 +1646,73 @@ function drawCargoTimeseries(payload) {
     xaxis: { title: "월" },
     yaxis: { title: "톤" },
     legend: { orientation: "h", y: -0.2, font: { size: 10 } },
+  }, { displayModeBar: false, responsive: true });
+}
+
+// Year-based sector comparison — replaces rolling 12M/24M framing with
+// calendar-year cuts (2024 partial / 2025 full / 2026 partial in this
+// snapshot). Partial-year bars get a hatched marker pattern + an
+// annotation to flag that they're not 12-month totals.
+function drawCargoYearly(payload) {
+  const periods = payload.periods || [];
+  const series = payload.series || [];
+  if (!periods.length || !series.length) return;
+
+  // Count months per year so partial-year flag is data-driven.
+  const monthsByYear = {};
+  for (const p of periods) {
+    const y = p.slice(0, 4);
+    monthsByYear[y] = (monthsByYear[y] || 0) + 1;
+  }
+  const years = Object.keys(monthsByYear).sort();
+
+  // Sum per (sector, year).
+  const cargoSectors = ["CARGO"];   // primary focus per the user's brief
+  const byYear = {};                 // sector -> [yearTon, yearTon, ...]
+  for (const s of series) {
+    const sums = years.map(_ => 0);
+    for (let i = 0; i < periods.length; i++) {
+      const yi = years.indexOf(periods[i].slice(0, 4));
+      sums[yi] += _seriesTon(s, i);
+    }
+    byYear[s.sector] = { color: s.color || "#94a3b8", sums };
+  }
+
+  // Build one bar trace per sector, x = years.
+  const sectorsSorted = Object.keys(byYear).sort((a, b) =>
+    byYear[b].sums.reduce((x, y) => x + y, 0)
+    - byYear[a].sums.reduce((x, y) => x + y, 0));
+
+  const traces = sectorsSorted.map(sec => {
+    const isPartial = years.map(y => monthsByYear[y] < 12);
+    return {
+      x: years.map(y => `${y}년${monthsByYear[y] < 12 ? ` (${monthsByYear[y]}mo)` : ""}`),
+      y: byYear[sec].sums,
+      name: sec,
+      type: "bar",
+      marker: {
+        color: byYear[sec].color,
+        pattern: { shape: isPartial.map(p => p ? "/" : ""), bgcolor: byYear[sec].color },
+        line: { color: "#1e293b", width: 0.4 },
+      },
+      text: byYear[sec].sums.map(v => fmtTon(v)),
+      textposition: "outside",
+      cliponaxis: false,
+      hovertemplate: `<b>${sec} · %{x}</b><br>%{y:,.0f}t<extra></extra>`,
+    };
+  });
+
+  Plotly.newPlot("cg-yearly", traces, {
+    margin: { t: 30, l: 70, r: 20, b: 60 },
+    barmode: "group",
+    xaxis: { title: "연도" },
+    yaxis: { title: "톤 (합계)" },
+    legend: { orientation: "h", y: -0.18, font: { size: 10 } },
+    annotations: [{
+      x: 0.5, y: 1.12, xref: "paper", yref: "paper",
+      text: "<span style='color:#475569'>※ 빗금 = 부분 연도 (12개월 미만)</span>",
+      showarrow: false, font: { size: 11 },
+    }],
   }, { displayModeBar: false, responsive: true });
 }
 
