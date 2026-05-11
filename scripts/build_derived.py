@@ -375,8 +375,12 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
               gt,
               json_extract(raw_data, '$.LengthOfAll')      AS loa,
               panjang,
+              lebar,
+              dalam,
               json_extract(raw_data, '$.TahunPembuatan')   AS tahun,
               json_extract(raw_data, '$.BenderaAsal')      AS bendera,
+              json_extract(raw_data, '$.Mesin')            AS mesin,
+              json_extract(raw_data, '$.MesinType')        AS mesin_type,
               imo,
               call_sign
             FROM vessels_snapshot
@@ -385,8 +389,8 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
             """,
             (snapshot_month,),
         )
-        for (nama, pemilik, jenis, gt, loa, panjang,
-             tahun, bendera, imo, call_sign) in cur:
+        for (nama, pemilik, jenis, gt, loa, panjang, lebar, dalam,
+             tahun, bendera, mesin, mesin_type, imo, call_sign) in cur:
             if not jenis:
                 continue
             sector, vclass = classify_vessel_type(jenis)
@@ -414,18 +418,34 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
             flag_v = "" if not bendera or str(bendera).strip() == "Indonesia" \
                        else str(bendera).strip()
             owner_v = (str(pemilik).strip() if pemilik else "(미상)")[:60]
+            # Additional numeric dims for the jang1117-style chart row
+            try:
+                lebar_v = round(float(lebar), 2) if lebar is not None else 0.0
+            except (TypeError, ValueError):
+                lebar_v = 0.0
+            try:
+                dalam_v = round(float(dalam), 2) if dalam is not None else 0.0
+            except (TypeError, ValueError):
+                dalam_v = 0.0
+            mesin_v = (str(mesin).strip() if mesin else "")[:80]
+            mesin_type_v = (str(mesin_type).strip() if mesin_type else "")[:60]
+
             rows.append([
                 (nama or "").strip(),
                 owner_v,
                 sector,
                 vc,
-                (jenis or "").strip(),         # PR — raw JenisDetailKet (no taxonomy grouping)
+                (jenis or "").strip(),         # raw JenisDetailKet
                 ts or "",
                 gt_v,
                 loa_v,
+                lebar_v,                        # PR — width (m)
+                dalam_v,                        # PR — depth (m)
                 tahun_v,
                 age_v,
                 flag_v,
+                mesin_v,                        # PR — engine name
+                mesin_type_v,                   # PR — engine type
                 (imo or "").strip(),
                 (call_sign or "").strip(),
             ])
@@ -443,12 +463,15 @@ def build_fleet_vessels(snapshot_month: str) -> dict:
         d["count"] += 1
 
     return {
-        "schema_version": 3,                # PR — added raw `jenis` column
+        "schema_version": 4,                # PR — lebar/dalam/mesin/mesin_type
         "snapshot_month": snapshot_month,
         "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/",
         "current_year": cur_year,
-        "cols": ["nama", "owner", "sector", "vc", "jenis", "ts", "gt", "loa",
-                  "tahun", "age", "flag", "imo", "call_sign"],
+        "cols": ["nama", "owner", "sector", "vc", "jenis", "ts",
+                  "gt", "loa", "lebar", "dalam",
+                  "tahun", "age", "flag",
+                  "mesin", "mesin_type",
+                  "imo", "call_sign"],
         "rows": rows,
         "totals": {
             "all_vessels": len(rows),

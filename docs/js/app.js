@@ -1642,6 +1642,7 @@ async function renderFleet() {
   tabEl._fleetOwners = fo;
 
   // Initial state object — PR-X: classes → sectors + jenis (raw type).
+  // PR — jang1117 layout adds width/depth ranges + chart-click filters.
   if (!tabEl._fleetState) {
     tabEl._fleetState = {
       sectors: new Set(),         // empty == all sectors
@@ -1655,6 +1656,8 @@ async function renderFleet() {
       gtMin: null, gtMax: null,
       yrMin: null, yrMax: null,
       loaMin: null, loaMax: null,
+      widthMin: null, widthMax: null,
+      depthMin: null, depthMax: null,
       sortCol: "gt",
       sortDir: "desc",
     };
@@ -1844,6 +1847,8 @@ function _wireFleetFilters() {
   num("fl-f-gt-min",  "gtMin"); num("fl-f-gt-max",  "gtMax");
   num("fl-f-yr-min",  "yrMin"); num("fl-f-yr-max",  "yrMax");
   num("fl-f-loa-min", "loaMin"); num("fl-f-loa-max", "loaMax");
+  num("fl-f-w-min",   "widthMin"); num("fl-f-w-max",   "widthMax");
+  num("fl-f-d-min",   "depthMin"); num("fl-f-d-max",   "depthMax");
 
   const reset = document.getElementById("fl-reset");
   if (reset && !reset.dataset.bound) {
@@ -1851,7 +1856,8 @@ function _wireFleetFilters() {
     reset.addEventListener("click", () => {
       st.sectors.clear(); st.jenis.clear(); st.subclasses.clear(); st.ages.clear();
       st.owner = ""; st.name = ""; st.flag = ""; st.jenisQuery = "";
-      st.gtMin = st.gtMax = st.yrMin = st.yrMax = st.loaMin = st.loaMax = null;
+      st.gtMin = st.gtMax = st.yrMin = st.yrMax = null;
+      st.loaMin = st.loaMax = st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
       // Reset UI controls
       document.querySelectorAll("#fl-f-sector button, #fl-f-subclass button, #fl-f-age button")
         .forEach(b => {
@@ -1864,7 +1870,9 @@ function _wireFleetFilters() {
       document.getElementById("fl-f-name").value = "";
       document.getElementById("fl-f-flag").value = "";
       for (const id of ["fl-f-gt-min", "fl-f-gt-max", "fl-f-yr-min",
-                         "fl-f-yr-max", "fl-f-loa-min", "fl-f-loa-max"]) {
+                         "fl-f-yr-max", "fl-f-loa-min", "fl-f-loa-max",
+                         "fl-f-w-min", "fl-f-w-max",
+                         "fl-f-d-min", "fl-f-d-max"]) {
         document.getElementById(id).value = "";
       }
       _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
@@ -1998,6 +2006,10 @@ function _applyFleetFilters() {
     if (st.gtMax != null && r[I.gt] > st.gtMax) return false;
     if (st.loaMin != null && r[I.loa] < st.loaMin) return false;
     if (st.loaMax != null && r[I.loa] > st.loaMax) return false;
+    if (st.widthMin != null && (r[I.lebar] || 0) < st.widthMin) return false;
+    if (st.widthMax != null && (r[I.lebar] || 0) > st.widthMax) return false;
+    if (st.depthMin != null && (r[I.dalam] || 0) < st.depthMin) return false;
+    if (st.depthMax != null && (r[I.dalam] || 0) > st.depthMax) return false;
     if (st.yrMin != null && (r[I.tahun] == null || r[I.tahun] < st.yrMin)) return false;
     if (st.yrMax != null && (r[I.tahun] == null || r[I.tahun] > st.yrMax)) return false;
     if (st.flag) {
@@ -2031,47 +2043,73 @@ function _renderFleetView() {
   const totalRows = fv.rows.length;
   const st = tabEl._fleetState;
 
-  // KPI
-  document.getElementById("fl-kpi-count").textContent = fmtCount(rows.length);
-  document.getElementById("fl-kpi-pct").textContent =
-    `${fmtCount(rows.length)} / ${fmtCount(totalRows)}` +
-    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : "");
-
-  let sumGt = 0, nGt = 0, sumAgeGt = 0;
-  let counts = {}, ageBuckets = {};
-  for (const b of FLEET_AGE_BUCKETS) ageBuckets[b.label] = 0;
+  // ---- KPI strip (5 cards · jang1117 layout) ----
+  let sumGt = 0, nGt = 0, sumAgeGt = 0, sumYrW = 0;
+  let sumLoa = 0, nLoa = 0, sumW = 0, nW = 0, sumD = 0, nD = 0;
+  const jenisSet = new Set();
   for (const r of rows) {
     const gt = r[I.gt] || 0;
     if (gt > 0) { sumGt += gt; nGt++; }
     const age = r[I.age];
-    if (age != null && gt > 0) { sumAgeGt += age * gt; }
-    const vc = r[I.vc] || "Other Cargo";
-    counts[vc] = (counts[vc] || 0) + 1;
-    const ab = _ageBucketKey(age);
-    if (ab) {
-      const label = FLEET_AGE_BUCKETS.find(b => b.key === ab).label;
-      ageBuckets[label]++;
-    }
+    const yr = r[I.tahun];
+    if (gt > 0 && yr) { sumAgeGt += age * gt; sumYrW += yr * gt; }
+    if ((r[I.loa] || 0) > 0)   { sumLoa += r[I.loa]; nLoa++; }
+    if ((r[I.lebar] || 0) > 0) { sumW   += r[I.lebar]; nW++; }
+    if ((r[I.dalam] || 0) > 0) { sumD   += r[I.dalam]; nD++; }
+    if (r[I.jenis]) jenisSet.add(r[I.jenis]);
   }
-  const avgGt = nGt > 0 ? (sumGt / nGt) : 0;
-  const avgAge = sumGt > 0 ? (sumAgeGt / sumGt) : null;
+  const avgGt = nGt > 0 ? sumGt / nGt : 0;
+  const avgAge = sumGt > 0 ? sumAgeGt / sumGt : null;
+  const avgYr = sumGt > 0 ? sumYrW / sumGt : null;
+  document.getElementById("fl-kpi-count").textContent = fmtCount(rows.length);
+  document.getElementById("fl-kpi-pct").textContent =
+    `${fmtCount(rows.length)} / ${fmtCount(totalRows)}` +
+    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : "");
+  document.getElementById("fl-kpi-jenis").textContent = fmtCount(jenisSet.size);
   document.getElementById("fl-kpi-avggt").textContent = avgGt ? fmtCount(Math.round(avgGt)) : "—";
-  document.getElementById("fl-kpi-sumgt").textContent = fmtTon(sumGt);
-  document.getElementById("fl-kpi-avgage").textContent = avgAge ? `${avgAge.toFixed(1)}년` : "—";
+  document.getElementById("fl-kpi-sumgt").textContent = `총 GT ${fmtTon(sumGt)}`;
+  document.getElementById("fl-kpi-avgyr").textContent = avgYr ? `${avgYr.toFixed(0)}` : "—";
+  document.getElementById("fl-kpi-avgage").textContent =
+    avgAge != null ? `선령 ${avgAge.toFixed(1)}년` : "선령 —";
+  document.getElementById("fl-kpi-dim-loa").textContent =
+    `LOA ${nLoa ? (sumLoa / nLoa).toFixed(1) : "—"} m`;
+  document.getElementById("fl-kpi-dim-w").textContent =
+    `W ${nW ? (sumW / nW).toFixed(1) : "—"} m`;
+  document.getElementById("fl-kpi-dim-d").textContent =
+    `D ${nD ? (sumD / nD).toFixed(1) : "—"} m`;
 
-  // Donut + age bars (responsive to filter)
-  _drawFleetClassDonutCounts(counts);
-  _drawFleetAgeBarsCounts(ageBuckets);
+  // ---- 6 charts (jang1117-style grid) ----
+  _drawFlChartYear(rows, I);
+  _drawFlChartType(rows, I);
+  _drawFlChartEngineType(rows, I);
+  _drawFlChartEngineName(rows, I);
+  _drawFlChartFlag(rows, I);
+  _drawFlChartGtHist(rows, I);
 
-  // Render list (cap at 500)
+  // ---- Active filter count badge ----
+  const active = (st.sectors.size > 0)
+    + (st.jenis.size > 0)
+    + (st.subclasses.size > 0)
+    + (st.ages.size > 0)
+    + (st.owner ? 1 : 0)
+    + (st.name  ? 1 : 0)
+    + (st.flag  ? 1 : 0)
+    + ((st.gtMin != null || st.gtMax != null) ? 1 : 0)
+    + ((st.yrMin != null || st.yrMax != null) ? 1 : 0)
+    + ((st.loaMin != null || st.loaMax != null) ? 1 : 0)
+    + ((st.widthMin != null || st.widthMax != null) ? 1 : 0)
+    + ((st.depthMin != null || st.depthMax != null) ? 1 : 0);
+  const badge = document.getElementById("fl-active-count");
+  if (badge) badge.textContent = active ? `(${active} 활성)` : "";
+
+  // ---- Sortable table ----
   _renderFleetTable(rows, I);
 
   const info = document.getElementById("fl-list-info");
   if (info) {
     const shown = Math.min(rows.length, 500);
-    info.textContent = `${shown.toLocaleString()} of ${rows.length.toLocaleString()} shown · sort: ${st.sortCol} ${st.sortDir}`;
+    info.textContent = `${shown.toLocaleString()} of ${rows.length.toLocaleString()} 표시 · sort: ${st.sortCol} ${st.sortDir}`;
   }
-  // Sort marker on header
   document.querySelectorAll("#fl-thead-row th[data-col]").forEach(h => {
     const m = h.querySelector("[data-sort-marker]");
     if (!m) return;
@@ -2116,15 +2154,21 @@ function _fleetCsvDownload() {
   if (!fv) return;
   const { rows, I } = _applyFleetFilters();
   const header = ["nama_kapal", "nama_pemilik", "sector", "vessel_class",
-                  "jenis_detail_ket", "tanker_subclass", "gt", "loa",
-                  "tahun", "age", "flag", "imo", "call_sign"];
+                  "jenis_detail_ket", "tanker_subclass",
+                  "gt", "loa", "lebar", "dalam",
+                  "tahun", "age", "flag",
+                  "mesin", "mesin_type",
+                  "imo", "call_sign"];
   const lines = [header.join(",")];
   const cidx = header.map(h => {
     const map = {nama_kapal: "nama", nama_pemilik: "owner",
                  sector: "sector", vessel_class: "vc",
                  jenis_detail_ket: "jenis",
-                 tanker_subclass: "ts", gt: "gt", loa: "loa", tahun: "tahun",
-                 age: "age", flag: "flag", imo: "imo", call_sign: "call_sign"};
+                 tanker_subclass: "ts",
+                 gt: "gt", loa: "loa", lebar: "lebar", dalam: "dalam",
+                 tahun: "tahun", age: "age", flag: "flag",
+                 mesin: "mesin", mesin_type: "mesin_type",
+                 imo: "imo", call_sign: "call_sign"};
     return I[map[h]];
   });
   for (const r of rows) {
@@ -2144,6 +2188,206 @@ function _fleetCsvDownload() {
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+// ────────────────────────────────────────────────────────────
+// PR — jang1117/vessels-style 6-chart grid for the Fleet tab.
+// All charts react to the filter; bar charts on Type / Flag are
+// click-to-filter (mirrors the reference site UX).
+// ────────────────────────────────────────────────────────────
+function _drawFlChartYear(rows, I) {
+  const counts = new Map();
+  for (const r of rows) {
+    const y = r[I.tahun];
+    if (y && y > 1900 && y < 2100) counts.set(y, (counts.get(y) || 0) + 1);
+  }
+  const years = [...counts.keys()].sort((a, b) => a - b);
+  const ys = years.map(y => counts.get(y));
+  Plotly.newPlot("fl-ch-year", [{
+    x: years, y: ys,
+    type: "scatter", mode: "lines", fill: "tozeroy",
+    line: { color: "#1f77b4", width: 1.5 },
+    fillcolor: "rgba(31,119,180,0.25)",
+    hovertemplate: "<b>%{x}</b><br>%{y:,} 척<extra></extra>",
+  }], {
+    margin: { t: 10, l: 40, r: 10, b: 30 },
+    xaxis: { title: { text: "건조 연도", font: { size: 10 } }, tickfont: { size: 10 } },
+    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 } },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function _drawFlChartType(rows, I) {
+  const counts = new Map();
+  for (const r of rows) {
+    const j = r[I.jenis] || "(blank)";
+    counts.set(j, (counts.get(j) || 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const labels = top.map(t => t[0]).reverse();
+  const ys = top.map(t => t[1]).reverse();
+  Plotly.newPlot("fl-ch-type", [{
+    x: ys, y: labels, type: "bar", orientation: "h",
+    marker: {
+      color: ys,
+      colorscale: "Blues", cmin: 0,
+      line: { color: "#1e293b", width: 0.3 },
+    },
+    text: ys.map(v => v.toLocaleString()),
+    textposition: "outside",
+    cliponaxis: false,
+    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra>클릭 시 필터</extra>",
+  }], {
+    margin: { t: 5, l: 140, r: 50, b: 30 },
+    xaxis: { tickfont: { size: 10 } },
+    yaxis: { tickfont: { size: 10 } },
+  }, { displayModeBar: false, responsive: true });
+  // Click-to-filter on Vessel Type bars
+  const host = document.getElementById("fl-ch-type");
+  if (host && !host.dataset.clickBound) {
+    host.dataset.clickBound = "1";
+    host.on("plotly_click", (ev) => {
+      const lbl = ev?.points?.[0]?.y;
+      if (!lbl) return;
+      const st = document.getElementById("tab-fleet")._fleetState;
+      if (st.jenis.has(lbl)) st.jenis.delete(lbl); else st.jenis.add(lbl);
+      _renderFleetJenisList(document.getElementById("tab-fleet")._fleetVessels);
+      _renderFleetView();
+    });
+  }
+}
+
+function _drawFlChartEngineType(rows, I) {
+  const counts = new Map();
+  for (const r of rows) {
+    let t = (r[I.mesin_type] || "").trim();
+    if (!t || t === "|" || t === "||") continue;       // dummy placeholders
+    counts.set(t, (counts.get(t) || 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+  if (!top.length) {
+    Plotly.purge("fl-ch-engine-type");
+    document.getElementById("fl-ch-engine-type").innerHTML =
+      `<div class="text-xs text-slate-400 p-4 text-center">엔진 타입 데이터 없음</div>`;
+    return;
+  }
+  Plotly.newPlot("fl-ch-engine-type", [{
+    labels: top.map(t => t[0]),
+    values: top.map(t => t[1]),
+    type: "pie", hole: 0.55,
+    textinfo: "percent",
+    textposition: "inside",
+    hovertemplate: "<b>%{label}</b><br>%{value:,} 척 (%{percent})<extra></extra>",
+    marker: { line: { color: "#fff", width: 1 } },
+  }], {
+    margin: { t: 5, l: 5, r: 5, b: 30 },
+    showlegend: true,
+    legend: { font: { size: 9 }, orientation: "h", y: -0.15 },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function _drawFlChartEngineName(rows, I) {
+  const counts = new Map();
+  for (const r of rows) {
+    let n = (r[I.mesin] || "").trim();
+    if (!n) continue;
+    // Collapse "BRAND|BRAND" multi-engine duplicates to first token
+    n = n.split("|")[0].trim();
+    if (!n) continue;
+    counts.set(n, (counts.get(n) || 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  if (!top.length) {
+    Plotly.purge("fl-ch-engine-name");
+    document.getElementById("fl-ch-engine-name").innerHTML =
+      `<div class="text-xs text-slate-400 p-4 text-center">엔진명 데이터 없음</div>`;
+    return;
+  }
+  const labels = top.map(t => t[0]).reverse();
+  const ys = top.map(t => t[1]).reverse();
+  Plotly.newPlot("fl-ch-engine-name", [{
+    x: ys, y: labels, type: "bar", orientation: "h",
+    marker: {
+      color: ys,
+      colorscale: "Greens", cmin: 0,
+      line: { color: "#1e293b", width: 0.3 },
+    },
+    text: ys.map(v => v.toLocaleString()),
+    textposition: "outside",
+    cliponaxis: false,
+    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra></extra>",
+  }], {
+    margin: { t: 5, l: 100, r: 50, b: 30 },
+    xaxis: { tickfont: { size: 10 } },
+    yaxis: { tickfont: { size: 9 } },
+  }, { displayModeBar: false, responsive: true });
+}
+
+function _drawFlChartFlag(rows, I) {
+  const counts = new Map();
+  for (const r of rows) {
+    const f = r[I.flag] || "Indonesia";
+    counts.set(f, (counts.get(f) || 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
+  const labels = top.map(t => t[0]).reverse();
+  const ys = top.map(t => t[1]).reverse();
+  Plotly.newPlot("fl-ch-flag", [{
+    x: ys, y: labels, type: "bar", orientation: "h",
+    marker: {
+      color: ys,
+      colorscale: "Oranges", cmin: 0,
+      line: { color: "#1e293b", width: 0.3 },
+    },
+    text: ys.map(v => v.toLocaleString()),
+    textposition: "outside",
+    cliponaxis: false,
+    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra>클릭 시 필터</extra>",
+  }], {
+    margin: { t: 5, l: 90, r: 50, b: 30 },
+    xaxis: { tickfont: { size: 10 } },
+    yaxis: { tickfont: { size: 10 } },
+  }, { displayModeBar: false, responsive: true });
+  // Click-to-filter on flag bars
+  const host = document.getElementById("fl-ch-flag");
+  if (host && !host.dataset.clickBound) {
+    host.dataset.clickBound = "1";
+    host.on("plotly_click", (ev) => {
+      const lbl = ev?.points?.[0]?.y;
+      if (lbl == null) return;
+      const st = document.getElementById("tab-fleet")._fleetState;
+      st.flag = (st.flag === lbl) ? "" : lbl;
+      const flagEl = document.getElementById("fl-f-flag");
+      if (flagEl) flagEl.value = st.flag;
+      _renderFleetView();
+    });
+  }
+}
+
+function _drawFlChartGtHist(rows, I) {
+  const gts = [];
+  for (const r of rows) {
+    const g = r[I.gt];
+    if (g && g > 0) gts.push(g);
+  }
+  if (!gts.length) {
+    Plotly.purge("fl-ch-gt-hist");
+    return;
+  }
+  Plotly.newPlot("fl-ch-gt-hist", [{
+    x: gts,
+    type: "histogram",
+    nbinsx: 50,
+    marker: { color: "#6c5ce7", line: { color: "#fff", width: 0.3 } },
+    hovertemplate: "GT bin %{x:,.0f}<br>%{y:,} 척<extra></extra>",
+  }], {
+    margin: { t: 5, l: 40, r: 10, b: 35 },
+    xaxis: {
+      type: "log", title: { text: "GT (log)", font: { size: 10 } },
+      tickfont: { size: 10 },
+    },
+    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 } },
+    bargap: 0.02,
+  }, { displayModeBar: false, responsive: true });
 }
 
 const _FLEET_CLASS_COLORS = {
