@@ -1309,7 +1309,7 @@ async function renderFleet() {
 
 async function renderCargo() {
   setupSourceLabels(document.getElementById("tab-cargo"));
-  let cargoFleet, routeFacts, timeseries, mapFlow;
+  let cargoFleet, routeFacts, timeseries, mapFlow, cargoYearly;
   try { cargoFleet = await loadDerived("cargo_fleet.json"); }
   catch (e) {
     const host = document.getElementById("cg-treemap");
@@ -1322,15 +1322,28 @@ async function renderCargo() {
   catch (e) { timeseries = { periods: [], series: [] }; }
   try { mapFlow = await loadDerived("map_flow.json"); }
   catch (e) { mapFlow = { ports: [], routes_top30: [], categories: [] }; }
+  try { cargoYearly = await loadDerived("cargo_yearly.json"); }
+  catch (e) { cargoYearly = null; }
+
+  // PR-29: stash the yearly payload on the tab element so the click handler
+  // can reach it without re-fetching.
+  const tabEl = document.getElementById("tab-cargo");
+  if (tabEl && cargoYearly) tabEl._cargoYearly = cargoYearly;
+
+  // Pick the default year: most-recent full (12-month) year if any, else
+  // most-recent year present in the payload, else fall back to legacy.
+  const defaultYear = _pickDefaultCargoYear(cargoYearly);
 
   drawCargoODMap(mapFlow);
-  drawCargoTreemap(cargoFleet.treemap_categories || []);
   drawCargoYearly(timeseries);
-  drawCargoCommodityBars(cargoFleet.top_commodities || []);
   drawCargoTimeseries(timeseries);
   drawCargoRoutes(routeFacts.routes || []);
   drawCargoSTS(routeFacts.routes || []);
   fillCargoCaptions(cargoFleet, routeFacts, timeseries, mapFlow);
+
+  // Year-aware treemap + commodity bars (default year = full year if any)
+  renderCargoYearlyView(cargoYearly, cargoFleet, defaultYear);
+  buildCargoYearPills(cargoYearly, defaultYear);
 
   // Wire up the "hide self-loop" checkbox on the Cargo tab
   const hideSelf = document.getElementById("cg-routes-hide-self");
@@ -1339,6 +1352,99 @@ async function renderCargo() {
     hideSelf.addEventListener("change", () => {
       drawCargoRoutes(routeFacts.routes || []);
     });
+  }
+}
+
+function _pickDefaultCargoYear(cargoYearly) {
+  if (!cargoYearly || !cargoYearly.years || !cargoYearly.years.length) return null;
+  const mpy = cargoYearly.months_per_year || {};
+  const fullYears = cargoYearly.years.filter(y => mpy[y] === 12);
+  if (fullYears.length) return fullYears[fullYears.length - 1];   // most-recent full year
+  return cargoYearly.years[cargoYearly.years.length - 1];          // else latest available
+}
+
+function buildCargoYearPills(cargoYearly, activeYear) {
+  const host = document.getElementById("cg-year-pills");
+  const banner = document.getElementById("cg-year-banner");
+  if (!host) return;
+  if (!cargoYearly || !cargoYearly.years || !cargoYearly.years.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    if (banner) banner.textContent = "";
+    return;
+  }
+  const mpy = cargoYearly.months_per_year || {};
+  host.innerHTML = cargoYearly.years.map(y => {
+    const isActive = y === activeYear;
+    const isPartial = (mpy[y] || 0) < 12;
+    const label = `${y}년${isPartial ? ` (${mpy[y]}mo)` : ""}`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-year="${y}" class="${cls}" role="tab" aria-selected="${isActive}">${label}</button>`;
+  }).join("");
+
+  host.querySelectorAll("button[data-year]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const y = btn.dataset.year;
+      // Re-render with new year selection
+      const tabEl = document.getElementById("tab-cargo");
+      const cy = (tabEl && tabEl._cargoYearly) || cargoYearly;
+      renderCargoYearlyView(cy, null, y);
+      buildCargoYearPills(cy, y);
+    });
+  });
+
+  if (banner) {
+    const isPartial = (mpy[activeYear] || 0) < 12;
+    banner.textContent = isPartial
+      ? `⚠️ ${activeYear}년은 부분 연도 (${mpy[activeYear]}개월) — 다른 연도와 단순 비교 시 주의.`
+      : `${activeYear}년 (12개월 전체).`;
+  }
+}
+
+function renderCargoYearlyView(cargoYearly, fallbackCargoFleet, year) {
+  // Compose the data source: cargoYearly takes precedence, else fall back to
+  // legacy aggregated cargo_fleet.json — keeps the page useful even if the
+  // year payload fails to load.
+  let treemap = [];
+  let commodities = [];
+  let yearLabel = "24M";
+  if (cargoYearly && year && cargoYearly.by_year && cargoYearly.by_year[year]) {
+    const slice = cargoYearly.by_year[year];
+    treemap = slice.treemap_categories || [];
+    commodities = slice.top_commodities || [];
+    const mpy = (cargoYearly.months_per_year || {})[year] || 0;
+    yearLabel = `${year}년${mpy < 12 ? ` (${mpy}mo)` : ""}`;
+  } else if (fallbackCargoFleet) {
+    treemap = fallbackCargoFleet.treemap_categories || [];
+    commodities = fallbackCargoFleet.top_commodities || [];
+  }
+
+  // Re-write card titles so the active period is visible without legend hunting
+  const tt = document.getElementById("cg-treemap-title");
+  if (tt) tt.textContent = `화물 카테고리 트리맵 — ${yearLabel} (Top ${treemap.length})`;
+  const ct = document.getElementById("cg-commodity-title");
+  if (ct) ct.textContent = `화물 품목 Top 10 — ${yearLabel}`;
+
+  drawCargoTreemap(treemap);
+  drawCargoCommodityBars(commodities);
+
+  // Captions specific to year slice
+  const cap1 = document.getElementById("cg-treemap-caption");
+  if (cap1) {
+    const cats = treemap.slice().sort((a, b) => b.ton_total - a.ton_total);
+    const total = cats.reduce((s, r) => s + (r.ton_total || 0), 0);
+    const top3 = cats.slice(0, 3).reduce((s, r) => s + r.ton_total, 0);
+    cap1.textContent = total > 0
+      ? `${yearLabel} — 상위 3개 카테고리(${cats.slice(0, 3).map(c => c.category).join(" · ")})가 전체 ${cats.length}개의 ${(top3 / total * 100).toFixed(1)}%.`
+      : "데이터 없음";
+  }
+  const cap2 = document.getElementById("cg-commodity-caption");
+  if (cap2 && commodities[0]) {
+    const totC = commodities.reduce((s, r) => s + (r.ton_total || 0), 0);
+    cap2.textContent = totC > 0
+      ? `${yearLabel} — ${commodities[0].name} 단일 품목이 Top 10 누적의 ${(commodities[0].ton_total / totC * 100).toFixed(1)}%.`
+      : "데이터 없음";
   }
 }
 
