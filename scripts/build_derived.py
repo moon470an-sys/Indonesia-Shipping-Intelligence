@@ -713,6 +713,189 @@ def build_fleet_age_bins(snapshot_month: str, current_year: int | None = None) -
     }
 
 
+def build_cargo_ports() -> dict:
+    """Per-port × commodity tonnage broken down by domestic/intl and
+    unloading/loading. Powers the Leaflet infographic mirrored from
+    jang1117.github.io/shipping_volume.
+
+    Output schema (jang1117-compatible)::
+
+        {
+          "commodities": [str, ...],            # sorted bucket labels
+          "ports": {
+            "<kode_pelabuhan>": {
+              "n":  "BELAWAN",                  # display name
+              "lat": 3.78, "lng": 98.69,
+              "dU": <ton>, "dS": <ton>,         # domestic Unloading / Shipping
+              "iU": <ton>, "iS": <ton>,         # international ...
+              "comms": {
+                "<bucket>": {"dU": .., "dS": .., "iU": .., "iS": ..}
+              }
+            }, ...
+          }
+        }
+
+    Mapping notes:
+      * `kind` column on `cargo_snapshot` is `dn` (domestic) or `ln` (intl).
+      * BONGKAR ton == U (unloading / 하역), MUAT ton == S (shipping / 선적).
+      * Raw KOMODITI text is folded into ~30 standard buckets via
+        `_BUCKET_KEYWORDS` below; unmatched rows go into the catch-all
+        `기타` bucket (jang1117 convention).
+      * Ports with neither lat/lon nor any volume are dropped.
+    """
+    # ---- 1) Build port-code → (name, lat, lng) lookup -------------------
+    from backend.build_static import _FLOW_PORT_COORDS  # type: ignore
+
+    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
+
+    # ---- 2) Commodity bucket mapping (raw KOMODITI text → bucket) ------
+    # Buckets mirror jang1117's commodity list where possible plus a couple
+    # of Indonesia-specific additions (NICKEL ORE, BAUXITE, PETIKEMAS).
+    _BUCKET_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+        # Crude / refined products
+        ("CRUDE OIL",            ("CRUDE OIL", "MINYAK MENTAH")),
+        ("OMAN BLEND CRUDE OIL", ("OMAN BLEND",)),
+        ("CONDENSATE",           ("CONDENSATE", "NAPHTHA", "NAFTA")),
+        ("PERTALITE",            ("PERTALITE",)),
+        ("PERTAMAX",             ("PERTAMAX",)),
+        ("AVTUR",                ("AVTUR", "JET A")),
+        ("HSD",                  ("HSD",)),
+        ("BIO SOLAR",            ("BIO SOLAR", "BIOSOLAR")),
+        ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL")),
+        ("METHANOL",             ("METHANOL",)),
+        ("ASPAL/BITUMEN",        ("ASPAL", "BITUMEN", "ASPHALT")),
+        # Gases
+        ("LPG",                  ("LPG", "ELPIJI", "LIQUEFIED PETROLEUM")),
+        ("LNG",                  ("LNG", "NATURAL GAS")),
+        # Palm
+        ("CPO",                  ("CPO", "PALM OIL", "MINYAK SAWIT")),
+        ("RBD PALM OIL",         ("RBD PALM OIL", "RBD OIL")),
+        ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN")),
+        ("OLEIN",                ("OLEIN",)),
+        ("PKO",                  ("PKO", "PALM KERNEL")),
+        ("STEARIN",              ("STEARIN",)),
+        ("FAME",                 ("FAME", "BIODIESEL", "METIL ESTER")),
+        # Dry bulk
+        ("BATU BARA CURAH KERING", ("BATU BARA", "BATUBARA", "STEAM COAL")),
+        ("COAL",                 ("COAL",)),
+        ("NICKEL ORE",           ("NICKEL", "NIKEL", "BIJIH NIKEL")),
+        ("BAUXITE",              ("BAUXITE", "BAUKSIT")),
+        ("IRON ORE",             ("IRON ORE", "BIJIH BESI")),
+        ("LIMESTONE",            ("LIMESTONE",)),
+        ("WOOD CHIP",            ("WOOD CHIP",)),
+        ("SEMEN CURAH",          ("SEMEN CURAH", "CEMENT BULK")),
+        ("SEMEN",                ("SEMEN", "CEMENT", "KLINKER", "CLINKER")),
+        ("PUPUK",                ("PUPUK", "FERTILIZER", "UREA")),
+        ("BERAS",                ("BERAS", "RICE")),
+        ("SALT",                 ("SALT", "GARAM")),
+        # Container + general
+        ("CONTAINER",            ("CONTAINER", "PETIKEMAS", "KONTAINER", "TEU")),
+        ("GENERAL CARGO",        ("GENERAL CARGO", "BARANG UMUM", "MUATAN UMUM")),
+        ("BARANG",               ("BARANG",)),
+        # Vehicles
+        ("MOBIL",                ("MOBIL", "CAR ", "PASSENGER CAR")),
+        ("TRUK",                 ("TRUK", "TRUCK", "TRONTON")),
+        ("MOTOR",                ("MOTOR ", "MOTORCYCLE", "SEPEDA MOTOR")),
+        # Fish / Livestock
+        ("IKAN",                 ("IKAN", "FISH")),
+        ("TERNAK",               ("TERNAK", "LIVESTOCK")),
+        # Chemicals
+        ("CHEMICAL",             ("CHEMICAL", "KIMIA")),
+    )
+
+    def _classify(label: str | None) -> str:
+        if not label:
+            return "기타"
+        s = str(label).upper()
+        for bucket, kws in _BUCKET_KEYWORDS:
+            if any(kw in s for kw in kws):
+                return bucket
+        return "기타"
+
+    # ---- 3) Aggregate via SQL — kind dn/ln × BONGKAR/MUAT × KOMODITI ---
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    def _p(k: str) -> str:
+        return ('$."' + k + '"').replace("'", "''")
+    P_KB = _p("('BONGKAR', 'KOMODITI')")
+    P_TB = _p("('BONGKAR', 'TON')")
+    P_KM = _p("('MUAT', 'KOMODITI')")
+    P_TM = _p("('MUAT', 'TON')")
+    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    # We aggregate per (kode_pelabuhan, kind, komoditi) — one row per
+    # (port, dn/ln, raw komoditi) summing BONGKAR ton AND MUAT ton.
+    rows: list[tuple] = []
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        log.info if False else None
+        for which, P_K, P_T in (("U", P_KB, P_TB), ("S", P_KM, P_TM)):
+            cur.execute(
+                f"SELECT kode_pelabuhan, kind, "
+                f"  json_extract(raw_row, '{P_K}') AS k, "
+                f"  SUM({ton(P_T)}) AS t "
+                f"FROM cargo_snapshot WHERE snapshot_month = ? "
+                f"AND kode_pelabuhan IS NOT NULL AND kode_pelabuhan != '' "
+                f"GROUP BY kode_pelabuhan, kind, k HAVING t > 0",
+                (snap,),
+            )
+            for code, kind, k, t in cur:
+                rows.append((code, kind, k, which, float(t or 0)))
+
+    # ---- 4) Reduce into per-port comms dict --------------------------
+    # Use a port-name lookup so we can populate `n` for display.
+    port_name: dict[str, str] = {}
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute("SELECT kode_pelabuhan, nama_pelabuhan FROM ports")
+        for code, name in cur:
+            if code and name:
+                port_name[code] = name.strip()
+
+    ports: dict[str, dict] = {}
+    bucket_seen: set[str] = set()
+    for (code, kind, k, which, t) in rows:
+        if code not in port_coords:
+            continue           # drop ports without geo (out of v1 scope)
+        bucket = _classify(k)
+        bucket_seen.add(bucket)
+        coord = port_coords[code]
+        p = ports.setdefault(code, {
+            "n":   port_name.get(code) or code,
+            "lat": coord[0],
+            "lng": coord[1],
+            "dU":  0.0, "dS": 0.0, "iU": 0.0, "iS": 0.0,
+            "comms": {},
+        })
+        # Field key: combine domestic/intl with U/S → dU, dS, iU, iS
+        side = ("d" if kind == "dn" else "i") + which
+        p[side] = round(p.get(side, 0.0) + t, 1)
+        cb = p["comms"].setdefault(bucket, {"dU": 0.0, "dS": 0.0, "iU": 0.0, "iS": 0.0})
+        cb[side] = round(cb[side] + t, 1)
+
+    # Stable list of commodities (alphabetical with 기타 last, matching
+    # jang1117's UX).
+    commodities = sorted(bucket_seen - {"기타"}) + (["기타"] if "기타" in bucket_seen else [])
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot)",
+        "commodities": commodities,
+        "ports": ports,
+        "_notes": {
+            "fields": "dU/dS/iU/iS = ton totals for "
+                      "(d)omestic/(i)ntl × (U)nloading/(S)hipping",
+            "bucket_keywords": [
+                {"bucket": b, "kws": list(kws)} for b, kws in _BUCKET_KEYWORDS
+            ],
+            "ports_dropped_no_coord": "kode_pelabuhan without lat/lng "
+                                       "are not exported (v1 limitation)",
+        },
+    }
+
+
 def build_cargo_yearly() -> dict:
     """Per calendar-year cargo cuts (treemap + commodities), for the Cargo tab.
 
