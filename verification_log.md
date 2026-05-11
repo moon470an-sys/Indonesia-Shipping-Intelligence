@@ -81,3 +81,39 @@
 
 ### 사이클 종료 시 액션
 - Cycle 1 완료. Cycle 2 시작.
+
+## Cycle 2 검증 — 2026-05-11 (사용자 Stop 지시로 중도 종료)
+
+### Demand 탭
+
+- ✅ Cargo 항만 인포그래픽 (cv-app) 통합 — Demand 탭 하단에 노출.
+  탭 1개로 흐름 지도 + 항만 인포그래픽을 동시에 볼 수 있게 됨.
+- ✅ tab-cargo 안내 카드 — deep-link `#tab-cargo` 도 안전.
+- ⚠️ 시계열 슬라이더 (월별 재생) — 미구현. Cycle 3.
+- ⚠️ 시계열 차트의 cargo-scope 적용 — 미구현. Cycle 3.
+
+### Supply 탭
+
+- ✅ scope 배지 (보조 / 제외 / 미정) Vessel Type 리스트에 부착.
+  "Tug Boat" 옆에 "보조" 배지가 시각적으로 명확.
+- ✅ excluded 행 muted (opacity 50%) — 기본 숨김 상태와 일관.
+- ⚠️ 시계열 차트 (Sector별 척수·GT 추이) — 미구현. Cycle 3.
+
+### Balance 탭
+- 본 사이클 변경 없음. Cycle 3 우선 영역.
+
+### Explorer 탭
+
+- ✅ 항로 테이블 (Top 30, 24M) — 검색·정렬 가능.
+- ✅ 항구 톤수 표 (60개) — 검색·정렬 가능.
+- ✅ 자동 인사이트 5건 (map_flow.json builder 산출).
+- ⚠️ 화물 품목 raw / 결측 키 / 변경 이력 — 미구현. Cycle 3.
+- ⚠️ Scope 제외 데이터 raw 표 — 토글 UI 만 존재. Cycle 3.
+
+### 횡단(원칙) 위반 점검
+- 원칙 1·4·5·6 통과.
+- 원칙 2·3 (시계열·탐색 병행) — Demand 흐름 지도 시계열 슬라이더 부재.
+  Cycle 3 우선.
+
+### 사이클 종료 시 액션
+- Cycle 2 의 1·2·3 완료. 사용자 Stop 지시로 Cycle 3 미시작.

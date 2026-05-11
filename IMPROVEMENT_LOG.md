@@ -71,4 +71,56 @@
 
 ---
 
-(다음 사이클 진입 시 본 섹션 아래에 Cycle 2 entry 추가.)
+## Cycle 2 — 2026-05-11 (사용자 Stop 지시로 중도 종료)
+
+**Scope**: Demand·Supply·Explorer 강화. Cycle 2-1, 2-2, 2-3 완료
+후 commit 직전 Stop. 2-4 (commit + 로그) 본 entry 작성으로 완료.
+
+### 변경 사항
+
+1. **Demand 탭에 Cargo 항만 인포그래픽 통합** (C2-1)
+   - tab-cargo 의 cv-app 전체 (헤더 + commodity 패널 + Leaflet 지도 +
+     항만 순위 사이드바)를 tab-overview (Demand) 하단으로 이관.
+   - CSS 셀렉터 `#tab-cargo .cv-*` → `.cv-*` 로 un-scope (74곳). cv-*
+     클래스는 본 위젯 외 사용처 없어 leakage 위험 0.
+   - 기존 tab-cargo 패널은 deep-link 호환용 안내 카드로 축소
+     (`<button data-jump-tab="overview">` 으로 Demand 로 이동).
+   - `boot()` 에 전역 `[data-jump-tab]` 클릭 핸들러 추가.
+   - `ensureLoaded("overview")` 가 `renderCargo()` 를 호출하도록 변경
+     — Demand 진입 시 인포그래픽 자동 활성.
+
+2. **Supply 탭 Vessel Type 리스트에 scope 배지** (C2-2)
+   - `_renderFleetJenisList` 가 각 jenis 행에 1글자 scope 배지를 표시:
+     auxiliary = "보조" / excluded = "제외" / unclassified = "미정".
+     scope=cargo 는 무배지 (기본).
+   - excluded 행은 `hideExcluded=true` 일 때 opacity 50% 로 muted.
+   - fleet_vessels.json totals.by_jenis 의 `scope` 메타 활용
+     (build_derived 가 Cycle 1 에서 추가).
+
+3. **Explorer 항로 테이블 + 항구 raw 위젯 + 자동 인사이트** (C2-3)
+   - `map_flow.json` 의 routes_top30 → 정렬·검색 가능한 30행 항로
+     테이블 (Origin / Destination / Category / Ton 24M / Calls /
+     Vessels). 헤더 클릭 정렬, 텍스트 검색 (origin·destination·
+     category 매치).
+   - `map_flow.json` 의 ports → 정렬·검색 가능한 60행 항구 톤수 표.
+   - `map_flow.json` 의 insights → 자동 산출 사실 5건 리스트.
+   - homeState.mapData 캐시 재활용 — Demand 렌더 후 Explorer 클릭 시
+     중복 fetch 회피.
+
+### 검증 결과
+- node --check docs/js/app.js 통과.
+- _esc / fmtTon / fmtCount 기존 헬퍼 재사용 → 신규 의존 0.
+- Cycle 1 의 scope_audit / fleet_vessels schema v5 데이터 그대로 사용.
+
+### 다음 사이클 후보 (Cycle 3 진입 시점)
+- [ ] Demand 흐름 지도에 시계열 슬라이더 (월별 재생)
+- [ ] Demand 시계열 차트에 cargo-scope 적용 (현재 LK3 전체 톤)
+- [ ] Balance 탭을 전 sector 로 확장 — Container/Bulk/General 톤·GT 매칭
+- [ ] Balance 톤/GT 비율 시계열 (가동 강도 대리지표)
+- [ ] Supply 시계열 차트 (vessels_snapshot 다중 월 필요)
+- [ ] Explorer 화물 품목 raw / 결측 키 추적 / 변경 이력 검색
+- [ ] URL 파라미터 필터 공유
+
+---
+
+(중단 지점 — 사용자가 재개 지시 시 Cycle 3 부터 진행.)

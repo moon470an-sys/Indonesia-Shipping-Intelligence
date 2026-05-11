@@ -163,6 +163,79 @@
         </div>
         <div id="home-timeseries" style="height:340px"></div>
       </div>
+
+      <!-- Cycle 2: 항만별 물동량 인포그래픽 (Cargo 탭에서 이관). 카테고리 토글 + 항구 순위 + Leaflet 지도. -->
+      <div class="mb-3 mt-8">
+        <h3 class="font-semibold text-slate-700 text-lg">항만별 물동량 — 코모디티 인포그래픽</h3>
+        <p class="text-[11px] text-slate-500">화물 카테고리를 선택하면 항만 원 크기와 순위가 실시간 반영됩니다. 직전 24개월 누계 기준.</p>
+      </div>
+      <div class="cv-app" data-source="docs/derived/cargo_ports.json">
+        <div class="cv-hdr">
+          <div>
+            <h3>🛢 인도네시아 항만별 물동량</h3>
+            <p>화물 선택에 따라 원 크기 · 순위가 실시간 반영됩니다</p>
+          </div>
+          <div class="cv-stats">
+            <div><div class="lbl">Domestic</div><div class="val" id="cv-st-dom" style="color:var(--cv-green)">—</div></div>
+            <div><div class="lbl">International</div><div class="val" id="cv-st-intl" style="color:var(--cv-blue)">—</div></div>
+            <div><div class="lbl">표시 항만</div><div class="val" id="cv-st-cnt" style="color:var(--cv-muted)">—</div></div>
+          </div>
+        </div>
+
+        <div class="cv-main">
+          <!-- Left commodity panel -->
+          <div class="cv-panel">
+            <div class="cv-panel-top">
+              <div class="cv-sec-ttl">표시 기준</div>
+              <div class="cv-btn-row">
+                <button class="cv-rbtn on-t" data-mode="total">전체</button>
+                <button class="cv-rbtn"      data-mode="domestic">Domestic</button>
+                <button class="cv-rbtn"      data-mode="international">Intl</button>
+              </div>
+              <div class="cv-btn-row">
+                <button class="cv-rbtn on-s" data-sub="both">전체</button>
+                <button class="cv-rbtn"      data-sub="unloading">하역</button>
+                <button class="cv-rbtn"      data-sub="loading">선적</button>
+              </div>
+            </div>
+
+            <div class="cv-multi-row">
+              <div class="cv-multi-toggle" id="cv-multi-toggle">
+                <div class="cv-toggle-track" id="cv-multi-track"><div class="cv-toggle-thumb"></div></div>
+                <span class="cv-toggle-label" id="cv-multi-label">다중 선택</span>
+              </div>
+              <button class="cv-preset-btn" id="cv-og-btn">O&amp;G 선택</button>
+              <button class="cv-preset-btn" id="cv-all-btn">전체 선택</button>
+            </div>
+
+            <div class="cv-multi-row">
+              <div class="cv-multi-toggle" id="cv-line-toggle">
+                <div class="cv-toggle-track on" id="cv-line-track"><div class="cv-toggle-thumb"></div></div>
+                <span class="cv-toggle-label">해상 물류 연결선 표시</span>
+              </div>
+            </div>
+
+            <div class="cv-comm-wrap">
+              <div id="cv-comm-list"></div>
+            </div>
+
+            <div class="cv-legend">
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-green)"></span>Domestic</div>
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-blue)"></span>International</div>
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-purple)"></span>혼합</div>
+            </div>
+          </div>
+
+          <!-- Center Leaflet map -->
+          <div class="cv-map" id="cv-map"></div>
+
+          <!-- Right sidebar — port ranking -->
+          <div class="cv-sidebar">
+            <div class="cv-sidebar-hd">항만 순위 (물동량 기준)</div>
+            <div id="cv-port-list"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Cycle 1: Fleet → 🚢 Supply 탭으로 전환. Cargo+Auxiliary(Tug) 기본
@@ -400,8 +473,10 @@
          showTab('cargo')가 호출되지 않으므로 사용자에게 노출되지 않음. -->
     <section id="tab-cargo" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <style>
-        /* Scoped to #tab-cargo so jang1117's CSS doesn't leak into other tabs. */
-        #tab-cargo .cv-app{
+        /* Cycle 2: cv-* selectors un-scoped so the widget can render in
+           either tab-overview (Demand) or tab-cargo (legacy). cv-* classes
+           are unique to this widget, so leakage risk is nil. */
+        .cv-app{
           --cv-bg:#F4F6FA; --cv-surface:#FFFFFF; --cv-s2:#F0F2F7;
           --cv-b1:rgba(0,0,0,.08); --cv-b2:rgba(0,0,0,.13);
           --cv-text:#0F172A; --cv-muted:#374151;
@@ -413,147 +488,87 @@
           --cv-comm-sel-bg:rgba(0,0,0,.03);
           font-family:'IBM Plex Sans KR',-apple-system,'Pretendard',sans-serif;
         }
-        #tab-cargo .cv-app{display:flex;flex-direction:column;border:1px solid var(--cv-b1);border-radius:12px;overflow:hidden;background:var(--cv-bg);color:var(--cv-text);height:calc(100vh - 160px);min-height:600px}
-        #tab-cargo .cv-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--cv-b1);background:var(--cv-surface);flex-shrink:0;gap:12px}
-        #tab-cargo .cv-hdr h3{font-size:14px;font-weight:600;letter-spacing:-.3px;margin:0}
-        #tab-cargo .cv-hdr p{font-size:10px;color:var(--cv-muted);margin-top:2px}
-        #tab-cargo .cv-stats{display:flex;gap:18px;align-items:center;flex-shrink:0;font-family:'IBM Plex Mono',monospace}
-        #tab-cargo .cv-stats .lbl{font-size:9px;color:var(--cv-muted);font-family:'IBM Plex Sans KR',sans-serif}
-        #tab-cargo .cv-stats .val{font-size:12px;font-weight:600}
-        #tab-cargo .cv-main{display:flex;flex:1;overflow:hidden}
-        #tab-cargo .cv-panel{width:248px;flex-shrink:0;background:var(--cv-surface);border-right:1px solid var(--cv-b1);display:flex;flex-direction:column;overflow:hidden}
-        #tab-cargo .cv-panel-top{padding:10px 12px;border-bottom:1px solid var(--cv-b1);flex-shrink:0}
-        #tab-cargo .cv-sec-ttl{font-size:9px;color:var(--cv-text);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px}
-        #tab-cargo .cv-btn-row{display:flex;gap:4px;margin-bottom:6px}
-        #tab-cargo .cv-btn-row:last-child{margin-bottom:0}
-        #tab-cargo .cv-rbtn{flex:1;font-size:11px;font-weight:600;padding:4px 0;border-radius:14px;border:1px solid var(--cv-b2);background:transparent;color:var(--cv-muted);cursor:pointer;transition:all .15s}
-        #tab-cargo .cv-rbtn:hover{color:var(--cv-text);border-color:rgba(0,0,0,.22)}
-        #tab-cargo .cv-rbtn.on-t{background:rgba(109,79,187,.12);border-color:var(--cv-purple);color:var(--cv-purple)}
-        #tab-cargo .cv-rbtn.on-s{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.22);color:#1A2035}
-        #tab-cargo .cv-multi-row{display:flex;align-items:center;border-bottom:1px solid var(--cv-b1);flex-shrink:0;gap:6px;padding:8px 12px}
-        #tab-cargo .cv-multi-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;flex:1}
-        #tab-cargo .cv-toggle-track{width:28px;height:16px;border-radius:8px;background:rgba(0,0,0,.1);border:1px solid var(--cv-b2);position:relative;transition:background .2s;flex-shrink:0}
-        #tab-cargo .cv-toggle-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--cv-muted);transition:all .2s}
-        #tab-cargo .cv-toggle-track.on{background:rgba(109,79,187,.35);border-color:var(--cv-purple)}
-        #tab-cargo .cv-toggle-track.on .cv-toggle-thumb{left:14px;background:var(--cv-purple)}
-        #tab-cargo .cv-toggle-label{font-size:11px;font-weight:600;color:var(--cv-muted)}
-        #tab-cargo .cv-toggle-track.on ~ .cv-toggle-label{color:var(--cv-purple)}
-        #tab-cargo .cv-preset-btn{font-size:10px;font-weight:600;padding:4px 10px;border-radius:12px;border:1px solid var(--cv-b2);background:transparent;color:var(--cv-muted);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
-        #tab-cargo .cv-preset-btn:hover{color:var(--cv-text);border-color:rgba(0,0,0,.22)}
-        #tab-cargo .cv-comm-wrap{flex:1;overflow-y:auto;padding:8px 10px}
-        #tab-cargo .cv-comm-wrap::-webkit-scrollbar{width:3px}
-        #tab-cargo .cv-comm-wrap::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
-        #tab-cargo .cv-comm-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;transition:background .1s;margin-bottom:2px;border:1px solid transparent;user-select:none}
-        #tab-cargo .cv-comm-row:hover{background:var(--cv-s2)}
-        #tab-cargo .cv-comm-row.selected{background:var(--cv-comm-sel-bg);border-color:var(--cv-b2)}
-        #tab-cargo .cv-comm-row.disabled{opacity:.35}
-        #tab-cargo .cv-chk{width:13px;height:13px;border-radius:3px;border:1.5px solid var(--cv-b2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-        #tab-cargo .cv-comm-row.selected .cv-chk{border-color:currentColor}
-        #tab-cargo .cv-chk-svg{display:none;width:9px;height:9px}
-        #tab-cargo .cv-comm-row.selected .cv-chk-svg{display:block}
-        #tab-cargo .cv-sw{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-        #tab-cargo .cv-comm-name{flex:1;font-size:11px;font-weight:600;color:var(--cv-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        #tab-cargo .cv-comm-vol{font-size:9px;font-weight:600;color:var(--cv-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
-        #tab-cargo .cv-legend{padding:7px 12px;border-top:1px solid var(--cv-b1);display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap}
-        #tab-cargo .cv-leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--cv-muted)}
-        #tab-cargo .cv-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-        #tab-cargo .cv-map{flex:1;background:var(--cv-map-bg)}
-        #tab-cargo .cv-sidebar{width:230px;flex-shrink:0;overflow-y:auto;background:var(--cv-surface);border-left:1px solid var(--cv-b1)}
-        #tab-cargo .cv-sidebar::-webkit-scrollbar{width:3px}
-        #tab-cargo .cv-sidebar::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
-        #tab-cargo .cv-sidebar-hd{padding:10px 13px 7px;border-bottom:1px solid var(--cv-b1);font-size:9px;color:var(--cv-text);font-weight:700;text-transform:uppercase;letter-spacing:.7px;position:sticky;top:0;background:var(--cv-surface);z-index:1}
-        #tab-cargo .cv-port-row{display:flex;align-items:center;padding:6px 13px;border-bottom:1px solid var(--cv-b1);cursor:pointer;transition:background .1s;gap:7px}
-        #tab-cargo .cv-port-row:hover{background:var(--cv-s2)}
-        #tab-cargo .cv-port-row.sel{background:var(--cv-sel-port-bg);border-left:2px solid var(--cv-purple)}
-        #tab-cargo .cv-rank{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cv-muted);width:18px;flex-shrink:0;text-align:right}
-        #tab-cargo .cv-pinfo{flex:1;min-width:0}
-        #tab-cargo .cv-pname{font-size:11px;font-weight:600;color:var(--cv-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        #tab-cargo .cv-pbar-wrap{height:2px;background:var(--cv-bar-bg);border-radius:1px;margin-top:4px}
-        #tab-cargo .cv-pbar{height:2px;border-radius:1px;transition:width .3s}
-        #tab-cargo .cv-ptotal{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--cv-text);flex-shrink:0}
+        .cv-app{display:flex;flex-direction:column;border:1px solid var(--cv-b1);border-radius:12px;overflow:hidden;background:var(--cv-bg);color:var(--cv-text);height:calc(100vh - 160px);min-height:600px}
+        .cv-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--cv-b1);background:var(--cv-surface);flex-shrink:0;gap:12px}
+        .cv-hdr h3{font-size:14px;font-weight:600;letter-spacing:-.3px;margin:0}
+        .cv-hdr p{font-size:10px;color:var(--cv-muted);margin-top:2px}
+        .cv-stats{display:flex;gap:18px;align-items:center;flex-shrink:0;font-family:'IBM Plex Mono',monospace}
+        .cv-stats .lbl{font-size:9px;color:var(--cv-muted);font-family:'IBM Plex Sans KR',sans-serif}
+        .cv-stats .val{font-size:12px;font-weight:600}
+        .cv-main{display:flex;flex:1;overflow:hidden}
+        .cv-panel{width:248px;flex-shrink:0;background:var(--cv-surface);border-right:1px solid var(--cv-b1);display:flex;flex-direction:column;overflow:hidden}
+        .cv-panel-top{padding:10px 12px;border-bottom:1px solid var(--cv-b1);flex-shrink:0}
+        .cv-sec-ttl{font-size:9px;color:var(--cv-text);font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px}
+        .cv-btn-row{display:flex;gap:4px;margin-bottom:6px}
+        .cv-btn-row:last-child{margin-bottom:0}
+        .cv-rbtn{flex:1;font-size:11px;font-weight:600;padding:4px 0;border-radius:14px;border:1px solid var(--cv-b2);background:transparent;color:var(--cv-muted);cursor:pointer;transition:all .15s}
+        .cv-rbtn:hover{color:var(--cv-text);border-color:rgba(0,0,0,.22)}
+        .cv-rbtn.on-t{background:rgba(109,79,187,.12);border-color:var(--cv-purple);color:var(--cv-purple)}
+        .cv-rbtn.on-s{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.22);color:#1A2035}
+        .cv-multi-row{display:flex;align-items:center;border-bottom:1px solid var(--cv-b1);flex-shrink:0;gap:6px;padding:8px 12px}
+        .cv-multi-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;flex:1}
+        .cv-toggle-track{width:28px;height:16px;border-radius:8px;background:rgba(0,0,0,.1);border:1px solid var(--cv-b2);position:relative;transition:background .2s;flex-shrink:0}
+        .cv-toggle-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--cv-muted);transition:all .2s}
+        .cv-toggle-track.on{background:rgba(109,79,187,.35);border-color:var(--cv-purple)}
+        .cv-toggle-track.on .cv-toggle-thumb{left:14px;background:var(--cv-purple)}
+        .cv-toggle-label{font-size:11px;font-weight:600;color:var(--cv-muted)}
+        .cv-toggle-track.on ~ .cv-toggle-label{color:var(--cv-purple)}
+        .cv-preset-btn{font-size:10px;font-weight:600;padding:4px 10px;border-radius:12px;border:1px solid var(--cv-b2);background:transparent;color:var(--cv-muted);cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+        .cv-preset-btn:hover{color:var(--cv-text);border-color:rgba(0,0,0,.22)}
+        .cv-comm-wrap{flex:1;overflow-y:auto;padding:8px 10px}
+        .cv-comm-wrap::-webkit-scrollbar{width:3px}
+        .cv-comm-wrap::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
+        .cv-comm-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;transition:background .1s;margin-bottom:2px;border:1px solid transparent;user-select:none}
+        .cv-comm-row:hover{background:var(--cv-s2)}
+        .cv-comm-row.selected{background:var(--cv-comm-sel-bg);border-color:var(--cv-b2)}
+        .cv-comm-row.disabled{opacity:.35}
+        .cv-chk{width:13px;height:13px;border-radius:3px;border:1.5px solid var(--cv-b2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+        .cv-comm-row.selected .cv-chk{border-color:currentColor}
+        .cv-chk-svg{display:none;width:9px;height:9px}
+        .cv-comm-row.selected .cv-chk-svg{display:block}
+        .cv-sw{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .cv-comm-name{flex:1;font-size:11px;font-weight:600;color:var(--cv-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .cv-comm-vol{font-size:9px;font-weight:600;color:var(--cv-muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+        .cv-legend{padding:7px 12px;border-top:1px solid var(--cv-b1);display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap}
+        .cv-leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--cv-muted)}
+        .cv-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .cv-map{flex:1;background:var(--cv-map-bg)}
+        .cv-sidebar{width:230px;flex-shrink:0;overflow-y:auto;background:var(--cv-surface);border-left:1px solid var(--cv-b1)}
+        .cv-sidebar::-webkit-scrollbar{width:3px}
+        .cv-sidebar::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
+        .cv-sidebar-hd{padding:10px 13px 7px;border-bottom:1px solid var(--cv-b1);font-size:9px;color:var(--cv-text);font-weight:700;text-transform:uppercase;letter-spacing:.7px;position:sticky;top:0;background:var(--cv-surface);z-index:1}
+        .cv-port-row{display:flex;align-items:center;padding:6px 13px;border-bottom:1px solid var(--cv-b1);cursor:pointer;transition:background .1s;gap:7px}
+        .cv-port-row:hover{background:var(--cv-s2)}
+        .cv-port-row.sel{background:var(--cv-sel-port-bg);border-left:2px solid var(--cv-purple)}
+        .cv-rank{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cv-muted);width:18px;flex-shrink:0;text-align:right}
+        .cv-pinfo{flex:1;min-width:0}
+        .cv-pname{font-size:11px;font-weight:600;color:var(--cv-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .cv-pbar-wrap{height:2px;background:var(--cv-bar-bg);border-radius:1px;margin-top:4px}
+        .cv-pbar{height:2px;border-radius:1px;transition:width .3s}
+        .cv-ptotal{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--cv-text);flex-shrink:0}
         /* Leaflet tooltip override (scoped) */
         #tab-cargo .leaflet-tooltip.cv-tt{background:var(--cv-tt-bg);border:1px solid var(--cv-tt-border);border-radius:10px;padding:11px 13px;font-family:'IBM Plex Sans KR',sans-serif;color:var(--cv-text);box-shadow:0 8px 28px rgba(0,0,0,.15);min-width:185px}
         #tab-cargo .leaflet-tooltip.cv-tt::before{display:none}
-        #tab-cargo .cv-tt-name{font-size:12px;font-weight:700;margin-bottom:6px}
-        #tab-cargo .cv-tt-tags{margin-bottom:7px}
-        #tab-cargo .cv-tt-tag{display:inline-block;font-size:9px;padding:2px 5px;border-radius:8px;font-weight:500;margin:0 2px 3px 0}
-        #tab-cargo .cv-tt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-        #tab-cargo .cv-tt-cell{background:var(--cv-tt-cell);border-radius:5px;padding:5px 7px}
-        #tab-cargo .cv-tt-cl{font-size:9px;font-weight:600;color:var(--cv-tt-cl);margin-bottom:1px}
-        #tab-cargo .cv-tt-cv{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
-        #tab-cargo .cv-tt-sep{border:none;border-top:1px solid var(--cv-b1);margin:6px 0}
-        #tab-cargo .cv-tt-foot{display:flex;justify-content:space-between;align-items:center}
-        #tab-cargo .cv-tt-fl{font-size:10px;color:var(--cv-muted)}
-        #tab-cargo .cv-tt-fv{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--cv-purple)}
-        #tab-cargo .cv-empty{padding:32px;text-align:center;color:var(--cv-muted)}
+        .cv-tt-name{font-size:12px;font-weight:700;margin-bottom:6px}
+        .cv-tt-tags{margin-bottom:7px}
+        .cv-tt-tag{display:inline-block;font-size:9px;padding:2px 5px;border-radius:8px;font-weight:500;margin:0 2px 3px 0}
+        .cv-tt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+        .cv-tt-cell{background:var(--cv-tt-cell);border-radius:5px;padding:5px 7px}
+        .cv-tt-cl{font-size:9px;font-weight:600;color:var(--cv-tt-cl);margin-bottom:1px}
+        .cv-tt-cv{font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+        .cv-tt-sep{border:none;border-top:1px solid var(--cv-b1);margin:6px 0}
+        .cv-tt-foot{display:flex;justify-content:space-between;align-items:center}
+        .cv-tt-fl{font-size:10px;color:var(--cv-muted)}
+        .cv-tt-fv{font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--cv-purple)}
+        .cv-empty{padding:32px;text-align:center;color:var(--cv-muted)}
       </style>
 
-      <div class="cv-app" data-source="docs/derived/cargo_ports.json">
-        <div class="cv-hdr">
-          <div>
-            <h3>🛢 인도네시아 항만별 물동량</h3>
-            <p>화물 선택에 따라 원 크기 · 순위가 실시간 반영됩니다</p>
-          </div>
-          <div class="cv-stats">
-            <div><div class="lbl">Domestic</div><div class="val" id="cv-st-dom" style="color:var(--cv-green)">—</div></div>
-            <div><div class="lbl">International</div><div class="val" id="cv-st-intl" style="color:var(--cv-blue)">—</div></div>
-            <div><div class="lbl">표시 항만</div><div class="val" id="cv-st-cnt" style="color:var(--cv-muted)">—</div></div>
-          </div>
-        </div>
-
-        <div class="cv-main">
-          <!-- Left commodity panel -->
-          <div class="cv-panel">
-            <div class="cv-panel-top">
-              <div class="cv-sec-ttl">표시 기준</div>
-              <div class="cv-btn-row">
-                <button class="cv-rbtn on-t" data-mode="total">전체</button>
-                <button class="cv-rbtn"      data-mode="domestic">Domestic</button>
-                <button class="cv-rbtn"      data-mode="international">Intl</button>
-              </div>
-              <div class="cv-btn-row">
-                <button class="cv-rbtn on-s" data-sub="both">전체</button>
-                <button class="cv-rbtn"      data-sub="unloading">하역</button>
-                <button class="cv-rbtn"      data-sub="loading">선적</button>
-              </div>
-            </div>
-
-            <div class="cv-multi-row">
-              <div class="cv-multi-toggle" id="cv-multi-toggle">
-                <div class="cv-toggle-track" id="cv-multi-track"><div class="cv-toggle-thumb"></div></div>
-                <span class="cv-toggle-label" id="cv-multi-label">다중 선택</span>
-              </div>
-              <button class="cv-preset-btn" id="cv-og-btn">O&amp;G 선택</button>
-              <button class="cv-preset-btn" id="cv-all-btn">전체 선택</button>
-            </div>
-
-            <div class="cv-multi-row">
-              <div class="cv-multi-toggle" id="cv-line-toggle">
-                <div class="cv-toggle-track on" id="cv-line-track"><div class="cv-toggle-thumb"></div></div>
-                <span class="cv-toggle-label">해상 물류 연결선 표시</span>
-              </div>
-            </div>
-
-            <div class="cv-comm-wrap">
-              <div id="cv-comm-list"></div>
-            </div>
-
-            <div class="cv-legend">
-              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-green)"></span>Domestic</div>
-              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-blue)"></span>International</div>
-              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-purple)"></span>혼합</div>
-            </div>
-          </div>
-
-          <!-- Center Leaflet map -->
-          <div class="cv-map" id="cv-map"></div>
-
-          <!-- Right sidebar — port ranking -->
-          <div class="cv-sidebar">
-            <div class="cv-sidebar-hd">항만 순위 (물동량 기준)</div>
-            <div id="cv-port-list"></div>
-          </div>
-        </div>
+      <!-- Cycle 2: cv-app은 Demand 탭(tab-overview)으로 이관됨. 본 패널은
+           styles만 보유. deep-link 호환을 위해 section은 유지하되 본문은
+           안내 메시지. -->
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <p class="text-sm text-slate-600">📦 항만별 물동량 인포그래픽은 <strong>Demand 탭</strong>으로 이관되었습니다.</p>
+        <button class="mt-3 px-3 py-1.5 text-xs rounded bg-slate-800 text-white hover:bg-slate-700" data-jump-tab="overview">→ Demand 탭으로 이동</button>
       </div>
 
     </section>
@@ -718,20 +733,54 @@
           <p class="text-[11px] text-slate-500 mb-2">Supply 탭 필터·검색의 raw 버전. scope=cargo + auxiliary 기본.</p>
           <a href="#" data-tab="fleet" class="ex-jumplink text-[12px] text-blue-600 hover:underline">→ Supply 탭으로 이동</a>
         </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h3 class="font-semibold mb-2 text-sm">🗺️ 항로 테이블 — Origin → Destination</h3>
-          <p class="text-[11px] text-slate-500 mb-2">Demand 흐름 지도의 raw 항로 리스트. <em>준비 중 (Cycle 2-3).</em></p>
-          <div id="ex-routes-placeholder" class="text-[11px] text-slate-400">데이터 없음 — Cycle 2에서 구현.</div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+            <h3 class="font-semibold text-sm">🗺️ 항로 테이블 — Origin → Destination (Top 30, 24M)</h3>
+            <input id="ex-route-search" type="text" placeholder="항구·카테고리 검색…" class="px-2 py-0.5 text-[11px] border border-slate-200 rounded w-44">
+          </div>
+          <p class="text-[11px] text-slate-500 mb-2">Demand 흐름 지도와 동일한 raw 항로. 헤더 클릭 시 정렬.</p>
+          <div class="overflow-auto max-h-[420px] border border-slate-100 rounded">
+            <table id="ex-routes-tbl" class="min-w-full text-[11px]">
+              <thead class="bg-slate-50 sticky top-0">
+                <tr>
+                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="origin">Origin</th>
+                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="destination">Destination</th>
+                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="category">Category</th>
+                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="ton_24m">Ton (24M)</th>
+                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="calls">Calls</th>
+                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="vessels">Vessels</th>
+                </tr>
+              </thead>
+              <tbody id="ex-routes-tbody"><tr><td colspan="6" class="px-2 py-3 text-center text-slate-400">로딩…</td></tr></tbody>
+            </table>
+          </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h3 class="font-semibold mb-2 text-sm">⚓ 항구별 톤수 상세</h3>
-          <p class="text-[11px] text-slate-500 mb-2">cargo_ports.json raw — Bongkar/Muat 상세.</p>
-          <div id="ex-ports-placeholder" class="text-[11px] text-slate-400">데이터 없음 — Cycle 2에서 구현.</div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+            <h3 class="font-semibold text-sm">⚓ 항구별 톤수 상세 (24M 누계)</h3>
+            <input id="ex-port-search" type="text" placeholder="항구 검색…" class="px-2 py-0.5 text-[11px] border border-slate-200 rounded w-44">
+          </div>
+          <p class="text-[11px] text-slate-500 mb-2">map_flow.json의 ports raw — 24개월 누계 톤. 헤더 클릭 시 정렬.</p>
+          <div class="overflow-auto max-h-[420px] border border-slate-100 rounded">
+            <table id="ex-ports-tbl" class="min-w-full text-[11px]">
+              <thead class="bg-slate-50 sticky top-0">
+                <tr>
+                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="name">항구</th>
+                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="lat">Lat</th>
+                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="lon">Lon</th>
+                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="ton_24m">Ton (24M)</th>
+                </tr>
+              </thead>
+              <tbody id="ex-ports-tbody"><tr><td colspan="4" class="px-2 py-3 text-center text-slate-400">로딩…</td></tr></tbody>
+            </table>
+          </div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h3 class="font-semibold mb-2 text-sm">📦 화물 품목 상세 (Komoditi Top N)</h3>
-          <p class="text-[11px] text-slate-500 mb-2">tanker_top.json + LK3 komoditi raw 매핑.</p>
-          <div id="ex-komoditi-placeholder" class="text-[11px] text-slate-400">데이터 없음 — Cycle 2에서 구현.</div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <h3 class="font-semibold mb-2 text-sm">📦 자동 인사이트 (map_flow.json)</h3>
+          <p class="text-[11px] text-slate-500 mb-2">Demand 지도 빌더가 자동 산출한 사실 5건. 외부 해석·추정 미포함.</p>
+          <ul id="ex-insights" class="text-[11px] text-slate-700 space-y-1 list-disc list-inside">
+            <li class="text-slate-400">로딩…</li>
+          </ul>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <h3 class="font-semibold mb-2 text-sm">🚫 결측 키 추적 (port × period × kind)</h3>
