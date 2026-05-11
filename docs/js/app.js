@@ -1619,24 +1619,22 @@ const FLEET_TANKER_SUBS = [
 async function renderFleet() {
   setupSourceLabels(document.getElementById("tab-fleet"));
 
-  // Parallel load: vessel rows (heavy) + owner rankings (light, fixed bar).
-  let fv, fo;
+  // jang1117 mirror no longer renders the "Top 25 owners" card, so we
+  // only fetch fleet_vessels.json here. fleet_owners.json stays in the
+  // bundle for other consumers but is not required for the tab.
+  let fv;
   try {
-    [fv, fo] = await Promise.all([
-      loadDerived("fleet_vessels.json"),
-      loadDerived("fleet_owners.json"),
-    ]);
+    fv = await loadDerived("fleet_vessels.json");
   } catch (e) {
     const host = document.getElementById("fl-tbody");
     if (host) host.innerHTML =
-      `<tr><td colspan="10">${errorState(`fleet payload 로드 실패: ${e.message}`)}</td></tr>`;
+      `<tr><td colspan="14">${errorState(`fleet_vessels.json 로드 실패: ${e.message}`)}</td></tr>`;
     return;
   }
 
   // Stash payloads on the tab element so filter handlers can re-read.
   const tabEl = document.getElementById("tab-fleet");
   tabEl._fleetVessels = fv;
-  tabEl._fleetOwners = fo;
 
   // Initial state object — jang1117 parity (no sector/subclass/age/owner/flag).
   if (!tabEl._fleetState) {
@@ -1657,7 +1655,6 @@ async function renderFleet() {
 
   _buildFleetFilters(fv);
   _wireFleetFilters();
-  drawFleetOwnerBars(fo.owners || []);   // always full registry (PR-static)
   _renderFleetView();
 }
 
@@ -1975,13 +1972,13 @@ function _renderFleetView() {
   document.getElementById("fl-avg-w").textContent   = nW   ? (sumW   / nW).toFixed(1)   : "—";
   document.getElementById("fl-avg-d").textContent   = nD   ? (sumD   / nD).toFixed(1)   : "—";
 
-  // ---- 6 charts (jang1117-style grid) ----
-  _drawFlChartYear(rows, I);
-  _drawFlChartType(rows, I);
-  _drawFlChartEngineType(rows, I);
-  _drawFlChartEngineName(rows, I);
-  _drawFlChartFlag(rows, I);
-  _drawFlChartGtHist(rows, I);
+  // ---- charts (each guarded — missing target = no-op, no throw) ----
+  try { _drawFlChartYear(rows, I); }       catch (e) { console.error("Year chart:", e); }
+  try { _drawFlChartType(rows, I); }       catch (e) { console.error("Type chart:", e); }
+  try { _drawFlChartEngineType(rows, I); } catch (e) { console.error("EngineType chart:", e); }
+  try { _drawFlChartEngineName(rows, I); } catch (e) { console.error("EngineName chart:", e); }
+  try { _drawFlChartFlag(rows, I); }       catch (e) { console.error("Flag chart:", e); }
+  try { _drawFlChartGtHist(rows, I); }     catch (e) { console.error("GT hist:", e); }
 
   // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
@@ -2149,6 +2146,7 @@ function _fleetCsvDownload() {
 // click-to-filter (mirrors the reference site UX).
 // ────────────────────────────────────────────────────────────
 function _drawFlChartYear(rows, I) {
+  if (!document.getElementById("fl-ch-year")) return;
   const counts = new Map();
   for (const r of rows) {
     const y = r[I.tahun];
@@ -2170,6 +2168,7 @@ function _drawFlChartYear(rows, I) {
 }
 
 function _drawFlChartType(rows, I) {
+  if (!document.getElementById("fl-ch-type")) return;
   const counts = new Map();
   for (const r of rows) {
     const j = r[I.jenis] || "(blank)";
@@ -2210,6 +2209,7 @@ function _drawFlChartType(rows, I) {
 }
 
 function _drawFlChartEngineType(rows, I) {
+  if (!document.getElementById("fl-ch-engine-type")) return;
   const counts = new Map();
   for (const r of rows) {
     let t = (r[I.mesin_type] || "").trim();
@@ -2239,6 +2239,7 @@ function _drawFlChartEngineType(rows, I) {
 }
 
 function _drawFlChartEngineName(rows, I) {
+  if (!document.getElementById("fl-ch-engine-name")) return;
   const counts = new Map();
   for (const r of rows) {
     let n = (r[I.mesin] || "").trim();
@@ -2276,6 +2277,7 @@ function _drawFlChartEngineName(rows, I) {
 }
 
 function _drawFlChartFlag(rows, I) {
+  if (!document.getElementById("fl-ch-flag")) return;
   const counts = new Map();
   for (const r of rows) {
     const f = r[I.flag] || "Indonesia";
@@ -2305,6 +2307,7 @@ function _drawFlChartFlag(rows, I) {
 }
 
 function _drawFlChartGtHist(rows, I) {
+  if (!document.getElementById("fl-ch-gt-hist")) return;
   const gts = [];
   for (const r of rows) {
     const g = r[I.gt];
