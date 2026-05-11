@@ -43,7 +43,8 @@
       <nav class="flex gap-1 text-sm flex-wrap" aria-label="Primary tabs" role="tablist">
         <button data-tab="overview"      class="tab px-3 py-1.5 rounded bg-slate-700"   role="tab" aria-selected="true"  aria-controls="tab-overview">🏠 Home</button>
         <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-tanker-sector">🛢️ Tanker Sector</button>
-        <button data-tab="cargo-fleet"   class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-cargo-fleet">📊 Cargo &amp; Fleet</button>
+        <button data-tab="fleet"         class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-fleet">🚢 Fleet</button>
+        <button data-tab="cargo"         class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-cargo">📦 Cargo</button>
         <button data-tab="financials"    class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-financials">💼 Listed Operators</button>
       </nav>
     </div>
@@ -141,34 +142,100 @@
     </section>
 
     <!-- Cargo & Fleet (PR-1 placeholder; treemap + donut + age bars land in PR-4) -->
-    <section id="tab-cargo-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
+    <!-- 🚢 Fleet (split out of the former Cargo & Fleet tab) -->
+    <section id="tab-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
-        <h2 class="text-2xl font-bold text-slate-800">📊 Cargo &amp; Fleet</h2>
-        <p class="text-sm text-slate-500">화물 카테고리 트리맵 · 품목 Top 10 · Class 도넛 · 선령 분포.</p>
+        <h2 class="text-2xl font-bold text-slate-800">🚢 Fleet</h2>
+        <p class="text-sm text-slate-500">화물선 (어선 · 여객선 제외) — Class 비율 · 선령 분포 · 상위 선주 (Tanker 위주, IDX 티커 매핑 포함).</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
+          <h3 class="font-semibold mb-2">선박 Class 비율</h3>
+          <div id="fl-class-donut" style="height:320px"><div class="skeleton-block" style="height:320px"></div></div>
+          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-class-caption">&nbsp;</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
+          <h3 class="font-semibold mb-2">선령 분포 (5년 단위, 25년+ 강조)</h3>
+          <div id="fl-age-bars" style="height:320px"><div class="skeleton-block" style="height:320px"></div></div>
+          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-age-caption">&nbsp;</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/owner_profile.json">
+        <h3 class="font-semibold mb-2">Top 선주 (Tanker 기준 · 척수 + 총 GT)</h3>
+        <p class="text-xs text-slate-500 mb-2">상위 25개 선주 — 막대 = 보유 척수, 색상 = 총 GT (진할수록 큰 선대). Tbk 접미 (IDX 상장)에는 ★ 표시.</p>
+        <div id="fl-owner-bars" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="fl-owner-caption">&nbsp;</p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/owner_profile.json">
+        <h3 class="font-semibold mb-2">Top 5 선주 — Tanker Subclass mix</h3>
+        <p class="text-xs text-slate-500 mb-2">각 선주 별 Crude / Product / Chemical / LPG / LNG / FAME 선대 구성 (척수). 단일 subclass 집중도 vs 분산도 비교.</p>
+        <div id="fl-owner-subclass" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
+      </div>
+    </section>
+
+    <!-- 📦 Cargo (split out of the former Cargo & Fleet tab) -->
+    <section id="tab-cargo" class="tab-panel hidden" role="tabpanel" tabindex="-1">
+      <div class="mb-4">
+        <h2 class="text-2xl font-bold text-slate-800">📦 Cargo</h2>
+        <p class="text-sm text-slate-500">🗺️ OD 흐름 지도 · 카테고리 트리맵 · 품목 Top 10 · 24개월 sector 추이 · Top OD 항로 (self-loop 별도 표기).</p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
+        <h3 class="font-semibold mb-2">🗺️ OD 흐름 지도 (Top 30 항로, 24M)</h3>
+        <p class="text-xs text-slate-500 mb-2">버블 = 항구별 24M 총 톤, 선 두께 ∝ 항로 톤, 색상 = 화물 카테고리. 카테고리 범례 클릭으로 토글 가능.</p>
+        <div id="cg-od-map" style="height:520px"><div class="skeleton-block" style="height:520px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-od-map-caption">&nbsp;</p>
       </div>
 
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/cargo_fleet.json">
         <h3 class="font-semibold mb-2">화물 카테고리 트리맵 (Top 15)</h3>
-        <div id="cf-treemap" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cf-treemap-caption">&nbsp;</p>
+        <div id="cg-treemap" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-treemap-caption">&nbsp;</p>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/cargo_fleet.json">
-        <h3 class="font-semibold mb-2">화물 품목 Top 10</h3>
-        <div id="cf-commodity-bar" style="height:340px"><div class="skeleton-block" style="height:340px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cf-commodity-caption">&nbsp;</p>
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/timeseries.json">
+        <h3 class="font-semibold mb-2">📅 연도별 sector 톤수 (2024 / 2025 / 2026)</h3>
+        <p class="text-xs text-slate-500 mb-1">달력 연도(Calendar Year) 단위 합계. 부분 연도(12개월 미만)는 막대에 빗금 패턴.</p>
+        <div id="cg-yearly" style="height:420px"><div class="skeleton-block" style="height:420px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-yearly-caption">&nbsp;</p>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/cargo_fleet.json">
-        <h3 class="font-semibold mb-2">선박 Class 비율</h3>
-        <div id="cf-class-donut" style="height:320px"><div class="skeleton-block" style="height:320px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cf-class-caption">&nbsp;</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_fleet.json">
+          <h3 class="font-semibold mb-2">화물 품목 Top 10</h3>
+          <div id="cg-commodity-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
+          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-commodity-caption">&nbsp;</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/timeseries.json">
+          <h3 class="font-semibold mb-2">월별 sector 톤수 추이</h3>
+          <p class="text-xs text-slate-500 mb-1">월 단위 누적 area. 빠른 추세 시각화용.</p>
+          <div id="cg-timeseries" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
+          <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-timeseries-caption">&nbsp;</p>
+        </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/cargo_fleet.json">
-        <h3 class="font-semibold mb-2">선령 분포 (5년 단위, 25년+ 강조)</h3>
-        <div id="cf-age-bars" style="height:320px"><div class="skeleton-block" style="height:320px"></div></div>
-        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cf-age-caption">&nbsp;</p>
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/route_facts.json">
+        <h3 class="font-semibold mb-2">Top 항로 (OD · 24M 톤)</h3>
+        <p class="text-xs text-slate-500 mb-2">상위 25개 OD 항로 — origin → destination · 24개월 총 톤 · 선박 수 · self-loop (STS) 표시.</p>
+        <div class="mb-2 flex flex-wrap gap-3 text-xs">
+          <label class="inline-flex items-center gap-1">
+            <input type="checkbox" id="cg-routes-hide-self" checked> self-loop (STS) 숨김
+          </label>
+        </div>
+        <div id="cg-routes-bar" style="height:560px"><div class="skeleton-block" style="height:560px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-routes-caption">&nbsp;</p>
+      </div>
+
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/route_facts.json">
+        <h3 class="font-semibold mb-2">Top STS / 자체 환적 (origin = destination)</h3>
+        <p class="text-xs text-slate-500 mb-2">자체 환적이 일어나는 항구 — 정유 단지 · 터미널 인근 STS 활동 신호.</p>
+        <div id="cg-sts-bar" style="height:380px"><div class="skeleton-block" style="height:380px"></div></div>
+        <p class="cf-caption text-xs text-slate-500 mt-2 italic" id="cg-sts-caption">&nbsp;</p>
       </div>
     </section>
 

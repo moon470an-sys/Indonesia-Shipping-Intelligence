@@ -54,10 +54,16 @@ def _vessel_overview(m): return q.vessel_overview(m)
 def _vessels_full(m): return q.vessels_full(m)
 @st.cache_data(ttl=1800)
 def _tankers_full(m): return q.tankers_full(m)
+@st.cache_data(ttl=1800)
+def _cargo_vessels_full(m): return q.cargo_vessels_full(m)
 # Tanker cargo-flow extract is heavy (~40s on first hit, single full-table
 # json_extract scan). Cache long.
 @st.cache_data(ttl=3600)
 def _tanker_cargo_flows(m): return q.tanker_cargo_flows(m)
+# Generic cargo flows — same shape as tanker_cargo_flows but excludes
+# fishing/passenger; heavier scan, cache long.
+@st.cache_data(ttl=3600)
+def _cargo_flows(m): return q.cargo_flows(m)
 # Snapshot-trend stack — depends on per-snapshot KPI compute; cache long.
 @st.cache_data(ttl=3600)
 def _tanker_snapshot_trend(): return q.tanker_snapshot_trend()
@@ -94,6 +100,8 @@ def _validator_extreme(m, threshold=1000.0, limit=200):
 def _residual_fleet_anomalies(m): return q.residual_fleet_anomalies(m)
 @st.cache_data(ttl=1800)
 def _vessel_utilization(m): return q.vessel_utilization(m)
+@st.cache_data(ttl=1800)
+def _cargo_vessel_utilization(m): return q.cargo_vessel_utilization(m)
 @st.cache_data(ttl=1800)
 def _korean_tankers(m): return q.korean_affiliated_tankers(m)
 @st.cache_data(ttl=1800)
@@ -224,10 +232,30 @@ def page_overview():
         f"{snapshot} 스냅샷 기준 — 선박 등기, 항구, LK3 물동량 적재 상태",
     )
     cols = st.columns(4)
-    kpi(cols[0], "선박 등록", v["total"], help="vessels_snapshot.row_count — 56개 검색코드 합산")
+    kpi(cols[0], "선박 등록 (전체)", v["total"],
+        help="vessels_snapshot.row_count — 56개 검색코드 합산 (어선·여객선 포함)")
     kpi(cols[1], "검색 코드", f"{v['codes']}/56", help="실제로 데이터가 들어온 검색코드 수")
     kpi(cols[2], "항구", c["ports"], help="LK3에서 등장한 고유 항구 수 (origin+destination)")
     kpi(cols[3], "물동량 행", c["rows"], help="cargo_snapshot.row_count — 24mo 누적")
+
+    # Cargo-sector scope: Fleet/Cargo tabs show the filtered subset shown here.
+    cargo_fleet = _cargo_vessels_full(snapshot)
+    if not cargo_fleet.empty:
+        cargo_gt = pd.to_numeric(cargo_fleet["gt"], errors="coerce").fillna(0).sum()
+        class_mix = cargo_fleet["vessel_class"].value_counts().to_dict()
+        st.markdown("##### 화물선 (CARGO sector) 현황 — Fleet · Cargo 탭이 사용하는 범위")
+        cols2 = st.columns(6)
+        kpi(cols2[0], "화물선 수", fmt.fmt_int(len(cargo_fleet)),
+            help=f"전체 등기 {v['total']:,}척 중 어선·여객선·예인선·정부선 제외")
+        kpi(cols2[1], "총 GT", fmt.fmt_gt(float(cargo_gt)))
+        kpi(cols2[2], "Tanker", fmt.fmt_int(int(class_mix.get("Tanker", 0))))
+        kpi(cols2[3], "General Cargo",
+            fmt.fmt_int(int(class_mix.get("General Cargo", 0))))
+        kpi(cols2[4], "Container + Bulk",
+            fmt.fmt_int(int(class_mix.get("Container", 0)
+                            + class_mix.get("Bulk Carrier", 0))))
+        kpi(cols2[5], "Other Cargo (Barge 등)",
+            fmt.fmt_int(int(class_mix.get("Other Cargo", 0))))
 
     st.subheader(f"{change_month} 변경 탐지 KPI")
     cols = st.columns(6)
@@ -265,17 +293,48 @@ def _avg_pos(s: pd.Series) -> float:
     return float(s.mean()) if len(s) else 0.0
 
 
-def page_fleet():
-    st.title("🚢 선박 데이터 대시보드")
+# Stable color map for the cargo vessel-class facet (used by Fleet tab).
+_CARGO_CLASS_PALETTE = {
+    "Tanker":         "#1e40af",
+    "Container":      "#0891b2",
+    "Bulk Carrier":   "#92400e",
+    "General Cargo":  "#16a34a",
+    "Other Cargo":    "#7c3aed",
+}
 
-    df = _vessels_full(snapshot)
+# Fleet-page age bucket (matches taxonomy buckets used elsewhere).
+_FLEET_AGE_BUCKETS = (
+    ("Newbuild (<5y)",     0,  5),
+    ("Modern (5-15y)",     5, 15),
+    ("Aging (15-25y)",    15, 25),
+    ("Retirement (≥25y)", 25, 99),
+)
+
+
+def _fleet_age_bucket(age: float | None) -> str | None:
+    if age is None or pd.isna(age) or age < 0:
+        return None
+    for label, lo, hi in _FLEET_AGE_BUCKETS:
+        if lo <= age < hi:
+            return label
+    return _FLEET_AGE_BUCKETS[-1][0]
+
+
+def page_fleet():
+    st.title("🚢 화물선 선대 분석")
+    st.caption(
+        f"Snapshot: **{snapshot}** · 어선 / 여객선 제외 · "
+        "탱커 · 컨테이너 · 벌크 · 일반화물 · 기타화물 (바지 등) 5개 클래스 중심"
+    )
+
+    df = _cargo_vessels_full(snapshot)
     if df.empty:
-        st.info("선박 데이터 없음")
+        st.info("화물선 데이터 없음")
         return
 
     total_rows = len(df)
 
-    # ---- ranges from data ----
+    # ---- numeric bounds (drive slider defaults) ----
     yrs = df["tahun_num"].dropna()
     yr_min = int(yrs.min()) if not yrs.empty else 1900
     yr_max = int(yrs.max()) if not yrs.empty else 2100
@@ -289,54 +348,72 @@ def page_fleet():
 
     gt_lo, gt_hi = _bounds(df["gt"], 100000)
     loa_lo, loa_hi = _bounds(df["loa"], 500)
-    w_lo, w_hi = _bounds(df["lebar"], 100)
-    d_lo, d_hi = _bounds(df["dalam"], 50)
 
-    # ---- reset support: bump a token so widgets re-init with defaults ----
     rt = st.session_state.get("fleet_reset_token", 0)
 
-    # ---- filters ----
-    with st.expander("🔍 필터", expanded=True):
-        types_all = sorted([t for t in df["jenis_kapal"].dropna().unique().tolist() if t])
-        st.markdown("**Vessel Type** (박스 클릭으로 다중 선택)")
-        if hasattr(st, "pills"):
-            types_sel = st.pills(
-                "Vessel Type", types_all, selection_mode="multi", default=[],
-                key=f"ft_types_{rt}", label_visibility="collapsed",
+    # ---------------- Filters ----------------
+    with st.expander("🔍 필터 (필요 시 클릭으로 좁히기)", expanded=True):
+        c0a, c0b = st.columns([2, 2])
+
+        class_options = (df["vessel_class"]
+                            .dropna().value_counts().index.tolist())
+        with c0a:
+            st.markdown("**Vessel Class**")
+            sel_classes = st.multiselect(
+                "Vessel Class", class_options, default=class_options,
+                key=f"ft_class_{rt}", label_visibility="collapsed",
+                help="화물선 5개 클래스 — 비어두면 전체",
             )
-        else:
-            types_sel = st.multiselect(
-                "Vessel Type", types_all, default=[],
-                key=f"ft_types_{rt}", label_visibility="collapsed",
+        with c0b:
+            sub_options = sorted(
+                [s for s in df.loc[df["vessel_class"] == "Tanker",
+                                    "tanker_subclass"].dropna().unique() if s]
             )
-        types_sel = list(types_sel) if types_sel else []
+            st.markdown("**Tanker Subclass** (Tanker 선택 시 적용)")
+            sel_subs = st.multiselect(
+                "Tanker Subclass", sub_options, default=sub_options,
+                key=f"ft_sub_{rt}", label_visibility="collapsed",
+            )
 
         c1, c2, c3 = st.columns(3)
+        with c1:
+            name_q = st.text_input("선박명 검색", key=f"ft_name_{rt}")
+            owner_q = st.text_input("선주 / 회사 검색", key=f"ft_owner_{rt}")
+            flags_all = sorted([f for f in df["bendera"].dropna().unique() if f])
+            flag_sel = st.multiselect("국적 (Flag)", flags_all, default=[],
+                                       key=f"ft_flag_{rt}",
+                                       help="비어두면 모든 국적")
 
-        exclude = c1.checkbox("Exclude mode (선택 제외)", key=f"ft_excl_{rt}")
-        name_q = c1.text_input("선박명 검색", key=f"ft_name_{rt}")
+        with c2:
+            yr_range = st.slider("건조 연도", yr_min, yr_max,
+                                  (yr_min, yr_max), key=f"ft_yr_{rt}")
+            age_bucket_options = [b[0] for b in _FLEET_AGE_BUCKETS]
+            age_sel = st.multiselect(
+                "선령 버킷", age_bucket_options, default=[],
+                key=f"ft_age_{rt}",
+                help="비어두면 모든 선령 · '결측' 데이터는 항상 포함",
+            )
 
-        yr_range = c2.slider("건조 연도", yr_min, yr_max, (yr_min, yr_max),
-                             key=f"ft_yr_{rt}")
-        gt_range = c2.slider("Gross Tonnage", gt_lo, gt_hi, (gt_lo, gt_hi),
-                             key=f"ft_gt_{rt}")
-
-        loa_range = c3.slider("LOA (m)", loa_lo, loa_hi, (loa_lo, loa_hi),
-                              key=f"ft_loa_{rt}")
-        w_range = c3.slider("Width (m)", w_lo, w_hi, (w_lo, w_hi),
-                            key=f"ft_w_{rt}")
-        d_range = c3.slider("Depth (m)", d_lo, d_hi, (d_lo, d_hi),
-                            key=f"ft_d_{rt}")
+        with c3:
+            gt_range = st.slider("Gross Tonnage", gt_lo, gt_hi, (gt_lo, gt_hi),
+                                  key=f"ft_gt_{rt}")
+            loa_range = st.slider("LOA (m)", loa_lo, loa_hi, (loa_lo, loa_hi),
+                                   key=f"ft_loa_{rt}")
 
         if st.button("🔄 필터 초기화", key="ft_reset"):
             st.session_state["fleet_reset_token"] = rt + 1
             st.rerun()
 
-    # ---- apply filters (NaN values pass through) ----
+    # ---------------- Apply filters ----------------
+    df = df.assign(age_bucket=df["age"].map(_fleet_age_bucket))
     fdf = df
-    if types_sel:
-        mask = fdf["jenis_kapal"].isin(types_sel)
-        fdf = fdf[~mask] if exclude else fdf[mask]
+    if sel_classes:
+        fdf = fdf[fdf["vessel_class"].isin(sel_classes)]
+    # Subclass filter only narrows the Tanker rows — non-tankers pass through.
+    if sel_subs and sub_options and len(sel_subs) != len(sub_options):
+        mask_tanker = fdf["vessel_class"] == "Tanker"
+        keep = (~mask_tanker) | (fdf["tanker_subclass"].isin(sel_subs))
+        fdf = fdf[keep]
 
     def _between_or_na(s, lo, hi):
         s = pd.to_numeric(s, errors="coerce")
@@ -345,134 +422,371 @@ def page_fleet():
     fdf = fdf[_between_or_na(fdf["tahun_num"], yr_range[0], yr_range[1])]
     fdf = fdf[_between_or_na(fdf["gt"], gt_range[0], gt_range[1])]
     fdf = fdf[_between_or_na(fdf["loa"], loa_range[0], loa_range[1])]
-    fdf = fdf[_between_or_na(fdf["lebar"], w_range[0], w_range[1])]
-    fdf = fdf[_between_or_na(fdf["dalam"], d_range[0], d_range[1])]
+
+    if age_sel:
+        fdf = fdf[fdf["age_bucket"].isin(age_sel) | fdf["age_bucket"].isna()]
+    if flag_sel:
+        fdf = fdf[fdf["bendera"].isin(flag_sel)]
     if name_q:
-        fdf = fdf[fdf["nama_kapal"].fillna("").str.contains(name_q, case=False, na=False)]
+        fdf = fdf[fdf["nama_kapal"].fillna("").str.contains(
+            name_q, case=False, na=False)]
+    if owner_q:
+        fdf = fdf[fdf["nama_pemilik"].fillna("").str.contains(
+            owner_q, case=False, na=False)]
 
-    active = sum([
-        bool(types_sel), name_q != "",
-        yr_range != (yr_min, yr_max), gt_range != (gt_lo, gt_hi),
-        loa_range != (loa_lo, loa_hi), w_range != (w_lo, w_hi),
-        d_range != (d_lo, d_hi),
-    ])
-    st.caption(f"vessels_snapshot · **{snapshot}** · {len(fdf):,} / {total_rows:,} rows · 필터 {active}")
+    st.caption(
+        f"화물선 (CARGO sector) · **{snapshot}** · "
+        f"{len(fdf):,} / {total_rows:,} 척"
+    )
 
-    # ---- KPI cards ----
-    cols = st.columns(4)
-    kpi(cols[0], "선박 수", len(fdf))
-    kpi(cols[1], "고유 종류 수", int(fdf["jenis_kapal"].nunique()))
-    kpi(cols[2], "평균 GT", f"{_avg_pos(fdf['gt']):,.0f}")
-    avg_yr = fdf["tahun_num"].mean()
-    kpi(cols[3], "평균 건조연도", f"{avg_yr:.0f}" if pd.notna(avg_yr) else "-")
-
-    # ---- dimension averages (zeros excluded) ----
-    st.markdown("##### 평균 제원 (0 제외)")
-    cols = st.columns(4)
-    kpi(cols[0], "GT 평균",       f"{_avg_pos(fdf['gt']):,.0f}")
-    kpi(cols[1], "LOA 평균 (m)",  f"{_avg_pos(fdf['loa']):,.1f}")
-    kpi(cols[2], "Width 평균 (m)", f"{_avg_pos(fdf['lebar']):,.1f}")
-    kpi(cols[3], "Depth 평균 (m)", f"{_avg_pos(fdf['dalam']):,.1f}")
+    # ---------------- KPI summary ----------------
+    cols = st.columns(5)
+    gt_total = pd.to_numeric(fdf["gt"], errors="coerce").fillna(0).sum()
+    kpi(cols[0], "선박 수", fmt.fmt_int(len(fdf)))
+    kpi(cols[1], "총 GT", fmt.fmt_gt(float(gt_total)))
+    avg_age = fdf["age"].dropna().mean()
+    kpi(cols[2], "평균 선령",
+        f"{avg_age:.1f}년" if pd.notna(avg_age) else "-")
+    kpi(cols[3], "고유 선주",
+        fmt.fmt_int(int(fdf["nama_pemilik"].dropna().nunique())))
+    kpi(cols[4], "Class 수",
+        fmt.fmt_int(int(fdf["vessel_class"].nunique())))
 
     st.markdown("---")
 
-    # ---- charts grid ----
-    c1, c2 = st.columns(2)
+    # ---------------- Sub-tabs ----------------
+    sub_comp, sub_age, sub_owner, sub_util, sub_list = st.tabs(
+        ["📊 구성 (Class · Subclass)",
+         "📅 선령 / 연도 분포",
+         "🏢 선주 · 국적",
+         "🛳️ 가동률 (Class별)",
+         "📋 선박 리스트"]
+    )
 
-    with c1:
-        st.markdown("**건조 연도별 추이**")
-        yr_df = (fdf.dropna(subset=["tahun_num"])
-                    .assign(tahun=lambda x: x["tahun_num"].astype(int))
-                    .groupby("tahun").size().reset_index(name="count"))
-        if yr_df.empty:
-            st.info("연도 데이터 없음")
+    # ============ 1) Composition ============
+    with sub_comp:
+        cA, cB = st.columns(2)
+        with cA:
+            st.markdown("**Vessel Class 비중**")
+            cls_dist = fdf["vessel_class"].value_counts().reset_index()
+            cls_dist.columns = ["vessel_class", "count"]
+            if cls_dist.empty:
+                st.info("데이터 없음")
+            else:
+                fig = px.pie(cls_dist, names="vessel_class", values="count",
+                              color="vessel_class",
+                              color_discrete_map=_CARGO_CLASS_PALETTE,
+                              hole=0.5)
+                fig.update_traces(textinfo="percent+label",
+                                  textposition="outside")
+                fig.update_layout(height=360, margin=dict(t=10, b=10),
+                                  legend=dict(font=dict(size=10)))
+                theme.donut_center(fig,
+                                   fmt.fmt_int(int(cls_dist["count"].sum())),
+                                   "화물선")
+                st.plotly_chart(fig, width="stretch")
+
+        with cB:
+            st.markdown("**Class 별 총 GT**")
+            cls_gt = (fdf.assign(
+                gt_num=pd.to_numeric(fdf["gt"], errors="coerce").fillna(0))
+                .groupby("vessel_class")["gt_num"].sum()
+                .reset_index().sort_values("gt_num", ascending=True))
+            if cls_gt.empty:
+                st.info("데이터 없음")
+            else:
+                fig = px.bar(cls_gt, x="gt_num", y="vessel_class",
+                              orientation="h",
+                              color="vessel_class",
+                              color_discrete_map=_CARGO_CLASS_PALETTE,
+                              labels={"gt_num": "총 GT",
+                                      "vessel_class": ""})
+                fig.update_layout(height=360, margin=dict(t=10, b=10),
+                                  showlegend=False)
+                st.plotly_chart(fig, width="stretch")
+
+        st.markdown("**Tanker Subclass 세부 (척수 + 총 GT)**")
+        tk = fdf[fdf["vessel_class"] == "Tanker"]
+        if tk.empty:
+            st.info("Tanker 데이터 없음 — 필터 확인")
         else:
-            fig = px.area(yr_df, x="tahun", y="count", height=300, markers=True)
-            fig.update_traces(line_color="#1f77b4", fillcolor="rgba(31,119,180,0.25)")
-            fig.update_layout(margin=dict(t=10, b=10), xaxis_title="건조 연도", yaxis_title="척수")
+            sub_agg = (tk.assign(
+                gt_num=pd.to_numeric(tk["gt"], errors="coerce").fillna(0))
+                .groupby("tanker_subclass")
+                .agg(척수=("vessel_key", "count"),
+                     총_GT=("gt_num", "sum"),
+                     평균_GT=("gt_num", "mean"))
+                .reset_index().sort_values("척수", ascending=False))
+            sub_agg["총_GT"] = sub_agg["총_GT"].round(0)
+            sub_agg["평균_GT"] = sub_agg["평균_GT"].round(0)
+            theme.dataframe(sub_agg)
+
+            fig = px.bar(sub_agg.sort_values("척수"),
+                          x="척수", y="tanker_subclass",
+                          orientation="h",
+                          color="tanker_subclass",
+                          color_discrete_map=_TANKER_PALETTE,
+                          labels={"tanker_subclass": ""})
+            fig.update_layout(height=300, margin=dict(t=10, b=10),
+                              showlegend=False)
             st.plotly_chart(fig, width="stretch")
 
-        st.markdown("**Vessel Type TOP 15**")
-        vt = fdf["jenis_kapal"].dropna()
-        vt = vt[vt != ""].value_counts().head(15).reset_index()
-        vt.columns = ["type", "count"]
-        if vt.empty:
-            st.info("선종 데이터 없음")
-        else:
-            fig = px.bar(vt.sort_values("count"), x="count", y="type",
-                         orientation="h", height=420, color="count",
-                         color_continuous_scale=theme.SCALES["blue"])
-            fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
-                              xaxis_title="척수", yaxis_title="")
-            st.plotly_chart(fig, width="stretch")
+    # ============ 2) Age / Year ============
+    with sub_age:
+        cA, cB = st.columns(2)
+        with cA:
+            st.markdown("**선령 버킷 분포 (Class 별)**")
+            ab = fdf.dropna(subset=["age_bucket"]).groupby(
+                ["age_bucket", "vessel_class"]).size().reset_index(name="n")
+            if ab.empty:
+                st.info("선령 데이터 없음")
+            else:
+                order = [b[0] for b in _FLEET_AGE_BUCKETS]
+                fig = px.bar(ab, x="age_bucket", y="n",
+                              color="vessel_class",
+                              color_discrete_map=_CARGO_CLASS_PALETTE,
+                              category_orders={"age_bucket": order},
+                              labels={"age_bucket": "선령 버킷",
+                                      "n": "척수"})
+                fig.update_layout(height=360, margin=dict(t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.2,
+                                               font=dict(size=10)))
+                st.plotly_chart(fig, width="stretch")
 
-        st.markdown("**엔진 타입 분포**")
-        et = fdf["mesin_type"].dropna()
-        et = et[et != ""].value_counts().head(10).reset_index()
-        et.columns = ["type", "count"]
-        if et.empty:
-            st.info("엔진 타입 데이터 없음")
-        else:
-            fig = px.pie(et, names="type", values="count", height=320, hole=0.5)
-            fig.update_traces(textinfo="percent+label", textposition="outside")
-            fig.update_layout(margin=dict(t=10, b=10),
-                              legend=dict(font=dict(size=10)))
-            theme.donut_center(fig, fmt.fmt_int(int(et["count"].sum())),
-                               "엔진 타입")
-            st.plotly_chart(fig, width="stretch")
+        with cB:
+            st.markdown("**건조 연도별 추이**")
+            yr_df = (fdf.dropna(subset=["tahun_num"])
+                         .assign(tahun=lambda x: x["tahun_num"].astype(int))
+                         .groupby(["tahun", "vessel_class"]).size()
+                         .reset_index(name="count"))
+            if yr_df.empty:
+                st.info("연도 데이터 없음")
+            else:
+                fig = px.area(yr_df, x="tahun", y="count",
+                               color="vessel_class",
+                               color_discrete_map=_CARGO_CLASS_PALETTE,
+                               labels={"tahun": "건조 연도", "count": "척수"})
+                fig.update_layout(height=360, margin=dict(t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.2,
+                                               font=dict(size=10)))
+                st.plotly_chart(fig, width="stretch")
 
-    with c2:
-        st.markdown("**엔진명 TOP 12**")
-        en = fdf["mesin"].dropna()
-        en = en[en != ""].value_counts().head(12).reset_index()
-        en.columns = ["engine", "count"]
-        if en.empty:
-            st.info("엔진명 데이터 없음")
-        else:
-            fig = px.bar(en.sort_values("count"), x="count", y="engine",
-                         orientation="h", height=320, color="count",
-                         color_continuous_scale=theme.SCALES["green"])
-            fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
-                              xaxis_title="척수", yaxis_title="")
-            st.plotly_chart(fig, width="stretch")
-
-        st.markdown("**국적(Flag State) TOP 12**")
-        fl = fdf["bendera"].dropna()
-        fl = fl[fl != ""].value_counts().head(12).reset_index()
-        fl.columns = ["flag", "count"]
-        if fl.empty:
-            st.info("국적 데이터 없음")
-        else:
-            fig = px.bar(fl.sort_values("count"), x="count", y="flag",
-                         orientation="h", height=320, color="count",
-                         color_continuous_scale=theme.SCALES["amber"])
-            fig.update_layout(margin=dict(t=10, b=10), coloraxis_showscale=False,
-                              xaxis_title="척수", yaxis_title="")
-            st.plotly_chart(fig, width="stretch")
-
-        st.markdown("**Gross Tonnage 분포** (log scale)")
-        gt_d = fdf[fdf["gt"] > 0]["gt"]
+        st.markdown("**GT 분포 (log scale)**")
+        gt_d = fdf[pd.to_numeric(fdf["gt"], errors="coerce") > 0]
         if gt_d.empty:
             st.info("GT 데이터 없음")
         else:
-            fig = px.histogram(gt_d, nbins=60, log_x=True, height=320,
-                               color_discrete_sequence=["#6c5ce7"])
-            fig.update_layout(margin=dict(t=10, b=10), showlegend=False,
-                              xaxis_title="GT (log)", yaxis_title="척수")
+            fig = px.histogram(gt_d, x="gt", nbins=60, log_x=True,
+                                color="vessel_class",
+                                color_discrete_map=_CARGO_CLASS_PALETTE,
+                                opacity=0.75)
+            fig.update_layout(height=340, margin=dict(t=10, b=10),
+                              barmode="overlay",
+                              xaxis_title="GT (log)", yaxis_title="척수",
+                              legend=dict(font=dict(size=10)))
             st.plotly_chart(fig, width="stretch")
 
-    st.markdown("---")
-    st.subheader("선박 목록")
-    display_cols = [
-        "search_code", "nama_kapal", "call_sign", "jenis_kapal", "jenis_detail",
-        "nama_pemilik", "bendera", "gt", "loa", "panjang", "lebar", "dalam",
-        "mesin", "mesin_type", "daya", "bahan_utama", "imo", "tahun",
-        "pelabuhan_pendaftaran", "vessel_key",
-    ]
-    display_cols = [c for c in display_cols if c in fdf.columns]
-    table = fdf[display_cols].sort_values("gt", ascending=False, na_position="last").head(2000)
-    st.caption(f"표시 {len(table):,} rows (최대 2,000)")
-    theme.dataframe(table)
+    # ============ 3) Owner / Flag ============
+    with sub_owner:
+        cA, cB = st.columns(2)
+        with cA:
+            st.markdown("**Top 선주 (척수 기준)**")
+            top = st.slider("Top N", 5, 50, 20, 5, key="ft_owner_top")
+            ow = (fdf.dropna(subset=["nama_pemilik"])
+                       .groupby("nama_pemilik")
+                       .agg(척수=("vessel_key", "count"),
+                            총_GT=("gt", lambda s: pd.to_numeric(s, errors="coerce")
+                                                       .fillna(0).sum()))
+                       .reset_index().sort_values("척수", ascending=False)
+                       .head(top))
+            if ow.empty:
+                st.info("선주 데이터 없음")
+            else:
+                ow["총_GT"] = ow["총_GT"].round(0)
+                fig = px.bar(ow.sort_values("척수"),
+                              x="척수", y="nama_pemilik",
+                              orientation="h",
+                              color="총_GT",
+                              color_continuous_scale=theme.SCALES["blue"],
+                              hover_data=["총_GT"],
+                              labels={"nama_pemilik": ""})
+                fig.update_layout(height=max(360, top * 22),
+                                  margin=dict(t=10, b=10),
+                                  coloraxis_showscale=False)
+                st.plotly_chart(fig, width="stretch")
+
+        with cB:
+            st.markdown("**국적(Flag State) Top 15**")
+            fl = (fdf["bendera"].dropna()
+                       .loc[lambda s: s != ""]
+                       .value_counts().head(15).reset_index())
+            fl.columns = ["flag", "count"]
+            if fl.empty:
+                st.info("국적 데이터 없음")
+            else:
+                fig = px.bar(fl.sort_values("count"),
+                              x="count", y="flag", orientation="h",
+                              color="count",
+                              color_continuous_scale=theme.SCALES["amber"],
+                              labels={"count": "척수", "flag": ""})
+                fig.update_layout(height=480, margin=dict(t=10, b=10),
+                                  coloraxis_showscale=False)
+                st.plotly_chart(fig, width="stretch")
+
+    # ============ 4) Utilization (cross-class) ============
+    with sub_util:
+        st.caption(
+            "**가동률 정의**: LK3 (cargo_snapshot)에 등장한 24개월 중 활동 개월 수. "
+            "Heavy ≥18mo · Active 12–18mo · Light 6–12mo · Idle <6mo. "
+            "매칭은 등기 `nama_kapal` ↔ LK3 `KAPAL` 대문자 동일 — "
+            "동명/표기차 false negative 가능."
+        )
+        with st.spinner("선박-cargo 매칭 중…"):
+            util = _cargo_vessel_utilization(snapshot)
+
+        if util.empty:
+            st.info("가동률 데이터를 계산할 수 없습니다.")
+        else:
+            # Restrict to currently-filtered fleet (by vessel_key)
+            keep_keys = set(fdf["vessel_key"].dropna().tolist())
+            uview = util[util["vessel_key"].isin(keep_keys)] if keep_keys \
+                       else util
+
+            if uview.empty:
+                st.info("현재 필터 조건에 해당하는 가동률 데이터 없음.")
+            else:
+                # ---- KPI row ----
+                n = len(uview)
+                n_idle = int((uview["status"] == "Idle (<25%)").sum())
+                n_heavy = int((uview["status"] == "Heavy (≥75%)").sum())
+                idle_gt = float(pd.to_numeric(
+                    uview.loc[uview["status"] == "Idle (<25%)", "gt"],
+                    errors="coerce").fillna(0).sum())
+                cols = st.columns(5)
+                kpi(cols[0], "분석 선박", fmt.fmt_int(n))
+                kpi(cols[1], "Idle 선박", fmt.fmt_int(n_idle))
+                kpi(cols[2], "Idle 비율", fmt.fmt_pct(n_idle / n * 100))
+                kpi(cols[3], "Idle 총 GT", fmt.fmt_gt(idle_gt),
+                    help="유휴 선대의 총 GT — 자본 매몰 규모")
+                kpi(cols[4], "Heavy 선박", fmt.fmt_int(n_heavy),
+                    help="24개월 중 ≥ 18개월 활동 — 핵심 운영 자산")
+
+                # ---- Per-class breakdown ----
+                cA, cB = st.columns([2, 3])
+                with cA:
+                    st.markdown("**Class별 가동률 분포 (척수)**")
+                    mat = (uview.groupby(["vessel_class", "status"])
+                                .size().reset_index(name="n"))
+                    pivot = mat.pivot_table(index="vessel_class",
+                                              columns="status",
+                                              values="n", fill_value=0)
+                    status_order = ["Idle (<25%)", "Light (25–50%)",
+                                     "Active (50–75%)", "Heavy (≥75%)"]
+                    pivot = pivot.reindex(columns=[s for s in status_order
+                                                       if s in pivot.columns],
+                                            fill_value=0)
+                    pivot["Total"] = pivot.sum(axis=1)
+                    pivot["Idle_%"] = (pivot.get("Idle (<25%)", 0)
+                                          / pivot["Total"] * 100).round(1)
+                    pivot["Heavy_%"] = (pivot.get("Heavy (≥75%)", 0)
+                                           / pivot["Total"] * 100).round(1)
+                    pivot = pivot.sort_values("Total", ascending=False)
+                    theme.dataframe(pivot.reset_index())
+
+                with cB:
+                    st.markdown("**Class별 Idle 비율 (높을수록 매물·차터 후보 多)**")
+                    cls_idle = (uview.groupby("vessel_class")
+                                      .agg(n=("vessel_key", "count"),
+                                           idle_n=("status",
+                                                    lambda s: (s == "Idle (<25%)").sum()))
+                                      .reset_index())
+                    cls_idle["idle_pct"] = (cls_idle["idle_n"]
+                                                / cls_idle["n"] * 100).round(1)
+                    cls_idle = cls_idle.sort_values("idle_pct",
+                                                       ascending=True)
+                    fig = px.bar(cls_idle, x="idle_pct", y="vessel_class",
+                                  orientation="h", color="vessel_class",
+                                  color_discrete_map=_CARGO_CLASS_PALETTE,
+                                  hover_data=["n", "idle_n"],
+                                  labels={"idle_pct": "Idle 비율 (%)",
+                                            "vessel_class": ""})
+                    fig.update_layout(height=320, margin=dict(t=10, b=10),
+                                       showlegend=False)
+                    st.plotly_chart(fig, width="stretch")
+
+                # ---- Status × Class stacked bar ----
+                st.markdown("**상태별 척수 (Class 누적)**")
+                fig = px.bar(mat, x="vessel_class", y="n",
+                              color="status",
+                              category_orders={"status": status_order},
+                              color_discrete_map=_UTIL_PALETTE,
+                              labels={"vessel_class": "", "n": "척수"})
+                fig.update_layout(height=360, margin=dict(t=10, b=10),
+                                   barmode="stack",
+                                   legend=dict(orientation="h", y=-0.2,
+                                                font=dict(size=10)))
+                st.plotly_chart(fig, width="stretch")
+
+                # ---- High-value idle list ----
+                st.markdown("##### 💎 고가치 유휴 화물선 Top 30 (GT 큰 순)")
+                idle_top = (uview[uview["status"] == "Idle (<25%)"]
+                                .dropna(subset=["gt"])
+                                .sort_values("gt", ascending=False)
+                                .head(30))
+                if idle_top.empty:
+                    st.info("Idle 분류 선박 없음")
+                else:
+                    show_cols = ["nama_kapal", "vessel_class",
+                                  "tanker_subclass", "nama_pemilik",
+                                  "bendera", "gt", "tahun", "age",
+                                  "months_active", "total_ton", "util_pct"]
+                    show_cols = [c for c in show_cols
+                                    if c in idle_top.columns]
+                    theme.dataframe(idle_top[show_cols])
+                    util_export_cols = show_cols + ["status"]
+                    util_export_cols = [c for c in util_export_cols
+                                            if c in uview.columns]
+                    _csv_button(uview[util_export_cols],
+                                 f"cargo_vessel_utilization_{snapshot}.csv",
+                                 label="📥 가동률 전체 CSV",
+                                 key="ft_dl_util")
+
+    # ============ 5) Sortable list ============
+    with sub_list:
+        st.markdown("**선박 리스트** — 컬럼 헤더 클릭으로 정렬, 검색/CSV 다운로드 지원")
+        cA, cB = st.columns([1, 1])
+        with cA:
+            sort_col = st.selectbox(
+                "정렬 기준",
+                ["gt", "age", "tahun_num", "nama_kapal", "nama_pemilik"],
+                key="ft_sort_col",
+            )
+        with cB:
+            sort_dir = st.radio(
+                "정렬 방향", ["내림차순", "오름차순"], horizontal=True,
+                key="ft_sort_dir",
+            )
+
+        ascending = sort_dir == "오름차순"
+        if sort_col in fdf.columns:
+            tbl = fdf.sort_values(sort_col, ascending=ascending,
+                                    na_position="last")
+        else:
+            tbl = fdf
+
+        display_cols = [
+            "nama_kapal", "vessel_class", "tanker_subclass", "jenis_detail",
+            "nama_pemilik", "bendera", "gt", "loa", "lebar", "dalam",
+            "tahun", "age", "age_bucket", "imo", "call_sign",
+            "pelabuhan_pendaftaran", "search_code", "vessel_key",
+        ]
+        display_cols = [c for c in display_cols if c in tbl.columns]
+        tbl_show = tbl[display_cols].head(3000)
+        st.caption(f"표시 {len(tbl_show):,} / 필터 {len(fdf):,} rows (최대 3,000)")
+        theme.dataframe(tbl_show)
+        _csv_button(fdf[display_cols], f"cargo_fleet_{snapshot}.csv",
+                     label="📥 화물선 리스트 CSV (필터 전체)",
+                     key="ft_csv_full")
 
 
 # ------------------------- Tanker Focus page -------------------------
@@ -5361,69 +5675,865 @@ def page_pertamina():
                     key="pert_dl_aged")
 
 
+@st.cache_data(ttl=3600)
+def _classify_jk_to_vessel_class(jk_unique: tuple[str, ...]) -> dict[str, str]:
+    """Vectorized backend.taxonomy classification for unique LK3 JENIS KAPAL
+    labels. Caches the lookup across reruns — labels are stable strings,
+    typically ~80 distinct values across all of LK3.
+    """
+    from backend.taxonomy import classify_vessel_type
+    return {jk: classify_vessel_type(jk)[1] for jk in jk_unique}
+
+
+def _cargo_long_form(flows: pd.DataFrame) -> pd.DataFrame:
+    """Reshape `cargo_flows()` rows into a long-form (one row per ton movement)
+    DataFrame with kapal/operator/origin/destination/kom/ton/direction/bucket
+    and a derived `vessel_class` from the LK3 ``jenis_kapal`` label.
+    """
+    if flows.empty:
+        return flows
+    b = flows[["period", "kapal", "operator", "jenis_kapal",
+                "origin", "destination",
+                "bongkar_kom", "bongkar_ton", "gt", "dwt"]].rename(
+        columns={"bongkar_kom": "kom", "bongkar_ton": "ton"})
+    b["direction"] = "BONGKAR"
+    m = flows[["period", "kapal", "operator", "jenis_kapal",
+                "origin", "destination",
+                "muat_kom", "muat_ton", "gt", "dwt"]].rename(
+        columns={"muat_kom": "kom", "muat_ton": "ton"})
+    m["direction"] = "MUAT"
+    long = pd.concat([b, m], ignore_index=True)
+    long["ton"] = pd.to_numeric(long["ton"], errors="coerce").fillna(0)
+    long = long[long["ton"] > 0].copy()
+    long["bucket"] = long["kom"].map(_classify_kom_for_palette)
+
+    jk_unique = tuple(sorted(long["jenis_kapal"].dropna().unique().tolist()))
+    jk_map = _classify_jk_to_vessel_class(jk_unique)
+    long["vessel_class"] = long["jenis_kapal"].map(jk_map).fillna("UNMAPPED")
+    return long
+
+
+def _cargo_od_map(long: pd.DataFrame, top_n: int = 60,
+                   key_prefix: str = "cg") -> None:
+    """🗺️ Indonesia OD map for the (filtered) generic cargo flow set.
+
+    Mirrors the tanker map's design (great-circle lines colored by commodity
+    bucket, port bubbles sized by total ton) but uses the broader cargo
+    palette from `_KOM_BUCKET_PALETTE` and the global port-coord lookup.
+    """
+    if long.empty:
+        st.info("표시할 화물 흐름이 없습니다.")
+        return
+
+    coord_map, foreign_set = _port_name_to_coords()
+    f = long.copy()
+    f["o_norm"] = f["origin"].map(_normalize_port_name)
+    f["d_norm"] = f["destination"].map(_normalize_port_name)
+    f["o_coord"] = f["o_norm"].map(lambda k: coord_map.get(k))
+    f["d_coord"] = f["d_norm"].map(lambda k: coord_map.get(k))
+    f["o_foreign"] = f["o_norm"].isin(foreign_set)
+    f["d_foreign"] = f["d_norm"].isin(foreign_set)
+
+    total_ton = float(f["ton"].sum())
+    intl_ton = float(f.loc[f["o_foreign"] | f["d_foreign"], "ton"].sum())
+    plottable = f.dropna(subset=["o_coord", "d_coord"]).copy()
+    plottable = plottable[~(plottable["o_foreign"] | plottable["d_foreign"])]
+    plot_ton = float(plottable["ton"].sum())
+    unknown_ton = total_ton - intl_ton - plot_ton
+
+    cN = st.columns(4)
+    kpi(cN[0], "필터 톤 합", fmt.fmt_ton(total_ton))
+    kpi(cN[1], "지도 표시 톤", fmt.fmt_ton(plot_ton),
+        help="origin/destination 양쪽 좌표 매핑된 항로의 톤 합")
+    kpi(cN[2], "국제 항해 톤", fmt.fmt_ton(intl_ton),
+        help="외국 항구 — 지도 밖")
+    kpi(cN[3], "미매핑 톤", fmt.fmt_ton(unknown_ton),
+        help="origin/destination 텍스트가 좌표 사전에 없음")
+
+    if plottable.empty:
+        st.info("좌표 매핑 가능한 항로가 없습니다.")
+        return
+
+    plottable["lat_o"] = plottable["o_coord"].map(lambda c: c[0])
+    plottable["lon_o"] = plottable["o_coord"].map(lambda c: c[1])
+    plottable["lat_d"] = plottable["d_coord"].map(lambda c: c[0])
+    plottable["lon_d"] = plottable["d_coord"].map(lambda c: c[1])
+
+    od_bucket = (plottable.groupby(
+                    ["o_norm", "d_norm", "lat_o", "lon_o", "lat_d", "lon_d",
+                     "bucket"])
+                          .agg(ton=("ton", "sum"), n_calls=("ton", "size"),
+                                n_vessels=("kapal", "nunique"))
+                          .reset_index())
+    od_bucket = od_bucket[od_bucket["o_norm"] != od_bucket["d_norm"]]
+    if od_bucket.empty:
+        st.info("Origin ≠ Destination 항로가 없습니다 (모두 self-loop).")
+        return
+    od_bucket = od_bucket.sort_values("ton", ascending=False).head(top_n)
+
+    port_ton = pd.concat([
+        plottable[["o_norm", "lat_o", "lon_o", "ton"]].rename(
+            columns={"o_norm": "port", "lat_o": "lat", "lon_o": "lon"}),
+        plottable[["d_norm", "lat_d", "lon_d", "ton"]].rename(
+            columns={"d_norm": "port", "lat_d": "lat", "lon_d": "lon"}),
+    ], ignore_index=True)
+    port_agg = (port_ton.groupby(["port", "lat", "lon"])["ton"].sum()
+                          .reset_index().sort_values("ton", ascending=False))
+
+    max_ton = float(od_bucket["ton"].max())
+    fig = go.Figure()
+    for bucket, sub in od_bucket.groupby("bucket"):
+        color = _KOM_BUCKET_PALETTE.get(bucket, "#64748b")
+        first = True
+        for r in sub.itertuples(index=False):
+            width = 1.0 + 8.0 * (r.ton / max_ton) ** 0.5
+            fig.add_trace(go.Scattergeo(
+                lon=[r.lon_o, r.lon_d], lat=[r.lat_o, r.lat_d],
+                mode="lines",
+                line=dict(width=width, color=color),
+                opacity=0.75,
+                hoverinfo="text",
+                text=(f"<b>{bucket}</b><br>{r.o_norm} → {r.d_norm}<br>"
+                      f"{fmt.fmt_compact(r.ton, 1)}t · {r.n_vessels}척 · "
+                      f"{int(r.n_calls)}회"),
+                name=bucket, legendgroup=bucket, showlegend=first,
+            ))
+            first = False
+
+    fig.add_trace(go.Scattergeo(
+        lon=port_agg["lon"], lat=port_agg["lat"], mode="markers",
+        marker=dict(
+            size=(port_agg["ton"] / port_agg["ton"].max() * 26 + 4),
+            color="#0f172a", opacity=0.85,
+            line=dict(width=0.5, color="#ffffff"),
+        ),
+        text=port_agg.apply(
+            lambda r: f"<b>{r['port']}</b><br>{fmt.fmt_compact(r['ton'], 1)}t",
+            axis=1),
+        hoverinfo="text", name="항구 (총 톤)", showlegend=True,
+    ))
+
+    fig.update_layout(
+        height=620, margin=dict(t=10, b=10, l=10, r=10),
+        legend=dict(orientation="h", y=-0.05, x=0,
+                    bgcolor="rgba(255,255,255,0.85)",
+                    bordercolor="#e2e8f0", borderwidth=1,
+                    font=dict(size=11)),
+        geo=dict(
+            scope="asia", projection_type="natural earth",
+            showcountries=True, showcoastlines=True, showland=True,
+            showocean=True, oceancolor="#f1f5f9",
+            landcolor="#fefefe", countrycolor="#cbd5e1",
+            coastlinecolor="#94a3b8",
+            lataxis=dict(range=[-12, 8]),
+            lonaxis=dict(range=[94, 142]),
+        ),
+    )
+    st.plotly_chart(fig, width="stretch")
+
+    with st.expander(f"📋 항로 테이블 — Top {len(od_bucket)}"):
+        lane_show = (od_bucket[["o_norm", "d_norm", "bucket",
+                                 "ton", "n_calls", "n_vessels"]]
+                        .rename(columns={"o_norm": "출발", "d_norm": "도착",
+                                          "bucket": "카테고리", "ton": "총_톤",
+                                          "n_calls": "항해수",
+                                          "n_vessels": "선박수"}))
+        theme.dataframe(lane_show)
+        _csv_button(lane_show,
+                     f"cargo_flow_map_lanes_{snapshot}.csv",
+                     label="📥 항로 CSV", key=f"{key_prefix}_lanes_dl")
+
+
 def page_cargo():
-    st.title("📦 Cargo (LK3)")
-    st.caption(f"Snapshot: **{snapshot}**")
+    st.title("📦 Cargo (LK3) — 화물 분석")
+    st.caption(
+        f"Snapshot: **{snapshot}** · "
+        "어선·여객선·예인선 등 비-화물 행 제외 (탱커·일반화물·벌크·컨테이너·바지 중심)"
+    )
 
-    c = _cargo_overview(snapshot)
-    cols = st.columns(4)
-    kpi(cols[0], "물동량 행", c["rows"])
-    kpi(cols[1], "항구", c["ports"])
-    kpi(cols[2], "(port,year,month,kind) 키", c["keys"])
-    kpi(cols[3], "이론 키", 267 * 24 * 2)
+    flows = _cargo_flows(snapshot)
+    if flows.empty:
+        st.info("LK3 화물 데이터가 없습니다.")
+        return
 
-    tab_top, tab_heat, tab_gaps = st.tabs(["Top 항구", "히트맵", "결측 점검"])
+    # Build long-form (per direction/ton) view used by all sub-tabs
+    long_all = _cargo_long_form(flows)
 
-    with tab_top:
-        top = st.slider("Top N 항구", 5, 100, 25, 5, key="cargo_top")
-        pt = _port_traffic(snapshot, top)
-        if pt.empty:
-            st.info("LK3 데이터 없음")
-        else:
-            theme.dataframe(pt)
-            fig = px.bar(pt, x="kode_pelabuhan", y=["rows_dn", "rows_ln"],
-                         barmode="stack", height=380,
-                         labels={"value": "행 수", "kode_pelabuhan": "항구"})
-            fig.update_layout(margin=dict(t=20, b=20))
+    # ---------------- Top filters (shared across sub-tabs) ----------------
+    with st.expander("🔍 필터", expanded=True):
+        all_buckets = (long_all.groupby("bucket")["ton"].sum()
+                                  .sort_values(ascending=False).index.tolist())
+        all_periods = sorted(long_all["period"].dropna().unique().tolist())
+        period_default = (all_periods[-12:] if len(all_periods) > 12
+                           else all_periods)
+        all_classes = (long_all.groupby("vessel_class")["ton"].sum()
+                                   .sort_values(ascending=False).index.tolist())
+        # Pre-compute top operators (ton) so the operator multiselect ranks them
+        op_ton_lookup = (long_all.dropna(subset=["operator"])
+                                    .groupby("operator")["ton"].sum()
+                                    .sort_values(ascending=False))
+        top_operators = op_ton_lookup.head(50).index.tolist()
+
+        c1, c2 = st.columns([2, 3])
+        with c1:
+            sel_buckets = st.multiselect(
+                "화물 카테고리 (비어두면 전체)",
+                all_buckets, default=[], key="cg_buckets",
+                help="복수 선택 가능. 비어두면 전체 카테고리.",
+            )
+        with c2:
+            sel_periods = st.multiselect(
+                "기간 (YYYY-MM)", all_periods, default=period_default,
+                key="cg_periods",
+                help=f"전체 {len(all_periods)}개월 · 기본값 = 최근 12개월",
+            )
+
+        c3, c4, c5 = st.columns([2, 2, 1])
+        with c3:
+            dir_pick = st.radio(
+                "방향", ["전체", "BONGKAR (양하)", "MUAT (적재)"],
+                horizontal=True, key="cg_dir",
+            )
+        with c4:
+            port_q = st.text_input(
+                "항구명 포함 (origin 또는 destination)", key="cg_port",
+                help="대소문자 무시 substring 매칭",
+            )
+        with c5:
+            top_n_lanes = st.slider("Top N 항로", 10, 200, 60, 10,
+                                      key="cg_topn")
+
+        c6, c7 = st.columns([2, 3])
+        with c6:
+            sel_classes = st.multiselect(
+                "선종 (Vessel Class)", all_classes, default=[],
+                key="cg_class",
+                help="LK3 JENIS KAPAL → 분류. 비어두면 전체 선종. "
+                      "Tanker, General Cargo, Container, Bulk Carrier, Other Cargo.",
+            )
+        with c7:
+            sel_operators = st.multiselect(
+                f"운영사 (PERUSAHAAN) — 상위 {len(top_operators)}개 미리보기",
+                top_operators, default=[], key="cg_operator",
+                help="비어두면 전체 운영사. 텍스트 검색은 항목명 일부 입력 가능.",
+            )
+
+    # ---------------- Apply filters ----------------
+    f = long_all
+    if sel_buckets:
+        f = f[f["bucket"].isin(sel_buckets)]
+    if sel_periods:
+        f = f[f["period"].isin(sel_periods)]
+    if sel_classes:
+        f = f[f["vessel_class"].isin(sel_classes)]
+    if sel_operators:
+        f = f[f["operator"].isin(sel_operators)]
+    if dir_pick.startswith("BONGKAR"):
+        f = f[f["direction"] == "BONGKAR"]
+    elif dir_pick.startswith("MUAT"):
+        f = f[f["direction"] == "MUAT"]
+    if port_q:
+        pq = port_q.upper()
+        mask = (f["origin"].fillna("").str.upper().str.contains(pq)
+                | f["destination"].fillna("").str.upper().str.contains(pq))
+        f = f[mask]
+
+    n_flows = len(f)
+    n_kapal = int(f["kapal"].dropna().nunique())
+    n_op = int(f["operator"].dropna().nunique())
+    total_ton = float(f["ton"].sum())
+    n_buckets = int(f["bucket"].nunique())
+    n_classes = int(f["vessel_class"].nunique())
+
+    cols = st.columns(6)
+    kpi(cols[0], "행 수", fmt.fmt_int(n_flows))
+    kpi(cols[1], "총 톤", fmt.fmt_ton(total_ton))
+    kpi(cols[2], "고유 선박", fmt.fmt_int(n_kapal))
+    kpi(cols[3], "운영사", fmt.fmt_int(n_op))
+    kpi(cols[4], "화물 카테고리", fmt.fmt_int(n_buckets))
+    kpi(cols[5], "선종", fmt.fmt_int(n_classes))
+
+    if f.empty:
+        st.info("필터 조건에 해당하는 데이터가 없습니다.")
+        return
+
+    st.markdown("---")
+
+    tab_sum, tab_map, tab_port, tab_intl, tab_sts, tab_list = st.tabs(
+        ["📊 화물 요약", "🗺️ OD 지도", "🏗️ 항구별",
+         "🌐 국제 무역", "🔄 STS / 자체 환적", "📋 상세 리스트"]
+    )
+
+    # ============ 1) Summary ============
+    with tab_sum:
+        cA, cB = st.columns(2)
+        with cA:
+            st.markdown("**화물 카테고리별 총 톤**")
+            ag = (f.groupby("bucket")["ton"].sum()
+                       .sort_values(ascending=True).reset_index())
+            fig = px.bar(ag, x="ton", y="bucket", orientation="h",
+                          color="bucket",
+                          color_discrete_map=_KOM_BUCKET_PALETTE,
+                          labels={"ton": "총 톤", "bucket": ""})
+            fig.update_layout(height=420, margin=dict(t=10, b=10),
+                              showlegend=False)
+            st.plotly_chart(fig, width="stretch")
+        with cB:
+            st.markdown("**월별 톤수 추이 (카테고리 누적)**")
+            mt = (f.groupby(["period", "bucket"])["ton"].sum()
+                       .reset_index().sort_values("period"))
+            fig = px.area(mt, x="period", y="ton",
+                           color="bucket",
+                           color_discrete_map=_KOM_BUCKET_PALETTE,
+                           labels={"period": "월", "ton": "톤"})
+            fig.update_layout(height=420, margin=dict(t=10, b=10),
+                              legend=dict(orientation="h", y=-0.2,
+                                           font=dict(size=10)))
             st.plotly_chart(fig, width="stretch")
 
-    with tab_heat:
-        st.markdown("**(port × period) 행 수 히트맵** — 짙을수록 데이터 많음")
-        cs = _cargo_summary(snapshot)
-        if cs.empty:
-            st.info("LK3 데이터 없음")
+        cC, cD = st.columns(2)
+        with cC:
+            st.markdown("**선종 × 카테고리 매트릭스** (톤)")
+            xt = (f.groupby(["vessel_class", "bucket"])["ton"]
+                       .sum().reset_index())
+            if xt.empty:
+                st.info("매트릭스 데이터 없음")
+            else:
+                pivot = xt.pivot(index="vessel_class", columns="bucket",
+                                   values="ton").fillna(0)
+                # Order rows by total tonnage
+                pivot = pivot.loc[pivot.sum(axis=1).sort_values(
+                    ascending=False).index]
+                fig = px.imshow(pivot, aspect="auto",
+                                 color_continuous_scale=theme.SCALES["blue"],
+                                 labels=dict(x="화물 카테고리",
+                                              y="선종",
+                                              color="톤"))
+                fig.update_layout(height=420, margin=dict(t=20, b=20))
+                st.plotly_chart(fig, width="stretch")
+        with cD:
+            st.markdown("**선종별 월별 톤수 추이**")
+            mc = (f.groupby(["period", "vessel_class"])["ton"]
+                       .sum().reset_index().sort_values("period"))
+            if mc.empty:
+                st.info("데이터 없음")
+            else:
+                fig = px.area(mc, x="period", y="ton",
+                                color="vessel_class",
+                                color_discrete_map=_CARGO_CLASS_PALETTE,
+                                labels={"period": "월", "ton": "톤",
+                                          "vessel_class": "선종"})
+                fig.update_layout(height=420, margin=dict(t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.2,
+                                               font=dict(size=10)))
+                st.plotly_chart(fig, width="stretch")
+
+        st.markdown("**Top 화물 (raw komoditi 텍스트 기준)**")
+        kom_top = (f.dropna(subset=["kom"])
+                       .groupby(["kom", "bucket"])
+                       .agg(톤=("ton", "sum"),
+                            행수=("ton", "size"),
+                            선박수=("kapal", "nunique"))
+                       .reset_index().sort_values("톤", ascending=False)
+                       .head(30))
+        kom_top["톤"] = kom_top["톤"].round(0)
+        theme.dataframe(kom_top)
+        _csv_button(kom_top, f"cargo_top_komoditi_{snapshot}.csv",
+                     key="cg_dl_komtop")
+
+        st.markdown("**Top 운영사 (총 톤)**")
+        op_top = (f.dropna(subset=["operator"])
+                       .groupby("operator")
+                       .agg(톤=("ton", "sum"),
+                            행수=("ton", "size"),
+                            선박수=("kapal", "nunique"))
+                       .reset_index().sort_values("톤", ascending=False)
+                       .head(25))
+        op_top["톤"] = op_top["톤"].round(0)
+        theme.dataframe(op_top)
+        _csv_button(op_top, f"cargo_top_operators_{snapshot}.csv",
+                     key="cg_dl_optop")
+
+    # ============ 2) OD Map ============
+    with tab_map:
+        st.subheader("🗺️ 화물 OD 흐름 지도")
+        st.caption(
+            "버블 = 항구별 총 톤, 선 두께 ∝ 항로 톤, 색상 = 화물 카테고리. "
+            "외국 항구는 지도 밖 — KPI에 합산."
+        )
+        _cargo_od_map(f, top_n=top_n_lanes, key_prefix="cg_map")
+
+        st.markdown("---")
+
+        # ---- Sankey of top OD pairs ----
+        st.subheader("🔀 OD Sankey (Top 항로)")
+        st.caption(
+            "출발 항구 → 도착 항구 흐름. 화살 두께 ∝ 톤. self-loop "
+            "(origin = destination, 즉 STS 자체 이동) 제외."
+        )
+        od_pairs = (f.dropna(subset=["origin", "destination"])
+                       .assign(o_norm=lambda d: d["origin"].map(_normalize_port_name),
+                                d_norm=lambda d: d["destination"].map(_normalize_port_name))
+                       .dropna(subset=["o_norm", "d_norm"]))
+        od_pairs = od_pairs[od_pairs["o_norm"] != od_pairs["d_norm"]]
+        od_top = (od_pairs.groupby(["o_norm", "d_norm"])["ton"].sum()
+                            .reset_index()
+                            .rename(columns={"o_norm": "origin",
+                                              "d_norm": "destination",
+                                              "ton": "총_톤"})
+                            .sort_values("총_톤", ascending=False))
+        sankey_top_n = st.slider("Sankey Top N", 10, 80, 30, 5,
+                                    key="cg_sankey_n")
+        _render_sankey(od_top.head(sankey_top_n), ton_col="총_톤")
+
+        st.markdown("---")
+
+        # ---- YoY growth analysis ----
+        st.subheader("📈 항로 YoY 성장 분석 (최근 vs 직전 기간)")
+        st.caption(
+            "현재 필터된 기간을 절반으로 나눠 후반(latest) vs 전반(prior) "
+            "톤수 변화를 비교. 후반 톤 ≥ 50,000 행만 표시 — 단일 운송 노이즈 컷."
+        )
+        # Use the periods currently in `f` (already period-filtered by sidebar)
+        periods_in_f = sorted(f["period"].dropna().unique().tolist())
+        half = len(periods_in_f) // 2
+        if half < 2 or len(periods_in_f) < 4:
+            st.info("성장률 분석은 4개월 이상 필터 시 가능 (현재 "
+                     f"{len(periods_in_f)}개월).")
         else:
-            kind = st.radio("kind", ["dn", "ln"], horizontal=True)
-            sub = cs[cs["kind"] == kind]
-            pivot = sub.pivot_table(index="kode_pelabuhan", columns="period",
-                                     values="rows", aggfunc="sum", fill_value=0)
-            pivot = pivot.loc[pivot.sum(axis=1).sort_values(ascending=False).head(40).index]
-            fig = px.imshow(pivot, aspect="auto", height=620,
-                            color_continuous_scale=theme.SCALES["blue"],
-                            labels=dict(x="기간", y="항구", color="행"))
-            fig.update_layout(margin=dict(t=20, b=20))
+            latest_set = set(periods_in_f[-half:])
+            prior_set = set(periods_in_f[:half] if half * 2 == len(periods_in_f)
+                            else periods_in_f[-2 * half:-half])
+            yoy = od_pairs.assign(side=od_pairs["period"].map(
+                lambda p: "latest" if p in latest_set
+                else ("prior" if p in prior_set else None)))
+            yoy = yoy.dropna(subset=["side"])
+            agg = (yoy.groupby(["o_norm", "d_norm", "side"])["ton"].sum()
+                       .unstack(fill_value=0).reset_index())
+            if "latest" not in agg.columns: agg["latest"] = 0
+            if "prior" not in agg.columns: agg["prior"] = 0
+            agg = agg[(agg["prior"] >= 50_000) | (agg["latest"] >= 50_000)]
+            agg["delta_ton"] = agg["latest"] - agg["prior"]
+            agg["growth_pct"] = ((agg["latest"] - agg["prior"])
+                                    / agg["prior"].replace(0, pd.NA) * 100)
+            agg = agg.dropna(subset=["growth_pct"])
+            agg["growth_pct"] = agg["growth_pct"].round(1)
+
+            if agg.empty:
+                st.info("성장률 분석할 항로가 없습니다.")
+            else:
+                cA, cB = st.columns(2)
+                with cA:
+                    st.markdown("**🚀 Top 성장 항로**")
+                    growers = agg.sort_values("delta_ton",
+                                                 ascending=False).head(15)
+                    growers["route"] = (growers["o_norm"] + " → "
+                                          + growers["d_norm"])
+                    fig = px.bar(growers.sort_values("delta_ton"),
+                                  x="delta_ton", y="route", orientation="h",
+                                  color="growth_pct",
+                                  color_continuous_scale=theme.SCALES["green"],
+                                  hover_data=["latest", "prior", "growth_pct"],
+                                  labels={"delta_ton": "증가 톤",
+                                            "route": "",
+                                            "growth_pct": "%"})
+                    fig.update_layout(height=460, margin=dict(t=10, b=10),
+                                       coloraxis_showscale=True)
+                    st.plotly_chart(fig, width="stretch")
+                with cB:
+                    st.markdown("**📉 Top 감소 항로**")
+                    losers = agg.sort_values("delta_ton",
+                                                ascending=True).head(15)
+                    losers["route"] = (losers["o_norm"] + " → "
+                                         + losers["d_norm"])
+                    fig = px.bar(losers.sort_values("delta_ton",
+                                                       ascending=False),
+                                  x="delta_ton", y="route", orientation="h",
+                                  color="growth_pct",
+                                  color_continuous_scale=theme.SCALES["red"],
+                                  hover_data=["latest", "prior", "growth_pct"],
+                                  labels={"delta_ton": "감소 톤 (음수)",
+                                            "route": "",
+                                            "growth_pct": "%"})
+                    fig.update_layout(height=460, margin=dict(t=10, b=10),
+                                       coloraxis_showscale=True)
+                    st.plotly_chart(fig, width="stretch")
+
+                # Table
+                with st.expander("📋 전체 YoY 변동 테이블"):
+                    show = agg[["o_norm", "d_norm", "prior", "latest",
+                                  "delta_ton", "growth_pct"]].rename(
+                        columns={"o_norm": "출발", "d_norm": "도착",
+                                  "prior": "전반", "latest": "후반",
+                                  "delta_ton": "증감",
+                                  "growth_pct": "성장률_%"})
+                    show["전반"] = show["전반"].round(0)
+                    show["후반"] = show["후반"].round(0)
+                    show["증감"] = show["증감"].round(0)
+                    theme.dataframe(show.sort_values("증감", ascending=False))
+                    _csv_button(show, f"cargo_yoy_routes_{snapshot}.csv",
+                                 label="📥 YoY 항로 CSV", key="cg_dl_yoy")
+
+    # ============ 3) Per-port ============
+    with tab_port:
+        st.markdown("**항구별 톤수 Top 30** (origin / destination 합산)")
+        po = pd.concat([
+            f[["origin", "ton"]].rename(columns={"origin": "port"}),
+            f[["destination", "ton"]].rename(columns={"destination": "port"}),
+        ], ignore_index=True).dropna(subset=["port"])
+        po["port_norm"] = po["port"].map(_normalize_port_name)
+        port_agg = (po.dropna(subset=["port_norm"])
+                       .groupby("port_norm")["ton"].sum()
+                       .sort_values(ascending=False).head(30)
+                       .reset_index())
+        if port_agg.empty:
+            st.info("항구 데이터 없음")
+        else:
+            fig = px.bar(port_agg.sort_values("ton"),
+                          x="ton", y="port_norm", orientation="h",
+                          color="ton",
+                          color_continuous_scale=theme.SCALES["blue"],
+                          labels={"port_norm": "", "ton": "총 톤"})
+            fig.update_layout(height=620, margin=dict(t=10, b=10),
+                              coloraxis_showscale=False)
             st.plotly_chart(fig, width="stretch")
 
-    with tab_gaps:
-        st.markdown("**결측 (port × period × kind) 키 점검**")
-        cs = _cargo_summary(snapshot)
-        if cs.empty:
-            st.info("LK3 데이터 없음")
+        st.markdown("**카테고리 × 항구 매트릭스** (Top 20 항구)")
+        top20 = set(port_agg.head(20)["port_norm"].tolist())
+        cb = pd.concat([
+            f[["origin", "bucket", "ton"]].rename(columns={"origin": "port"}),
+            f[["destination", "bucket", "ton"]].rename(
+                columns={"destination": "port"}),
+        ], ignore_index=True).dropna(subset=["port"])
+        cb["port_norm"] = cb["port"].map(_normalize_port_name)
+        cb = cb[cb["port_norm"].isin(top20)]
+        if cb.empty:
+            st.info("매트릭스 데이터 없음")
         else:
-            existing = set(zip(cs["kode_pelabuhan"], cs["period"], cs["kind"]))
-            ports_df = _ports()
-            periods = sorted(cs["period"].unique())
-            ports_list = ports_df["kode_pelabuhan"].tolist()
-            missing_rows = []
-            for p in ports_list:
-                for per in periods:
-                    for k in ("dn", "ln"):
-                        if (p, per, k) not in existing:
-                            missing_rows.append({"port": p, "period": per, "kind": k})
-            mdf = pd.DataFrame(missing_rows)
-            st.caption(f"누락 키: {len(mdf):,} (port {len(ports_list)} × period {len(periods)} × kind 2 - 보유 {len(existing):,})")
-            if not mdf.empty:
-                theme.dataframe(mdf.head(2000))
+            pivot = (cb.groupby(["port_norm", "bucket"])["ton"].sum()
+                        .reset_index()
+                        .pivot(index="port_norm", columns="bucket",
+                                values="ton").fillna(0))
+            fig = px.imshow(pivot, aspect="auto",
+                             color_continuous_scale=theme.SCALES["blue"],
+                             labels=dict(x="카테고리", y="항구",
+                                          color="톤"))
+            fig.update_layout(height=520, margin=dict(t=20, b=20))
+            st.plotly_chart(fig, width="stretch")
+
+    # ============ 4) International trade ============
+    with tab_intl:
+        st.subheader("🌐 국제 무역 — 외국 항구가 endpoint인 화물 흐름")
+        st.caption(
+            "**정의**: origin 또는 destination이 외국 항구 사전(SINGAPORE / "
+            "PORT KLANG / KAOHSIUNG / RAS TANURA 등 ~40개)에 매칭된 행. "
+            "**EXPORT** = origin이 ID, destination이 외국. "
+            "**IMPORT** = origin이 외국, destination이 ID. "
+            "**Transshipment** = 양쪽 모두 외국 (LK3에 거의 없음)."
+        )
+
+        _coord_map, _foreign = _port_name_to_coords()
+        intl = f.copy()
+        intl["o_norm"] = intl["origin"].map(_normalize_port_name)
+        intl["d_norm"] = intl["destination"].map(_normalize_port_name)
+        intl["o_foreign"] = intl["o_norm"].isin(_foreign)
+        intl["d_foreign"] = intl["d_norm"].isin(_foreign)
+        intl = intl[intl["o_foreign"] | intl["d_foreign"]].copy()
+
+        if intl.empty:
+            st.info(
+                "현재 필터에 국제 항해 행이 없습니다. 화물 카테고리 / 기간 / "
+                "운영사 필터를 풀어보세요."
+            )
+        else:
+            def _direction(r):
+                if r.o_foreign and r.d_foreign:
+                    return "Transshipment"
+                return "IMPORT" if r.o_foreign else "EXPORT"
+
+            intl["trade"] = intl.apply(_direction, axis=1)
+            intl["foreign_port"] = intl.apply(
+                lambda r: r.o_norm if r.o_foreign else r.d_norm, axis=1)
+            intl["id_port"] = intl.apply(
+                lambda r: r.d_norm if r.o_foreign else r.o_norm, axis=1)
+
+            total_intl = float(intl["ton"].sum())
+            export_ton = float(intl.loc[intl["trade"] == "EXPORT",
+                                          "ton"].sum())
+            import_ton = float(intl.loc[intl["trade"] == "IMPORT",
+                                          "ton"].sum())
+            total_all = float(f["ton"].sum())
+            share = (total_intl / total_all * 100) if total_all else 0
+            n_foreign = int(intl["foreign_port"].nunique())
+
+            cols = st.columns(5)
+            kpi(cols[0], "국제 톤 합", fmt.fmt_ton(total_intl))
+            kpi(cols[1], "EXPORT 톤", fmt.fmt_ton(export_ton),
+                help="origin = ID, destination = 외국")
+            kpi(cols[2], "IMPORT 톤", fmt.fmt_ton(import_ton),
+                help="origin = 외국, destination = ID")
+            kpi(cols[3], "전체 비중", fmt.fmt_pct(share),
+                help="필터 화물 중 국제 항해의 톤 비중")
+            kpi(cols[4], "외국 endpoint 수", fmt.fmt_int(n_foreign))
+
+            st.markdown("---")
+
+            # ---- Top foreign endpoints ----
+            cA, cB = st.columns(2)
+            with cA:
+                st.markdown("**Top 외국 항구 (총 톤)**")
+                fp = (intl.groupby(["foreign_port", "trade"])["ton"].sum()
+                          .reset_index())
+                pivot = fp.pivot_table(index="foreign_port",
+                                         columns="trade", values="ton",
+                                         fill_value=0)
+                for col in ("EXPORT", "IMPORT", "Transshipment"):
+                    if col not in pivot.columns:
+                        pivot[col] = 0
+                pivot["Total"] = pivot.sum(axis=1)
+                pivot = pivot.sort_values("Total",
+                                            ascending=False).head(20)
+                top_p = pivot.reset_index()
+                fp_long = top_p.melt(
+                    id_vars="foreign_port",
+                    value_vars=["EXPORT", "IMPORT", "Transshipment"],
+                    var_name="trade", value_name="ton")
+                fp_long = fp_long[fp_long["ton"] > 0]
+                fig = px.bar(fp_long, x="ton", y="foreign_port",
+                              color="trade", orientation="h",
+                              barmode="stack",
+                              color_discrete_map={
+                                  "EXPORT": "#16a34a",
+                                  "IMPORT": "#dc2626",
+                                  "Transshipment": "#7c3aed"},
+                              labels={"foreign_port": "",
+                                       "ton": "톤", "trade": ""})
+                fig.update_layout(height=500, margin=dict(t=10, b=10),
+                                  legend=dict(orientation="h", y=-0.1,
+                                               font=dict(size=10)),
+                                  yaxis=dict(autorange="reversed"))
+                st.plotly_chart(fig, width="stretch")
+
+            with cB:
+                st.markdown("**국제 무역 화물 카테고리 mix**")
+                cm = (intl.groupby("bucket")["ton"].sum()
+                          .sort_values(ascending=False).reset_index())
+                cm = cm[cm["ton"] > 0]
+                if cm.empty:
+                    st.info("국제 무역 카테고리 데이터 없음")
+                else:
+                    fig = px.pie(cm, names="bucket", values="ton",
+                                  color="bucket",
+                                  color_discrete_map=_KOM_BUCKET_PALETTE,
+                                  hole=0.5)
+                    fig.update_traces(textinfo="percent+label",
+                                        textposition="outside")
+                    fig.update_layout(height=500, margin=dict(t=10, b=10),
+                                       legend=dict(font=dict(size=10)))
+                    theme.donut_center(fig, fmt.fmt_ton(float(cm["ton"].sum())),
+                                         "국제 톤")
+                    st.plotly_chart(fig, width="stretch")
+
+            # ---- Top intl routes (ID port ↔ foreign port) ----
+            st.markdown("**Top 국제 항로 (ID 항구 ↔ 외국 항구)**")
+            route_top = (intl.groupby(["id_port", "foreign_port",
+                                         "trade", "bucket"])
+                              .agg(톤=("ton", "sum"),
+                                   행수=("ton", "size"),
+                                   선박수=("kapal", "nunique"))
+                              .reset_index()
+                              .sort_values("톤", ascending=False).head(40))
+            route_top["톤"] = route_top["톤"].round(0)
+            theme.dataframe(route_top)
+            _csv_button(route_top, f"cargo_intl_routes_{snapshot}.csv",
+                         label="📥 국제 항로 CSV", key="cg_dl_intl")
+
+            # ---- ID port export/import pair table ----
+            st.markdown("**ID 항구별 EXPORT / IMPORT 균형**")
+            id_pair = (intl.groupby(["id_port", "trade"])["ton"]
+                            .sum().reset_index()
+                            .pivot_table(index="id_port", columns="trade",
+                                          values="ton", fill_value=0))
+            for col in ("EXPORT", "IMPORT", "Transshipment"):
+                if col not in id_pair.columns:
+                    id_pair[col] = 0
+            id_pair["Net_Export"] = id_pair["EXPORT"] - id_pair["IMPORT"]
+            id_pair["Total"] = (id_pair["EXPORT"] + id_pair["IMPORT"]
+                                  + id_pair["Transshipment"])
+            id_pair = id_pair.sort_values("Total", ascending=False).head(20)
+            for c in ("EXPORT", "IMPORT", "Transshipment",
+                       "Net_Export", "Total"):
+                id_pair[c] = id_pair[c].round(0)
+            theme.dataframe(id_pair.reset_index())
+
+    # ============ 5) STS / self-loop analysis ============
+    with tab_sts:
+        st.subheader("🔄 STS (Ship-to-Ship) / 자체 환적")
+        st.caption(
+            "**정의**: LK3 행 중 origin = destination (동일 항구) — 정유 단지·터미널 "
+            "내부 환적이나 닻 정박 중 STS 운영을 의미. "
+            "한국 메모리: 2026-05 기준 ID 탱커 LK3의 약 40%가 self-loop, 약 252M 톤 "
+            "(Pertamina Trans Kontinental이 50%+ 점유). "
+            "본 sub-tab은 **현재 필터 (선종·카테고리·기간·운영사 등)에 한정**."
+        )
+        sts = f.copy()
+        sts["o_norm"] = sts["origin"].map(_normalize_port_name)
+        sts["d_norm"] = sts["destination"].map(_normalize_port_name)
+        sts = sts.dropna(subset=["o_norm", "d_norm"])
+        sts = sts[sts["o_norm"] == sts["d_norm"]].copy()
+        sts["hub"] = sts["o_norm"]
+
+        if sts.empty:
+            st.info("현재 필터에 self-loop (STS) 행이 없습니다.")
+        else:
+            total_ton_all = float(f["ton"].sum())
+            sts_ton = float(sts["ton"].sum())
+            sts_share = (sts_ton / total_ton_all * 100) if total_ton_all else 0
+            n_hubs = int(sts["hub"].nunique())
+            n_op = int(sts["operator"].dropna().nunique())
+            n_kapal = int(sts["kapal"].dropna().nunique())
+
+            cols = st.columns(5)
+            kpi(cols[0], "STS 톤 합", fmt.fmt_ton(sts_ton))
+            kpi(cols[1], "전체 대비", fmt.fmt_pct(sts_share),
+                help="현재 필터 화물 중 self-loop 톤 비중")
+            kpi(cols[2], "STS 허브 수", fmt.fmt_int(n_hubs))
+            kpi(cols[3], "STS 운영사", fmt.fmt_int(n_op))
+            kpi(cols[4], "STS 선박", fmt.fmt_int(n_kapal))
+
+            st.markdown("---")
+
+            # ---- Top hubs & top operators ----
+            cA, cB = st.columns(2)
+            with cA:
+                st.markdown("**Top STS 허브 (총 톤)**")
+                hub_ton = (sts.groupby("hub")["ton"].sum()
+                                .sort_values(ascending=False).head(20)
+                                .reset_index())
+                fig = px.bar(hub_ton.sort_values("ton"),
+                              x="ton", y="hub", orientation="h",
+                              color="ton",
+                              color_continuous_scale=theme.SCALES["blue"],
+                              labels={"hub": "", "ton": "톤"})
+                fig.update_layout(height=520, margin=dict(t=10, b=10),
+                                   coloraxis_showscale=False)
+                st.plotly_chart(fig, width="stretch")
+
+            with cB:
+                st.markdown("**Top STS 운영사 (총 톤)**")
+                op_ton = (sts.dropna(subset=["operator"])
+                                .groupby("operator")["ton"].sum()
+                                .sort_values(ascending=False).head(20)
+                                .reset_index())
+                fig = px.bar(op_ton.sort_values("ton"),
+                              x="ton", y="operator", orientation="h",
+                              color="ton",
+                              color_continuous_scale=theme.SCALES["amber"],
+                              labels={"operator": "", "ton": "톤"})
+                fig.update_layout(height=520, margin=dict(t=10, b=10),
+                                   coloraxis_showscale=False)
+                st.plotly_chart(fig, width="stretch")
+
+            # ---- STS commodity mix + monthly trend ----
+            cC, cD = st.columns(2)
+            with cC:
+                st.markdown("**STS 화물 카테고리 mix**")
+                cm = (sts.groupby("bucket")["ton"].sum()
+                          .sort_values(ascending=False).reset_index())
+                cm = cm[cm["ton"] > 0]
+                if cm.empty:
+                    st.info("STS 카테고리 데이터 없음")
+                else:
+                    fig = px.pie(cm, names="bucket", values="ton",
+                                  color="bucket",
+                                  color_discrete_map=_KOM_BUCKET_PALETTE,
+                                  hole=0.5)
+                    fig.update_traces(textinfo="percent+label",
+                                        textposition="outside")
+                    fig.update_layout(height=420, margin=dict(t=10, b=10),
+                                       legend=dict(font=dict(size=10)))
+                    theme.donut_center(fig, fmt.fmt_ton(sts_ton),
+                                         "STS 톤")
+                    st.plotly_chart(fig, width="stretch")
+            with cD:
+                st.markdown("**STS 월별 톤수 추이 (카테고리 누적)**")
+                mt = (sts.groupby(["period", "bucket"])["ton"].sum()
+                           .reset_index().sort_values("period"))
+                if mt.empty:
+                    st.info("월별 데이터 없음")
+                else:
+                    fig = px.area(mt, x="period", y="ton",
+                                   color="bucket",
+                                   color_discrete_map=_KOM_BUCKET_PALETTE,
+                                   labels={"period": "월", "ton": "톤"})
+                    fig.update_layout(height=420, margin=dict(t=10, b=10),
+                                       legend=dict(orientation="h", y=-0.2,
+                                                    font=dict(size=10)))
+                    st.plotly_chart(fig, width="stretch")
+
+            # ---- HHI of STS hub concentration ----
+            st.markdown("##### STS 허브 집중도 (HHI)")
+            hub_pct = (hub_ton["ton"] / hub_ton["ton"].sum() * 100)
+            hhi = float((hub_pct ** 2).sum())
+            band = ("저집중" if hhi < 1500
+                     else "중집중" if hhi < 2500
+                     else "고집중")
+            cE = st.columns(4)
+            kpi(cE[0], "Top-20 HHI", f"{hhi:,.0f}",
+                help="KPPU 기준 1500/2500 — 0~10,000 percent-share HHI")
+            kpi(cE[1], "Top-1 점유율",
+                fmt.fmt_pct(float(hub_pct.max())))
+            kpi(cE[2], "Top-3 누적",
+                fmt.fmt_pct(float(hub_pct.head(3).sum())))
+            kpi(cE[3], "분류", band)
+
+            # ---- Detail table ----
+            st.markdown("##### STS 허브 × 운영사 × 카테고리 Top 50")
+            tbl = (sts.groupby(["hub", "operator", "bucket"])["ton"]
+                        .sum().reset_index()
+                        .sort_values("ton", ascending=False).head(50))
+            tbl["ton"] = tbl["ton"].round(0)
+            tbl = tbl.rename(columns={"hub": "STS_허브",
+                                          "operator": "운영사",
+                                          "bucket": "카테고리",
+                                          "ton": "톤"})
+            theme.dataframe(tbl)
+            _csv_button(tbl, f"cargo_sts_detail_{snapshot}.csv",
+                         label="📥 STS 상세 CSV", key="cg_dl_sts")
+
+    # ============ 6) Detail list ============
+    with tab_list:
+        st.markdown(
+            "**상세 화물 행 리스트** — 현재 필터에 매치되는 LK3 raw 행 (정렬·CSV)"
+        )
+        cA, cB = st.columns([1, 1])
+        with cA:
+            sort_col = st.selectbox(
+                "정렬 기준",
+                ["ton", "period", "kapal", "operator", "origin",
+                 "destination", "bucket"],
+                key="cg_sort_col",
+            )
+        with cB:
+            sort_dir = st.radio(
+                "정렬 방향", ["내림차순", "오름차순"], horizontal=True,
+                key="cg_sort_dir",
+            )
+        ascending = sort_dir == "오름차순"
+        tbl = f.sort_values(sort_col, ascending=ascending,
+                               na_position="last")
+
+        show_cols = ["period", "direction", "bucket", "kom",
+                      "kapal", "operator", "jenis_kapal", "vessel_class",
+                      "origin", "destination", "ton", "gt", "dwt"]
+        show_cols = [c for c in show_cols if c in tbl.columns]
+        tbl_show = tbl[show_cols].head(3000).copy()
+        tbl_show["ton"] = tbl_show["ton"].round(1)
+        st.caption(f"표시 {len(tbl_show):,} / 필터 {len(f):,} rows (최대 3,000)")
+        theme.dataframe(tbl_show)
+        _csv_button(tbl[show_cols], f"cargo_flows_{snapshot}.csv",
+                     label="📥 화물 흐름 CSV (필터 전체)",
+                     key="cg_csv_full")
 
 
 def page_changes():
