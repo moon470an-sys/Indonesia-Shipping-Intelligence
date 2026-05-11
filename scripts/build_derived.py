@@ -550,6 +550,31 @@ def build_cargo_yearly() -> dict:
             )
             od_rows_raw = cur.fetchall()
 
+            # PR-36: per-(o, d, komoditi) ton so we can attach a dominant
+            # category to each year-cut route. The Home map's year-mode then
+            # regains color parity with 24M mode.
+            cur.execute(
+                f"SELECT o, d, kom, SUM(t) AS s FROM ( "
+                f"  SELECT json_extract(raw_row, '{P_ORIG}') AS o, "
+                f"         json_extract(raw_row, '{P_DEST}') AS d, "
+                f"         json_extract(raw_row, '{P_K_B}') AS kom, "
+                f"         {ton(P_T_B)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f"  UNION ALL "
+                f"  SELECT json_extract(raw_row, '{P_ORIG}') AS o, "
+                f"         json_extract(raw_row, '{P_DEST}') AS d, "
+                f"         json_extract(raw_row, '{P_K_M}') AS kom, "
+                f"         {ton(P_T_M)} AS t "
+                f"  FROM cargo_snapshot WHERE snapshot_month=? AND data_year=? "
+                f") WHERE o IS NOT NULL AND o != '' AND o != '-' "
+                f"  AND d IS NOT NULL AND d != '' AND d != '-' "
+                f"  AND kom IS NOT NULL AND kom != '' AND kom != '-' "
+                f"  AND t > 0 "
+                f"GROUP BY o, d, kom",
+                (snap, yr_int, snap, yr_int),
+            )
+            od_kom_raw = cur.fetchall()
+
             # Normalize, look up coords, split into top routes vs STS hubs.
             od_agg: dict = {}
             sts_agg: dict = {}
@@ -571,12 +596,50 @@ def build_cargo_yearly() -> dict:
                     od_agg[key][0] += t
                     od_agg[key][1] += c
 
+            # PR-36: fold (o, d, kom) into normalized (on, dn) -> category_ton
+            # so each route can be tagged with its dominant commodity category.
+            try:
+                from backend.build_static import _flow_classify_kom  # type: ignore
+            except Exception:
+                def _flow_classify_kom(label):
+                    if not label:
+                        return "기타"
+                    s = str(label).upper()
+                    if "CRUDE" in s or "MENTAH" in s:
+                        return "Crude"
+                    if "CPO" in s or "PALM OIL" in s or "MINYAK SAWIT" in s:
+                        return "CPO/팜오일"
+                    if "LNG" in s or "NATURAL GAS" in s:
+                        return "LNG"
+                    if "LPG" in s or "ELPIJI" in s:
+                        return "LPG"
+                    return "기타"
+
+            od_cat: dict[tuple[str, str], dict[str, float]] = {}
+            for o, d, kom, t in od_kom_raw:
+                on = _flow_normalize_port(o)
+                dn = _flow_normalize_port(d)
+                if not on or not dn:
+                    continue
+                bucket = _flow_classify_kom(kom)
+                category = _bucket_to_category(bucket)
+                if not category:
+                    continue
+                key = (on, dn)
+                if key not in od_cat:
+                    od_cat[key] = {}
+                od_cat[key][category] = od_cat[key].get(category, 0.0) + float(t or 0)
+
             # Top 30 OD routes (mappable preferred — keep all then sort)
             route_rows = []
             for (on, dn), (tv, cv) in sorted(
                 od_agg.items(), key=lambda kv: -kv[1][0])[:120]:
                 op = port_coords.get(on)
                 dp = port_coords.get(dn)
+                # PR-36: dominant commodity category for this OD pair
+                cats = od_cat.get((on, dn), {})
+                dominant = max(cats, key=cats.get) if cats else None
+                category_ton = {c: round(t, 1) for c, t in cats.items()}
                 route_rows.append({
                     "origin": on,
                     "destination": dn,
@@ -587,6 +650,8 @@ def build_cargo_yearly() -> dict:
                     "ton": round(tv, 1),
                     "calls": cv,
                     "mappable": bool(op and dp),
+                    "category": dominant,
+                    "category_ton": category_ton,
                 })
             # Prefer mappable routes for the headline Top 30; fall back to
             # non-mappable if mappable count is short.

@@ -1376,16 +1376,20 @@ function drawHomeMap() {
         origin: r.origin, destination: r.destination,
         lat_o: r.lat_o, lon_o: r.lon_o,
         lat_d: r.lat_d, lon_d: r.lon_d,
-        ton_24m: r.ton,        // alias for the existing template that reads ton_24m
+        ton_24m: r.ton,                  // alias for the existing template
         vessels: 0,
         calls: r.calls || 0,
-        category: null,
+        // PR-36: backend now attaches dominant commodity category so year
+        // mode colour-matches 24M mode.
+        category: r.category || null,
+        category_ton: r.category_ton || {},
       }));
     routeTonField = "ton_24m";
     const mpy = homeState.cargoYearly.months_per_year || {};
     const partial = (mpy[homeState.filterPeriod] || 0) < 12;
     yearLabel = `${homeState.filterPeriod}년${partial ? ` (${mpy[homeState.filterPeriod]}mo, 부분)` : ""}`;
-    notes.push(`${yearLabel} 달력연도 cut · 카테고리 분리 없음 (단색)`);
+    const cats = new Set(routes.map(r => r.category).filter(Boolean));
+    notes.push(`${yearLabel} 달력연도 cut · 카테고리 ${cats.size}개 색상 분리`);
   } else {
     if (homeState.filterCategory === "bulk") {
       notes.push("드라이벌크 OD 분리 미구현 — 탱커 데이터 표시 중");
@@ -1421,11 +1425,13 @@ function drawHomeMap() {
     const cx = mx - (dy / norm) * lift;
     const cy = my + (dx / norm) * lift;
     const d = `M ${start[0]} ${start[1]} Q ${cx} ${cy} ${end[0]} ${end[1]}`;
-    // PR-35: navy default in year mode (no per-route category); legacy gray
-    // when a 24M route lacks a category.
-    const color = categoryColors[r.category] || (isYearMode ? "#1A3A6B" : "#6b7280");
+    // PR-35/36: categoryColors maps the 5 map_flow.categories names to hex.
+    // Year-mode now has dominant category attached (PR-36) so the SAME
+    // colour map applies; the gray fallback covers routes whose dominant
+    // category fell outside the 5-bucket scheme.
+    const color = categoryColors[r.category] || "#6b7280";
     const pathId = `route-path-${i}`;
-    const dimmed = !isYearMode && hi && r.category !== hi;
+    const dimmed = hi && r.category !== hi;
     const baseStroke = Math.max(1, 4 * r.ton_24m / tonMax);
     const path = routeLayer.append("path")
       .attr("id", pathId)

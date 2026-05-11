@@ -113,7 +113,11 @@
           "lon_d": 104.1,
           "ton": 4741335.0,
           "calls": 55,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 4741335.0
+          }
         },
         {
           "origin": "TANJUNG PRIOK",
@@ -124,7 +128,11 @@
           "lon_d": 119.41,
           "ton": 3396741.9,
           "calls": 569,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3396726.9
+          }
         },
         {
           "origin": "PATIMBAN",
@@ -135,7 +143,11 @@
           "lon_d": 106.88,
           "ton": 1629009.1,
           "calls": 21,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1629009.1
+          }
         },
         {
           "origin": "TANJUNG EMAS",
@@ -146,7 +158,12 @@
           "lon_d": 114.59,
           "ton": 1495071.1,
           "calls": 268,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1486271.1,
+            "FAME / Edible": 8800.0
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -157,7 +174,13 @@
           "lon_d": 106.88,
           "ton": 1431650.8,
           "calls": 623,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1356512.8,
+            "FAME / Edible": 19529.9,
+            "Crude": 15528.4
+          }
         },
         {
           "origin": "TANJUNG PRIOK",
@@ -168,7 +191,13 @@
           "lon_d": 112.74,
           "ton": 1407393.9,
           "calls": 641,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1316376.7,
+            "FAME / Edible": 38268.5,
+            "Crude": 3499.0
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -179,7 +208,13 @@
           "lon_d": 125.18,
           "ton": 1346066.8,
           "calls": 1892,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1331637.2,
+            "Crude": 7003.0,
+            "FAME / Edible": 2305.0
+          }
         },
         {
           "origin": "BAU-BAU",
@@ -190,7 +225,13 @@
           "lon_d": 112.74,
           "ton": 1155503.2,
           "calls": 492,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1155275.2,
+            "FAME / Edible": 144.0,
+            "LPG / LNG": 84.0
+          }
         },
         {
           "origin": "TUBAN",
@@ -201,7 +242,13 @@
           "lon_d": 116.83,
           "ton": 1127994.3,
           "calls": 47,
-          "mappable": true
+          "mappable": true,
+          "category": "Crude",
+          "category_ton": {
+            "Crude": 621777.6,
+            "Product / BBM": 500297.7,
+            "FAME / Edible": 5919.0
+          }
         },
         {
           "origin": "KUMAI",
@@ -212,7 +259,13 @@
           "lon_d": 112.94,
           "ton": 1119952.2,
           "calls": 156,
-          "mappable": true
+          "mappable": true,
+          "category": "FAME / Edible",
+          "category_ton": {
+            "Product / BBM": 92086.6,
+            "FAME / Edible": 949918.6,
+            "Crude": 69094.0
+          }
         },
         {
           "origin": "SAMARINDA",
@@ -223,7 +276,14 @@
           "lon_d": 116.83,
           "ton": 1106903.7,
           "calls": 678,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1010772.2,
+            "Chemical": 3.0,
+            "FAME / Edible": 54403.5,
+            "Crude": 41724.9
+          }
         },
         {
           "origin": "BOOM BARU",
@@ -234,7 +294,12 @@
           "lon_d": 106.88,
           "ton": 1102099.0,
           "calls": 106,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1063211.0,
+            "FAME / Edible": 38888.0
+          }
         },
         {
           "origin": "MAKASSAR",
@@ -245,7 +310,13 @@
           "lon_d": 112.74,
           "ton": 1064164.4,
           "calls": 1495,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1058045.4,
+            "FAME / Edible": 3043.0,
+            "LPG / LNG": 326.0
+          }
         },
         {
           "origin": "CILACAP",
@@ -256,7 +327,13 @@
           "lon_d": 112.05,
           "ton": 1020112.5,
           "calls": 47,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 944159.5,
+            "Crude": 73475.0,
+            "FAME / Edible": 2478.0
+          }
         },
         {
           "origin": "BALIKPAPAN",
@@ -267,7 +344,13 @@
           "lon_d": 117.15,
           "ton": 984706.5,
           "calls": 666,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 965854.5,
+            "FAME / Edible": 12840.0,
+            "Crude": 6012.0
+          }
         },
         {
           "origin": "TUBAN",
@@ -278,7 +361,12 @@
           "lon_d": 109.02,
           "ton": 966812.8,
           "calls": 42,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Crude": 415962.2,
+            "Product / BBM": 550850.6
+          }
         },
         {
           "origin": "KABIL",
@@ -289,7 +377,13 @@
           "lon_d": 98.69,
           "ton": 954683.9,
           "calls": 72,
-          "mappable": true
+          "mappable": true,
+          "category": "Crude",
+          "category_ton": {
+            "Product / BBM": 71919.9,
+            "FAME / Edible": 23243.3,
+            "Crude": 519828.0
+          }
         },
         {
           "origin": "TUBAN",
@@ -300,7 +394,12 @@
           "lon_d": 101.45,
           "ton": 947747.0,
           "calls": 39,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Crude": 473328.0,
+            "Product / BBM": 474419.0
+          }
         },
         {
           "origin": "BANJARMASIN",
@@ -311,7 +410,13 @@
           "lon_d": 117.15,
           "ton": 947662.8,
           "calls": 208,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 936392.8,
+            "Crude": 7020.0,
+            "FAME / Edible": 4250.0
+          }
         },
         {
           "origin": "BALIKPAPAN",
@@ -322,7 +427,12 @@
           "lon_d": 112.05,
           "ton": 922550.9,
           "calls": 66,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 803574.9,
+            "Crude": 118976.0
+          }
         }
       ],
       "top_sts": [
@@ -534,7 +644,13 @@
           "lon_d": 125.18,
           "ton": 3881904.3,
           "calls": 2860,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3873581.3,
+            "FAME / Edible": 4275.9,
+            "Crude": 3504.0
+          }
         },
         {
           "origin": "PONTIANAK",
@@ -545,7 +661,13 @@
           "lon_d": 106.88,
           "ton": 3292953.6,
           "calls": 341,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3234141.3,
+            "FAME / Edible": 18650.3,
+            "Crude": 15944.0
+          }
         },
         {
           "origin": "TANJUNG PRIOK",
@@ -556,7 +678,15 @@
           "lon_d": 112.74,
           "ton": 3113328.7,
           "calls": 1478,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3025886.5,
+            "Chemical": 6.0,
+            "FAME / Edible": 44347.0,
+            "Crude": 17530.5,
+            "LPG / LNG": 60.0
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -567,7 +697,14 @@
           "lon_d": 106.88,
           "ton": 2609151.8,
           "calls": 1356,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2528557.7,
+            "FAME / Edible": 29213.4,
+            "Crude": 17518.9,
+            "LPG / LNG": 36.0
+          }
         },
         {
           "origin": "BAU-BAU",
@@ -578,7 +715,12 @@
           "lon_d": 112.74,
           "ton": 2527560.8,
           "calls": 553,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2526313.1,
+            "FAME / Edible": 1247.7
+          }
         },
         {
           "origin": "TANJUNG PRIOK",
@@ -589,7 +731,13 @@
           "lon_d": 119.41,
           "ton": 2376479.3,
           "calls": 821,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2357442.3,
+            "FAME / Edible": 15036.9,
+            "LPG / LNG": 4000.0
+          }
         },
         {
           "origin": "SAMARINDA",
@@ -600,7 +748,13 @@
           "lon_d": 116.83,
           "ton": 1669165.6,
           "calls": 945,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1590041.6,
+            "FAME / Edible": 57217.0,
+            "Crude": 16207.0
+          }
         },
         {
           "origin": "SAMARINDA",
@@ -611,7 +765,12 @@
           "lon_d": 114.59,
           "ton": 1544797.5,
           "calls": 433,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1524255.9,
+            "FAME / Edible": 20541.6
+          }
         },
         {
           "origin": "CILACAP",
@@ -622,7 +781,13 @@
           "lon_d": 112.05,
           "ton": 1498901.6,
           "calls": 71,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Crude": 148354.5,
+            "FAME / Edible": 19465.0,
+            "Product / BBM": 1331082.2
+          }
         },
         {
           "origin": "TUBAN",
@@ -633,7 +798,14 @@
           "lon_d": 116.83,
           "ton": 1471847.1,
           "calls": 81,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Crude": 462013.0,
+            "Product / BBM": 941474.9,
+            "FAME / Edible": 66659.2,
+            "LPG / LNG": 1700.0
+          }
         },
         {
           "origin": "MAKASSAR",
@@ -644,7 +816,12 @@
           "lon_d": 106.88,
           "ton": 1354084.6,
           "calls": 1104,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1338584.7,
+            "FAME / Edible": 15500.0
+          }
         }
       ],
       "top_sts": [
@@ -856,7 +1033,12 @@
           "lon_d": 112.74,
           "ton": 9273260.5,
           "calls": 512,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 9273001.4,
+            "FAME / Edible": 259.2
+          }
         },
         {
           "origin": "WEDA",
@@ -867,7 +1049,11 @@
           "lon_d": null,
           "ton": 6516215.5,
           "calls": 300,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 6516215.5
+          }
         },
         {
           "origin": "MOLAWE",
@@ -878,7 +1064,11 @@
           "lon_d": null,
           "ton": 3528077.3,
           "calls": 688,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 3528077.3
+          }
         },
         {
           "origin": "WEDA",
@@ -889,7 +1079,11 @@
           "lon_d": null,
           "ton": 2870462.8,
           "calls": 61,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2870462.8
+          }
         },
         {
           "origin": "BAHODOPI",
@@ -900,7 +1094,11 @@
           "lon_d": null,
           "ton": 2810399.7,
           "calls": 53,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2810399.7
+          }
         },
         {
           "origin": "WEDA",
@@ -911,7 +1109,11 @@
           "lon_d": null,
           "ton": 2780424.3,
           "calls": 336,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2780424.3
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -922,7 +1124,11 @@
           "lon_d": null,
           "ton": 2779945.5,
           "calls": 85,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2779945.5
+          }
         },
         {
           "origin": "WEDA",
@@ -933,7 +1139,11 @@
           "lon_d": null,
           "ton": 2711353.4,
           "calls": 275,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2711353.4
+          }
         },
         {
           "origin": "KOLONODALE",
@@ -944,7 +1154,11 @@
           "lon_d": null,
           "ton": 2697906.1,
           "calls": 472,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2697906.1
+          }
         },
         {
           "origin": "MOROWALI",
@@ -955,7 +1169,11 @@
           "lon_d": null,
           "ton": 2686500.6,
           "calls": 551,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2686500.6
+          }
         },
         {
           "origin": "MOLAWE",
@@ -966,7 +1184,11 @@
           "lon_d": null,
           "ton": 2644869.0,
           "calls": 571,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2644869.0
+          }
         },
         {
           "origin": "OBI ISLAND",
@@ -977,7 +1199,11 @@
           "lon_d": null,
           "ton": 2457466.0,
           "calls": 297,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2457465.9
+          }
         },
         {
           "origin": "MOROWALI",
@@ -988,7 +1214,11 @@
           "lon_d": null,
           "ton": 2300630.0,
           "calls": 402,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2300630.0
+          }
         },
         {
           "origin": "MOROWALI",
@@ -999,7 +1229,11 @@
           "lon_d": null,
           "ton": 2169119.3,
           "calls": 299,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2169119.3
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -1010,7 +1244,13 @@
           "lon_d": 125.18,
           "ton": 2142746.6,
           "calls": 1043,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2138119.6,
+            "Crude": 3510.0,
+            "FAME / Edible": 835.0
+          }
         },
         {
           "origin": "SAMARINDA",
@@ -1021,7 +1261,11 @@
           "lon_d": null,
           "ton": 2080984.4,
           "calls": 645,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 2080984.4
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -1032,7 +1276,11 @@
           "lon_d": null,
           "ton": 1993586.9,
           "calls": 145,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1993586.9
+          }
         },
         {
           "origin": "SINGAPORE",
@@ -1043,7 +1291,11 @@
           "lon_d": 112.74,
           "ton": 1784612.5,
           "calls": 308,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1784612.5
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -1054,7 +1306,13 @@
           "lon_d": 106.88,
           "ton": 1777800.8,
           "calls": 669,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1723010.5,
+            "FAME / Edible": 33936.0,
+            "Crude": 18154.2
+          }
         },
         {
           "origin": "HONG KONG",
@@ -1065,7 +1323,11 @@
           "lon_d": null,
           "ton": 1672160.0,
           "calls": 33,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1672160.0
+          }
         },
         {
           "origin": "MUARA JAWA",
@@ -1076,7 +1338,11 @@
           "lon_d": null,
           "ton": 1519192.4,
           "calls": 10,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1519192.4
+          }
         },
         {
           "origin": "MOLAWE",
@@ -1087,7 +1353,11 @@
           "lon_d": null,
           "ton": 1513292.4,
           "calls": 270,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1513292.4
+          }
         },
         {
           "origin": "TANJUNG PERAK",
@@ -1098,7 +1368,14 @@
           "lon_d": null,
           "ton": 1490676.1,
           "calls": 453,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1463282.1,
+            "Chemical": 96.0,
+            "FAME / Edible": 27288.0,
+            "LPG / LNG": 10.0
+          }
         },
         {
           "origin": "HONG KONG",
@@ -1109,7 +1386,11 @@
           "lon_d": null,
           "ton": 1469189.0,
           "calls": 21,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1469189.0
+          }
         },
         {
           "origin": "PORT KLANG",
@@ -1120,7 +1401,13 @@
           "lon_d": null,
           "ton": 1441282.5,
           "calls": 273,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1409683.3,
+            "Crude": 14999.2,
+            "FAME / Edible": 3000.0
+          }
         },
         {
           "origin": "MOLAWE",
@@ -1131,7 +1418,11 @@
           "lon_d": null,
           "ton": 1434961.1,
           "calls": 276,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1434961.1
+          }
         },
         {
           "origin": "CHATTOGRAM",
@@ -1142,7 +1433,11 @@
           "lon_d": null,
           "ton": 1422025.0,
           "calls": 25,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1422025.0
+          }
         },
         {
           "origin": "KOLONODALE",
@@ -1153,7 +1448,11 @@
           "lon_d": null,
           "ton": 1376924.8,
           "calls": 231,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1376924.8
+          }
         },
         {
           "origin": "SAMARINDA",
@@ -1164,7 +1463,12 @@
           "lon_d": 117.49,
           "ton": 1361275.4,
           "calls": 100,
-          "mappable": true
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1358271.4,
+            "Crude": 3004.0
+          }
         },
         {
           "origin": "SINGAPORE",
@@ -1175,7 +1479,13 @@
           "lon_d": null,
           "ton": 1339956.0,
           "calls": 145,
-          "mappable": false
+          "mappable": false,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 1150760.7,
+            "Crude": 29204.0,
+            "FAME / Edible": 159991.3
+          }
         }
       ],
       "top_sts": [
