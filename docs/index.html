@@ -521,7 +521,8 @@
             <button id="fl-csv" type="button" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">📥 CSV</button>
           </div>
         </div>
-        <div class="overflow-x-auto">
+        <!-- Cycle 21: sticky thead 작동을 위해 max-height + overflow-y-auto -->
+        <div class="overflow-auto" style="max-height:70vh">
           <table id="fl-table" class="min-w-full text-[11px]">
             <thead class="bg-slate-50">
               <tr id="fl-thead-row"></tr>

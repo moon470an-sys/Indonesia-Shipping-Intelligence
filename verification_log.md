@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 21 검증 — 2026-05-12 (Supply 탭 13차 — sticky thead + sort 강조 + mobile 점검)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 선박 목록 sticky thead | ✅ Cycle 21 | thead position:sticky, top:0, z-index:5. 컨테이너 max-height:70vh로 스크롤 영역 분리 |
+| 정렬 컬럼 시각 강조 | ✅ Cycle 21 | aria-sort 속성 → blue-100 bg, navy text. 스크린리더 호환 |
+| 모바일 반응형 점검 | ✅ Cycle 21 | iPhone 13 (390px): KPI grid-cols-2 정상, 차트 단열 stack, scope strip wrap. 외양 양호. minor: term-info 툴팁이 영역 밖으로 확장하지만 시각 거슬리지 않음 |
+| 화면 결과 (smoke test) | ✅ sticky position 적용, 스크롤 400px → thead top diff 0 (vis 고정), 기본 정렬 gt=desc, 클릭 후 nama=asc + bg rgb(219,234,254) | playwright |
+
+### 횡단
+- 원칙 lint ✅. CSS 추가만, 데이터 흐름 무영향.
+
 ## Cycle 20 검증 — 2026-05-12 (Supply 탭 디자인·데이터 12차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

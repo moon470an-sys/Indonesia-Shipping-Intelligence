@@ -2876,8 +2876,11 @@ function _renderFleetView() {
   if (hr && hr.checked !== tabEl._fleetHideRaw) hr.checked = tabEl._fleetHideRaw;
   document.querySelectorAll("#fl-thead-row th[data-col]").forEach(h => {
     const m = h.querySelector("[data-sort-marker]");
-    if (!m) return;
-    m.textContent = h.dataset.col === st.sortCol ? (st.sortDir === "asc" ? "▲" : "▼") : "";
+    const isActive = h.dataset.col === st.sortCol;
+    // Cycle 21: aria-sort 속성으로 sticky thead 강조 + 스크린리더 시그널
+    if (isActive) h.setAttribute("aria-sort", st.sortDir === "asc" ? "ascending" : "descending");
+    else h.removeAttribute("aria-sort");
+    if (m) m.textContent = isActive ? (st.sortDir === "asc" ? "▲" : "▼") : "";
   });
   // Cycle 19: 현재 필터 상태 URL hash 동기화 (Supply 탭이 활성일 때만)
   try { _writeFleetUrl(); } catch (e) { /* ignore */ }
