@@ -2818,7 +2818,7 @@ function _renderFleetView() {
   // ---- KPI strip (5 cards · jang1117 layout) ----
   let sumGt = 0, nGt = 0, sumAgeGt = 0;
   let sumLoa = 0, nLoa = 0, sumW = 0, nW = 0, sumD = 0, nD = 0;
-  let aged25 = 0, agedTotalForPct = 0;
+  let aged25 = 0, agedTotalForPct = 0, agedSumGt = 0;
   const jenisSet = new Set();
   for (const r of rows) {
     const gt = r[I.gt] || 0;
@@ -2828,7 +2828,7 @@ function _renderFleetView() {
     // Cycle 9: 25년+ 노후선 카운트. age는 정수형(가용시), 결측은 KPI에서 제외.
     if (age != null) {
       agedTotalForPct += 1;
-      if (age >= 25) aged25 += 1;
+      if (age >= 25) { aged25 += 1; if (gt > 0) agedSumGt += gt; }
     }
     if ((r[I.loa] || 0) > 0)   { sumLoa += r[I.loa]; nLoa++; }
     if ((r[I.lebar] || 0) > 0) { sumW   += r[I.lebar]; nW++; }
@@ -2845,17 +2845,21 @@ function _renderFleetView() {
     if (el) el.textContent = val;
   };
   set("fl-kpi-count", fmtCount(rows.length));
+  // Cycle 31: 선박 수 sub에 선대 GT 합계 추가 (시장 규모 신호)
   set("fl-kpi-pct",
     `${fmtCount(rows.length)} / ${fmtCount(totalRows)}` +
-    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : ""));
+    (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : "") +
+    (sumGt > 0 ? ` · GT ${fmtTon(sumGt)}` : ""));
   set("fl-kpi-jenis", fmtCount(jenisSet.size));
   set("fl-kpi-avggt", avgGt ? fmtCount(Math.round(avgGt)) : "—");
   // Cycle 9: "평균 건조연도" 대신 노후선 25년+ (척수 + %). 의사결정 직결.
   const agedPct = agedTotalForPct > 0 ? (aged25 / agedTotalForPct) * 100 : null;
   set("fl-kpi-aged25", aged25 ? fmtCount(aged25) : "—");
+  // Cycle 31: 노후 KPI sub에 25y+ 척의 합계 GT 추가 (자산 규모 신호)
   set("fl-kpi-aged25-pct",
     (agedPct != null ? `전체 ${agedPct.toFixed(1)}% · ` : "") +
-    (avgAge != null ? `평균 선령 ${avgAge.toFixed(1)}년` : "평균 선령 —"));
+    (avgAge != null ? `평균 ${avgAge.toFixed(1)}년` : "평균 —") +
+    (agedSumGt > 0 ? ` · GT ${fmtTon(agedSumGt)}` : ""));
   // Cycle 10: 노후선 필터 활성화 시 KPI 카드에 ring 강조.
   const agedBtn = document.getElementById("fl-kpi-aged25-card");
   if (agedBtn) {

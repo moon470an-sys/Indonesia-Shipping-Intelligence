@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 31 검증 — 2026-05-12 (Supply 탭 23차 — KPI sub에 합계 GT)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 선박 수 KPI sub에 선대 GT 합계 | ✅ Cycle 31 | "41,135 / 91,807 (44.8%) · GT 53.1M" — 시장 규모 신호 |
+| 노후 KPI sub에 노후선 합계 GT | ✅ Cycle 31 | "전체 31.8% · 평균 17.2년 · GT 11.5M" — 자산 규모 신호 (전체 53.1M의 21.6%) |
+
+### 횡단
+- 원칙 lint ✅. 데이터 통계 표시만 — 25y+ 노후선 자산 규모 시그널 강화.
+
 ## Cycle 30 검증 — 2026-05-12 (Supply 탭 22차 — 선박명 search highlight)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
