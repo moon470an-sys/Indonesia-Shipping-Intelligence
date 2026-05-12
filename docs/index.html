@@ -109,10 +109,21 @@
         </p>
       </div>
 
-      <!-- Cycle 2: 항만별 물동량 인포그래픽 (Cargo 탭에서 이관). 카테고리 토글 + 항구 순위 + Leaflet 지도. -->
-      <div class="mb-3 mt-8">
-        <h3 class="font-semibold text-slate-700 text-lg">항만별 물동량 — 코모디티 인포그래픽</h3>
-        <p class="text-[11px] text-slate-500">화물 카테고리를 선택하면 항만 원 크기와 순위가 실시간 반영됩니다. 직전 24개월 누계 기준.</p>
+      <!-- Cycle 4: 항만별 물동량 인포그래픽 + 흐름 라인 + 입자 애니메이션.
+           기간 필터 (24M / 12M / 연도별) 추가. 항만 동그라미는 흐름 라인을
+           가리지 않도록 약화하고, 24M routes_top30 기반 O→D 라인 + 입자가
+           메인 시각화. -->
+      <div class="mb-3 mt-8 flex items-baseline justify-between flex-wrap gap-2">
+        <div>
+          <h3 class="font-semibold text-slate-700 text-lg">화물 흐름 + 항만별 물동량</h3>
+          <p class="text-[11px] text-slate-500">기간을 선택하면 항만 톤·순위가 갱신됩니다. 흐름 라인은 직전 24M 누계 기준 Top 30 항로 (선 두께 ∝ 톤, 입자 = 흐름 방향).</p>
+        </div>
+        <div class="flex items-center gap-2 text-[11px]" data-source="docs/derived/cargo_ports_periods.json">
+          <span class="text-slate-500">기간</span>
+          <div id="cv-period-pills" class="flex rounded border border-slate-200 overflow-hidden">
+            <button class="px-2 py-1 bg-slate-100 text-slate-400" disabled>loading…</button>
+          </div>
+        </div>
       </div>
       <div class="cv-app" data-source="docs/derived/cargo_ports.json">
         <div class="cv-hdr">

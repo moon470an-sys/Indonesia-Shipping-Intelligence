@@ -905,6 +905,221 @@ def build_cargo_ports() -> dict:
     }
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# Cycle 4 — cargo_ports_periods.json
+# ──────────────────────────────────────────────────────────────────────────
+# Per-period × port × commodity tonnage. Powers the cv-app(Leaflet
+# infographic) period filter on the Demand tab.
+#
+# Periods produced:
+#   "24m"   — 직전 24개월 (partial latest 1개월 제외 시 23개월) 누계
+#   "12m"   — 직전 12개월 (partial latest 제외)
+#   "<YYYY>" — 각 calendar year (2024/2025/2026, partial year는 그대로)
+#
+# Output schema (top-level keys mirror cargo_ports.json shape per period):
+#   {
+#     schema_version, snapshot_month,
+#     active_period: "24m",   # 기본 표시
+#     periods: {
+#       "24m":   { label, months, commodities, ports },
+#       "12m":   { ... },
+#       "2024":  { label, months, partial, commodities, ports },
+#       ...
+#     }
+#   }
+# ──────────────────────────────────────────────────────────────────────────
+def build_cargo_ports_periods() -> dict:
+    """Multi-period variant of build_cargo_ports.
+
+    Re-uses the bucket taxonomy + port-coord lookup from build_cargo_ports
+    but groups rows by (period, port, kind, bucket) so the JS can flip
+    between 24m / 12m / each calendar year without refetching.
+    """
+    from backend.build_static import _FLOW_PORT_COORDS  # type: ignore
+    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
+
+    # Reuse the exact same bucket taxonomy as build_cargo_ports — keep this
+    # tuple in sync; jang1117 commodity list + Indonesia-specific additions.
+    _BUCKET_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("CRUDE OIL",            ("CRUDE OIL", "MINYAK MENTAH")),
+        ("OMAN BLEND CRUDE OIL", ("OMAN BLEND",)),
+        ("CONDENSATE",           ("CONDENSATE", "NAPHTHA", "NAFTA")),
+        ("PERTALITE",            ("PERTALITE",)),
+        ("PERTAMAX",             ("PERTAMAX",)),
+        ("AVTUR",                ("AVTUR", "JET A")),
+        ("HSD",                  ("HSD",)),
+        ("BIO SOLAR",            ("BIO SOLAR", "BIOSOLAR")),
+        ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL")),
+        ("METHANOL",             ("METHANOL",)),
+        ("ASPAL/BITUMEN",        ("ASPAL", "BITUMEN", "ASPHALT")),
+        ("LPG",                  ("LPG", "ELPIJI", "LIQUEFIED PETROLEUM")),
+        ("LNG",                  ("LNG", "NATURAL GAS")),
+        ("CPO",                  ("CPO", "PALM OIL", "MINYAK SAWIT")),
+        ("RBD PALM OIL",         ("RBD PALM OIL", "RBD OIL")),
+        ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN")),
+        ("OLEIN",                ("OLEIN",)),
+        ("PKO",                  ("PKO", "PALM KERNEL")),
+        ("STEARIN",              ("STEARIN",)),
+        ("FAME",                 ("FAME", "BIODIESEL", "METIL ESTER")),
+        ("BATU BARA CURAH KERING", ("BATU BARA", "BATUBARA", "STEAM COAL")),
+        ("COAL",                 ("COAL",)),
+        ("NICKEL ORE",           ("NICKEL", "NIKEL", "BIJIH NIKEL")),
+        ("BAUXITE",              ("BAUXITE", "BAUKSIT")),
+        ("IRON ORE",             ("IRON ORE", "BIJIH BESI")),
+        ("LIMESTONE",            ("LIMESTONE",)),
+        ("WOOD CHIP",            ("WOOD CHIP",)),
+        ("SEMEN CURAH",          ("SEMEN CURAH", "CEMENT BULK")),
+        ("SEMEN",                ("SEMEN", "CEMENT", "KLINKER", "CLINKER")),
+        ("PUPUK",                ("PUPUK", "FERTILIZER", "UREA")),
+        ("BERAS",                ("BERAS", "RICE")),
+        ("SALT",                 ("SALT", "GARAM")),
+        ("CONTAINER",            ("CONTAINER", "PETIKEMAS", "KONTAINER", "TEU")),
+        ("GENERAL CARGO",        ("GENERAL CARGO", "BARANG UMUM", "MUATAN UMUM")),
+        ("BARANG",               ("BARANG",)),
+        ("MOBIL",                ("MOBIL", "CAR ", "PASSENGER CAR")),
+        ("TRUK",                 ("TRUK", "TRUCK", "TRONTON")),
+        ("MOTOR",                ("MOTOR ", "MOTORCYCLE", "SEPEDA MOTOR")),
+        ("IKAN",                 ("IKAN", "FISH")),
+        ("TERNAK",               ("TERNAK", "LIVESTOCK")),
+        ("CHEMICAL",             ("CHEMICAL", "KIMIA")),
+    )
+
+    def _classify(label: str | None) -> str:
+        if not label:
+            return "기타"
+        s = str(label).upper()
+        for bucket, kws in _BUCKET_KEYWORDS:
+            if any(kw in s for kw in kws):
+                return bucket
+        return "기타"
+
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    def _p(k: str) -> str:
+        return ('$."' + k + '"').replace("'", "''")
+    P_KB = _p("('BONGKAR', 'KOMODITI')")
+    P_TB = _p("('BONGKAR', 'TON')")
+    P_KM = _p("('MUAT', 'KOMODITI')")
+    P_TM = _p("('MUAT', 'TON')")
+    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    # SQL aggregation keyed on (year, month) so we can bin into periods.
+    rows: list[tuple] = []  # (code, kind, k, which, year, month, t)
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        for which, P_K, P_T in (("U", P_KB, P_TB), ("S", P_KM, P_TM)):
+            cur.execute(
+                f"SELECT kode_pelabuhan, kind, data_year, data_month, "
+                f"  json_extract(raw_row, '{P_K}') AS k, "
+                f"  SUM({ton(P_T)}) AS t "
+                f"FROM cargo_snapshot WHERE snapshot_month = ? "
+                f"AND kode_pelabuhan IS NOT NULL AND kode_pelabuhan != '' "
+                f"GROUP BY kode_pelabuhan, kind, data_year, data_month, k HAVING t > 0",
+                (snap,),
+            )
+            for code, kind, year, month, k, t in cur:
+                rows.append((code, kind, k, which, int(year or 0), int(month or 0), float(t or 0)))
+
+    # Port name lookup (same as build_cargo_ports).
+    port_name: dict[str, str] = {}
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute("SELECT kode_pelabuhan, nama_pelabuhan FROM ports")
+        for code, name in cur:
+            if code and name:
+                port_name[code] = name.strip()
+
+    # ---- Determine period membership ----
+    # The partial-latest flag tells us whether to exclude the most-recent
+    # (year, month) from rolling windows. Read it from meta_for_derived.
+    meta_payload = build_meta()
+    latest = meta_payload.get("latest_lk3_month") or snap or ""   # "YYYY-MM"
+    latest_year, latest_month = (int(latest[:4]), int(latest[5:7])) if latest else (None, None)
+    # Build a set of all (year, month) actually present, sorted descending.
+    months_present = sorted(
+        {(y, m) for _, _, _, _, y, m, _ in rows if y and m},
+        reverse=True,
+    )
+
+    def _windowed(n: int) -> set[tuple[int, int]]:
+        """Return the most recent N (year, month) tuples (excluding partial
+        latest if dropped)."""
+        return set(months_present[:n])
+
+    # Build period definitions.
+    period_defs: list[dict] = [
+        {
+            "key": "24m",
+            "label": "직전 24개월",
+            "months": _windowed(24),
+        },
+        {
+            "key": "12m",
+            "label": "직전 12개월",
+            "months": _windowed(12),
+        },
+    ]
+    # One bucket per calendar year present.
+    years_present = sorted({y for y, _ in months_present})
+    for y in years_present:
+        months_for_y = {(yy, mm) for (yy, mm) in months_present if yy == y}
+        period_defs.append({
+            "key": str(y),
+            "label": f"{y}년",
+            "months": months_for_y,
+        })
+
+    # ---- Aggregate per period ----
+    period_outputs: dict[str, dict] = {}
+    for pd in period_defs:
+        keep = pd["months"]
+        ports: dict[str, dict] = {}
+        bucket_seen: set[str] = set()
+        for (code, kind, k, which, y, m, t) in rows:
+            if (y, m) not in keep:
+                continue
+            if code not in port_coords:
+                continue
+            bucket = _classify(k)
+            bucket_seen.add(bucket)
+            coord = port_coords[code]
+            p = ports.setdefault(code, {
+                "n":   port_name.get(code) or code,
+                "lat": coord[0], "lng": coord[1],
+                "dU": 0.0, "dS": 0.0, "iU": 0.0, "iS": 0.0,
+                "comms": {},
+            })
+            side = ("d" if kind == "dn" else "i") + which
+            p[side] = round(p.get(side, 0.0) + t, 1)
+            cb = p["comms"].setdefault(bucket, {"dU": 0.0, "dS": 0.0, "iU": 0.0, "iS": 0.0})
+            cb[side] = round(cb[side] + t, 1)
+
+        commodities = sorted(bucket_seen - {"기타"}) + (["기타"] if "기타" in bucket_seen else [])
+        n_months = len(keep)
+        period_outputs[pd["key"]] = {
+            "label": pd["label"],
+            "months": n_months,
+            "month_list": sorted([f"{y:04d}-{m:02d}" for (y, m) in keep]),
+            "commodities": commodities,
+            "ports": ports,
+        }
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "active_period": "24m",
+        "periods": period_outputs,
+        "_notes": {
+            "fields": "dU/dS/iU/iS per period — same shape as cargo_ports.json",
+            "bucket_keywords": [
+                {"bucket": b, "kws": list(kws)} for b, kws in _BUCKET_KEYWORDS
+            ],
+            "windows": "24m / 12m exclude partial latest month if dropped.",
+        },
+    }
+
+
 def build_cargo_routes() -> dict:
     """Origin→Destination cargo routes (lines) for the Cargo tab Leaflet map.
 
@@ -2449,6 +2664,15 @@ def main() -> None:
     bytes_total += _write_json(DERIVED / "cargo_ports.json", cp)
     print(f"  cargo_ports.json — {len(cp['ports'])} ports × "
           f"{len(cp['commodities'])} commodities")
+
+    # Cycle 4: 기간별 port × commodity 톤. cv-app 기간 필터용.
+    cpp = build_cargo_ports_periods()
+    bytes_total += _write_json(DERIVED / "cargo_ports_periods.json", cpp)
+    _periods_summary = ", ".join(
+        f"{k}: {p['months']}mo · {len(p['ports'])}p"
+        for k, p in cpp["periods"].items()
+    )
+    print(f"  cargo_ports_periods.json — {_periods_summary}")
 
     # build_cargo_routes is heavy (2.4M raw_row json_extracts × 6 paths);
     # commented out for now. Cargo OD lines on the map are sourced from

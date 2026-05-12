@@ -181,3 +181,54 @@
   period). 기존 cargo_ports.json 은 24M 누계만 있음.
 - cv-app 항만 동그라미 마커 → O→D polyline + Canvas/SVG 입자 애니메이션.
   map_flow.json 의 routes_top30 (24M only) → 기간별 routes 확장 필요.
+
+## Cycle 4 — 2026-05-12
+
+**Scope**: 사용자 요청 ② (기간별 필터) + ③ (동그라미 제거, 흐름 라인 +
+입자 애니메이션) 처리. Cargo flows 기간 확장은 차후 미루고 routes_top30
+(24M)을 흐름 라인 데이터로 재사용.
+
+### 변경 사항
+
+1. **빌더 신규: `build_cargo_ports_periods` (요청 ②)**
+   - cargo_snapshot 을 (data_year, data_month) 별로 GROUP BY 한 뒤
+     Python 측에서 period 버킷(24m / 12m / 각 calendar year) 으로 binning.
+   - 출력 schema (per-period):
+     `{ label, months, month_list, commodities, ports }` — ports 의
+     내부 구조는 기존 cargo_ports.json 과 동일하여 cv-app 렌더 함수
+     재사용 가능.
+   - bucket 분류기 + port 좌표 lookup 은 기존 `build_cargo_ports` 와
+     공유. 코드 중복 일부 있으나 향후 리팩터 가능.
+   - cargo_flows_periods 빌더는 보류 — 흐름 라인 데이터는 기존
+     map_flow.routes_top30 (24M) 을 재사용. 입자가 항로 구조를
+     보여주는 게 목적이라 기간별 정확성 < 시각적 일관성.
+
+2. **cv-app 기간 필터 UI**
+   - cv-app 헤더 우측에 `#cv-period-pills` 추가 — 24M / 12M / 2024 /
+     2025 / 2026 버튼. 클릭 시 `_cvState.period` 갱신 + `_cvState.DATA`
+     swap + 선택 코모디티 set 정리(새 기간의 commodity 목록과 교집합).
+   - `_cvState.PERIODS` 에 모든 period 객체 캐시. fetch 1회.
+
+3. **항만 동그라미 → 흐름 입자 (요청 ③)**
+   - `_cvRenderCircles` 변경: 톤 비례 가변 마커(반경 4~70px) →
+     **고정 3.5px 작은 점**. 클릭 타겟 + 위치 표시 역할만.
+   - `_cvRenderLines` 변경: opacity 0.55 → 0.22 (흐름 라인은 입자의
+     "트랙" 배경 역할). 라인 두께는 톤 비례 유지.
+   - **신규: Canvas 오버레이 입자 애니메이션** (`_cvStartFlowAnimation`).
+     - Leaflet map container 위에 `<canvas class="cv-flow-canvas">`
+       오버레이. pointer-events:none 으로 Leaflet 인터랙션 통과.
+     - 각 항로(routes_top30, 24M)에 3개씩 입자 분포. t=[0,1] 파라미터
+       로 직선 보간. 속도 _CV_FLOW_SPEED (≈ 한 항로 2.2초 통과).
+     - 입자: 카테고리 색 점 + 후행 그라데이션 트레일 + 흰색 하이라이트.
+     - 크기 ∝ √(ton/maxTon) — 큰 항로는 더 큰 입자.
+     - `map.on('resize zoom move')` 에서 canvas size 재계산. 입자
+       위치는 매 프레임 latLngToContainerPoint 재호출이라 별도 처리
+       불필요.
+
+### 다음 사이클 후보 (Cycle 5+)
+- [ ] cargo_flows_periods 빌더 — 기간별 정확한 O→D 데이터
+- [ ] document.hidden 시 flow animation 일시정지 (battery 절약)
+- [ ] 입자 색상/크기를 cv-app의 commodity 필터와 연동
+  (현재 lines는 항상 모든 카테고리 표시)
+- [ ] Balance 탭 전 sector 확장 (Container/Bulk/General 톤·GT 매칭)
+- [ ] Supply 시계열 (vessels_snapshot 다중 월)
