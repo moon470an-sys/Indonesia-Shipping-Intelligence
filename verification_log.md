@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 18 검증 — 2026-05-12 (Supply 탭 디자인·데이터 10차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Flag chart 클릭 → flag 필터 | ✅ Cycle 18 | y 라벨 클릭 시 flagFilter set. 토글 해제 가능. Indonesia 포함 |
+| Alert callout class chip 클릭 → 자동 필터 | ✅ Cycle 18 | 25y+ 클래스 칩 클릭 → vcFilter + yrMax(25y+) 동시 적용. 토글 가능 |
+| 페이지 사이즈 / raw 토글 / CSV ko localStorage 영속 | ✅ Cycle 18 | 새로고침 후에도 유지. fl_pageSize / fl_hideRaw / fl_csvKo |
+| Plotly click 핸들러 toggle 안정성 | ✅ Cycle 18 | newPlot 후 .on() 리스너 소실 이슈 해결 — 매 render마다 removeAllListeners + 재등록. heatmap / age / GT bucket / type / flag 모두 적용 |
+| 화면 결과 (smoke test) | ✅ 4 차트 모두 toggle off 정상: heatmap (yr/vc null), GT bucket (gt null), age (yrMax null), flag (null). 영속 25 retain | playwright |
+
+### 횡단
+- 원칙 lint ✅. plotly_click 안정성 패치는 잠재적 사용성 회귀 fix — toggle 동작 보장.
+
 ## Cycle 17 검증 — 2026-05-12 (Supply 탭 디자인·데이터 9차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

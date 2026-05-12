@@ -2118,6 +2118,7 @@ async function renderFleet() {
       ownerExact: "",                  // Cycle 13: Top 운영사 row 클릭 시 set
       scopeOnly: null,                 // Cycle 15: null = 모두, "cargo" / "auxiliary" 선택 시 해당만
       vcFilter: null,                  // Cycle 17: vessel_class (vc) 한정 — 히트맵 셀 클릭 시 set
+      flagFilter: null,                // Cycle 18: Flag chart 클릭 시 set
       gtMin: null, gtMax: null,
       yrMin: null, yrMax: null,
       loaMin: null, loaMax: null,
@@ -2365,6 +2366,7 @@ function _wireFleetFilters() {
       st.ownerExact = "";
       st.scopeOnly = null;
       st.vcFilter = null;
+      st.flagFilter = null;
       st.gtMin = st.gtMax = st.yrMin = st.yrMax = null;
       st.loaMin = st.loaMax = null;
       st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
@@ -2388,7 +2390,7 @@ function _wireFleetFilters() {
     csv.dataset.bound = "1";
     csv.addEventListener("click", _fleetCsvDownload);
   }
-  // Cycle 14: page size 선택
+  // Cycle 14: page size 선택. Cycle 18: 변경 시 localStorage 저장.
   const ps = document.getElementById("fl-page-size");
   if (ps && !ps.dataset.bound) {
     ps.dataset.bound = "1";
@@ -2397,17 +2399,30 @@ function _wireFleetFilters() {
       if (Number.isFinite(v) && v >= 25) {
         tabEl._fleetPageSize = v;
         tabEl._fleetPage = 1;
+        try { localStorage.setItem("fl_pageSize", String(v)); } catch (e) {}
         _renderFleetView();
       }
     });
   }
-  // Cycle 14: raw 컬럼 hide 토글
+  // Cycle 14: raw 컬럼 hide 토글. Cycle 18: localStorage 저장.
   const hr = document.getElementById("fl-hide-raw");
   if (hr && !hr.dataset.bound) {
     hr.dataset.bound = "1";
     hr.addEventListener("change", () => {
       tabEl._fleetHideRaw = !!hr.checked;
+      try { localStorage.setItem("fl_hideRaw", hr.checked ? "1" : "0"); } catch (e) {}
       _renderFleetView();
+    });
+  }
+  // Cycle 18: CSV 한글/영어 헤더 토글도 영속화
+  const ko = document.getElementById("fl-csv-ko");
+  if (ko && !ko.dataset.bound) {
+    ko.dataset.bound = "1";
+    const stored = localStorage.getItem("fl_csvKo");
+    if (stored === "0") ko.checked = false;
+    else if (stored === "1") ko.checked = true;
+    ko.addEventListener("change", () => {
+      try { localStorage.setItem("fl_csvKo", ko.checked ? "1" : "0"); } catch (e) {}
     });
   }
 }
@@ -2559,6 +2574,11 @@ function _applyFleetFilters() {
     if (st.scopeOnly && I.scope != null && r[I.scope] !== st.scopeOnly) return false;
     // Cycle 17: vcFilter (vessel_class) — 히트맵 셀 클릭 시 set
     if (st.vcFilter && r[I.vc] !== st.vcFilter) return false;
+    // Cycle 18: flagFilter (Flag chart 클릭 시 set). Indonesia는 빈 문자열로 들어옴.
+    if (st.flagFilter) {
+      const f = (r[I.flag] || "Indonesia");
+      if (f !== st.flagFilter) return false;
+    }
     return true;
   });
 
@@ -2672,9 +2692,15 @@ function _renderFleetView() {
 
   // ---- Sortable + paginated table ----
   // Cycle 14: page size 사용자 선택 (25/50/100/200). raw 컬럼 hide 토글.
+  // Cycle 18: 사용자 preference를 localStorage에 영속화.
   if (typeof tabEl._fleetPage !== "number") tabEl._fleetPage = 1;
-  if (typeof tabEl._fleetPageSize !== "number") tabEl._fleetPageSize = 100;
-  if (typeof tabEl._fleetHideRaw !== "boolean") tabEl._fleetHideRaw = false;
+  if (typeof tabEl._fleetPageSize !== "number") {
+    const saved = Number(localStorage.getItem("fl_pageSize"));
+    tabEl._fleetPageSize = (saved && [25, 50, 100, 200].includes(saved)) ? saved : 100;
+  }
+  if (typeof tabEl._fleetHideRaw !== "boolean") {
+    tabEl._fleetHideRaw = localStorage.getItem("fl_hideRaw") === "1";
+  }
   const pageSize = tabEl._fleetPageSize;
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   if (tabEl._fleetPage > totalPages) tabEl._fleetPage = 1;
@@ -2928,10 +2954,10 @@ function _drawFlChartType(rows, I) {
     yaxis: { tickfont: { size: 10 } },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
-  // Click-to-filter on Vessel Type bars
+  // Click-to-filter on Vessel Type bars. Cycle 18: re-bind every render.
   const host = document.getElementById("fl-ch-type");
-  if (host && !host.dataset.clickBound) {
-    host.dataset.clickBound = "1";
+  if (host) {
+    host.removeAllListeners?.("plotly_click");
     host.on("plotly_click", (ev) => {
       const lbl = ev?.points?.[0]?.y;
       if (!lbl) return;
@@ -3029,13 +3055,28 @@ function _drawFlChartFlag(rows, I) {
     text: ys.map(v => v.toLocaleString()),
     textposition: "outside",
     cliponaxis: false,
-    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra></extra>",
+    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra>클릭 시 국적 필터</extra>",
   }], {
     margin: { t: 5, l: 90, r: 50, b: 30 },
     xaxis: { tickfont: { size: 10 }, gridcolor: "#eef2f7", type: "log" },
     yaxis: { tickfont: { size: 10 } },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
+  // Cycle 18: Flag chart 클릭 → flagFilter 적용. Plotly.newPlot 시마다 re-bind.
+  //   Plotly v2.35는 newPlot 시 기존 .on() 핸들러를 제거하므로 매번 재등록.
+  const flagHost = document.getElementById("fl-ch-flag");
+  if (flagHost) {
+    flagHost.removeAllListeners?.("plotly_click");
+    flagHost.on("plotly_click", (ev) => {
+      const lbl = ev?.points?.[0]?.y;
+      if (!lbl) return;
+      const tabEl = document.getElementById("tab-fleet");
+      const st = tabEl._fleetState;
+      st.flagFilter = st.flagFilter === lbl ? null : lbl;
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  }
 }
 
 // Cycle 15: GT log histogram → class별 boxplot. p25/median/p75/whisker 통계로 교체.
@@ -3157,10 +3198,10 @@ function _drawFlChartAge(rows, I) {
               range: [0, 105], ticksuffix: "%" },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
-  // Cycle 15: 막대 클릭 시 해당 bucket 이상 노후만 보기 (yrMax = currentYear - bucketLo)
+  // Cycle 15: 막대 클릭 시 해당 bucket 이상 노후만 보기. Cycle 18: re-bind every render.
   const host = document.getElementById("fl-ch-age");
-  if (host && !host.dataset.clickBound) {
-    host.dataset.clickBound = "1";
+  if (host) {
+    host.removeAllListeners?.("plotly_click");
     host.on("plotly_click", (ev) => {
       const pt = ev?.points?.[0];
       if (!pt || pt.curveNumber !== 0) return;  // 누적선 트레이스 무시
@@ -3242,10 +3283,10 @@ function _drawFlChartGtBucket(rows, I) {
               rangemode: "tozero", ticksuffix: "%" },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
-  // Cycle 17: 막대 클릭 → gtMin/gtMax 필터. 초대형(25k+)은 max를 비움.
+  // Cycle 17: 막대 클릭 → gtMin/gtMax 필터. Cycle 18: re-bind every render.
   const gtHost = document.getElementById("fl-ch-gt-bucket");
-  if (gtHost && !gtHost.dataset.clickBound) {
-    gtHost.dataset.clickBound = "1";
+  if (gtHost) {
+    gtHost.removeAllListeners?.("plotly_click");
     gtHost.on("plotly_click", (ev) => {
       const pt = ev?.points?.[0];
       if (!pt || pt.curveNumber !== 0) return;  // 점유율 line 무시
@@ -3461,9 +3502,14 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal) {
   }
   const topClasses = [...byClass.entries()]
     .sort((a, b) => b[1] - a[1]).slice(0, 4);
+  // Cycle 18: 각 chip은 button — 클릭 시 vcFilter + yrMax(25y+) 즉시 적용
   const breakdown = topClasses.map(([cls, n]) => {
     const p = agedTotalByClass > 0 ? (n / agedTotalByClass * 100).toFixed(0) : "0";
-    return `<span class="inline-block mr-2"><strong>${cls}</strong> ${n.toLocaleString()}척 <em class="opacity-70 not-italic">(${p}%)</em></span>`;
+    return `<button type="button" data-alert-class="${_esc(cls)}"
+                    class="inline-block mr-2 px-2 py-0.5 rounded bg-white/40 hover:bg-white border border-current/30 cursor-pointer transition-colors"
+                    title="${_esc(cls)} 노후 25년+ 만 보기">
+              <strong>${_esc(cls)}</strong> ${n.toLocaleString()}척 <em class="opacity-70 not-italic">(${p}%)</em>
+            </button>`;
   }).join("");
 
   host.classList.remove("hidden");
@@ -3488,6 +3534,26 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal) {
           : "노후선 비중 30% 초과 — 히트맵에서 class × 선령 cross 확인."}
       </div>
     </div>`;
+  // Cycle 18: class chip 클릭 시 vcFilter + 25y+ 노후 필터 동시 적용
+  host.querySelectorAll("button[data-alert-class]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tabEl = document.getElementById("tab-fleet");
+      const st = tabEl._fleetState;
+      const cls = btn.dataset.alertClass;
+      const cutoff = new Date().getFullYear() - 25;
+      // Toggle: 같은 vcFilter + cutoff yrMax 가 이미 적용 중이면 해제
+      const isActive = st.vcFilter === cls && st.yrMax === cutoff;
+      if (isActive) {
+        st.vcFilter = null; st.yrMax = null;
+        const yr = document.getElementById("fl-f-yr-max"); if (yr) yr.value = "";
+      } else {
+        st.vcFilter = cls; st.yrMax = cutoff;
+        const yr = document.getElementById("fl-f-yr-max"); if (yr) yr.value = String(cutoff);
+      }
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  });
 }
 
 // Cycle 11: 운영사명에서 IDX 상장 여부 추정.
@@ -3592,10 +3658,10 @@ function _drawFleetAgeClassHeatmap(rows, I) {
     yaxis: { tickfont: { size: 10 }, autorange: "reversed" },  // <5 위, Σ 아래
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
-  // Cycle 17: 셀 클릭 → age bucket + vc class 둘 다 필터. 합계 행/열 클릭은 단일 축만 필터.
+  // Cycle 17: 셀 클릭 → age bucket + vc class 둘 다 필터. Cycle 18: re-bind every render.
   const heatHost = document.getElementById("fl-age-class-heatmap");
-  if (heatHost && !heatHost.dataset.clickBound) {
-    heatHost.dataset.clickBound = "1";
+  if (heatHost) {
+    heatHost.removeAllListeners?.("plotly_click");
     heatHost.on("plotly_click", (ev) => {
       const pt = ev?.points?.[0];
       if (!pt) return;
@@ -3671,6 +3737,11 @@ function _renderFleetActiveChips(st) {
     key: "vc", label: "선급",
     value: st.vcFilter,
     reset: () => { st.vcFilter = null; },
+  });
+  if (st.flagFilter) chips.push({
+    key: "flag", label: "국적",
+    value: st.flagFilter,
+    reset: () => { st.flagFilter = null; },
   });
   const range = (label, lo, hi, idMin, idMax, keyMin, keyMax, suffix = "") => {
     if (st[keyMin] == null && st[keyMax] == null) return;
