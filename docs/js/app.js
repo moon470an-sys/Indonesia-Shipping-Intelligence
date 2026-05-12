@@ -3755,6 +3755,11 @@ function _drawFleetOwnerScatter(rows, I) {
   });
   const sNorm = mkSubset(norIdx);
   const sIdx  = mkSubset(idxIdx);
+  // Cycle 24: 사분면 가이드 — median 척수 / median 평균선령 라인.
+  const sortedVessels = [...top].map(o => o.vessels).sort((a, b) => a - b);
+  const sortedAges = [...top].map(o => o.age_w / o.gt_w).sort((a, b) => a - b);
+  const medV = sortedVessels[Math.floor(sortedVessels.length / 2)] || 1;
+  const medA = sortedAges[Math.floor(sortedAges.length / 2)] || 15;
   Plotly.newPlot("fl-owner-scatter", [
     {
       name: "일반",
@@ -3766,7 +3771,7 @@ function _drawFleetOwnerScatter(rows, I) {
         symbol: "circle",
       },
       hovertext: sNorm.hovers, hovertemplate: "%{hovertext}<extra>클릭 시 owner 필터</extra>",
-      customdata: norIdx,  // map back to top[] index
+      customdata: norIdx,
     },
     {
       name: "IDX 상장",
@@ -3778,22 +3783,43 @@ function _drawFleetOwnerScatter(rows, I) {
         symbol: "star",
       },
       hovertext: sIdx.hovers, hovertemplate: "%{hovertext}<extra>★ IDX · 클릭 시 owner 필터</extra>",
-      customdata: idxIdx,  // map back to top[] index
+      customdata: idxIdx,
     },
   ], {
-    margin: { t: 10, l: 50, r: 10, b: 50 },
+    margin: { t: 40, l: 50, r: 10, b: 50 },
     xaxis: { title: { text: "척수 (log)", font: { size: 10 } }, type: "log",
              tickfont: { size: 10 }, gridcolor: "#eef2f7" },
     yaxis: { title: { text: "평균 선령 (년, GT 가중)", font: { size: 10 } },
              tickfont: { size: 10 }, gridcolor: "#eef2f7" },
     shapes: [
+      // 25y+ 노후 임계점
       { type: "line", xref: "x", yref: "y",
         x0: 1, x1: 9999, y0: 25, y1: 25,
         line: { color: "#dc262640", width: 1, dash: "dot" } },
+      // Cycle 24: median 가이드 — 척수 / 평균선령
+      { type: "line", xref: "x", yref: "y",
+        x0: medV, x1: medV, y0: 0, y1: 60,
+        line: { color: "#94a3b840", width: 1, dash: "dash" } },
+      { type: "line", xref: "x", yref: "y",
+        x0: 1, x1: 9999, y0: medA, y1: medA,
+        line: { color: "#94a3b840", width: 1, dash: "dash" } },
     ],
     annotations: [
       { xref: "paper", yref: "y", x: 0.99, y: 25.5, text: "25y+ (노후)",
         showarrow: false, font: { size: 9, color: "#dc2626" }, xanchor: "right" },
+      // Cycle 24: 사분면 라벨 (4개)
+      { xref: "paper", yref: "paper", x: 0.99, y: 1.06,
+        text: `↗ 대규모 노후 (>${medV.toLocaleString()}척 · >${medA.toFixed(0)}y)`,
+        showarrow: false, font: { size: 9, color: "#475569" }, xanchor: "right" },
+      { xref: "paper", yref: "paper", x: 0.01, y: 1.06,
+        text: `↖ 소규모 노후`,
+        showarrow: false, font: { size: 9, color: "#475569" }, xanchor: "left" },
+      { xref: "paper", yref: "paper", x: 0.99, y: -0.13,
+        text: `↘ 대규모 신생`,
+        showarrow: false, font: { size: 9, color: "#475569" }, xanchor: "right" },
+      { xref: "paper", yref: "paper", x: 0.01, y: -0.13,
+        text: `↙ 소규모 신생`,
+        showarrow: false, font: { size: 9, color: "#475569" }, xanchor: "left" },
     ],
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });

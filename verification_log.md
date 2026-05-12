@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 24 검증 — 2026-05-12 (Supply 탭 16차 — scatter 사분면 + 종합 E2E)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Owner scatter 사분면 라벨 | ✅ Cycle 24 | median 가이드라인 (척수 / 평균선령) + 4개 사분면 라벨 (↗ 대규모 노후 / ↖ 소규모 노후 / ↘ 대규모 신생 / ↙ 소규모 신생) |
+| 종합 E2E (필터 조합) | ✅ Cycle 24 | aged KPI → 12,433 / +cargo → 10,158 / +Tanker 25-30 → 236. 3 chips, URL `#fleet?scope=cargo&vc=Tanker&yrMin=1996&yrMax=2001` |
+| URL deep-link fresh context | ✅ Cycle 24 | `#fleet?aged=1&scope=cargo&vc=Tanker` → 667척, 3 chips, 모든 state 적용. 동일 path + 새 hash는 reload 없으므로 fresh context로 검증 |
+| Reset → URL 초기화 | ✅ Cycle 24 | reset 후 URL = `#fleet`, 0 chips, 41,135척 |
+
+### 횡단
+- 원칙 lint ✅. 사분면 라벨은 데이터 분류만 — "추천/유망" 등 가치 판단 없음.
+
 ## Cycle 23 검증 — 2026-05-12 (Supply 탭 15차 — 노후 dims + GT 통계 + age 평균 라인)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
