@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 43 검증 — 2026-05-12 (Supply 탭 35차 — sister vessel 점프)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Sister vessel 카드 button화 + 클릭 점프 | ✅ Cycle 43 | 각 sister 카드 = button. 클릭 시 name filter 자동 적용 + 기존 expand 해제 + 새 vessel 자동 expand + 테이블 top scroll |
+| 화면 결과 (smoke test) | ✅ DANNY 147 sister 클릭 → state.name='DANNY 147', count 1척, 1 detail row, detailName='DANNY 147' | playwright |
+
+### 횡단
+- 원칙 lint ✅. owner fleet 안 빠른 navigation — fleet 구성 빠르게 탐색.
+
 ## Cycle 42 검증 — 2026-05-12 (Supply 탭 34차 — detail rows 'Close all')
 
 ### Supply 탭 (🚢 — id: tab-fleet)

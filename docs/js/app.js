@@ -3159,17 +3159,19 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
         sisterListHtml = `
           <div class="mt-3 pt-3 border-t border-slate-200">
             <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">
-              이 운영사의 다른 선박 (top ${topSiblings.length} of ${siblings.length})
+              이 운영사의 다른 선박 (top ${topSiblings.length} of ${siblings.length}) — 클릭 시 점프
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
               ${topSiblings.map(rr => {
                 const sAge = rr[I.age];
-                return `<div class="flex items-center gap-2 px-2 py-1 bg-white rounded border border-slate-200">
-                  <span class="font-semibold text-slate-800 truncate flex-1" title="${_esc(rr[I.nama])}">${_esc(rr[I.nama])}</span>
+                return `<button type="button" class="fl-sister-jump flex items-center gap-2 px-2 py-1 bg-white rounded border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-left transition-colors"
+                                data-sister-nama="${_esc(rr[I.nama])}"
+                                title="${_esc(rr[I.nama])} 로 점프 + 상세 펼치기">
+                  <span class="font-semibold text-slate-800 truncate flex-1">${_esc(rr[I.nama])}</span>
                   <span class="font-mono text-slate-500 text-[10px]">GT ${(rr[I.gt]||0).toLocaleString()}</span>
                   <span class="font-mono text-[10px] ${sAge != null && sAge >= 25 ? 'text-rose-600 font-semibold' : 'text-slate-400'}">${rr[I.tahun] || '—'} · ${sAge != null ? sAge + 'y' : '—'}</span>
                   <span class="text-[10px] text-slate-400">${_esc(rr[I.vc])}</span>
-                </div>`;
+                </button>`;
               }).join("")}
             </div>
           </div>`;
@@ -3217,6 +3219,31 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     body.dataset.clickBound = "1";
     body.addEventListener("click", (e) => {
       const tabElX = document.getElementById("tab-fleet");
+      // Cycle 43: sister 점프 버튼 — 선박명으로 name filter 설정 + 자동 expand
+      const sis = e.target.closest(".fl-sister-jump");
+      if (sis) {
+        e.stopPropagation();
+        const nama = sis.dataset.sisterNama;
+        if (!nama) return;
+        const st = tabElX._fleetState;
+        // 새 vessel로 점프: name filter set, 기존 expand 해제, 새 row 자동 expand
+        st.name = nama;
+        const ne = document.getElementById("fl-f-name"); if (ne) ne.value = nama;
+        tabElX._fleetExpanded = new Set();
+        // 정확히 같은 이름의 첫 row에서 vKey 생성해 expand
+        const fv = tabElX._fleetVessels;
+        const J = {}; fv.cols.forEach((c, i) => J[c] = i);
+        const match = fv.rows.find(r => r[J.nama] === nama);
+        if (match) {
+          const key = `${match[J.nama] || ""}|${match[J.tahun] || ""}`;
+          tabElX._fleetExpanded.add(key);
+        }
+        tabElX._fleetPage = 1;
+        _renderFleetView();
+        // 스크롤 to table top
+        document.getElementById("fl-table")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
       // Detail action button — fl-detail-action class
       const act = e.target.closest(".fl-detail-action");
       if (act) {
