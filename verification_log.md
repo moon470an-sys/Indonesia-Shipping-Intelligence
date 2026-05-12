@@ -117,3 +117,52 @@
 
 ### 사이클 종료 시 액션
 - Cycle 2 의 1·2·3 완료. 사용자 Stop 지시로 Cycle 3 미시작.
+
+## Cycle 3 검증 — 2026-05-12
+
+### Demand 탭
+
+- ✅ 선박 등록 KPI 카드 → "국내 vs 국제 화물 비중" 으로 교체.
+  Supply 정보 노출 없음.
+- ✅ KPI 라벨 "총 화물 물동량 (LK3)" · "탱커 화물 물동량" 으로 명확화.
+- ✅ d3 흐름 지도 (#home-map-svg) 통째 삭제. d3/topojson CDN 제거.
+  sector 사이드바·자동 요약 사이드바·국제 항로 사이드바 동시 제거.
+- ✅ 시계열 차트 — CARGO sector만, 카테고리(Container/Bulk/Tanker
+  subclass/General/Other Cargo) 색상 분리 stacked area. PASSENGER 등
+  비화물 제외. 24M total 5.85B 톤 검증.
+- ⚠️ cv-app 기간 필터·동그라미 제거·흐름 라인은 Cycle 4 처리.
+
+### Supply / Balance / Explorer 탭
+- 본 사이클 변경 없음.
+
+### 횡단(원칙) 위반 점검
+- 원칙 1·2·4·5·6 통과.
+- 원칙 3 (시계열·비율 우선) — Demand 시계열이 이제 CARGO 한정·카테고리별
+  로 더 의미있는 신호. 통과.
+
+### 사이클 종료
+- Cycle 3 완료. Cycle 4 시작.
+
+## Cycle 4 검증 — 2026-05-12
+
+### Demand 탭
+
+- ✅ cv-app 기간 필터 UI (24M / 12M / 2024 / 2025 / 2026) 추가.
+  cargo_ports_periods.json — 79항만 × 40코모디티 × 5기간.
+- ✅ 항만 동그라미 톤 비례 가변 마커(4~70px) → 고정 3.5px 작은 점.
+- ✅ 정적 라인 opacity 0.22 — 입자의 트랙 배경.
+- ✅ Canvas 오버레이 입자 애니메이션 — routes_top30(24M) 각 항로에
+  3개 입자, origin→destination 보간, 카테고리 색 + 트레일 + 하이라이트.
+- ⚠️ 기간 필터는 항만 톤만 갱신 (라인은 24M 고정). Cycle 5+ 에서
+  cargo_flows_periods 빌더 추가 가능.
+
+### Supply / Balance / Explorer 탭
+- 본 사이클 변경 없음.
+
+### 횡단(원칙) 위반 점검
+- 원칙 1·2·4·5·6 통과.
+- 원칙 3 — Demand 지도가 이제 기간 필터 + 흐름 시각화로 시계열·탐색
+  병행 원칙에 더 부합. 통과.
+
+### 사이클 종료
+- Cycle 4 완료. 사용자 요청 4건 (①②③④) 모두 처리됨.
