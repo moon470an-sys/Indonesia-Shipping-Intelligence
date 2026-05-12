@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 19 검증 — 2026-05-12 (Supply 탭 디자인·데이터 11차 — URL deep-link)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| URL hash 파라미터 boot 적용 | ✅ Cycle 19 | `#fleet?aged=1&scope=cargo` 등 — boot 시 탭 활성 + 필터 자동 적용 |
+| 필터 변경 시 URL 자동 동기화 | ✅ Cycle 19 | `_renderFleetView` 마지막에 `_writeFleetUrl()` 호출. history.replaceState |
+| 공유 URL 복사 버튼 | ✅ Cycle 19 | 🔗 공유 URL — clipboard API. 권한 거부 fallback prompt |
+| aged shortcut 자동 인식 | ✅ Cycle 19 | yrMax = currentYear-25 이고 yrMin null이면 `aged=1`로 압축 |
+| 화면 결과 (smoke test) | ✅ `#fleet?aged=1&scope=cargo` boot → active=fleet, scope=cargo, yrMax=2001, 10,158척, 2 chips. heatmap 클릭 후 URL = `#fleet?scope=cargo&vc=Tanker&yrMin=1996&yrMax=2001`. 복사 시 clipboard = full URL. 리셋 → `#fleet` | playwright |
+
+### 횡단
+- 원칙 lint ✅. URL 파라미터는 필터 상태만 — 데이터/추정 없음, 공식 데이터 무영향.
+
 ## Cycle 18 검증 — 2026-05-12 (Supply 탭 디자인·데이터 10차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

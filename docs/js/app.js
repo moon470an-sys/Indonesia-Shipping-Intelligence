@@ -1128,7 +1128,14 @@ async function boot() {
     if (j) { e.preventDefault(); showTab(j.dataset.jumpTab); }
   });
   bindTabKeyboardNav();
-  showTab("overview");
+  // Cycle 19: URL hash로 시작 탭 결정. fleet 탭 deep-link 지원.
+  const initialTab = (() => {
+    const h = window.location.hash || "";
+    const qIdx = h.indexOf("?");
+    const tab = (qIdx >= 0 ? h.substring(1, qIdx) : h.substring(1)) || "";
+    return ["overview", "fleet", "tanker-sector", "explorer", "financials"].includes(tab) ? tab : "overview";
+  })();
+  showTab(initialTab);
   loadGlobalFooter();
   setupSourceLabels();
   decorateGlossary(document);
@@ -2133,7 +2140,143 @@ async function renderFleet() {
   _wireFleetFilters();
   _wireFleetScopeToggle();
   _wireFleetAgedKpi();
+  // Cycle 19: URL hash 파라미터 적용 (boot 시 한 번)
+  _applyFleetUrlState();
+  _wireFleetCopyLink();
   _renderFleetView();
+}
+
+// Cycle 19: URL hash 파라미터로 필터 상태 공유.
+//   - 파라미터 key=value 쌍, 멀티값은 콤마. URLSearchParams 사용.
+//   - hash 형식 `#fleet?aged=1&scope=cargo` — fleet 탭임을 명시.
+const _FLEET_URL_KEYS = [
+  "scope", "vc", "flag", "owner", "name",
+  "yrMin", "yrMax", "gtMin", "gtMax", "loaMin", "loaMax",
+  "widthMin", "widthMax", "depthMin", "depthMax",
+  "jenis", "jenisExclude", "aged",
+];
+
+function _readFleetUrlParams() {
+  const hash = window.location.hash || "";
+  // 형식: #fleet?key=val&key2=val2 또는 #?key=val
+  const qIdx = hash.indexOf("?");
+  if (qIdx < 0) return null;
+  const tabPart = hash.substring(1, qIdx);
+  const params = new URLSearchParams(hash.substring(qIdx + 1));
+  return { tab: tabPart || null, params };
+}
+
+function _applyFleetUrlState() {
+  const parsed = _readFleetUrlParams();
+  if (!parsed) return;
+  if (parsed.tab && parsed.tab !== "fleet") return;
+  const params = parsed.params;
+  const tabEl = document.getElementById("tab-fleet");
+  if (!tabEl) return;
+  const st = tabEl._fleetState;
+
+  // scope
+  const sc = params.get("scope");
+  if (sc === "cargo" || sc === "auxiliary") st.scopeOnly = sc;
+  // vc / flag / owner / name
+  if (params.get("vc"))   st.vcFilter = params.get("vc");
+  if (params.get("flag")) st.flagFilter = params.get("flag");
+  if (params.get("owner")) st.ownerExact = params.get("owner");
+  if (params.get("name")) {
+    st.name = params.get("name");
+    const el = document.getElementById("fl-f-name"); if (el) el.value = st.name;
+  }
+  // jenis (comma-sep), jenisExclude
+  if (params.get("jenis")) {
+    params.get("jenis").split(",").map(s => s.trim()).filter(Boolean).forEach(j => st.jenis.add(j));
+  }
+  if (params.get("jenisExclude") === "1") {
+    st.jenisExclude = true;
+    const ex = document.getElementById("fl-f-jenis-exclude"); if (ex) ex.checked = true;
+  }
+  // aged shortcut: yrMax = currentYear - 25
+  if (params.get("aged") === "1") {
+    st.yrMax = new Date().getFullYear() - 25;
+  }
+  // numeric ranges
+  const numKeys = [
+    ["yrMin", "fl-f-yr-min"], ["yrMax", "fl-f-yr-max"],
+    ["gtMin", "fl-f-gt-min"], ["gtMax", "fl-f-gt-max"],
+    ["loaMin", "fl-f-loa-min"], ["loaMax", "fl-f-loa-max"],
+    ["widthMin", "fl-f-w-min"], ["widthMax", "fl-f-w-max"],
+    ["depthMin", "fl-f-d-min"], ["depthMax", "fl-f-d-max"],
+  ];
+  for (const [k, id] of numKeys) {
+    const v = params.get(k);
+    if (v != null && v !== "" && !Number.isNaN(Number(v))) {
+      st[k] = Number(v);
+      const el = document.getElementById(id); if (el) el.value = String(st[k]);
+    }
+  }
+}
+
+// URL hash 갱신 — render 마지막에 호출. 현재 필터 상태 → URL.
+function _writeFleetUrl() {
+  const tabEl = document.getElementById("tab-fleet");
+  const st = tabEl?._fleetState;
+  if (!st) return;
+  const params = new URLSearchParams();
+  if (st.scopeOnly) params.set("scope", st.scopeOnly);
+  if (st.vcFilter)  params.set("vc", st.vcFilter);
+  if (st.flagFilter) params.set("flag", st.flagFilter);
+  if (st.ownerExact) params.set("owner", st.ownerExact);
+  if (st.name)       params.set("name", st.name);
+  if (st.jenis.size) params.set("jenis", [...st.jenis].join(","));
+  if (st.jenisExclude) params.set("jenisExclude", "1");
+  // aged shortcut detection
+  const cutoff = new Date().getFullYear() - 25;
+  if (st.yrMax === cutoff && st.yrMin == null) {
+    params.set("aged", "1");
+  } else {
+    if (st.yrMin != null) params.set("yrMin", st.yrMin);
+    if (st.yrMax != null) params.set("yrMax", st.yrMax);
+  }
+  if (st.gtMin != null) params.set("gtMin", st.gtMin);
+  if (st.gtMax != null) params.set("gtMax", st.gtMax);
+  if (st.loaMin != null) params.set("loaMin", st.loaMin);
+  if (st.loaMax != null) params.set("loaMax", st.loaMax);
+  if (st.widthMin != null) params.set("widthMin", st.widthMin);
+  if (st.widthMax != null) params.set("widthMax", st.widthMax);
+  if (st.depthMin != null) params.set("depthMin", st.depthMin);
+  if (st.depthMax != null) params.set("depthMax", st.depthMax);
+
+  const qs = params.toString();
+  const newHash = qs ? `#fleet?${qs}` : `#fleet`;
+  // 현재 보이는 탭이 fleet인 경우에만 hash 업데이트 (다른 탭 이동 시 보존)
+  const activeTab = document.querySelector(".tab.active")?.dataset.tab;
+  if (activeTab !== "fleet") return;
+  if (window.location.hash !== newHash) {
+    try { history.replaceState(null, "", window.location.pathname + window.location.search + newHash); }
+    catch (e) {}
+  }
+}
+
+function _wireFleetCopyLink() {
+  const btn = document.getElementById("fl-copy-link");
+  if (!btn || btn.dataset.bound) return;
+  btn.dataset.bound = "1";
+  btn.addEventListener("click", async () => {
+    _writeFleetUrl();
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      const orig = btn.textContent;
+      btn.textContent = "✅ 복사됨";
+      btn.classList.add("bg-emerald-50", "border-emerald-300");
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove("bg-emerald-50", "border-emerald-300");
+      }, 1500);
+    } catch (e) {
+      // Clipboard 권한 미허용 fallback — prompt로 표시
+      window.prompt("URL을 복사하세요:", url);
+    }
+  });
 }
 
 // Cycle 10: "노후선 25년+" KPI 카드 클릭 시 자동 필터.
@@ -2727,6 +2870,8 @@ function _renderFleetView() {
     if (!m) return;
     m.textContent = h.dataset.col === st.sortCol ? (st.sortDir === "asc" ? "▲" : "▼") : "";
   });
+  // Cycle 19: 현재 필터 상태 URL hash 동기화 (Supply 탭이 활성일 때만)
+  try { _writeFleetUrl(); } catch (e) { /* ignore */ }
 }
 
 // Render pagination controls (jang1117 .pgn equivalent).
