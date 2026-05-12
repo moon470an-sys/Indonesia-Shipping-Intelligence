@@ -3,6 +3,26 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 10 검증 — 2026-05-12 (Supply 탭 디자인·데이터 2차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 중복 sub-header 제거 | ✅ Cycle 10 | jang1117 mirror 잔존 "⚓ 선박 데이터 대시보드" 삭제. row count badge만 유지 |
+| 노후선 KPI 카드 클릭→필터 | ✅ Cycle 10 | 1st click → yrMax=2001(현년-25), ring 강조 + 필터 패널 펼침. 2nd click → toggle off |
+| 선령 분포 차트 누적 % 보조선 | ✅ Cycle 10 | dotted line(slate), y2 축. 25년+ 누적 비중 시각화 |
+| Top 운영사 class mix 라벨 | ✅ Cycle 10 | 컬러 도트 + 약어 class + % chip 3개. tooltip에 풀네임. +N개 처리 |
+| KPI 카드 자동 sync | ✅ Cycle 10 | yrMax 수동 변경 시에도 ring 자동 토글 |
+| 화면 결과 (smoke test) | ✅ click 시 41,135→12,433 (toggle on), 다시 41,135 (toggle off). 25개 class label 렌더 | playwright |
+| 시계열 (월별 변동) | ❌ 미구현 | Cycle 11+ (vessels_changes 필요) |
+| 운영사 시계열 | ❌ 미구현 | Cycle 11+ |
+
+### 횡단
+
+- 원칙 lint: ✅ 통과 (0건).
+- 원칙 4: 노후 % 계산은 age 결측 분모 제외 — KPI sub-label에 "—" 표기.
+
 ## Cycle 9 검증 — 2026-05-12 (Supply 탭 디자인·데이터 1차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

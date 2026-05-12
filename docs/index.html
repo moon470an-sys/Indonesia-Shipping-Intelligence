@@ -216,14 +216,9 @@
         </label>
       </div>
 
-      <!-- Header (jang1117 style: dashboard title + row badge) -->
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div>
-          <h2 class="text-xl font-semibold text-slate-800 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-md text-sm">⚓</span>
-            선박 데이터 대시보드
-          </h2>
-        </div>
+      <!-- Cycle 10: jang1117 mirror의 중복 sub-header 제거. row count는 scope-strip 우측으로 흡수.
+           h1 "🚢 Supply — Fleet 공급"이 이미 panel 헤더 역할을 한다. -->
+      <div class="flex items-center justify-end mb-3">
         <span class="hbadge text-[11px] font-mono px-3 py-1 rounded border border-slate-200 bg-slate-50 text-slate-600" id="fl-hbadge">— rows</span>
       </div>
 
@@ -339,12 +334,16 @@
           <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-avggt">—</div>
           <div class="text-[11px] text-slate-500">gross_tonnage avg</div>
         </div>
-        <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
+        <button id="fl-kpi-aged25-card" type="button"
+                class="block w-full relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden text-left hover:shadow-md hover:bg-rose-50 transition-colors cursor-pointer"
+                title="클릭 시 25년+ 노후선만 필터링">
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-rose-500"></div>
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">노후선 (25년+)</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
+            노후선 (25년+) <span class="text-rose-500 text-[9px]" aria-hidden="true">▶ 필터</span>
+          </div>
           <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-aged25">—</div>
           <div class="text-[11px] text-slate-500" id="fl-kpi-aged25-pct">평균 선령 —</div>
-        </div>
+        </button>
       </div>
 
       <!-- 치수 요약 (필터 결과 기준 평균값, 0 제외) -->

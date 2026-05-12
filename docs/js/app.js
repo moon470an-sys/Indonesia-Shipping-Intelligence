@@ -2128,7 +2128,43 @@ async function renderFleet() {
   _buildFleetFilters(fv);
   _wireFleetFilters();
   _wireFleetScopeToggle();
+  _wireFleetAgedKpi();
   _renderFleetView();
+}
+
+// Cycle 10: "노후선 25년+" KPI 카드 클릭 시 자동 필터.
+//   - 1st click: yrMax = currentYear - 25 (only ≥25y 노후선만 보기)
+//   - 2nd click: 필터 해제 (yrMax = null)
+function _wireFleetAgedKpi() {
+  const btn = document.getElementById("fl-kpi-aged25-card");
+  if (!btn || btn.dataset.bound) return;
+  btn.dataset.bound = "1";
+  btn.addEventListener("click", () => {
+    const tabEl = document.getElementById("tab-fleet");
+    if (!tabEl || !tabEl._fleetState) return;
+    const st = tabEl._fleetState;
+    const cutoff = new Date().getFullYear() - 25;
+    const input = document.getElementById("fl-f-yr-max");
+    if (st.yrMax === cutoff) {
+      // toggle off — 노후선 필터 해제
+      st.yrMax = null;
+      if (input) input.value = "";
+      btn.classList.remove("ring-2", "ring-rose-400", "bg-rose-50");
+    } else {
+      st.yrMax = cutoff;
+      if (input) input.value = String(cutoff);
+      btn.classList.add("ring-2", "ring-rose-400", "bg-rose-50");
+      // 사용자가 필터 UI를 확인할 수 있도록 필터 패널 펼침
+      const body = document.getElementById("fl-fbody");
+      const tog = document.getElementById("fl-ftoggle");
+      if (body && body.classList.contains("hidden")) {
+        body.classList.remove("hidden");
+        if (tog) tog.textContent = "▲ 접기";
+      }
+    }
+    tabEl._fleetPage = 1;
+    _renderFleetView();
+  });
 }
 
 // Cycle 1 — wire the "제외 선종도 표시" toggle. Default OFF (cargo+aux only).
@@ -2481,6 +2517,15 @@ function _renderFleetView() {
   set("fl-kpi-aged25-pct",
     (agedPct != null ? `전체 ${agedPct.toFixed(1)}% · ` : "") +
     (avgAge != null ? `평균 선령 ${avgAge.toFixed(1)}년` : "평균 선령 —"));
+  // Cycle 10: 노후선 필터 활성화 시 KPI 카드에 ring 강조.
+  const agedBtn = document.getElementById("fl-kpi-aged25-card");
+  if (agedBtn) {
+    const cutoff = new Date().getFullYear() - 25;
+    const active = st.yrMax === cutoff;
+    agedBtn.classList.toggle("ring-2", active);
+    agedBtn.classList.toggle("ring-rose-400", active);
+    agedBtn.classList.toggle("bg-rose-50", active);
+  }
   // 평균 제원 (치수 요약) — 4 sub-values
   set("fl-avg-gt",  avgGt ? fmtCount(Math.round(avgGt)) : "—");
   set("fl-avg-loa", nLoa ? (sumLoa / nLoa).toFixed(1) : "—");
@@ -2906,19 +2951,40 @@ function _drawFlChartAge(rows, I) {
     FL_PRIMARY                    // 청정 — 네이비
   );
   const pcts = counts.map(c => totalCounted > 0 ? (c / totalCounted * 100) : 0);
-  Plotly.newPlot("fl-ch-age", [{
-    x: labels, y: counts, type: "bar",
-    marker: { color: colors, line: { color: "#fff", width: 0.5 } },
-    text: counts.map((c, i) => c > 0 ? `${c.toLocaleString()}<br><span style="font-size:9px;opacity:.7">${pcts[i].toFixed(1)}%</span>` : ""),
-    textposition: "outside",
-    cliponaxis: false,
-    hovertemplate: "<b>%{x}년</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra></extra>",
-    customdata: pcts,
-  }], {
-    margin: { t: 25, l: 40, r: 10, b: 35 },
+  // Cycle 10: 누적 % 보조선. 25년+ 비중을 한눈에 식별.
+  const cumPcts = [];
+  let cum = 0;
+  for (const p of pcts) { cum += p; cumPcts.push(cum); }
+  Plotly.newPlot("fl-ch-age", [
+    {
+      name: "척수",
+      x: labels, y: counts, type: "bar",
+      marker: { color: colors, line: { color: "#fff", width: 0.5 } },
+      text: counts.map((c, i) => c > 0 ? `${c.toLocaleString()}<br><span style="font-size:9px;opacity:.7">${pcts[i].toFixed(1)}%</span>` : ""),
+      textposition: "outside",
+      cliponaxis: false,
+      hovertemplate: "<b>%{x}년</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra></extra>",
+      customdata: pcts,
+    },
+    {
+      name: "누적 %",
+      x: labels, y: cumPcts,
+      type: "scatter", mode: "lines+markers",
+      yaxis: "y2",
+      line: { color: "#475569", width: 1.4, dash: "dot" },
+      marker: { color: "#475569", size: 5 },
+      hovertemplate: "<b>%{x}년까지 누적</b><br>%{y:.1f}%<extra></extra>",
+    }
+  ], {
+    margin: { t: 30, l: 40, r: 45, b: 35 },
+    showlegend: true,
+    legend: { font: { size: 9 }, orientation: "h", y: 1.18, x: 0 },
     xaxis: { title: { text: "선령 (년)", font: { size: 10 } }, tickfont: { size: 10 } },
     yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
              gridcolor: "#eef2f7" },
+    yaxis2: { title: { text: "누적 %", font: { size: 10 } }, overlaying: "y",
+              side: "right", tickfont: { size: 10 }, showgrid: false,
+              range: [0, 105], ticksuffix: "%" },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
 }
@@ -3036,31 +3102,58 @@ function _drawFleetTopOwners(rows, I) {
     "Other":             "#94a3b8",
   };
 
+  // Class 라벨 약어 — 좁은 셀에 들어가도록 짧게.
+  const CLS_LABEL = {
+    "Container":             "Container",
+    "Bulk Carrier":          "Bulk",
+    "Tanker":                "Tanker",
+    "General Cargo":         "GenCargo",
+    "Other Cargo":           "Other",
+    "Passenger Ship":        "Passenger",
+    "Ferry":                 "Ferry",
+    "Fishing Vessel":        "Fishing",
+    "Tug/OSV/AHTS":          "Tug/OSV",
+    "Dredger/Special":       "Dredger",
+    "Government/Navy/Other": "Gov/Navy",
+    "UNMAPPED":              "UNMAPPED",
+    "Other":                 "Other",
+  };
+
   host.innerHTML = `
     <div class="grid grid-cols-12 gap-2 text-[10px] font-mono uppercase tracking-wider text-slate-500 px-2 py-1 border-b border-slate-100">
       <div class="col-span-1 text-right">#</div>
-      <div class="col-span-5">운영사</div>
+      <div class="col-span-3">운영사</div>
       <div class="col-span-2 text-right">척수</div>
       <div class="col-span-2 text-right">선대 GT</div>
-      <div class="col-span-1 text-right">평균선령</div>
-      <div class="col-span-1">선종 mix</div>
+      <div class="col-span-1 text-right">평균<br>선령</div>
+      <div class="col-span-3">선종 mix (top 3)</div>
     </div>
     ${top.map((o, idx) => {
       const avgAge = o.gt_weight > 0 ? (o.age_weight / o.gt_weight) : null;
       const vPct = (o.vessels / maxV * 100).toFixed(1);
       const gtPct = (o.sum_gt / maxGt * 100).toFixed(1);
       const totalClass = Object.values(o.class_mix).reduce((a, b) => a + b, 0);
-      const mix = Object.entries(o.class_mix)
-        .sort((a, b) => b[1] - a[1])
-        .map(([k, v]) => {
-          const w = (v / totalClass * 100).toFixed(1);
-          const c = CLS_COLOR[k] || "#94a3b8";
-          return `<span class="inline-block h-2.5" style="background:${c};width:${w}%" title="${_esc(k)} ${v}척"></span>`;
-        }).join("");
+      const sortedClasses = Object.entries(o.class_mix).sort((a, b) => b[1] - a[1]);
+      // 상위 3 class 라벨 (chip 스타일). 나머지는 + N개.
+      const top3 = sortedClasses.slice(0, 3);
+      const extra = sortedClasses.length - 3;
+      const labelHtml = top3.map(([k, v]) => {
+        const c = CLS_COLOR[k] || "#94a3b8";
+        const lbl = CLS_LABEL[k] || k;
+        const pct = (v / totalClass * 100).toFixed(0);
+        return `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 mr-1 mb-0.5 text-[10px] whitespace-nowrap"
+                       title="${_esc(k)} · ${v.toLocaleString()}척 (${pct}%)">
+          <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:${c}"></span>
+          <span class="text-slate-700">${lbl}</span>
+          <span class="text-slate-400 font-mono">${pct}%</span>
+        </span>`;
+      }).join("");
+      const extraHtml = extra > 0 ?
+        `<span class="text-[10px] text-slate-400 align-middle">+${extra}</span>` : "";
       return `
         <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50">
           <div class="col-span-1 text-right font-mono text-[10px] text-slate-400">${idx + 1}</div>
-          <div class="col-span-5 truncate text-slate-800" title="${_esc(o.owner)}">${_esc(o.owner)}</div>
+          <div class="col-span-3 truncate text-slate-800 text-[12px]" title="${_esc(o.owner)}">${_esc(o.owner)}</div>
           <div class="col-span-2 text-right font-mono">
             <div class="text-[11px]">${o.vessels.toLocaleString()}</div>
             <div class="h-1 rounded bg-slate-100 mt-0.5">
@@ -3073,12 +3166,12 @@ function _drawFleetTopOwners(rows, I) {
               <div class="h-1 rounded" style="width:${gtPct}%;background:#3b82f6"></div>
             </div>
           </div>
-          <div class="col-span-1 text-right font-mono text-[11px] ${avgAge != null && avgAge >= 25 ? 'text-rose-600' : 'text-slate-700'}">${avgAge != null ? avgAge.toFixed(1) : '—'}</div>
-          <div class="col-span-1 flex h-2.5 rounded overflow-hidden">${mix}</div>
+          <div class="col-span-1 text-right font-mono text-[11px] ${avgAge != null && avgAge >= 25 ? 'text-rose-600 font-semibold' : 'text-slate-700'}">${avgAge != null ? avgAge.toFixed(1) : '—'}</div>
+          <div class="col-span-3 flex flex-wrap items-center">${labelHtml}${extraHtml}</div>
         </div>`;
     }).join("")}
     <div class="text-[10px] text-slate-400 px-2 pt-2">
-      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개</em>
+      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개 · 평균선령 25년+ → rose 강조</em>
     </div>`;
 }
 
