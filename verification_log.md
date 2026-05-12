@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 12 검증 — 2026-05-12 (Supply 탭 디자인·데이터 4차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Vessel Type 차트 scope 색상 범례 | ✅ Cycle 12 | 4 색상 칩 (화물선/보조선/제외/분류 미정) 카드 헤더 아래 |
+| 선박 목록 컬럼 재정렬 | ✅ Cycle 12 | 식별/소유 4 → 규모 4 → 연식 2 → raw 보조 4 (dim 처리). 25y+ 선령 셀 rose 강조 |
+| Top 1/2/3 운영사 메달 | ✅ Cycle 12 | gold/silver/bronze 컬러 원형 badge |
+| 화면 결과 (smoke test) | ✅ scope legend 4 chips, headers 1-4 = 선박명/선주/VT/국적 (non-dim), 끝 4 = 엔진/IMO/Call Sign (dim), 메달 3개 RGB 정상, rose 25y+ cells 22개 (페이지 1) | playwright |
+
+### 횡단
+- 원칙 lint ✅. 원칙 5 (필요한 정보만) — raw 컬럼은 보존하되 시각적 우선순위 하향. 사용자 운영 판단 컬럼이 시선 우선.
+
 ## Cycle 11 검증 — 2026-05-12 (Supply 탭 디자인·데이터 3차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

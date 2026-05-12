@@ -386,11 +386,18 @@
           <div id="fl-ch-year" style="height:300px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-1">
             <div class="text-xs font-mono text-slate-700">Vessel Type TOP 15 <span class="text-[10px] text-slate-400">(클릭 필터)</span></div>
             <div class="text-[10px] text-slate-400">색상 = scope</div>
           </div>
-          <div id="fl-ch-type" style="height:300px"></div>
+          <!-- Cycle 12: scope 색상 범례 — Vessel Type 차트 막대 색상 의미 명시 -->
+          <div class="flex items-center gap-3 mb-2 text-[10px] text-slate-600">
+            <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#1A3A6B"></span>화물선</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#64748b"></span>보조선 (Tug)</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#a8a29e"></span>제외 선종</span>
+            <span class="inline-flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-sm" style="background:#dc2626"></span>분류 미정</span>
+          </div>
+          <div id="fl-ch-type" style="height:280px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center justify-between mb-2">

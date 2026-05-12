@@ -2195,21 +2195,32 @@ function _buildFleetFilters(fv) {
   if (hbadge) hbadge.textContent = `${fv.rows.length.toLocaleString()} rows`;
 
   // Table header
+  // Cycle 12: 의사결정 컬럼 우선 → raw 컬럼 후순위.
+  //   1) 식별/소유: 선박명 / 선주 / Vessel Type / 국적
+  //   2) 규모: GT / LOA / Width / Depth
+  //   3) 연식: 건조 / 선령
+  //   4) 보조 (raw·드물게 사용): 엔진 / 엔진 타입 / IMO / Call Sign — 시각적으로도 dim
   const th = document.getElementById("fl-thead-row");
   if (th && !th.dataset.wired) {
     th.dataset.wired = "1";
     const cols = [
-      ["nama", "선박명"], ["owner", "선주"],
-      ["jenis", "Vessel Type"],
-      ["gt", "GT"], ["loa", "LOA (m)"],
-      ["lebar", "Width (m)"], ["dalam", "Depth (m)"],
-      ["tahun", "건조"], ["age", "선령"],
-      ["flag", "국적"],
-      ["mesin", "엔진"], ["mesin_type", "엔진 타입"],
-      ["imo", "IMO"], ["call_sign", "Call Sign"],
+      ["nama",       "선박명",       false],
+      ["owner",      "선주",         false],
+      ["jenis",      "Vessel Type",  false],
+      ["flag",       "국적",         false],
+      ["gt",         "GT",           false],
+      ["loa",        "LOA (m)",      false],
+      ["lebar",      "Width (m)",    false],
+      ["dalam",      "Depth (m)",    false],
+      ["tahun",      "건조",         false],
+      ["age",        "선령",         false],
+      ["mesin",      "엔진",         true ],
+      ["mesin_type", "엔진 타입",    true ],
+      ["imo",        "IMO",          true ],
+      ["call_sign",  "Call Sign",    true ],
     ];
-    th.innerHTML = cols.map(([k, l]) =>
-      `<th data-col="${k}" class="px-2 py-1 text-left font-semibold text-slate-600 border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none">${l} <span class="text-slate-300" data-sort-marker></span></th>`
+    th.innerHTML = cols.map(([k, l, dim]) =>
+      `<th data-col="${k}" class="px-2 py-1 text-left font-semibold ${dim ? 'text-slate-400 bg-slate-50' : 'text-slate-600'} border-b border-slate-200 cursor-pointer hover:bg-slate-100 select-none" ${dim ? 'title="원천 데이터 — 운영 판단에는 보조 정보"' : ''}>${l} <span class="text-slate-300" data-sort-marker></span></th>`
     ).join("");
     th.querySelectorAll("th[data-col]").forEach(h => {
       h.addEventListener("click", () => {
@@ -2635,23 +2646,26 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
   if (!body) return;
   const start = (page - 1) * pageSize;
   const top = rows.slice(start, start + pageSize);
+  // Cycle 12: 헤더 순서와 일치하도록 셀 순서 재정렬. raw 4개(엔진/엔진타입/IMO/Call Sign)는 dim 처리.
   body.innerHTML = top.map(r => {
     const flag = r[I.flag] || "Indonesia";
+    const age = r[I.age];
+    const yr = r[I.tahun];
     return `<tr class="hover:bg-slate-50 border-b border-slate-100">
       <td class="px-2 py-1 font-medium text-slate-800">${_esc(r[I.nama])}</td>
       <td class="px-2 py-1 text-slate-600">${_esc(r[I.owner])}</td>
       <td class="px-2 py-1">${_esc(r[I.jenis])}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-600">${_esc(flag)}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.gt] || 0).toLocaleString()}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.loa] || 0).toFixed(1)}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.lebar] || 0).toFixed(1)}</td>
       <td class="px-2 py-1 text-right font-mono">${(r[I.dalam] || 0).toFixed(1)}</td>
-      <td class="px-2 py-1 text-right">${r[I.tahun] || "—"}</td>
-      <td class="px-2 py-1 text-right">${r[I.age] != null ? r[I.age] : "—"}</td>
-      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(flag)}</td>
-      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.mesin])}</td>
-      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.mesin_type])}</td>
-      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.imo])}</td>
-      <td class="px-2 py-1 text-[11px] text-slate-500">${_esc(r[I.call_sign])}</td>
+      <td class="px-2 py-1 text-right">${yr || "—"}</td>
+      <td class="px-2 py-1 text-right ${age != null && age >= 25 ? 'text-rose-600 font-semibold' : ''}">${age != null ? age : "—"}</td>
+      <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50">${_esc(r[I.mesin])}</td>
+      <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50">${_esc(r[I.mesin_type])}</td>
+      <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50 font-mono">${_esc(r[I.imo])}</td>
+      <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50 font-mono">${_esc(r[I.call_sign])}</td>
     </tr>`;
   }).join("");
 }
@@ -3152,9 +3166,15 @@ function _drawFleetTopOwners(rows, I) {
       }).join("");
       const extraHtml = extra > 0 ?
         `<span class="text-[10px] text-slate-400 align-middle">+${extra}</span>` : "";
+      // Cycle 12: Top 1-3 메달 강조 (gold/silver/bronze 도트). 4위 이하는 일반 숫자.
+      const MEDAL = ["#fbbf24", "#94a3b8", "#a16207"]; // gold / silver / bronze
+      const rankBadge = idx < 3
+        ? `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white"
+                  style="background:${MEDAL[idx]}" title="Top ${idx + 1}">${idx + 1}</span>`
+        : `<span class="font-mono text-[10px] text-slate-400">${idx + 1}</span>`;
       return `
         <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50">
-          <div class="col-span-1 text-right font-mono text-[10px] text-slate-400">${idx + 1}</div>
+          <div class="col-span-1 text-right">${rankBadge}</div>
           <div class="col-span-3 truncate text-slate-800 text-[12px] flex items-center gap-1" title="${_esc(o.owner)}${_ownerIsIdxListed(o.owner) ? ' · IDX 상장' : ''}">
             <span class="truncate">${_esc(o.owner)}</span>
             ${_ownerIsIdxListed(o.owner) ? '<span class="inline-block px-1 py-px text-[8px] font-mono rounded bg-blue-100 text-blue-700 flex-shrink-0" title="인도네시아 IDX 상장사 (Tbk-suffix)">IDX</span>' : ''}
