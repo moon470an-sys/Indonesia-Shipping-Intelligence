@@ -3980,13 +3980,13 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal, st) {
   const cls = isSevere
     ? "bg-rose-50 border-rose-300 text-rose-900"
     : "bg-amber-50 border-amber-300 text-amber-900";
-  host.className = `mb-4 px-4 py-2 rounded-lg border text-[12px] flex items-start gap-2 ${cls}`;
+  host.className = `mb-4 px-4 py-3 rounded-lg border text-[12px] flex items-start gap-3 ${cls}`;
   const icon = isSevere ? "⚠" : "ℹ";
   const lvl = isSevere ? "시장 구조 시급" : "시장 구조 주의";
   host.innerHTML = `
-    <span class="text-[14px] leading-5 flex-shrink-0">${icon}</span>
+    <span class="text-[20px] leading-none flex-shrink-0 mt-0.5">${icon}</span>
     <div class="flex-1">
-      <strong class="mr-1">${lvl} — 노후선 ${pct.toFixed(1)}%</strong>${ownerContext}
+      <strong class="mr-1 text-[13px]">${lvl} — 노후선 ${pct.toFixed(1)}%</strong>${ownerContext}
       <span>${aged25.toLocaleString()}척 / 분석 대상 ${agedTotal.toLocaleString()}척 (선령 미상 제외) · 필터 결과 ${rows.length.toLocaleString()}척 기준.</span>
       <div class="text-[11px] opacity-90 mt-1 leading-5">
         <span class="opacity-75 mr-1">노후선 25년+ 집중도:</span> ${breakdown || "<em class=\"opacity-60\">데이터 없음</em>"}
@@ -4248,8 +4248,8 @@ function _renderFleetActiveChips(st) {
                 title="이 필터 제거" aria-label="이 필터 제거">×</button>
       </span>
     `).join("")}
-    <button type="button" id="fl-chips-clear" class="ml-2 px-2 py-0.5 rounded border border-slate-300 text-slate-600 text-[10px] hover:bg-rose-50 hover:border-rose-400 hover:text-rose-600">
-      모두 해제
+    <button type="button" id="fl-chips-clear" class="ml-auto px-2 py-0.5 rounded-full border border-rose-300 bg-rose-50 text-rose-700 text-[10px] font-semibold hover:bg-rose-100 hover:border-rose-500 transition-colors">
+      ⊗ 모두 해제
     </button>`;
   // Bind X buttons
   host.querySelectorAll("button[data-chip-x]").forEach(btn => {

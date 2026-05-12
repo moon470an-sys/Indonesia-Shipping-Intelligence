@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 29 검증 — 2026-05-12 (Supply 탭 21차 — 종합 audit + alert polish)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 종합 시각 audit | ✅ Cycle 29 | 8 차트 SVG 모두 정상, 100 row, 10 owners, alert amber. KPI {count: 41,135, jenis: 53, avgGt: 1,292, aged: 12,433} |
+| Alert callout layout polish | ✅ Cycle 29 | icon size 14→20px, gap 2→3, padding 2→3, 헤더 strong 12→13px — 시각 위계 강화 |
+| "모두 해제" 버튼 visual polish | ✅ Cycle 29 | rose-50 + rose-300 border + ⊗ icon + font-semibold — 위험성 표현 강화 |
+
+### 횡단
+- 원칙 lint ✅. 작은 시각 polish — 데이터 흐름 무영향.
+
 ## Cycle 28 검증 — 2026-05-12 (Supply 탭 20차 — alert baseline 비교 + row hover)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
