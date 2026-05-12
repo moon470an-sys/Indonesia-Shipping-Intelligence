@@ -195,3 +195,32 @@
 
 ### 사이클 종료
 - Cycle 5 완료. 사용자 요청 5건 (①②③④⑤) 모두 처리됨.
+
+## Cycle 6 검증 — 2026-05-12
+
+### Demand 탭
+
+- ✅ 시계열 차트 제목 "— 카테고리별 stacked bar" 문구 삭제.
+- ✅ y축 라벨 "ton (CARGO 카테고리 stacked)" → "ton".
+- ✅ 차트 하단 카테고리 안내 단락 통째 삭제.
+- ✅ 시계열 차트 우측에 카테고리 상세 화물 박스 추가 (grid 2-col).
+  - 드롭다운(#cat-detail-select) — 10 카테고리, ton_total_24m desc.
+  - 메타 라인 — 24M 누계 톤 / KOMODITI 수 / 항해 수.
+  - Top 12 코모디티 리스트 — 순위·이름·톤·미니 바·비중·항해 수.
+  - 색상은 시계열 차트와 일관 (CARGO_CATEGORY_PALETTE).
+- ✅ 신규 빌더 build_cargo_category_details — cargo_snapshot 24M
+  raw에서 (JENIS_KAPAL, KOMODITI) 톤 집계 후 카테고리별 Top 12.
+- ✅ 데이터 검증: 10 카테고리. 예) Bulk Carrier 24M 1.98B (BATU BARA 39%,
+  BATUBARA 25%), Container 491M (PETIKEMAS 20 FULL 25%), Other Cargo
+  2.30B (NICKEL ORE 25%, BATU BARA 24%).
+
+### Supply / Balance / Explorer 탭
+- 본 사이클 변경 없음.
+
+### 횡단(원칙) 위반 점검
+- 원칙 1·2·4·5·6 통과.
+- 원칙 3 (탐색성) — 시계열 카테고리 별 상세 화물 확인 가능 → 화물 ×
+  선종 × 시간 3축 중 화물 차원에서 드릴다운 가능. 강화.
+
+### 사이클 종료
+- Cycle 6 완료. 사용자 요청 4건 (①②③④) 모두 처리됨.
