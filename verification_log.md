@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 42 검증 — 2026-05-12 (Supply 탭 34차 — detail rows 'Close all')
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 펼친 detail row 일괄 닫기 버튼 | ✅ Cycle 42 | 'N 상세 닫기' (count 표시). 펼친 detail 없으면 hidden, 있으면 visible |
+| 화면 결과 (smoke test) | ✅ initial hidden → 3 row 펼침 후 visible (count '3') → 클릭 → hidden + detail rows 0 | playwright |
+
+### 횡단
+- 원칙 lint ✅. UX 강화 — 여러 detail 펼친 후 빠르게 정리.
+
 ## Cycle 41 검증 — 2026-05-12 (Supply 탭 33차 — sister vessels mini-list)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

@@ -2654,6 +2654,16 @@ function _wireFleetFilters() {
     jsn.dataset.bound = "1";
     jsn.addEventListener("click", _fleetJsonDownload);
   }
+  // Cycle 42: detail rows 일괄 닫기
+  const closeAll = document.getElementById("fl-close-all-details");
+  if (closeAll && !closeAll.dataset.bound) {
+    closeAll.dataset.bound = "1";
+    closeAll.addEventListener("click", () => {
+      const tabElX = document.getElementById("tab-fleet");
+      if (tabElX?._fleetExpanded) tabElX._fleetExpanded.clear();
+      _renderFleetView();
+    });
+  }
   // Cycle 14: page size 선택. Cycle 18: 변경 시 localStorage 저장.
   const ps = document.getElementById("fl-page-size");
   if (ps && !ps.dataset.bound) {
@@ -3013,6 +3023,14 @@ function _renderFleetView() {
   if (ps && Number(ps.value) !== pageSize) ps.value = String(pageSize);
   const hr = document.getElementById("fl-hide-raw");
   if (hr && hr.checked !== tabEl._fleetHideRaw) hr.checked = tabEl._fleetHideRaw;
+  // Cycle 42: detail close-all 버튼 visibility + count
+  const closeAllBtn = document.getElementById("fl-close-all-details");
+  const expCount = tabEl._fleetExpanded?.size || 0;
+  if (closeAllBtn) {
+    closeAllBtn.classList.toggle("hidden", expCount === 0);
+    const cnt = document.getElementById("fl-close-all-count");
+    if (cnt) cnt.textContent = String(expCount);
+  }
   document.querySelectorAll("#fl-thead-row th[data-col]").forEach(h => {
     const m = h.querySelector("[data-sort-marker]");
     const isActive = h.dataset.col === st.sortCol;
