@@ -2093,12 +2093,24 @@ const FLEET_TANKER_SUBS = [
 async function renderFleet() {
   setupSourceLabels(document.getElementById("tab-fleet"));
   // Cycle 20: Supply 탭 헤더에 데이터 freshness 채움 (state.meta 사용)
+  // Cycle 61: build_at 경과 일수에 따라 색상 적용 (≤3d emerald / 4-7d 기본 / >7d amber)
   try {
     const m = state.meta || {};
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || "—"; };
     set("fl-meta-vessel", m.latest_vessel_snapshot_month);
     set("fl-meta-lk3", m.latest_lk3_month);
     set("fl-meta-build", (m.build_at || "").replace("T", " ").replace(/Z$/, "Z").substring(0, 16));
+    if (m.build_at) {
+      const ageDays = (Date.now() - new Date(m.build_at).getTime()) / 86400000;
+      const buildEl = document.getElementById("fl-meta-build");
+      if (buildEl && ageDays > 7) {
+        buildEl.classList.add("text-amber-600");
+        buildEl.title = `데이터 build 후 ${Math.round(ageDays)}일 경과 — 갱신 지연 가능`;
+      } else if (buildEl && ageDays <= 3) {
+        buildEl.classList.add("text-emerald-700");
+        buildEl.title = `데이터 build 후 ${Math.round(ageDays)}일 경과 — fresh`;
+      }
+    }
   } catch (e) {}
 
   // Cycle 9: Top Owner 카드를 위해 fleet_owners.json 함께 로드. 실패해도

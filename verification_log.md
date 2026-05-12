@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 61 검증 — 2026-05-13 (Supply 탭 53차 — build 신선도 색상)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| build_at 일수 기반 색상 | ✅ Cycle 61 | ≤3d emerald (fresh) / 4-7d 기본 / >7d amber (지연 가능) + tooltip |
+| 화면 결과 (smoke test) | ✅ "2026-05-12 04:38" build → 1일 경과 → text-emerald-700, tooltip "데이터 build 후 1일 경과 — fresh" | playwright |
+
+### 횡단
+- 원칙 lint ✅. 작은 운영 신호 — 데이터 갱신 지연 즉시 인지.
+
 ## Cycle 60 검증 — 2026-05-13 (Supply 탭 52차 — Esc shortcut 라이브 검증)
 
 ### 라이브 사이트 (https://moon470an-sys.github.io/Indonesia-Shipping-Intelligence/#fleet)
