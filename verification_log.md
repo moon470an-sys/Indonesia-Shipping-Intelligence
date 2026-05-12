@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 52 검증 — 2026-05-13 (Supply 탭 44차 — HHI 시장 집중도)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| HHI (Herfindahl-Hirschman Index) | ✅ Cycle 52 | Top 운영사 footer에 HHI 값 + 라벨 (분산/중간/집중). KPPU 임계점 적용 (<1500 분산 emerald, 1500-2500 중간 amber, >2500 집중 rose) |
+| 화면 결과 (smoke test) | ✅ 기본 (cargo+aux 41,135척, 15,928 운영사) → 'HHI 22 (분산)' — KPPU threshold 1500 한참 미만 | playwright |
+
+### 횡단
+- 원칙 lint ✅. BI 인사이트: Indonesia 화물선 운영사 시장 HHI 22 = 극도 분산. 포트 운영사 HHI ~6306 (memory note)과 대조 — 동일 인도네시아 시장 안에서 운영사는 분산, 항만은 집중.
+
 ## Cycle 51 검증 — 2026-05-13 (Supply 탭 43차 — 시장 구조 Top 5/10 GT 점유율)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

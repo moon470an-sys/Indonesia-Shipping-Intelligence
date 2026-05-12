@@ -4043,6 +4043,17 @@ function _drawFleetTopOwners(rows, I) {
   const top5Pct = totalGt > 0 ? (top5Gt / totalGt * 100) : 0;
   const top10Pct = totalGt > 0 ? (top10Gt / totalGt * 100) : 0;
   const ownersCount = sorted.length;
+  // Cycle 52: HHI (Herfindahl-Hirschman Index) — sum of (share_%)². [0, 10000]
+  //   KPPU 임계점: <1500 분산 / 1500-2500 중간 / >2500 집중
+  let hhi = 0;
+  if (totalGt > 0) {
+    for (const o of sorted) {
+      const sharePct = (o.sum_gt || 0) / totalGt * 100;
+      hhi += sharePct * sharePct;
+    }
+  }
+  const hhiLabel = hhi < 1500 ? "분산" : hhi < 2500 ? "중간" : "집중";
+  const hhiCls = hhi < 1500 ? "text-emerald-700" : hhi < 2500 ? "text-amber-700" : "text-rose-700";
   if (!top.length) {
     host.innerHTML = `<div class="text-slate-400 text-[11px] p-4 text-center">필터 결과 운영사 없음</div>`;
     return;
@@ -4159,6 +4170,8 @@ function _drawFleetTopOwners(rows, I) {
       <span><strong class="text-slate-700">시장 구조:</strong> Top 5 GT ${fmtTon(top5Gt)} · <strong>${top5Pct.toFixed(1)}%</strong> of 전체 GT ${fmtTon(totalGt)}</span>
       <span class="text-slate-400">·</span>
       <span>Top 10 GT ${fmtTon(top10Gt)} · <strong>${top10Pct.toFixed(1)}%</strong></span>
+      <span class="text-slate-400">·</span>
+      <span title="Herfindahl-Hirschman Index — sum of (share %)². KPPU: <1500 분산 / 1500-2500 중간 / >2500 집중">HHI <strong class="${hhiCls}">${hhi.toFixed(0)}</strong> (<span class="${hhiCls}">${hhiLabel}</span>)</span>
       <span class="text-slate-400">·</span>
       <span>${ownersCount.toLocaleString()}개 운영사</span>
     </div>
