@@ -2184,6 +2184,8 @@ async function renderFleet() {
   _markClickableFleetPanels();
   // Cycle 36: scroll-to-top 버튼 wire
   _wireFleetScrollTop();
+  // Cycle 59: Esc 키로 펼친 detail 일괄 닫기
+  _wireFleetKeyboardShortcuts();
   _renderFleetView();
 }
 
@@ -2246,6 +2248,24 @@ function _computeFleetOwnerTotals(fv) {
     totals.set(owner, ent);
   }
   return totals;
+}
+
+// Cycle 59: keyboard shortcut — Esc 키 누르면 모든 detail rows 닫기 (포커스가 input/textarea가 아닐 때만)
+function _wireFleetKeyboardShortcuts() {
+  if (document.body.dataset.flKbBound) return;
+  document.body.dataset.flKbBound = "1";
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    // 입력 중일 때는 무시
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    const tabEl = document.getElementById("tab-fleet");
+    if (!tabEl || tabEl.classList.contains("hidden")) return;
+    const exp = tabEl._fleetExpanded;
+    if (!exp || exp.size === 0) return;
+    exp.clear();
+    _renderFleetView();
+  });
 }
 
 // Cycle 36: 스크롤 깊이 따라 scroll-to-top 버튼 표시 토글
