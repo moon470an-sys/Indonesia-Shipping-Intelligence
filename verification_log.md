@@ -3,6 +3,32 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 50 검증 — 2026-05-13 (Supply 탭 42차 — 미사용 derived 검토 audit)
+
+### Supply 탭 derived 파일 활용도 점검
+
+| 파일 | Supply 탭 활용 | 위치 |
+|------|--------------|------|
+| fleet_vessels.json | ✅ 메인 데이터 | renderFleet |
+| fleet_owners.json | ✅ Top 운영사 카드 | Cycle 9 |
+| owner_profile.json | ✅ Tanker detail | Cycle 47 |
+| owner_ticker_map.json | ✅ IDX ticker chip | Cycle 49 |
+| scope_audit.json | ✅ scope strip | Cycle 1 |
+| meta.json | ✅ 헤더 freshness | Cycle 20 |
+| subclass_facts.json | ⚪ Balance 탭 전용 (12m window tanker fleet summary) | — |
+| tanker_subclass.json | ⚪ Balance 탭 전용 (monthly cards + YoY) | — |
+| tanker_top.json | ⚪ Balance 탭 전용 (commodity/operator flows) | — |
+| route_facts.json | ⚪ Demand 탭 전용 (OD routes) | — |
+| timeseries.json | ⚪ Demand 탭 전용 (sector monthly) | — |
+| cargo_*.json | ⚪ Demand 탭 전용 | — |
+| home_kpi.json | ⚪ Demand 탭 전용 | — |
+| regulatory_notes.html | ⚪ About / 별도 영역 | — |
+
+### 결론
+- 코드 변경 없음. 모든 Supply-relevant derived 파일은 이미 활용됨.
+- 미사용 파일(subclass_facts / tanker_* / route_facts / timeseries / cargo_*)은 Balance / Demand 탭에서 활용 중이거나 Supply 영역과 무관.
+- Supply 탭은 데이터 차원이 포화됨.
+
 ## Cycle 49 검증 — 2026-05-13 (Supply 탭 41차 — IDX ticker 정확 매핑)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
