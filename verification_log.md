@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 34 검증 — 2026-05-12 (Supply 탭 26차 — detail row 빠른 필터 버튼)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Detail row 안 owner/vc/jenis/flag '→ 필터' 버튼 | ✅ Cycle 34 | 클릭 시 각 필터 즉시 적용 (vc=vcFilter, jenis=교체, flag=flagFilter). stopPropagation으로 row 토글 분리 |
+| 화면 결과 (smoke test) | ✅ 첫 선박 detail row → owner 'PT PRIMA SENTOSA TANGGUH' '→ 필터' 클릭 → ownerExact 적용, count 1척, 1 chip | playwright |
+
+### 횡단
+- 원칙 lint ✅. drill-down UX 자연스러움 — vessel detail에서 same-owner/type 즉시 조회.
+
 ## Cycle 33 검증 — 2026-05-12 (Supply 탭 25차 — 선박 row 클릭 → detail expand)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

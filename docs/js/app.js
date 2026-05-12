@@ -3025,18 +3025,23 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     const k = vKey(r);
     const isOpen = exp.has(k);
     const expandArrow = isOpen ? "▼" : "▶";
+    // Cycle 34: 빠른 필터 버튼 inline. data-fa-{field}=value 속성으로 카드 본문에 부착.
+    const faBtn = (field, value, label) => value ? `
+      <button type="button" data-fa-${field}="${_esc(value)}"
+              class="fl-detail-action ml-1 text-[9px] px-1.5 py-0.5 rounded border border-blue-200 text-blue-700 hover:bg-blue-50"
+              title="${_esc(label)} 만 필터링">→ 필터</button>` : "";
     const detailRow = isOpen ? `
       <tr class="fl-detail-row" data-vk="${_esc(k)}">
         <td colspan="14" class="px-4 py-3 bg-slate-50 border-b border-slate-200">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선박명</span><span class="font-semibold">${_esc(r[I.nama])}</span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선주</span><span>${_esc(r[I.owner])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선주</span><span>${_esc(r[I.owner])}</span>${faBtn("owner", r[I.owner], r[I.owner])}</div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Sector</span><span>${_esc(r[I.sector])}</span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Vessel Class</span><span>${_esc(r[I.vc])}</span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">JenisDetailKet</span><span>${_esc(r[I.jenis])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Vessel Class</span><span>${_esc(r[I.vc])}</span>${faBtn("vc", r[I.vc], r[I.vc])}</div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">JenisDetailKet</span><span>${_esc(r[I.jenis])}</span>${faBtn("jenis", r[I.jenis], r[I.jenis])}</div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Tanker Subclass</span><span>${_esc(r[I.ts]) || '—'}</span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Scope</span><span>${_esc(r[I.scope])}</span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">국적</span><span>${_esc(flag)}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">국적</span><span>${_esc(flag)}</span>${faBtn("flag", flag, flag)}</div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">건조 / 선령</span><span class="font-mono ${age != null && age >= 25 ? 'text-rose-600 font-bold' : ''}">${yr || '—'} · ${age != null ? age + '년' : '—'}</span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">GT × LOA × W × D</span><span class="font-mono">${(r[I.gt]||0).toLocaleString()} · ${(r[I.loa]||0).toFixed(1)}m · ${(r[I.lebar]||0).toFixed(1)}m · ${(r[I.dalam]||0).toFixed(1)}m</span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">엔진</span><span class="font-mono">${_esc(r[I.mesin]) || '—'} <span class="opacity-60">/ ${_esc(r[I.mesin_type]) || '—'}</span></span></div>
@@ -3061,13 +3066,32 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
       <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50 font-mono">${_esc(r[I.call_sign])}</td>
     </tr>${detailRow}`;
   }).join("");
-  // Cycle 33: row click → toggle expand
+  // Cycle 33: row click → toggle expand. Cycle 34: detail action buttons (owner/vc/jenis/flag 필터)
   if (!body.dataset.clickBound) {
     body.dataset.clickBound = "1";
     body.addEventListener("click", (e) => {
+      const tabElX = document.getElementById("tab-fleet");
+      // Detail action button — fl-detail-action class
+      const act = e.target.closest(".fl-detail-action");
+      if (act) {
+        e.stopPropagation();
+        const st = tabElX._fleetState;
+        if (act.dataset.faOwner) st.ownerExact = st.ownerExact === act.dataset.faOwner ? "" : act.dataset.faOwner;
+        else if (act.dataset.faVc) st.vcFilter = st.vcFilter === act.dataset.faVc ? "" : act.dataset.faVc;
+        else if (act.dataset.faJenis) {
+          const v = act.dataset.faJenis;
+          // Toggle jenis selection — if only this one is selected, clear; else replace with this
+          if (st.jenis.size === 1 && st.jenis.has(v)) st.jenis.clear();
+          else { st.jenis.clear(); st.jenis.add(v); }
+          _renderFleetJenisList(tabElX._fleetVessels);
+        } else if (act.dataset.faFlag) st.flagFilter = st.flagFilter === act.dataset.faFlag ? "" : act.dataset.faFlag;
+        tabElX._fleetPage = 1;
+        _renderFleetView();
+        return;
+      }
+      // Row click → toggle expand
       const tr = e.target.closest("tr.fl-vessel-row");
       if (!tr) return;
-      const tabElX = document.getElementById("tab-fleet");
       const setExp = tabElX._fleetExpanded || (tabElX._fleetExpanded = new Set());
       const key = tr.dataset.vk;
       if (setExp.has(key)) setExp.delete(key); else setExp.add(key);
