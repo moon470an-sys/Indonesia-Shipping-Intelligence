@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 32 검증 — 2026-05-12 (Supply 탭 24차 — regression smoke 통과)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 시나리오 | 결과 |
+|---------|------|
+| Default load | 41,135척, GT 53.1M, 25y+ 31.8% (평균 17.2년, GT 11.5M) ✅ |
+| Aged KPI 클릭 | 12,433척, 1 chip ✅ |
+| +scope cargo + heatmap Tanker × 25-30 + GT bucket 중형 (조합 필터) | 110척, 4 chips, URL `#fleet?scope=cargo&vc=Tanker&yrMin=1996&yrMax=2001&gtMin=500&gtMax=5000`, alert 유지 ✅ |
+| Reset | 41,135척, 0 chips, URL `#fleet` ✅ |
+| 8 차트 SVG 무결성 (stress 후) | 모두 정상 ✅ |
+
+### 횡단
+- 코드 변경 없음 — 회귀 점검만. 23 cycles 누적 기능이 모두 충돌 없이 합성.
+
 ## Cycle 31 검증 — 2026-05-12 (Supply 탭 23차 — KPI sub에 합계 GT)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
