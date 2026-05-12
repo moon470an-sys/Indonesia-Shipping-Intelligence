@@ -3200,7 +3200,12 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">건조 / 선령</span><span class="font-mono ${age != null && age >= 25 ? 'text-rose-600 font-bold' : ''}">${yr || '—'} · ${age != null ? age + '년' : '—'}</span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">GT × LOA × W × D</span><span class="font-mono">${(r[I.gt]||0).toLocaleString()} · ${(r[I.loa]||0).toFixed(1)}m · ${(r[I.lebar]||0).toFixed(1)}m · ${(r[I.dalam]||0).toFixed(1)}m</span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">엔진</span><span class="font-mono">${_esc(r[I.mesin]) || '—'} <span class="opacity-60">/ ${_esc(r[I.mesin_type]) || '—'}</span></span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">IMO / Call Sign</span><span class="font-mono">${_esc(r[I.imo]) || '—'} / ${_esc(r[I.call_sign]) || '—'}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">IMO / Call Sign</span><span class="font-mono">${(() => {
+              const imo = r[I.imo];
+              if (!imo || !/^\d{6,9}$/.test(String(imo).trim())) return _esc(imo) || '—';
+              const cleanImo = String(imo).trim();
+              return `<a href="https://www.equasis.org/EquasisWeb/restricted/Search?fs=ShipSearch&IMO=${encodeURIComponent(cleanImo)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline" title="Equasis.org에서 IMO ${_esc(cleanImo)} 조회 (외부 사이트)">${_esc(cleanImo)} ↗</a>`;
+            })()} / ${_esc(r[I.call_sign]) || '—'}</span></div>
           </div>
           ${sisterListHtml}
         </td>

@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 46 검증 — 2026-05-12 (Supply 탭 38차 — IMO equasis.org 외부 lookup)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Detail row IMO → equasis.org lookup | ✅ Cycle 46 | IMO 6-9자리 숫자만 정규식 매치 → equasis.org URL 생성. target="_blank" + rel="noopener". 텍스트 끝 ↗ 외부 링크 표시 |
+| 화면 결과 (smoke test) | ✅ IMO 9418054 → 'https://www.equasis.org/EquasisWeb/restricted/Search?fs=ShipSearch&IMO=9418054', 텍스트 '9418054 ↗' | playwright |
+
+### 횡단
+- 원칙 lint ✅. 외부 사이트 link는 분석가 친화 — 글로벌 IMO 표준 DB(Equasis) 연계.
+
 ## Cycle 45 검증 — 2026-05-12 (Supply 탭 37차 — sister 확장 시 scrollable)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
