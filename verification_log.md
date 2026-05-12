@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 36 검증 — 2026-05-12 (Supply 탭 28차 — scroll-to-top 버튼)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Scroll-to-top floating 버튼 | ✅ Cycle 36 | scrollY > 600일 때만 우하단 표시. 클릭 시 smooth scroll to top. fleet 탭 활성 일 때만 |
+| 화면 결과 (smoke test) | ✅ initial hidden, scroll 800 → visible, click → scrollY 0 + hidden | playwright |
+
+### 횡단
+- 원칙 lint ✅. 사용성 polish — 긴 페이지에서 위로 이동 단축.
+
 ## Cycle 35 검증 — 2026-05-12 (Supply 탭 27차 — owner total + class median 컨텍스트)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

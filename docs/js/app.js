@@ -2158,6 +2158,8 @@ async function renderFleet() {
   _wireFleetCopyLink();
   // Cycle 27: 클릭 가능한 차트 panel에 hover 강조 마커
   _markClickableFleetPanels();
+  // Cycle 36: scroll-to-top 버튼 wire
+  _wireFleetScrollTop();
   _renderFleetView();
 }
 
@@ -2220,6 +2222,30 @@ function _computeFleetOwnerTotals(fv) {
     totals.set(owner, ent);
   }
   return totals;
+}
+
+// Cycle 36: 스크롤 깊이 따라 scroll-to-top 버튼 표시 토글
+function _wireFleetScrollTop() {
+  const btn = document.getElementById("fl-scroll-top");
+  if (!btn || btn.dataset.bound) return;
+  btn.dataset.bound = "1";
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  let raf = null;
+  const onScroll = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = null;
+      const tabFleet = document.getElementById("tab-fleet");
+      // 활성 탭이 fleet 일 때만 표시
+      if (tabFleet?.classList.contains("hidden")) { btn.classList.add("hidden"); return; }
+      if (window.scrollY > 600) btn.classList.remove("hidden");
+      else btn.classList.add("hidden");
+    });
+  };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
 }
 
 function _markClickableFleetPanels() {
