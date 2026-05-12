@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 25 검증 — 2026-05-12 (Supply 탭 17차 — chips sticky + filter badge + pagination polish)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Active filter chips sticky | ✅ Cycle 25 | position:sticky, top:2 (8px), z-index:10, shadow. 스크롤 후에도 항상 보임 |
+| Filter count badge | ✅ Cycle 25 | "적용 필터 N" → "적용 필터 [N]" 동그라미 blue-600 배지 |
+| Pagination polish | ✅ Cycle 25 | ⏮ 처음 / ◀ 이전 / 페이지 / ▶ 다음 / ⏭ 마지막 + "page X / Y" 라벨. 8 buttons |
+| 화면 결과 (smoke test) | ✅ chips: sticky 8px, badge "1", scroll 800px → topInViewport 8. pagination 8 buttons (⏮◀ ... ▶⏭). page label 존재 | playwright |
+
+### 횡단
+- 원칙 lint ✅. UX 강화만, 데이터 흐름 무영향.
+
 ## Cycle 24 검증 — 2026-05-12 (Supply 탭 16차 — scatter 사분면 + 종합 E2E)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

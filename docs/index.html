@@ -226,8 +226,9 @@
         </label>
       </div>
 
-      <!-- Cycle 11: active filter chips. JS가 동적으로 채움. 아무 필터도 없을 때는 hidden. -->
-      <div id="fl-active-chips" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-3 flex flex-wrap items-center gap-2 text-[11px]"></div>
+      <!-- Cycle 11: active filter chips. JS가 동적으로 채움. 아무 필터도 없을 때는 hidden.
+           Cycle 25: 스크롤 시 상단 sticky — 필터 상태 항상 가시. -->
+      <div id="fl-active-chips" class="hidden sticky top-2 z-10 bg-white border border-blue-300 rounded-lg px-3 py-2 mb-3 flex flex-wrap items-center gap-2 text-[11px] shadow-md"></div>
 
       <!-- Cycle 10: jang1117 mirror의 중복 sub-header 제거. row count는 scope-strip 우측으로 흡수.
            h1 "🚢 Supply — Fleet 공급"이 이미 panel 헤더 역할을 한다. -->

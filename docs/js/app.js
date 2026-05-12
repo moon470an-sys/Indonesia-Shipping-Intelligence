@@ -2905,7 +2905,7 @@ function _renderFleetPagination(total, page, pageSize, totalPages) {
     host.innerHTML = `<span class="text-slate-400">결과 없음</span>`;
     return;
   }
-  // Compact pager: ◀ prev | 1 ... [page] ... totalPages | next ▶
+  // Cycle 25: 페이지네이션 polish — 처음/끝 버튼 + page X of Y 라벨
   const tabEl = document.getElementById("tab-fleet");
   const pages = [];
   const add = (n) => pages.push(n);
@@ -2918,16 +2918,19 @@ function _renderFleetPagination(total, page, pageSize, totalPages) {
   const uniq = [];
   for (const p of pages) if (uniq[uniq.length - 1] !== p) uniq.push(p);
 
-  const btn = (label, target, disabled, active) =>
+  const btn = (label, target, disabled, active, title) =>
     `<button type="button" data-page="${target ?? ""}" ` +
-    `class="px-2 py-0.5 rounded border ${active ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 hover:bg-slate-50"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}" ` +
-    `${disabled ? "disabled" : ""}>${label}</button>`;
+    `class="px-2 py-0.5 rounded border ${active ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold" : "border-slate-200 hover:bg-slate-50"} ${disabled ? "opacity-40 cursor-not-allowed" : ""}" ` +
+    `${title ? `title="${title}"` : ""} ${disabled ? "disabled" : ""}>${label}</button>`;
   host.innerHTML =
-    btn("◀", page - 1, page <= 1, false) +
+    btn("⏮", 1, page <= 1, false, "처음 페이지") +
+    btn("◀", page - 1, page <= 1, false, "이전 페이지") +
     uniq.map(p => p === "…"
       ? `<span class="px-1 text-slate-400">…</span>`
       : btn(p, p, false, p === page)).join("") +
-    btn("▶", page + 1, page >= totalPages, false);
+    btn("▶", page + 1, page >= totalPages, false, "다음 페이지") +
+    btn("⏭", totalPages, page >= totalPages, false, "마지막 페이지") +
+    `<span class="px-2 text-[11px] font-mono text-slate-500 ml-2">page <strong>${page.toLocaleString()}</strong> / ${totalPages.toLocaleString()}</span>`;
   if (!host.dataset.bound) {
     host.dataset.bound = "1";
     host.addEventListener("click", (e) => {
@@ -4157,7 +4160,10 @@ function _renderFleetActiveChips(st) {
   }
   host.classList.remove("hidden");
   host.innerHTML = `
-    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mr-1">적용 필터 (${chips.length})</span>
+    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mr-1 inline-flex items-center gap-1">
+      적용 필터
+      <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-blue-600 text-white text-[11px] font-bold leading-none">${chips.length}</span>
+    </span>
     ${chips.map((c, i) => `
       <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-slate-300 text-slate-700"
             data-chip-idx="${i}">
