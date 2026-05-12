@@ -22,10 +22,9 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
-  <!-- Renewal v2 (PR-2): d3 + topojson power the Home flow map -->
-  <script src="https://cdn.jsdelivr.net/npm/d3@7" charset="utf-8"></script>
-  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3" charset="utf-8"></script>
-  <!-- Leaflet for the Cargo tab's port infographic (jang1117/shipping_volume mirror) -->
+  <!-- Cycle 3: d3 + topojson 의존성 제거. Demand 탭의 메인 지도는 cv-app
+       (Leaflet) 으로 일원화. d3는 Plotly 내부 의존이라 별도 로드 불필요. -->
+  <!-- Leaflet for the port-volume infographic (Demand 탭 메인 지도) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" charset="utf-8"></script>
   <link rel="stylesheet" href="./css/site.css" />
@@ -81,87 +80,33 @@
         </div>
         <span class="text-[11px] text-slate-500" id="home-year-banner"></span>
       </div>
+      <!-- Cycle 3: KPI 정비. "선박 등록 척수"는 Supply 영역이므로 제거.
+           Demand 탭은 화물(LK3) KPI 한정으로 구성. 3 카드 (총 화물 / 탱커 /
+           국내·국제 비중) + 데이터 기준일. -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="home-kpi" data-source="docs/derived/home_kpi.json">
-        <div class="kpi-card-large"><div class="kpi-label">총 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
-        <div class="kpi-card-large"><div class="kpi-label">탱커 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
-        <div class="kpi-card-large"><div class="kpi-label">선박 등록 척수 <span class="text-[10px] text-slate-400 font-normal">(kapal.dephub.go.id)</span></div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">총 화물 물동량 (LK3)</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">탱커 화물 물동량</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
+        <div class="kpi-card-large"><div class="kpi-label">국내 vs 국제 비중</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
         <div class="kpi-card-large"><div class="kpi-label">데이터 기준일</div><div class="skeleton-value"></div><div class="skeleton-line" style="width:50%"></div></div>
       </div>
 
-      <!-- 4.2 Main map (PR-2: d3 + topojson + SVG particle animation) -->
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/derived/map_flow.json">
-        <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 화물 흐름 지도 <span class="text-xs text-slate-500 font-normal" id="home-map-period">(loading…)</span></h3>
-          <div class="flex flex-wrap gap-3 text-xs" id="home-map-controls">
-            <div class="flex items-center gap-1">
-              <span class="text-slate-500 mr-1">카테고리</span>
-              <div class="flex rounded border border-slate-200 overflow-hidden" id="map-control-cat">
-                <button data-key="all" class="px-2 py-1 bg-slate-800 text-white">모든 화물</button>
-                <button data-key="tanker" class="px-2 py-1 bg-white hover:bg-slate-100">탱커만</button>
-                <button data-key="bulk" class="px-2 py-1 bg-white hover:bg-slate-100">드라이벌크만</button>
-              </div>
-            </div>
-            <div class="flex items-center gap-1">
-              <span class="text-slate-500 mr-1">기간</span>
-              <div class="flex rounded border border-slate-200 overflow-hidden" id="map-control-period">
-                <button data-key="12m" class="px-2 py-1 bg-white hover:bg-slate-100" title="최근 12개월 롤링">12M</button>
-                <button data-key="24m" class="px-2 py-1 bg-slate-800 text-white" title="24개월 누계 (카테고리 색상 분리)">24M</button>
-                <!-- PR-35: year buttons populated by JS so partial years get an (Nmo) suffix -->
-              </div>
-            </div>
-            <div class="flex items-center gap-1">
-              <span class="text-slate-500 mr-1">트래픽</span>
-              <div class="flex rounded border border-slate-200 overflow-hidden" id="map-control-traffic">
-                <button data-key="dn_ln" class="px-2 py-1 bg-slate-800 text-white">국내+국제</button>
-                <button data-key="dn" class="px-2 py-1 bg-white hover:bg-slate-100">국내만</button>
-                <button data-key="ln" class="px-2 py-1 bg-white hover:bg-slate-100">국제만</button>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Cycle 3: d3 흐름 지도 블록 제거. Demand 탭의 메인 지도는
+           항만별 물동량 인포그래픽(cv-app, 본 패널 하단)으로 일원화. d3/
+           topojson 의존성과 sector 사이드바도 함께 제거. 흐름 라인 + 입자
+           애니메이션은 Cycle 4에서 cv-app에 직접 적용 예정. -->
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          <!-- Map SVG -->
-          <div class="lg:col-span-3 relative bg-slate-50 rounded overflow-hidden" style="min-height: 480px">
-            <svg id="home-map-svg" class="w-full h-full" viewBox="0 0 900 500" preserveAspectRatio="xMidYMid meet"></svg>
-            <div id="home-map-status" class="absolute bottom-2 right-3 text-xs text-slate-400"></div>
-            <div id="home-map-legend" class="absolute top-2 left-3 bg-white/85 rounded px-2 py-1.5 text-xs shadow-sm"></div>
-          </div>
-
-          <!-- Right sidebar: sector breakdown + intl + insights -->
-          <div class="space-y-3">
-            <div class="bg-slate-50 rounded p-3">
-              <h4 class="text-xs font-semibold text-slate-700 mb-2">Sector 비중 (latest LK3)</h4>
-              <ul class="space-y-1.5" id="map-sector-strip">
-                <li><span class="skeleton-line" style="width:90%"></span></li>
-                <li><span class="skeleton-line" style="width:75%"></span></li>
-                <li><span class="skeleton-line" style="width:60%"></span></li>
-              </ul>
-            </div>
-            <div class="bg-slate-50 rounded p-3">
-              <h4 class="text-xs font-semibold text-slate-700 mb-1">국제 항로 (요약)</h4>
-              <p class="text-xl font-bold text-slate-800" id="map-intl-ton"><span class="skeleton-line" style="width:60%; display:inline-block; height:20px"></span></p>
-              <p class="text-[10.5px] text-slate-500 mt-1" id="map-intl-note"><span class="skeleton-line" style="width:80%"></span></p>
-            </div>
-            <div class="bg-slate-50 rounded p-3">
-              <h4 class="text-xs font-semibold text-slate-700 mb-1">📋 자동 요약 (사실)</h4>
-              <ul class="text-xs text-slate-700 space-y-1.5" id="map-insights">
-                <li><span class="skeleton-line" style="width:90%"></span></li>
-                <li><span class="skeleton-line" style="width:75%"></span></li>
-                <li><span class="skeleton-line" style="width:85%"></span></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4.3 Timeseries (PR-3 fills) -->
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/timeseries.json">
+      <!-- Cycle 3: timeseries 차트를 CARGO 한정 + 카테고리(Container/
+           Bulk/Tanker subclass/General/Other) stacked area로 재구성.
+           PASSENGER/FISHING 등 비화물 sector는 표시하지 않음. -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/data/cargo_sector_monthly.json">
         <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 전체 물동량 24개월 추이 (sector stacked)</h3>
+          <h3 class="font-semibold">인도네시아 화물(Cargo) 물동량 24개월 추이 <span class="text-xs text-slate-500 font-normal">— 카테고리별 stacked</span></h3>
           <div class="flex gap-1 text-xs" id="home-ts-toggle"></div>
         </div>
-        <div id="home-timeseries" style="height:340px"></div>
+        <div id="home-timeseries" style="height:360px"></div>
+        <p class="text-[10.5px] text-slate-400 mt-1">
+          카테고리: Bulk Carrier · Container · General Cargo · Other Cargo · Tanker subclass (Crude / Product / Chemical / LPG / LNG / FAME / Water). PASSENGER · FISHING · OFFSHORE · NON_COMMERCIAL은 제외.
+        </p>
       </div>
 
       <!-- Cycle 2: 항만별 물동량 인포그래픽 (Cargo 탭에서 이관). 카테고리 토글 + 항구 순위 + Leaflet 지도. -->

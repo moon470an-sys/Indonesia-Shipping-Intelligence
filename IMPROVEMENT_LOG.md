@@ -123,4 +123,61 @@
 
 ---
 
-(중단 지점 — 사용자가 재개 지시 시 Cycle 3 부터 진행.)
+## Cycle 3 — 2026-05-12
+
+**Scope**: 사용자 요청 4건 중 ①(선박 등록 KPI 삭제) + ②부분(d3 흐름
+지도 삭제 — cv-app은 이미 통합됨) + ④(시계열 CARGO 카테고리화).
+②의 기간 필터 추가, ③(cv-app 동그라미 → 흐름 라인 + 입자)는 데이터
+빌더 보강이 필요해 Cycle 4 로 분리.
+
+### 변경 사항
+
+1. **KPI 카드 정비 (요청 ①)**
+   - `tanker_fleet` 카드 (선박 등록 척수) → "국내 vs 국제 화물 비중"
+     으로 대체. `map_flow.json.totals` 의 domestic_ton / intl_ton 으로
+     합성. 24M 누계 기준 백분율 + 절대값 모두 표기.
+   - `total_12m_ton` 라벨 "총 물동량 (인도네시아)" → "총 화물 물동량
+     (LK3)" 로 변경. LK3 자체가 화물 데이터이지만 명시.
+   - `tanker_12m_ton` 라벨 "탱커 물동량" → "탱커 화물 물동량".
+   - `data_freshness` 서브라벨에 "LK3" 명시.
+
+2. **d3 흐름 지도 블록 제거 (요청 ②부분)**
+   - `#home-map-svg`, 카테고리/기간/트래픽 필터, 우측 사이드바 (sector
+     비중 + 국제 항로 + 자동 요약) 통째 삭제.
+   - `<script src=".../d3@7">`, `<script src=".../topojson-client@3">`
+     CDN 의존성 제거. 페이지 로드 가벼워짐.
+   - `renderHome()` 단순화: drawHomeMap / fillSectorStrip /
+     fillForeignSidebar / fillMapInsights / _injectHomeMapYearButtons /
+     bindMapControls / _refreshHomeMapPeriodLabel / fetch(TOPO_URL) 모두
+     제거. 함수 정의는 보존 (호출되지 않음 — Cycle 4에서 정리 가능).
+   - `homeState.mapData` 는 cv-app 라우트 오버레이용으로 유지.
+
+3. **home-timeseries: CARGO 카테고리별 stacked area (요청 ④)**
+   - 데이터 소스 변경: `timeseries.json` (sector 시리즈) →
+     `cargo_sector_monthly.json` (CARGO sector × vessel_class × period +
+     tanker subclass × period). PASSENGER/FISHING 등 비화물 sector 제거.
+   - `_buildCargoCategorySeries(cm)` — Tanker vessel_class 행은 제거하고
+     tanker_subclass_rows로 대체해 더 세분화 (Crude/Product/Chemical/
+     LPG/LNG/FAME/Water/UNKNOWN). 비탱커는 Container/Bulk Carrier/
+     General Cargo/Other Cargo.
+   - `CARGO_CATEGORY_PALETTE` 11개 색상. Tanker subclass는 기존
+     SUBCLASS_PALETTE와 일치 유지.
+   - 차트 헤더 변경: "전체 물동량 24개월 추이 (sector stacked)" →
+     "화물(Cargo) 물동량 24개월 추이 — 카테고리별 stacked". 하단에
+     포함 카테고리 명시 + 제외 sector 명시.
+   - 누계 검증: 24M 합 5.85B 톤. 분해 결과 — Other 2.3B, Bulk 2.0B,
+     Product 0.55B, Container 0.49B, General 0.29B, Chemical 0.12B,
+     LPG 0.06B, LNG 0.04B, FAME 0.01B.
+
+### 검증 결과
+- node --check docs/js/app.js 통과.
+- 카테고리 합산 검증 — 24M total 5.85B tons (LK3 CARGO 한정).
+- d3/topojson CDN 제거로 외부 의존 -2개.
+
+### 다음 사이클 (Cycle 4)
+- 사용자 요청 ②기간 필터 + ③흐름 라인/입자/동그라미 제거
+- cv-app 에 기간(24M/12M/연도별) 필터 — `build_derived.py` 에
+  `cargo_ports_periods.json` 빌더 추가 필요 (port × commodity ×
+  period). 기존 cargo_ports.json 은 24M 누계만 있음.
+- cv-app 항만 동그라미 마커 → O→D polyline + Canvas/SVG 입자 애니메이션.
+  map_flow.json 의 routes_top30 (24M only) → 기간별 routes 확장 필요.

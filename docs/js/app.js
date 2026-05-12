@@ -1177,44 +1177,31 @@ const homeState = {
 async function renderHome() {
   setupSourceLabels(document.getElementById("tab-overview"));
 
-  // Parallel: KPI hero, timeseries, map data, world topology, year cuts.
-  let topo, kpis, ts;
+  // Cycle 3: d3 흐름 지도 제거에 따라 topo·sector-strip·foreign·insights
+  // 호출 모두 정리. KPI + timeseries + map_flow(cv-app용 totals/routes) 만
+  // 로드. cv-app의 Leaflet 인포그래픽은 renderCargo가 처리.
+  let kpis, ts;
   try {
-    [kpis, ts, homeState.mapData, topo] = await Promise.all([
+    [kpis, ts, homeState.mapData] = await Promise.all([
       loadDerived("home_kpi.json"),
       loadDerived("timeseries.json"),
       loadDerived("map_flow.json"),
-      fetch(TOPO_URL).then(r => {
-        if (!r.ok) throw new Error(`world-atlas ${r.status}`);
-        return r.json();
-      }),
     ]);
-    homeState.topology = topo;
   } catch (e) {
-    const status = document.getElementById("home-map-status");
-    if (status) status.textContent = `Map data load failed: ${e.message}`;
+    console.warn("Home derived load failed:", e);
     return;
   }
-  // PR-35: cargo_yearly.json is optional — Home map year buttons gracefully
-  // disappear if it failed to load. The other tabs already handle absence.
+  // cargo_yearly.json is optional — year buttons gracefully degrade.
   try { homeState.cargoYearly = await loadDerived("cargo_yearly.json"); }
   catch (e) { homeState.cargoYearly = null; }
-  homeState.timeseries = ts;   // PR-35: needed by _refreshHomeMapPeriodLabel re-renders
+  // Cycle 3: CARGO 카테고리 시계열용 raw 데이터. 본 사이트 핵심 자산이라
+  // 못 받으면 timeseries는 폴백(전체 sector)으로 동작.
+  try { homeState.cargoMonthly = await loadJson("cargo_sector_monthly.json"); }
+  catch (e) { homeState.cargoMonthly = null; }
+  homeState.timeseries = ts;
 
-  renderHomeKpi(kpis);
+  renderHomeKpi(kpis, homeState.mapData);
   renderHomeTimeseries(ts);
-  // PR-35: inject year buttons into the period control BEFORE binding
-  // so a single bindMapControls() pass wires them all.
-  _injectHomeMapYearButtons();
-  bindMapControls();
-  drawHomeMap();
-  fillSectorStrip(kpis?.sector_breakdown || []);
-  // PR-34/35: surface the active period on the map title. Re-evaluated on
-  // each drawHomeMap() because the period button can switch between rolling
-  // 24M and a calendar year.
-  _refreshHomeMapPeriodLabel(ts);
-  fillForeignSidebar();
-  fillMapInsights();
 }
 
 // PR-16: 5-row sector breakdown bars in the map sidebar.
@@ -1282,7 +1269,7 @@ function _buildHomeYearPills(payload, activeYear) {
       const y = btn.dataset.year;
       const el = document.getElementById("home-kpi");
       if (el) el.dataset.activeYear = y;
-      renderHomeKpi(payload);
+      renderHomeKpi(payload, homeState && homeState.mapData);
       _buildHomeYearPills(payload, y);
     });
   });
@@ -1294,7 +1281,7 @@ function _buildHomeYearPills(payload, activeYear) {
   }
 }
 
-function renderHomeKpi(payload) {
+function renderHomeKpi(payload, mapPayload) {
   const host = document.getElementById("home-kpi");
   if (!host || !payload) return;
 
@@ -1330,12 +1317,16 @@ function renderHomeKpi(payload) {
     ? `${activeYear}년${(payload.kpis.find(k => k.id === "total_12m_ton")?.months_per_year?.[activeYear] || 12) < 12 ? " (부분)" : ""}`
     : "12M";
 
+  // Cycle 3: tanker_fleet KPI (선박 등록 척수)는 Supply 영역이므로 Demand
+  // 탭에서 제외. 대체로 "국내 vs 국제 화물 비중" 카드(domestic_intl_split)
+  // 를 map_flow.json.totals로부터 합성. KPI 순서: 총 화물 / 탱커 화물 /
+  // 국내·국제 / 데이터 기준일.
   const cards = payload.kpis.map(k => {
     if (k.id === "total_12m_ton") {
       const v = yearValue(k);
       const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">${yearLabel} 총 물동량 (인도네시아)</div>
+        <div class="kpi-label">${yearLabel} 총 화물 물동량 (LK3)</div>
         <div>
           <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
           <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
@@ -1346,7 +1337,7 @@ function renderHomeKpi(payload) {
       const v = yearValue(k);
       const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">${yearLabel} 탱커 물동량</div>
+        <div class="kpi-label">${yearLabel} 탱커 화물 물동량</div>
         <div>
           <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
           <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
@@ -1354,18 +1345,31 @@ function renderHomeKpi(payload) {
       </div>`;
     }
     if (k.id === "tanker_fleet") {
-      const age = k.avg_age_gt_weighted == null ? "—" : `${k.avg_age_gt_weighted.toFixed(1)}년`;
-      const subParts = [];
-      if (k.cargo_count != null)  subParts.push(`화물 ${fmt(k.cargo_count)}`);
-      if (k.tanker_count != null) subParts.push(`탱커 ${fmt(k.tanker_count)}`);
-      const subBreakdown = subParts.length
-        ? `<span class="text-slate-400">그중 ${subParts.join(" · ")}척</span> · `
-        : "";
-      return `<div class="kpi-card-large" title="Source: kapal.dephub.go.id/ditkapel_service/data_kapal/">
-        <div class="kpi-label">선박 등록 척수 <span class="text-[10px] text-slate-400 font-normal">(kapal.dephub.go.id)</span></div>
+      // Cycle 3: Supply 영역이므로 카드 위치만 차지 → "국내 vs 국제" 합성.
+      const tot = mapPayload && mapPayload.totals;
+      if (!tot) {
+        return `<div class="kpi-card-large">
+          <div class="kpi-label">국내 vs 국제 비중</div>
+          <div><div class="kpi-value-large">—</div>
+          <div class="kpi-sub-large text-slate-400">데이터 없음</div></div>
+        </div>`;
+      }
+      const dn = Number(tot.domestic_ton || 0);
+      const ln = Number(tot.intl_ton || 0);
+      const tot24 = dn + ln;
+      const dnPct = tot24 > 0 ? (dn / tot24 * 100) : null;
+      const lnPct = tot24 > 0 ? (ln / tot24 * 100) : null;
+      const dnPctTxt = dnPct == null ? "—" : `${dnPct.toFixed(1)}%`;
+      const lnPctTxt = lnPct == null ? "—" : `${lnPct.toFixed(1)}%`;
+      return `<div class="kpi-card-large" title="Source: monitoring-inaportnet.dephub.go.id (LK3) — 24M 누계">
+        <div class="kpi-label">국내 vs 국제 화물 비중 <span class="text-[10px] text-slate-400 font-normal">(24M)</span></div>
         <div>
-          <div class="kpi-value-large">${fmt(k.value_count || 0)}<span class="text-base text-slate-400 ml-1">척</span></div>
-          <div class="kpi-sub-large">${subBreakdown}<span class="text-slate-600">평균 선령</span> ${age} <span class="text-slate-400">(GT 가중, 탱커 기준)</span></div>
+          <div class="kpi-value-large" style="font-size:clamp(22px,3vw,30px)">
+            <span class="text-blue-700">${dnPctTxt}</span>
+            <span class="text-slate-400 mx-1">/</span>
+            <span class="text-sky-600">${lnPctTxt}</span>
+          </div>
+          <div class="kpi-sub-large"><span class="text-slate-600">국내</span> ${fmtTon(dn)} <span class="text-slate-400">·</span> <span class="text-slate-600">국제</span> ${fmtTon(ln)} tons</div>
         </div>
       </div>`;
     }
@@ -1375,7 +1379,7 @@ function renderHomeKpi(payload) {
         <div class="kpi-label">데이터 기준일</div>
         <div>
           <div class="kpi-value-large" style="font-size:clamp(22px,3vw,32px)">${k.value_text || "—"}</div>
-          <div class="kpi-sub-large">vessel snapshot ${k.vessel_snapshot || "—"} <span class="text-slate-400">${partial}</span></div>
+          <div class="kpi-sub-large">LK3 (vessel snapshot ${k.vessel_snapshot || "—"}) <span class="text-slate-400">${partial}</span></div>
         </div>
       </div>`;
     }
@@ -1384,11 +1388,37 @@ function renderHomeKpi(payload) {
   host.innerHTML = cards;
 }
 
-// ---------- PR-3: Home 24M sector stacked area ----------
+// ---------- Cycle 3: Home 24M stacked area — CARGO sector 한정, 카테고리 분리 ----------
+// 기존: sector(PASSENGER/CARGO/FISHING 등) stacked. 본 사이트 Demand 탭은
+// 화물(LK3) 분석이므로 CARGO sector만 표시하고 그 안에서 vessel_class /
+// tanker subclass 단위로 다시 분해해 카테고리별 색상을 분리한다.
+// 데이터: cargo_sector_monthly.json (rows + tanker_subclass_rows).
 const homeTsState = { mode: "abs", payload: null };
+
+// Cycle 3 카테고리 팔레트. SUBCLASS_PALETTE(상단 기 정의)와 일관성 유지.
+const CARGO_CATEGORY_PALETTE = {
+  "Container":             "#9333ea",  // purple
+  "Bulk Carrier":          "#52525b",  // slate-700
+  "General Cargo":         "#f59e0b",  // amber
+  "Other Cargo":           "#94a3b8",  // slate-400
+  // Tanker subclasses (cargo_sector_monthly.tanker_subclass_rows)
+  "Crude Oil":             "#92400e",
+  "Product":               "#0284c7",
+  "Chemical":              "#059669",
+  "LPG":                   "#d97706",
+  "LNG":                   "#7c3aed",
+  "FAME / Vegetable Oil":  "#65a30d",
+  "Water":                 "#0ea5e9",
+  "UNKNOWN":               "#cbd5e1",
+};
+// Stack order (bottom to top). 가장 큰 카테고리부터 쌓아 변동성 흡수.
+const CARGO_CATEGORY_ORDER = [
+  "Bulk Carrier", "Crude Oil", "Product", "LNG", "LPG", "Chemical",
+  "FAME / Vegetable Oil", "Water", "Container", "General Cargo", "Other Cargo", "UNKNOWN",
+];
+
 function renderHomeTimeseries(payload) {
   homeTsState.payload = payload;
-  // Mode toggle wiring (one-time)
   const toggleHost = document.getElementById("home-ts-toggle");
   if (toggleHost && !toggleHost.dataset.wired) {
     toggleHost.innerHTML = `
@@ -1414,43 +1444,88 @@ function renderHomeTimeseries(payload) {
   drawHomeTimeseries();
 }
 
+// Cycle 3: CARGO 카테고리별 시계열 구축.
+// 입력: cargo_sector_monthly.rows (sector × vessel_class × period × kind)
+//      + cargo_sector_monthly.tanker_subclass_rows (subclass × period × kind)
+// 출력: { periods: [...], series: [{ name, color, y: [...] }, ...] } —
+// vessel_class=Tanker 행은 제외하고 subclass 행으로 대체해 더 세분화.
+function _buildCargoCategorySeries(cm) {
+  if (!cm || !cm.rows) return null;
+  const periodSet = new Set();
+  const byCat = {};        // { category: { period: tonTotal } }
+  for (const r of cm.rows) {
+    if (r.sector !== "CARGO") continue;
+    if (r.vessel_class === "Tanker") continue;   // subclass rows로 대체
+    periodSet.add(r.period);
+    const key = r.vessel_class;
+    if (!byCat[key]) byCat[key] = {};
+    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r.ton_total) || 0);
+  }
+  for (const r of (cm.tanker_subclass_rows || [])) {
+    periodSet.add(r.period);
+    const key = r.subclass;
+    if (!byCat[key]) byCat[key] = {};
+    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r.ton_total) || 0);
+  }
+  const periods = [...periodSet].sort();
+  const knownOrder = CARGO_CATEGORY_ORDER.filter(k => byCat[k]);
+  const unknownCats = Object.keys(byCat).filter(k => !CARGO_CATEGORY_ORDER.includes(k));
+  const ordered = [...knownOrder, ...unknownCats];
+  const series = ordered.map(name => ({
+    name,
+    color: CARGO_CATEGORY_PALETTE[name] || "#cbd5e1",
+    y: periods.map(p => byCat[name][p] || 0),
+  }));
+  return { periods, series };
+}
+
 function drawHomeTimeseries() {
-  const payload = homeTsState.payload;
-  if (!payload) return;
-  const periods = payload.periods || [];
-  const traces = [];
-  for (const s of (payload.series || [])) {
-    let y = s.ton_by_period.slice();
-    let name = s.sector;
+  const cm = homeState && homeState.cargoMonthly;
+  const built = _buildCargoCategorySeries(cm);
+  let periods, series;
+  if (built) {
+    periods = built.periods;
+    series  = built.series;
+  } else {
+    // Fallback: legacy sector stacked area (CARGO만 필터).
+    const payload = homeTsState.payload;
+    if (!payload) return;
+    periods = payload.periods || [];
+    series = (payload.series || [])
+      .filter(s => s.sector === "CARGO")
+      .map(s => ({ name: "CARGO", color: "#1A3A6B", y: (s.ton_by_period || []).slice() }));
+  }
+
+  const traces = series.map(s => {
+    let y = s.y.slice();
     if (homeTsState.mode === "yoy") {
-      // YoY for each period i = (y[i] - y[i-12]) / y[i-12] * 100
       y = y.map((v, i) => {
-        if (i < 12 || !y[i - 12]) return null;
-        return ((v - y[i - 12]) / y[i - 12]) * 100;
+        if (i < 12 || !s.y[i - 12]) return null;
+        return ((v - s.y[i - 12]) / s.y[i - 12]) * 100;
       });
     }
-    traces.push({
-      x: periods,
-      y,
-      name,
+    return {
+      x: periods, y,
+      name: s.name,
       type: "scatter",
       mode: "lines",
-      stackgroup: homeTsState.mode === "abs" ? "one" : null,
+      stackgroup: homeTsState.mode === "abs" ? "cargo" : null,
       line: { color: s.color, width: homeTsState.mode === "abs" ? 0.5 : 2 },
       fillcolor: s.color,
       hovertemplate: homeTsState.mode === "abs"
-        ? `<b>%{x}</b><br>${name}: %{y:,.0f} tons<extra></extra>`
-        : `<b>%{x}</b><br>${name}: %{y:.1f}%<extra></extra>`,
-    });
-  }
+        ? `<b>%{x}</b><br>${s.name}: %{y:,.0f} tons<extra></extra>`
+        : `<b>%{x}</b><br>${s.name}: %{y:.1f}%<extra></extra>`,
+    };
+  });
+
   Plotly.newPlot("home-timeseries", traces, {
     margin: { t: 10, l: 60, r: 20, b: 50 },
     xaxis: { tickangle: -40 },
     yaxis: {
-      title: homeTsState.mode === "abs" ? "ton" : "YoY %",
+      title: homeTsState.mode === "abs" ? "ton (CARGO 카테고리 stacked)" : "YoY %",
       zeroline: homeTsState.mode === "yoy",
     },
-    legend: { orientation: "h", y: -0.2 },
+    legend: { orientation: "h", y: -0.25, font: { size: 10 } },
     hovermode: "x unified",
   }, { displayModeBar: false, responsive: true });
 }
