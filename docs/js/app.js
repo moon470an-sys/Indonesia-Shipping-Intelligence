@@ -2999,13 +2999,23 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
   if (!body) return;
   const start = (page - 1) * pageSize;
   const top = rows.slice(start, start + pageSize);
+  // Cycle 30: 선박명 검색어 highlight 준비 — state.name 매치 부분에 <mark> 적용
+  const tabEl = document.getElementById("tab-fleet");
+  const nameQ = (tabEl?._fleetState?.name || "").trim();
+  const hl = (s) => {
+    const esc = _esc(s || "");
+    if (!nameQ) return esc;
+    const escQ = nameQ.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return esc.replace(new RegExp(`(${escQ})`, "ig"),
+      '<mark class="bg-amber-200 text-slate-900 px-0.5 rounded">$1</mark>');
+  };
   // Cycle 12: 헤더 순서와 일치하도록 셀 순서 재정렬. raw 4개(엔진/엔진타입/IMO/Call Sign)는 dim 처리.
   body.innerHTML = top.map(r => {
     const flag = r[I.flag] || "Indonesia";
     const age = r[I.age];
     const yr = r[I.tahun];
     return `<tr class="hover:bg-slate-50 border-b border-slate-100">
-      <td class="px-2 py-1 font-medium text-slate-800">${_esc(r[I.nama])}</td>
+      <td class="px-2 py-1 font-medium text-slate-800">${hl(r[I.nama])}</td>
       <td class="px-2 py-1 text-slate-600">${_esc(r[I.owner])}</td>
       <td class="px-2 py-1">${_esc(r[I.jenis])}</td>
       <td class="px-2 py-1 text-[11px] text-slate-600">${_esc(flag)}</td>

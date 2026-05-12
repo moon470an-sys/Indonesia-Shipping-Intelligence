@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 30 검증 — 2026-05-12 (Supply 탭 22차 — 선박명 search highlight)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 선박 목록 검색어 highlight | ✅ Cycle 30 | name 필터 입력 시 선박명 컬럼의 매치 부분 amber-200 highlight. 정규식 escape + case-insensitive |
+| 화면 결과 (smoke test) | ✅ "PERTAMINA" 검색 시 18 mark, 첫 row "PERTAMINA GALUNGGUNG" 형식 highlight | playwright |
+
+### 횡단
+- 원칙 lint ✅. UX 강화만, 데이터 흐름 무영향.
+
 ## Cycle 29 검증 — 2026-05-12 (Supply 탭 21차 — 종합 audit + alert polish)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
