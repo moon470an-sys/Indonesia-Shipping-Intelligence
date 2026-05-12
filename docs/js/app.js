@@ -3162,12 +3162,14 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
         const moreBtn = (siblings.length > 5) ? `
           <button type="button" class="fl-sister-toggle ml-2 text-[10px] px-2 py-0.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
                   data-sister-vk="${_esc(k)}">${showAll ? `상위 5만 보기` : `더 보기 (+${siblings.length - 5})`}</button>` : "";
+        // Cycle 45: 전체 표시 시 max-height + overflow-y. 5만 표시는 grid 그대로.
+        const gridWrap = showAll ? `style="max-height:300px;overflow-y:auto;padding:4px"` : "";
         sisterListHtml = `
           <div class="mt-3 pt-3 border-t border-slate-200">
             <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2 flex items-center">
               <span>이 운영사의 다른 선박 (${topSiblings.length} of ${siblings.length}) — 클릭 시 점프</span>${moreBtn}
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]" ${gridWrap}>
               ${topSiblings.map(rr => {
                 const sAge = rr[I.age];
                 return `<button type="button" class="fl-sister-jump flex items-center gap-2 px-2 py-1 bg-white rounded border border-slate-200 hover:bg-blue-50 hover:border-blue-300 text-left transition-colors"

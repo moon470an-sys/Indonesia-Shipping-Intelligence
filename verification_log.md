@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 45 검증 — 2026-05-12 (Supply 탭 37차 — sister 확장 시 scrollable)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Sister 확장 시 max-height + scroll | ✅ Cycle 45 | "더 보기" 펼친 후 grid에 max-height:300px + overflow-y:auto |
+| 화면 결과 (smoke test) | ✅ DANNY 282 sib 확장 → maxHeight 300px, overflow-y auto, scrollHeight 3243 > clientHeight 300 (scrollable) | playwright |
+
+### 횡단
+- 원칙 lint ✅. 큰 fleet owner detail UX polish.
+
 ## Cycle 44 검증 — 2026-05-12 (Supply 탭 36차 — sister vessels "더 보기" 토글)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
