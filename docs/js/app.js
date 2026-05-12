@@ -2648,7 +2648,7 @@ function _renderFleetView() {
   try { _drawFleetTopOwners(rows, I); }     catch (e) { console.error("Top Owners:", e); }
   try { _drawFleetAgeClassHeatmap(rows, I); } catch (e) { console.error("Age×Class:", e); }
   try { _renderFleetActiveChips(st); }      catch (e) { console.error("Active chips:", e); }
-  try { _renderFleetAgedAlert(aged25, agedTotalForPct, rows.length); } catch (e) { console.error("Aged alert:", e); }
+  try { _renderFleetAgedAlert(rows, I, aged25, agedTotalForPct); } catch (e) { console.error("Aged alert:", e); }
 
   // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
@@ -2785,24 +2785,31 @@ function _fleetCsvDownload() {
   const fv = tabEl._fleetVessels;
   if (!fv) return;
   const { rows, I } = _applyFleetFilters();
-  const header = ["nama_kapal", "nama_pemilik", "sector", "vessel_class",
-                  "jenis_detail_ket", "tanker_subclass",
-                  "gt", "loa", "lebar", "dalam",
-                  "tahun", "age", "flag",
-                  "mesin", "mesin_type",
-                  "imo", "call_sign"];
-  const lines = [header.join(",")];
-  const cidx = header.map(h => {
-    const map = {nama_kapal: "nama", nama_pemilik: "owner",
-                 sector: "sector", vessel_class: "vc",
-                 jenis_detail_ket: "jenis",
-                 tanker_subclass: "ts",
-                 gt: "gt", loa: "loa", lebar: "lebar", dalam: "dalam",
-                 tahun: "tahun", age: "age", flag: "flag",
-                 mesin: "mesin", mesin_type: "mesin_type",
-                 imo: "imo", call_sign: "call_sign"};
-    return I[map[h]];
-  });
+  // Cycle 16: 한국어/영어 헤더 토글. 사용자 체크박스 (default 한글) 기준.
+  const koCheck = document.getElementById("fl-csv-ko");
+  const useKorean = koCheck ? !!koCheck.checked : true;
+  const FIELDS = [
+    { en: "nama_kapal",       ko: "선박명",         key: "nama" },
+    { en: "nama_pemilik",     ko: "선주",           key: "owner" },
+    { en: "sector",           ko: "섹터",           key: "sector" },
+    { en: "vessel_class",     ko: "선급",           key: "vc" },
+    { en: "jenis_detail_ket", ko: "Vessel Type",    key: "jenis" },
+    { en: "tanker_subclass",  ko: "탱커 subclass",  key: "ts" },
+    { en: "gt",               ko: "GT",             key: "gt" },
+    { en: "loa",              ko: "LOA (m)",        key: "loa" },
+    { en: "lebar",            ko: "Width (m)",      key: "lebar" },
+    { en: "dalam",            ko: "Depth (m)",      key: "dalam" },
+    { en: "tahun",            ko: "건조연도",       key: "tahun" },
+    { en: "age",              ko: "선령",           key: "age" },
+    { en: "flag",             ko: "국적",           key: "flag" },
+    { en: "mesin",            ko: "엔진",           key: "mesin" },
+    { en: "mesin_type",       ko: "엔진 타입",      key: "mesin_type" },
+    { en: "imo",              ko: "IMO",            key: "imo" },
+    { en: "call_sign",        ko: "Call Sign",      key: "call_sign" },
+  ];
+  const header = FIELDS.map(f => useKorean ? f.ko : f.en);
+  const lines = [header.map(h => /[",\n]/.test(h) ? `"${h.replace(/"/g, '""')}"` : h).join(",")];
+  const cidx = FIELDS.map(f => I[f.key]);
   for (const r of rows) {
     lines.push(cidx.map(i => {
       const v = r[i];
@@ -3340,9 +3347,15 @@ function _drawFleetTopOwners(rows, I) {
         ? `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white"
                   style="background:${MEDAL[idx]}" title="Top ${idx + 1}">${idx + 1}</span>`
         : `<span class="font-mono text-[10px] text-slate-400">${idx + 1}</span>`;
+      // Cycle 16: hover tooltip detail — 평균선령 + 척수 + 모든 class breakdown
+      const classDetail = sortedClasses
+        .map(([k, v]) => `${k}: ${v.toLocaleString()}척`)
+        .join(" / ");
+      const idxNote = _ownerIsIdxListed(o.owner) ? "\n· IDX 상장사" : "";
+      const tooltip = `${o.owner}\n· 척수: ${o.vessels.toLocaleString()}\n· 선대 GT: ${o.sum_gt.toLocaleString()}\n· 평균선령: ${avgAge != null ? avgAge.toFixed(1) + '년' : '—'}\n· 선종 mix: ${classDetail}${idxNote}\n\n클릭 시 이 운영사로 필터`;
       return `
         <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50 transition-colors"
-             data-owner-row="${_esc(o.owner)}" title="클릭 시 ${_esc(o.owner)} 운영사로 필터">
+             data-owner-row="${_esc(o.owner)}" title="${_esc(tooltip)}">
           <div class="col-span-1 text-right">${rankBadge}</div>
           <div class="col-span-3 truncate text-slate-800 text-[12px] flex items-center gap-1" title="${_esc(o.owner)}${_ownerIsIdxListed(o.owner) ? ' · IDX 상장' : ''}">
             <span class="truncate">${_esc(o.owner)}</span>
@@ -3393,7 +3406,8 @@ function _drawFleetTopOwners(rows, I) {
 //   ≥ 50% → red severe (시급 교체 필요 신호)
 //   ≥ 30% → amber warn (구조적 노후화)
 //   < 30% → hidden
-function _renderFleetAgedAlert(aged25, agedTotal, viewCount) {
+// Cycle 16: class별 노후 breakdown 추가 — 어느 class에 노후가 집중되어 있는지 한 줄 표시
+function _renderFleetAgedAlert(rows, I, aged25, agedTotal) {
   const host = document.getElementById("fl-aged-alert");
   if (!host) return;
   if (!agedTotal || aged25 == null) { host.classList.add("hidden"); return; }
@@ -3402,6 +3416,24 @@ function _renderFleetAgedAlert(aged25, agedTotal, viewCount) {
   if (pct >= 50) severity = "severe";
   else if (pct >= 30) severity = "warn";
   if (!severity) { host.classList.add("hidden"); host.innerHTML = ""; return; }
+
+  // class별 25y+ 척수 집계
+  const byClass = new Map();
+  let agedTotalByClass = 0;
+  for (const r of rows) {
+    const age = r[I.age];
+    if (age == null || age < 25) continue;
+    let cls = r[I.vc] || "Other";
+    byClass.set(cls, (byClass.get(cls) || 0) + 1);
+    agedTotalByClass += 1;
+  }
+  const topClasses = [...byClass.entries()]
+    .sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const breakdown = topClasses.map(([cls, n]) => {
+    const p = agedTotalByClass > 0 ? (n / agedTotalByClass * 100).toFixed(0) : "0";
+    return `<span class="inline-block mr-2"><strong>${cls}</strong> ${n.toLocaleString()}척 <em class="opacity-70 not-italic">(${p}%)</em></span>`;
+  }).join("");
+
   host.classList.remove("hidden");
   const isSevere = severity === "severe";
   const cls = isSevere
@@ -3414,11 +3446,14 @@ function _renderFleetAgedAlert(aged25, agedTotal, viewCount) {
     <span class="text-[14px] leading-5 flex-shrink-0">${icon}</span>
     <div class="flex-1">
       <strong class="mr-1">${lvl} — 노후선 ${pct.toFixed(1)}%</strong>
-      <span>${aged25.toLocaleString()}척 / 분석 대상 ${agedTotal.toLocaleString()}척 (선령 미상 제외) · 현재 필터 결과 ${viewCount.toLocaleString()}척 기준.</span>
-      <div class="text-[11px] opacity-80 mt-0.5">
+      <span>${aged25.toLocaleString()}척 / 분석 대상 ${agedTotal.toLocaleString()}척 (선령 미상 제외) · 필터 결과 ${rows.length.toLocaleString()}척 기준.</span>
+      <div class="text-[11px] opacity-90 mt-1 leading-5">
+        <span class="opacity-75 mr-1">노후선 25년+ 집중도:</span> ${breakdown || "<em class=\"opacity-60\">데이터 없음</em>"}
+      </div>
+      <div class="text-[11px] opacity-70 mt-0.5">
         ${isSevere
           ? "노후선 비중이 50%를 초과 — 신조 발주·매각 등 교체 사이클 의사결정에 직결되는 신호."
-          : "노후선 비중 30% 초과 — class별 분포는 아래 히트맵에서 확인."}
+          : "노후선 비중 30% 초과 — 히트맵에서 class × 선령 cross 확인."}
       </div>
     </div>`;
 }

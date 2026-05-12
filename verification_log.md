@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 16 검증 — 2026-05-12 (Supply 탭 디자인·데이터 8차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Alert callout class별 노후 breakdown | ✅ Cycle 16 | 25y+ 척의 class 분포 top 4 표시. 기본: General Cargo 52% / Other Cargo 23% / Tug 18% / Tanker 5% — 노후가 GC에 집중되어 있다는 시장 신호 가시화 |
+| Top 운영사 hover detail tooltip | ✅ Cycle 16 | 척수/GT/평균선령/선종 mix(전체) 다줄. IDX 상장사 노트. 클릭 안내 |
+| CSV 한국어/영어 헤더 토글 | ✅ Cycle 16 | 기본 한글, 체크박스 해제 시 영어 원본 필드명 (nama_kapal 등). 헤더 17 필드 일관성 |
+| 화면 결과 (smoke test) | ✅ alert breakdown 4 entries, owner tooltip 5 lines, KO header "선박명,선주...", EN header "nama_kapal,nama_pemilik..." | playwright |
+
+### 횡단
+- 원칙 lint ✅. 원칙 1 (공식 데이터): class별 breakdown은 데이터 집계만 — "노후가 어디에 있는가"만 명시, 액션 추천 없음.
+
 ## Cycle 15 검증 — 2026-05-12 (Supply 탭 디자인·데이터 7차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
