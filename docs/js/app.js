@@ -2122,6 +2122,17 @@ async function renderFleet() {
     tabEl._fleetOwners = null;
     console.warn("fleet_owners.json 로드 실패:", e.message);
   }
+  // Cycle 47: owner_profile.json — Tanker 선박 detail에 운영사 tanker fleet 정보 보강
+  try {
+    const ownerProfile = await loadDerived("owner_profile.json");
+    const map = new Map();
+    for (const o of (ownerProfile.owners || [])) {
+      if (o.owner) map.set(o.owner, o);
+    }
+    tabEl._fleetOwnerProfile = map;
+  } catch (e) {
+    tabEl._fleetOwnerProfile = null;
+  }
   // Cycle 28: baseline 평균 GT / LOA — alert 비교용 (cargo + auxiliary 전체 기준)
   tabEl._fleetBaseline = _computeFleetBaseline(fv);
   // Cycle 35: vessel detail 컨텍스트용 — class median GT + owner total 사전 계산
@@ -3141,6 +3152,37 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     const ownerOwn = r[I.owner];
     const oTot = (ownerTotals && ownerOwn) ? ownerTotals.get(ownerOwn) : null;
     const ownerCtx = oTot ? `<span class="text-[10px] opacity-70 ml-1">총 ${oTot.vessels.toLocaleString()}척 · GT ${fmtTon(oTot.sumGt)}</span>` : "";
+    // Cycle 47: Tanker 선박 detail에 owner profile (tanker fleet 합계) 표시
+    let tankerProfileHtml = "";
+    if (isOpen && r[I.vc] === "Tanker" && tabEl._fleetOwnerProfile) {
+      const op = tabEl._fleetOwnerProfile.get(r[I.owner]);
+      if (op) {
+        const mix = op.subclass_mix || {};
+        const mixEntries = Object.entries(mix).sort((a, b) => b[1] - a[1]);
+        const mixHtml = mixEntries.map(([k, v]) =>
+          `<span class="inline-block px-1.5 py-0.5 mr-1 rounded bg-white border border-slate-200 text-[10px]">${_esc(k)} ${v.toLocaleString()}</span>`
+        ).join("");
+        const tickerChip = op.ticker
+          ? `<span class="inline-block px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-mono ml-1" title="IDX 상장 티커">${_esc(op.ticker)}</span>`
+          : "";
+        tankerProfileHtml = `
+          <div class="mt-3 pt-3 border-t border-slate-200">
+            <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">
+              이 운영사의 Tanker fleet${tickerChip}
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-[11px]">
+              <span><strong>${op.tankers.toLocaleString()}</strong> 척</span>
+              <span class="text-slate-400">·</span>
+              <span>합계 GT <strong>${(op.sum_gt || 0).toLocaleString()}</strong></span>
+              <span class="text-slate-400">·</span>
+              <span>평균 GT <strong>${(op.avg_gt || 0).toLocaleString()}</strong></span>
+              <span class="text-slate-400">·</span>
+              <span>max GT <strong>${(op.max_gt || 0).toLocaleString()}</strong></span>
+            </div>
+            <div class="mt-2 text-[11px]"><span class="opacity-70 mr-1">Subclass mix:</span>${mixHtml || '<em class="text-slate-400">없음</em>'}</div>
+          </div>`;
+      }
+    }
     // Cycle 41: sister vessels — same owner의 다른 선박 top 5 (GT 내림차순)
     // Cycle 44: "더 보기" 토글로 전체 표시 가능
     let sisterListHtml = "";
@@ -3207,6 +3249,7 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
               return `<a href="https://www.equasis.org/EquasisWeb/restricted/Search?fs=ShipSearch&IMO=${encodeURIComponent(cleanImo)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline" title="Equasis.org에서 IMO ${_esc(cleanImo)} 조회 (외부 사이트)">${_esc(cleanImo)} ↗</a>`;
             })()} / ${_esc(r[I.call_sign]) || '—'}</span></div>
           </div>
+          ${tankerProfileHtml}
           ${sisterListHtml}
         </td>
       </tr>` : "";

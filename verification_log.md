@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 47 검증 — 2026-05-12 (Supply 탭 39차 — Tanker detail에 owner_profile 활용)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| owner_profile.json 로드 | ✅ Cycle 47 | Tanker 운영사 데이터 (ticker / tankers / sum_gt / avg_gt / max_gt / subclass_mix). Map 캐시 |
+| Tanker detail에 owner Tanker fleet 정보 | ✅ Cycle 47 | vc='Tanker' 인 vessel detail에만 표시: 척수, sum/avg/max GT, IDX ticker chip, subclass mix |
+| 화면 결과 (smoke test) | ✅ Tanker 필터 + 첫 vessel detail → '이 운영사의 Tanker fleet 1척 · 합계 GT 164,630 · 평균 GT 164,630 · max GT 164,630 · Subclass mix: Product 1' | playwright |
+
+### 횡단
+- 원칙 lint ✅. 미사용 derived 파일을 적재적소에 활용. 데이터 깊이 강화.
+
 ## Cycle 46 검증 — 2026-05-12 (Supply 탭 38차 — IMO equasis.org 외부 lookup)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
