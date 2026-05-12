@@ -1195,6 +1195,10 @@ async function renderHome() {
   // 못 받으면 timeseries는 폴백(전체 sector)으로 동작.
   try { homeState.cargoMonthly = await loadJson("cargo_sector_monthly.json"); }
   catch (e) { homeState.cargoMonthly = null; }
+  // Year-aware domestic/intl split — sourced from cargo_ports_periods.json
+  // (per-period ports with dU/dS/iU/iS). Falls back to map_flow.totals (24M).
+  try { homeState.cargoPortsPeriods = await loadDerived("cargo_ports_periods.json"); }
+  catch (e) { homeState.cargoPortsPeriods = null; }
   homeState.timeseries = ts;
 
   renderHomeKpi(kpis, homeState.mapData);
@@ -1424,23 +1428,39 @@ function renderHomeKpi(payload, mapPayload) {
     }
     if (k.id === "tanker_fleet") {
       // Cycle 3: Supply 영역이므로 카드 위치만 차지 → "국내 vs 국제" 합성.
-      const tot = mapPayload && mapPayload.totals;
-      if (!tot) {
+      // PR-now: 연도 선택(activeYear)에 따라 cargo_ports_periods.json의 해당
+      //   기간 ports(dU/dS/iU/iS)를 합산해 dn/intl 비중을 재계산. 해당 기간
+      //   데이터가 없으면 map_flow.totals(24M)로 폴백.
+      let dn = null, ln = null, scopeLabel = "24M", scopeMonths = null;
+      const cpp = homeState.cargoPortsPeriods;
+      const yearPeriod = (cpp && activeYear && cpp.periods && cpp.periods[activeYear]) || null;
+      if (yearPeriod) {
+        let dnSum = 0, lnSum = 0;
+        for (const code in (yearPeriod.ports || {})) {
+          const pp = yearPeriod.ports[code];
+          dnSum += Number(pp.dU || 0) + Number(pp.dS || 0);
+          lnSum += Number(pp.iU || 0) + Number(pp.iS || 0);
+        }
+        dn = dnSum; ln = lnSum;
+        scopeMonths = yearPeriod.months || null;
+        scopeLabel = `${activeYear}년${(scopeMonths && scopeMonths < 12) ? ` (${scopeMonths}mo)` : ""}`;
+      } else if (mapPayload && mapPayload.totals) {
+        dn = Number(mapPayload.totals.domestic_ton || 0);
+        ln = Number(mapPayload.totals.intl_ton || 0);
+      } else {
         return `<div class="kpi-card-large">
           <div class="kpi-label">국내 vs 국제 비중</div>
           <div><div class="kpi-value-large">—</div>
           <div class="kpi-sub-large text-slate-400">데이터 없음</div></div>
         </div>`;
       }
-      const dn = Number(tot.domestic_ton || 0);
-      const ln = Number(tot.intl_ton || 0);
-      const tot24 = dn + ln;
-      const dnPct = tot24 > 0 ? (dn / tot24 * 100) : null;
-      const lnPct = tot24 > 0 ? (ln / tot24 * 100) : null;
+      const totSum = dn + ln;
+      const dnPct = totSum > 0 ? (dn / totSum * 100) : null;
+      const lnPct = totSum > 0 ? (ln / totSum * 100) : null;
       const dnPctTxt = dnPct == null ? "—" : `${dnPct.toFixed(1)}%`;
       const lnPctTxt = lnPct == null ? "—" : `${lnPct.toFixed(1)}%`;
-      return `<div class="kpi-card-large" title="Source: monitoring-inaportnet.dephub.go.id (LK3) — 24M 누계">
-        <div class="kpi-label">국내 vs 국제 화물 비중 <span class="text-[10px] text-slate-400 font-normal">(24M)</span></div>
+      return `<div class="kpi-card-large" title="Source: monitoring-inaportnet.dephub.go.id (LK3)">
+        <div class="kpi-label">국내 vs 국제 화물 비중 <span class="text-[10px] text-slate-400 font-normal">(${scopeLabel})</span></div>
         <div>
           <div class="kpi-value-large" style="font-size:clamp(22px,3vw,30px)">
             <span class="text-blue-700">${dnPctTxt}</span>
@@ -1565,17 +1585,20 @@ function drawHomeTimeseries() {
   Plotly.newPlot("home-timeseries", traces, {
     barmode: "stack",
     bargap: 0.18,
-    margin: { t: 10, l: 60, r: 20, b: 60 },
+    autosize: true,
+    margin: { t: 10, l: 56, r: 16, b: 50 },
     xaxis: {
       tickangle: -40,
       type: "category",
       tickfont: { size: 10 },
+      automargin: true,
     },
     yaxis: {
       title: "ton",
       tickformat: "~s",
+      automargin: true,
     },
-    legend: { orientation: "h", y: -0.32, font: { size: 10 } },
+    legend: { orientation: "h", y: -0.22, font: { size: 10 } },
     hovermode: "x unified",
   }, { displayModeBar: false, responsive: true });
 }
@@ -2874,20 +2897,35 @@ async function renderCargo() {
   _cvStartFlowAnimation();
 }
 
-// Cycle 4: 기간 필터 (24M / 12M / 2024 / 2025 / 2026) 빌드 + 이벤트.
+// Cycle 4: 기간 필터 (연도별 only) 빌드 + 이벤트.
+// 사용자 요청 — 24m / 12m 롤링 윈도우 버튼은 제거하고 달력 연도 단위로만
+// 기간을 선택. 기본 활성 기간이 24m/12m 이면 가장 최근(=마지막) 연도로 승격.
 function _cvBuildPeriodPills() {
   const host = document.getElementById("cv-period-pills");
   if (!host || !_cvState.PERIODS) return;
-  const order = ["24m", "12m"];
   const yrs = Object.keys(_cvState.PERIODS).filter(k => /^\d{4}$/.test(k)).sort();
-  const keys = [...order.filter(k => _cvState.PERIODS[k]), ...yrs];
-  host.innerHTML = keys.map(k => {
+  if (!yrs.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400" disabled>연도 데이터 없음</button>`;
+    return;
+  }
+  // Auto-promote rolling-window default to the most recent calendar year.
+  if (!yrs.includes(_cvState.period)) {
+    _cvState.period = yrs[yrs.length - 1];
+    const p = _cvState.PERIODS[_cvState.period];
+    const newCommods = (p && p.commodities) || [];
+    _cvState.COMMS = newCommods.map((key, i) => ({
+      key, lbl: key, col: _cvColorForIndex(i, newCommods.length),
+    }));
+    _cvState.DATA = (p && p.ports) || {};
+    const keep = new Set([..._cvState.selComms].filter(k0 => newCommods.includes(k0)));
+    if (!keep.size && newCommods.length) keep.add(newCommods[0]);
+    _cvState.selComms = keep;
+  }
+  host.innerHTML = yrs.map(k => {
     const p = _cvState.PERIODS[k];
     const active = k === _cvState.period;
-    const label = p.label || k;
-    const sub = (k === "24m" || k === "12m")
-      ? ""
-      : ` <span class="text-[10px] opacity-70">(${p.months}mo)</span>`;
+    const label = p.label || `${k}년`;
+    const sub = ` <span class="text-[10px] opacity-70">(${p.months}mo)</span>`;
     const cls = active
       ? "px-2 py-1 bg-slate-800 text-white"
       : "px-2 py-1 bg-white hover:bg-slate-100";
