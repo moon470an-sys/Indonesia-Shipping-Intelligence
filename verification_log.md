@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 28 검증 — 2026-05-12 (Supply 탭 20차 — alert baseline 비교 + row hover)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 노후 alert에 baseline 비교 | ✅ Cycle 28 | 전체 (cargo+aux) 25y+ baseline {avgGt: 923, avgLoa: 53.5m} 1회 캐시. 현재 필터 결과 평균과 vs % 비교 표시. ±2% 미만은 slate, +면 rose, -면 emerald |
+| 선박 목록 row hover 강화 | ✅ Cycle 28 | bg-sky-50 + 좌측 navy strip (inset shadow). transition 80ms |
+| 헤더 freshness 가독성 polish | ✅ Cycle 28 | font-weight 600 + navy color로 데이터 시점 강조 |
+| 화면 결과 (smoke test) | ✅ baseline {923, 53.46m}. Tanker 필터 시 평균 GT 3,299 (+257% vs 전체), LOA 75.7m (+42%) — 노후 Tanker의 큰 자산 규모 시그널. row hover transition 0.08s | playwright |
+
+### 횡단
+- 원칙 lint ✅. baseline 비교는 데이터 통계 표시만 — 분석/해석은 사용자 몫.
+- BI 가치: 노후 Tanker fleet가 일반 노후선 대비 GT 3.5배 → 매각/대체 의사결정 차원이 다름 시그널.
+
 ## Cycle 27 검증 — 2026-05-12 (Supply 탭 19차 — click hint + sortable indicator)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

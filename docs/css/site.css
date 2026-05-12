@@ -390,6 +390,15 @@ table tbody tr:hover { background:#fef3c7; }
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15), 0 4px 12px -2px rgba(15, 23, 42, 0.08);
 }
 
+/* Cycle 28: 선박 목록 row hover 강화. tbody의 모든 td 배경 + 좌측 strip 강조 */
+#fl-tbody tr { transition: background-color 80ms ease; }
+#fl-tbody tr:hover { background: #f0f9ff; }
+#fl-tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 #1A3A6B; padding-left: 5px; }
+
+/* Cycle 28: 헤더 freshness 영역 가독성 polish */
+#fl-data-meta { line-height: 1.4; }
+#fl-data-meta span { font-weight: 600; color: #1e3a8a; }
+
 /* Cycle 17: button.scope-chip (클릭 가능한 scope 필터). active 상태 */
 button.scope-chip { cursor: pointer; }
 button.scope-chip:hover { filter: brightness(0.95); }

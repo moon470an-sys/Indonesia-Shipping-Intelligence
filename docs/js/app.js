@@ -2122,6 +2122,8 @@ async function renderFleet() {
     tabEl._fleetOwners = null;
     console.warn("fleet_owners.json 로드 실패:", e.message);
   }
+  // Cycle 28: baseline 평균 GT / LOA — alert 비교용 (cargo + auxiliary 전체 기준)
+  tabEl._fleetBaseline = _computeFleetBaseline(fv);
 
   // Initial state object — jang1117 parity (no sector/subclass/age/owner/flag).
   if (!tabEl._fleetState) {
@@ -2154,6 +2156,27 @@ async function renderFleet() {
   // Cycle 27: 클릭 가능한 차트 panel에 hover 강조 마커
   _markClickableFleetPanels();
   _renderFleetView();
+}
+
+// Cycle 28: 노후 alert baseline 비교용 — 전체 (cargo + aux scope) 25y+ 평균 GT/LOA 1회 계산
+function _computeFleetBaseline(fv) {
+  if (!fv || !fv.cols) return null;
+  const I = {}; fv.cols.forEach((c, i) => I[c] = i);
+  let sumGt = 0, nGt = 0, sumLoa = 0, nLoa = 0;
+  for (const r of fv.rows) {
+    const scope = r[I.scope];
+    if (scope === "excluded" || scope === "unclassified") continue;
+    const age = r[I.age];
+    if (age == null || age < 25) continue;
+    const gt = r[I.gt] || 0;
+    if (gt > 0) { sumGt += gt; nGt += 1; }
+    const loa = r[I.loa] || 0;
+    if (loa > 0) { sumLoa += loa; nLoa += 1; }
+  }
+  return {
+    avgGt: nGt > 0 ? Math.round(sumGt / nGt) : null,
+    avgLoa: nLoa > 0 ? (sumLoa / nLoa) : null,
+  };
 }
 
 function _markClickableFleetPanels() {
@@ -3924,12 +3947,21 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal, st) {
   }
   const agedAvgGt = agedNGt > 0 ? Math.round(agedSumGt / agedNGt) : null;
   const agedAvgLoa = agedNLoa > 0 ? (agedSumLoa / agedNLoa) : null;
+  // Cycle 28: baseline 비교 — 전체 (cargo+aux) 25y+ 평균과 비교
+  const baseline = document.getElementById("tab-fleet")?._fleetBaseline || null;
+  const diff = (cur, base) => {
+    if (cur == null || base == null || base === 0) return "";
+    const d = (cur - base) / base * 100;
+    const sign = d > 0 ? "+" : "";
+    const cls = Math.abs(d) < 2 ? "text-slate-500" : d > 0 ? "text-rose-700" : "text-emerald-700";
+    return `<span class="text-[10px] ml-1 ${cls}" title="vs 전체 25y+ baseline ${base.toLocaleString()}">${sign}${d.toFixed(0)}% vs 전체</span>`;
+  };
   const dimsLine = (agedAvgGt != null || agedAvgLoa != null) ?
     `<div class="text-[11px] opacity-90 mt-1 leading-5">
        <span class="opacity-75 mr-1">노후선 평균 제원:</span>
-       ${agedAvgGt != null ? `<strong>평균 GT</strong> ${agedAvgGt.toLocaleString()}` : ''}
+       ${agedAvgGt != null ? `<strong>평균 GT</strong> ${agedAvgGt.toLocaleString()}${baseline ? diff(agedAvgGt, baseline.avgGt) : ''}` : ''}
        ${agedAvgGt != null && agedAvgLoa != null ? '<span class="opacity-50 mx-2">·</span>' : ''}
-       ${agedAvgLoa != null ? `<strong>평균 LOA</strong> ${agedAvgLoa.toFixed(1)}m` : ''}
+       ${agedAvgLoa != null ? `<strong>평균 LOA</strong> ${agedAvgLoa.toFixed(1)}m${baseline ? diff(agedAvgLoa, baseline.avgLoa) : ''}` : ''}
      </div>` : '';
   const topClasses = [...byClass.entries()]
     .sort((a, b) => b[1] - a[1]).slice(0, 4);
