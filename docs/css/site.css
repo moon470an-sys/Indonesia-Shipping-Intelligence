@@ -365,6 +365,12 @@ table tbody tr:hover { background:#fef3c7; }
 .scope-unclassified { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
 .scope-chip em      { font-style: normal; }
 
+/* Cycle 17: button.scope-chip (클릭 가능한 scope 필터). active 상태 */
+button.scope-chip { cursor: pointer; }
+button.scope-chip:hover { filter: brightness(0.95); }
+button.scope-chip:focus-visible { outline: 2px solid #1A3A6B; outline-offset: 1px; }
+button.scope-chip[style*="outline"] { font-weight: 600; box-shadow: 0 0 0 2px rgba(26,58,107,0.15); }
+
 /* Cycle 6 — Demand 탭 시계열 차트 우측 "카테고리 상세 화물" 박스의 mini bar. */
 .cat-bar-wrap { height: 3px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: hidden; }
 .cat-bar      { height: 3px; border-radius: 2px; transition: width .2s ease; }

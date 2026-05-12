@@ -2117,6 +2117,7 @@ async function renderFleet() {
       name: "",                        // 선박명 substring
       ownerExact: "",                  // Cycle 13: Top 운영사 row 클릭 시 set
       scopeOnly: null,                 // Cycle 15: null = 모두, "cargo" / "auxiliary" 선택 시 해당만
+      vcFilter: null,                  // Cycle 17: vessel_class (vc) 한정 — 히트맵 셀 클릭 시 set
       gtMin: null, gtMax: null,
       yrMin: null, yrMax: null,
       loaMin: null, loaMax: null,
@@ -2363,6 +2364,7 @@ function _wireFleetFilters() {
       st.name = "";
       st.ownerExact = "";
       st.scopeOnly = null;
+      st.vcFilter = null;
       st.gtMin = st.gtMax = st.yrMin = st.yrMax = null;
       st.loaMin = st.loaMax = null;
       st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
@@ -2555,6 +2557,8 @@ function _applyFleetFilters() {
     if (st.ownerExact && r[I.owner] !== st.ownerExact) return false;
     // Cycle 15: scopeOnly 필터 (chip 클릭 시 set)
     if (st.scopeOnly && I.scope != null && r[I.scope] !== st.scopeOnly) return false;
+    // Cycle 17: vcFilter (vessel_class) — 히트맵 셀 클릭 시 set
+    if (st.vcFilter && r[I.vc] !== st.vcFilter) return false;
     return true;
   });
 
@@ -3215,7 +3219,7 @@ function _drawFlChartGtBucket(rows, I) {
       text: counts.map((c, i) => c > 0 ? `${c.toLocaleString()}` : ""),
       textposition: "outside",
       cliponaxis: false,
-      hovertemplate: "<b>%{x}</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra></extra>",
+      hovertemplate: "<b>%{x}</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra>클릭 시 GT 범위 필터</extra>",
       customdata: pcts,
     },
     {
@@ -3238,6 +3242,34 @@ function _drawFlChartGtBucket(rows, I) {
               rangemode: "tozero", ticksuffix: "%" },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
+  // Cycle 17: 막대 클릭 → gtMin/gtMax 필터. 초대형(25k+)은 max를 비움.
+  const gtHost = document.getElementById("fl-ch-gt-bucket");
+  if (gtHost && !gtHost.dataset.clickBound) {
+    gtHost.dataset.clickBound = "1";
+    gtHost.on("plotly_click", (ev) => {
+      const pt = ev?.points?.[0];
+      if (!pt || pt.curveNumber !== 0) return;  // 점유율 line 무시
+      const lbl = pt.x;
+      const bucket = BUCKETS.find(b => b.key === lbl);
+      if (!bucket) return;
+      const tabEl = document.getElementById("tab-fleet");
+      const st = tabEl._fleetState;
+      const newMin = bucket.lo;
+      const newMax = isFinite(bucket.hi) ? bucket.hi : null;
+      const inMin = document.getElementById("fl-f-gt-min");
+      const inMax = document.getElementById("fl-f-gt-max");
+      if (st.gtMin === newMin && st.gtMax === newMax) {
+        st.gtMin = null; st.gtMax = null;
+        if (inMin) inMin.value = ""; if (inMax) inMax.value = "";
+      } else {
+        st.gtMin = newMin; st.gtMax = newMax;
+        if (inMin) inMin.value = String(newMin);
+        if (inMax) inMax.value = newMax != null ? String(newMax) : "";
+      }
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  }
 }
 
 // Cycle 9: Top 운영사 카드.
@@ -3551,7 +3583,7 @@ function _drawFleetAgeClassHeatmap(rows, I) {
     texttemplate: "%{text}",
     textfont: { family: "Pretendard, sans-serif", size: 10 },
     customdata: customHover,
-    hovertemplate: "%{customdata}<extra></extra>",
+    hovertemplate: "%{customdata}<extra>셀 클릭 시 age+class 필터</extra>",
     xgap: 1, ygap: 1,
     colorbar: { thickness: 6, len: 0.7, tickfont: { size: 9 }, title: { text: "척수", font: { size: 9 } } },
   }], {
@@ -3560,6 +3592,51 @@ function _drawFleetAgeClassHeatmap(rows, I) {
     yaxis: { tickfont: { size: 10 }, autorange: "reversed" },  // <5 위, Σ 아래
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
+  // Cycle 17: 셀 클릭 → age bucket + vc class 둘 다 필터. 합계 행/열 클릭은 단일 축만 필터.
+  const heatHost = document.getElementById("fl-age-class-heatmap");
+  if (heatHost && !heatHost.dataset.clickBound) {
+    heatHost.dataset.clickBound = "1";
+    heatHost.on("plotly_click", (ev) => {
+      const pt = ev?.points?.[0];
+      if (!pt) return;
+      const xRaw = pt.x;        // e.g. "Tanker" or "Σ row"
+      const yRaw = pt.y;        // e.g. "20–25년 ▸" or "Σ col"
+      const tabEl = document.getElementById("tab-fleet");
+      const st = tabEl._fleetState;
+      // age bucket parse — remove 년 + 강조 마커
+      const isColTotal = yRaw === "Σ col";
+      const isRowTotal = xRaw === "Σ row";
+      let bucket = null;
+      if (!isColTotal) {
+        // yRaw에서 ●, ▸, "년" 제거 → "20–25" 등
+        const key = String(yRaw).replace(/[●▸]/g, "").replace(/년/g, "").trim();
+        bucket = AGE_BUCKETS.find(b => b.key === key);
+      }
+      const yr = new Date().getFullYear();
+      // Apply age filter (only when row is a real bucket)
+      if (bucket) {
+        const newYrMin = yr - bucket.hi;     // hi exclusive on age
+        const newYrMax = yr - bucket.lo;
+        // Toggle when already exactly matching
+        if (st.yrMin === newYrMin && st.yrMax === newYrMax) {
+          st.yrMin = null; st.yrMax = null;
+          const a = document.getElementById("fl-f-yr-min"); if (a) a.value = "";
+          const b = document.getElementById("fl-f-yr-max"); if (b) b.value = "";
+        } else {
+          st.yrMin = newYrMin; st.yrMax = newYrMax;
+          const a = document.getElementById("fl-f-yr-min"); if (a) a.value = String(newYrMin);
+          const b = document.getElementById("fl-f-yr-max"); if (b) b.value = String(newYrMax);
+        }
+      }
+      // Apply class filter (only when column is a real class)
+      if (!isRowTotal) {
+        const cls = String(xRaw);
+        st.vcFilter = st.vcFilter === cls ? null : cls;
+      }
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  }
 }
 
 // Cycle 11: 적용된 필터를 chip으로 시각화. 각 chip에 X 버튼.
@@ -3589,6 +3666,11 @@ function _renderFleetActiveChips(st) {
     value: st.scopeOnly === "cargo" ? "화물선만" : "보조선만",
     reset: () => { st.scopeOnly = null;
                    _refreshScopeButtonStates(); },
+  });
+  if (st.vcFilter) chips.push({
+    key: "vc", label: "선급",
+    value: st.vcFilter,
+    reset: () => { st.vcFilter = null; },
   });
   const range = (label, lo, hi, idMin, idMax, keyMin, keyMax, suffix = "") => {
     if (st[keyMin] == null && st[keyMax] == null) return;

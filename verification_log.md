@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 17 검증 — 2026-05-12 (Supply 탭 디자인·데이터 9차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 히트맵 셀 클릭 → age + class 동시 필터 | ✅ Cycle 17 | yrMin/yrMax = bucket 범위, vcFilter = class. 합계 행/열 단일 축 필터. 토글 가능 |
+| GT bucket 막대 클릭 → GT 범위 필터 | ✅ Cycle 17 | gtMin/gtMax = bucket 범위. 점유율 line 무시 (curveNumber 0만). 초대형은 max 비움 |
+| Active chip에 선급(vc) 항목 추가 | ✅ Cycle 17 | vcFilter 활성 시 chip 표시, X 클릭 해제 |
+| scope chip 비주얼 polish | ✅ Cycle 17 | button.scope-chip 추가. hover brightness, focus outline, active ring |
+| 화면 결과 (smoke test) | ✅ Tanker × 25-30 셀 → yrMin=1996, yrMax=2001, vc=Tanker, count 236, 2 chips. 중형 GT bucket → gtMin=500, gtMax=5000, count 13,363 | playwright |
+
+### 횡단
+- 원칙 lint ✅. cross-filter UX 일관성 확보 (heatmap, age chart, GT bucket, KPI, owner, scope chip 모두 click → 필터).
+
 ## Cycle 16 검증 — 2026-05-12 (Supply 탭 디자인·데이터 8차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
