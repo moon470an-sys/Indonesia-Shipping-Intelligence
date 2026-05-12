@@ -200,9 +200,17 @@
     <!-- Cycle 1: Fleet → 🚢 Supply 탭으로 전환. Cargo+Auxiliary(Tug) 기본
          필터. Explorer 토글로 전체 raw 접근. 다중 필터 + 선박 목록 + 시계열. -->
     <section id="tab-fleet" class="tab-panel hidden" role="tabpanel" tabindex="-1">
-      <div class="mb-4">
-        <h2 class="text-2xl font-bold text-slate-800">🚢 Supply — Fleet 공급</h2>
-        <p class="text-xs text-slate-500 mt-1">어떤 화물선이, 얼마나, 어떻게 늘고 줄어드는가. 선대 탐색기 + 시계열.</p>
+      <div class="mb-4 flex items-start justify-between flex-wrap gap-2">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">🚢 Supply — Fleet 공급</h2>
+          <p class="text-xs text-slate-500 mt-1">어떤 화물선이, 얼마나, 어떻게 늘고 줄어드는가. 선대 탐색기 + 시계열.</p>
+        </div>
+        <!-- Cycle 20: 데이터 시점 명시 (meta.json) -->
+        <div class="text-right text-[11px] text-slate-500 font-mono" id="fl-data-meta" data-source="docs/derived/meta.json">
+          <div>vessel snapshot: <span id="fl-meta-vessel">—</span></div>
+          <div>LK3 latest: <span id="fl-meta-lk3">—</span></div>
+          <div class="text-[10px] text-slate-400">build: <span id="fl-meta-build">—</span></div>
+        </div>
       </div>
 
       <!-- Cycle 1: scope meta-strip + scope filter toggle. Cycle 15: chip 클릭 → scope 필터. -->
@@ -444,9 +452,17 @@
         <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
           <div class="flex items-center justify-between mb-2">
             <div class="text-xs font-mono text-slate-700">선령 × 선종 매트릭스 — 노후선 집중도</div>
-            <div class="text-[10px] text-slate-400">셀 = 척수 · 25년+ rose 라벨 강조</div>
+            <div class="text-[10px] text-slate-400">셀 = 척수 · 25년+ rose 라벨 강조 · 셀 클릭 시 age+class 필터</div>
           </div>
           <div id="fl-age-class-heatmap" style="height:340px"></div>
+        </div>
+        <!-- Cycle 20: Top 운영사 분포 mini scatter. 척수 vs 평균선령, 사이즈=선대 GT. -->
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">운영사 분포 — 척수 × 평균선령 (크기 = 선대 GT)</div>
+            <div class="text-[10px] text-slate-400">상위 50개사. 우상단(많은 척수 + 노후) 또는 우하단(많은 척수 + 신생) 확인</div>
+          </div>
+          <div id="fl-owner-scatter" style="height:340px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center justify-between mb-2">

@@ -3,6 +3,22 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 20 검증 — 2026-05-12 (Supply 탭 디자인·데이터 12차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Supply 탭 헤더에 데이터 freshness | ✅ Cycle 20 | meta.json에서 vessel snapshot / LK3 latest / build 시점 우상단 표시 |
+| Top 운영사 mini scatter | ✅ Cycle 20 | 척수 × 평균선령 (log-x). 사이즈 = √선대 GT. 색상: <15y blue, 15-25y amber, ≥25y rose. 25y 기준선 + 라벨 |
+| Scatter point 클릭 → owner 필터 | ✅ Cycle 20 | ownerExact set, 토글 가능. Plotly newPlot 시 안전 re-bind |
+| Alert에 owner context 라벨 | ✅ Cycle 20 | ownerExact 활성 시 alert 헤더에 "📌 PT.XXX" 칩 표시 |
+| 화면 결과 (smoke test) | ✅ meta {vessel: 2026-05, LK3: 2026-04, build: 2026-05-12 04:38}, scatter 50 points + 25y 기준선, 클릭 시 ownerExact='PT.DANNY...', count 283 | playwright |
+
+### 횡단
+- 원칙 lint ✅. 원칙 1 (공식 데이터·외부 해석 없음): scatter는 단순 owner 집계 — 사분면 라벨도 데이터 기술만 ("우상단"="많은 척수 + 노후").
+- 원칙 3 (비율·통계): scatter는 owner 비교 통계. mini snapshot.
+
 ## Cycle 19 검증 — 2026-05-12 (Supply 탭 디자인·데이터 11차 — URL deep-link)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

@@ -2092,6 +2092,14 @@ const FLEET_TANKER_SUBS = [
 
 async function renderFleet() {
   setupSourceLabels(document.getElementById("tab-fleet"));
+  // Cycle 20: Supply 탭 헤더에 데이터 freshness 채움 (state.meta 사용)
+  try {
+    const m = state.meta || {};
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || "—"; };
+    set("fl-meta-vessel", m.latest_vessel_snapshot_month);
+    set("fl-meta-lk3", m.latest_lk3_month);
+    set("fl-meta-build", (m.build_at || "").replace("T", " ").replace(/Z$/, "Z").substring(0, 16));
+  } catch (e) {}
 
   // Cycle 9: Top Owner 카드를 위해 fleet_owners.json 함께 로드. 실패해도
   // 메인 패널은 살아남도록 try/catch 분리.
@@ -2814,8 +2822,9 @@ function _renderFleetView() {
   try { _drawFlChartGtHist(rows, I); }      catch (e) { console.error("GT hist:", e); }
   try { _drawFleetTopOwners(rows, I); }     catch (e) { console.error("Top Owners:", e); }
   try { _drawFleetAgeClassHeatmap(rows, I); } catch (e) { console.error("Age×Class:", e); }
+  try { _drawFleetOwnerScatter(rows, I); }    catch (e) { console.error("Owner scatter:", e); }
   try { _renderFleetActiveChips(st); }      catch (e) { console.error("Active chips:", e); }
-  try { _renderFleetAgedAlert(rows, I, aged25, agedTotalForPct); } catch (e) { console.error("Aged alert:", e); }
+  try { _renderFleetAgedAlert(rows, I, aged25, agedTotalForPct, st); } catch (e) { console.error("Aged alert:", e); }
 
   // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
@@ -3620,12 +3629,90 @@ function _drawFleetTopOwners(rows, I) {
   }
 }
 
+// Cycle 20: Top 50 운영사 분포 scatter — 척수 vs 평균선령. 크기 = 선대 GT(sqrt).
+//   - 사분면 분석: 우상단(많은 척수 + 노후) vs 우하단(많은 척수 + 신생)
+//   - 25년+ 평균선령 owner는 rose 색상으로 강조
+function _drawFleetOwnerScatter(rows, I) {
+  const host = document.getElementById("fl-owner-scatter");
+  if (!host) return;
+  // 현재 필터된 rows 기준 owner 집계
+  const acc = new Map();
+  for (const r of rows) {
+    const owner = (r[I.owner] || "").trim();
+    if (!owner) continue;
+    const gt = r[I.gt] || 0;
+    const age = r[I.age];
+    const ent = acc.get(owner) || { owner, vessels: 0, sum_gt: 0,
+                                     age_w: 0, gt_w: 0 };
+    ent.vessels += 1;
+    ent.sum_gt += gt;
+    if (gt > 0 && age != null) { ent.age_w += age * gt; ent.gt_w += gt; }
+    acc.set(owner, ent);
+  }
+  const top = [...acc.values()]
+    .filter(o => o.vessels >= 3 && o.gt_w > 0)
+    .sort((a, b) => b.vessels - a.vessels)
+    .slice(0, 50);
+  if (!top.length) {
+    Plotly.purge("fl-owner-scatter");
+    host.innerHTML = `<div class="text-xs text-slate-400 p-4 text-center">필터 결과 운영사 부족 (3척+ 기준)</div>`;
+    return;
+  }
+  const xs = top.map(o => o.vessels);
+  const ys = top.map(o => o.age_w / o.gt_w);
+  const sizes = top.map(o => Math.max(8, Math.sqrt(o.sum_gt) / 10));
+  const colors = ys.map(a => a >= 25 ? FL_ALERT : a >= 15 ? FL_WARN : FL_PRIMARY);
+  const labels = top.map(o => o.owner.length > 20 ? o.owner.substring(0, 18) + "…" : o.owner);
+  const hovers = top.map(o => `<b>${o.owner}</b><br>척수: ${o.vessels.toLocaleString()}<br>선대 GT: ${o.sum_gt.toLocaleString()}<br>평균선령(GT가중): ${(o.age_w / o.gt_w).toFixed(1)}년${_ownerIsIdxListed(o.owner) ? '<br><i>IDX 상장</i>' : ''}`);
+  Plotly.newPlot("fl-owner-scatter", [{
+    x: xs, y: ys, text: labels, type: "scatter", mode: "markers",
+    marker: {
+      size: sizes, color: colors,
+      line: { color: "white", width: 1 },
+      opacity: 0.78,
+    },
+    hovertext: hovers,
+    hovertemplate: "%{hovertext}<extra>클릭 시 owner 필터</extra>",
+  }], {
+    margin: { t: 10, l: 50, r: 10, b: 50 },
+    xaxis: { title: { text: "척수 (log)", font: { size: 10 } }, type: "log",
+             tickfont: { size: 10 }, gridcolor: "#eef2f7" },
+    yaxis: { title: { text: "평균 선령 (년, GT 가중)", font: { size: 10 } },
+             tickfont: { size: 10 }, gridcolor: "#eef2f7" },
+    shapes: [
+      { type: "line", xref: "x", yref: "y",
+        x0: 1, x1: 9999, y0: 25, y1: 25,
+        line: { color: "#dc262640", width: 1, dash: "dot" } },
+    ],
+    annotations: [
+      { xref: "paper", yref: "y", x: 0.99, y: 25.5, text: "25y+ (노후)",
+        showarrow: false, font: { size: 9, color: "#dc2626" }, xanchor: "right" },
+    ],
+    plot_bgcolor: "white", paper_bgcolor: "white",
+  }, { displayModeBar: false, responsive: true });
+  // 클릭 → owner 필터
+  if (host) {
+    host.removeAllListeners?.("plotly_click");
+    host.on("plotly_click", (ev) => {
+      const pi = ev?.points?.[0]?.pointIndex;
+      if (pi == null) return;
+      const owner = top[pi]?.owner;
+      if (!owner) return;
+      const tabEl = document.getElementById("tab-fleet");
+      const stx = tabEl._fleetState;
+      stx.ownerExact = stx.ownerExact === owner ? "" : owner;
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  }
+}
+
 // Cycle 13: 25y+ 비중 임계점 alert callout.
 //   ≥ 50% → red severe (시급 교체 필요 신호)
 //   ≥ 30% → amber warn (구조적 노후화)
 //   < 30% → hidden
 // Cycle 16: class별 노후 breakdown 추가 — 어느 class에 노후가 집중되어 있는지 한 줄 표시
-function _renderFleetAgedAlert(rows, I, aged25, agedTotal) {
+function _renderFleetAgedAlert(rows, I, aged25, agedTotal, st) {
   const host = document.getElementById("fl-aged-alert");
   if (!host) return;
   if (!agedTotal || aged25 == null) { host.classList.add("hidden"); return; }
@@ -3634,6 +3721,10 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal) {
   if (pct >= 50) severity = "severe";
   else if (pct >= 30) severity = "warn";
   if (!severity) { host.classList.add("hidden"); host.innerHTML = ""; return; }
+  // Cycle 20: owner 필터 활성 시 컨텍스트 라벨 — "PT.XXX 노후 N척"
+  const ownerContext = (st && st.ownerExact)
+    ? `<span class="ml-2 inline-block px-2 py-0.5 rounded bg-white/40 text-[11px] font-mono" title="현재 운영사 필터 적용 중">📌 ${_esc(st.ownerExact.length > 32 ? st.ownerExact.substring(0,30) + '…' : st.ownerExact)}</span>`
+    : "";
 
   // class별 25y+ 척수 집계
   const byClass = new Map();
@@ -3668,7 +3759,7 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal) {
   host.innerHTML = `
     <span class="text-[14px] leading-5 flex-shrink-0">${icon}</span>
     <div class="flex-1">
-      <strong class="mr-1">${lvl} — 노후선 ${pct.toFixed(1)}%</strong>
+      <strong class="mr-1">${lvl} — 노후선 ${pct.toFixed(1)}%</strong>${ownerContext}
       <span>${aged25.toLocaleString()}척 / 분석 대상 ${agedTotal.toLocaleString()}척 (선령 미상 제외) · 필터 결과 ${rows.length.toLocaleString()}척 기준.</span>
       <div class="text-[11px] opacity-90 mt-1 leading-5">
         <span class="opacity-75 mr-1">노후선 25년+ 집중도:</span> ${breakdown || "<em class=\"opacity-60\">데이터 없음</em>"}
