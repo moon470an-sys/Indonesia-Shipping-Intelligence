@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 13 검증 — 2026-05-12 (Supply 탭 디자인·데이터 5차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 노후선 alert callout | ✅ Cycle 13 | 30% 이상 amber, 50% 이상 rose. 기본 31.8% → amber 노출 |
+| 히트맵 row/column totals | ✅ Cycle 13 | 8x8 (Σ row + Σ col). hover에서 합계/grand total 명시 |
+| Top 운영사 row 클릭 필터 | ✅ Cycle 13 | ownerExact state field, 클릭 시 highlight + chip, 재클릭 토글 해제 |
+| Active chip 운영사 항목 | ✅ Cycle 13 | 28자 초과 시 ellipsis. X 클릭 시 해제 |
+| 화면 결과 (smoke test) | ✅ alert 노출 (amber), heatmap 8x8 + Σ 라벨, owner click → 41,135→283, toggle off → 41,135 | playwright |
+
+### 횡단
+- 원칙 lint ✅. 원칙 1 (공식 데이터·외부 추정 금지): alert 메시지는 비중 임계점 사실만 표시 — "교체 사이클 의사결정에 직결되는 신호"는 일반 시장 설명 (특정 회사 추천 없음).
+
 ## Cycle 12 검증 — 2026-05-12 (Supply 탭 디자인·데이터 4차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

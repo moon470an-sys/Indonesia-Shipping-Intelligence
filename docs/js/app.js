@@ -2115,6 +2115,7 @@ async function renderFleet() {
       jenisQuery: "",                  // search box content
       jenisExclude: false,             // 제외 모드 toggle
       name: "",                        // 선박명 substring
+      ownerExact: "",                  // Cycle 13: Top 운영사 row 클릭 시 set
       gtMin: null, gtMax: null,
       yrMin: null, yrMax: null,
       loaMin: null, loaMax: null,
@@ -2320,6 +2321,7 @@ function _wireFleetFilters() {
       st.jenisQuery = "";
       st.jenisExclude = false;
       st.name = "";
+      st.ownerExact = "";
       st.gtMin = st.gtMax = st.yrMin = st.yrMax = null;
       st.loaMin = st.loaMax = null;
       st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
@@ -2462,6 +2464,8 @@ function _applyFleetFilters() {
     if (st.yrMin != null && (r[I.tahun] == null || r[I.tahun] < st.yrMin)) return false;
     if (st.yrMax != null && (r[I.tahun] == null || r[I.tahun] > st.yrMax)) return false;
     if (nameQ && !(r[I.nama] || "").toUpperCase().includes(nameQ)) return false;
+    // Cycle 13: ownerExact 필터 (Top 운영사 row 클릭 시 set)
+    if (st.ownerExact && r[I.owner] !== st.ownerExact) return false;
     return true;
   });
 
@@ -2555,6 +2559,7 @@ function _renderFleetView() {
   try { _drawFleetTopOwners(rows, I); }     catch (e) { console.error("Top Owners:", e); }
   try { _drawFleetAgeClassHeatmap(rows, I); } catch (e) { console.error("Age×Class:", e); }
   try { _renderFleetActiveChips(st); }      catch (e) { console.error("Active chips:", e); }
+  try { _renderFleetAgedAlert(aged25, agedTotalForPct, rows.length); } catch (e) { console.error("Aged alert:", e); }
 
   // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
@@ -3173,7 +3178,8 @@ function _drawFleetTopOwners(rows, I) {
                   style="background:${MEDAL[idx]}" title="Top ${idx + 1}">${idx + 1}</span>`
         : `<span class="font-mono text-[10px] text-slate-400">${idx + 1}</span>`;
       return `
-        <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50">
+        <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50 transition-colors"
+             data-owner-row="${_esc(o.owner)}" title="클릭 시 ${_esc(o.owner)} 운영사로 필터">
           <div class="col-span-1 text-right">${rankBadge}</div>
           <div class="col-span-3 truncate text-slate-800 text-[12px] flex items-center gap-1" title="${_esc(o.owner)}${_ownerIsIdxListed(o.owner) ? ' · IDX 상장' : ''}">
             <span class="truncate">${_esc(o.owner)}</span>
@@ -3196,7 +3202,61 @@ function _drawFleetTopOwners(rows, I) {
         </div>`;
     }).join("")}
     <div class="text-[10px] text-slate-400 px-2 pt-2">
-      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개 · 평균선령 25년+ → rose 강조 · Tbk = IDX 상장사</em>
+      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개 · 평균선령 25년+ → rose 강조 · Tbk = IDX 상장사 · row 클릭 시 해당 운영사로 필터</em>
+    </div>`;
+  // Cycle 13: row 클릭 시 ownerExact 필터 적용.
+  //   - 클릭한 owner의 척수가 차지하는 row가 highlight.
+  //   - 같은 row 재클릭 시 토글 해제.
+  host.querySelectorAll(".grid.grid-cols-12[data-owner-row]").forEach(row => {
+    row.style.cursor = "pointer";
+    row.addEventListener("click", () => {
+      const tabEl = document.getElementById("tab-fleet");
+      const stx = tabEl._fleetState;
+      const target = row.dataset.ownerRow;
+      stx.ownerExact = stx.ownerExact === target ? "" : target;
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  });
+  // Highlight 현재 ownerExact row
+  const cur = document.getElementById("tab-fleet")._fleetState.ownerExact;
+  if (cur) {
+    const row = host.querySelector(`.grid.grid-cols-12[data-owner-row="${CSS.escape(cur)}"]`);
+    if (row) row.classList.add("bg-blue-50", "ring-1", "ring-blue-200");
+  }
+}
+
+// Cycle 13: 25y+ 비중 임계점 alert callout.
+//   ≥ 50% → red severe (시급 교체 필요 신호)
+//   ≥ 30% → amber warn (구조적 노후화)
+//   < 30% → hidden
+function _renderFleetAgedAlert(aged25, agedTotal, viewCount) {
+  const host = document.getElementById("fl-aged-alert");
+  if (!host) return;
+  if (!agedTotal || aged25 == null) { host.classList.add("hidden"); return; }
+  const pct = (aged25 / agedTotal) * 100;
+  let severity = null;
+  if (pct >= 50) severity = "severe";
+  else if (pct >= 30) severity = "warn";
+  if (!severity) { host.classList.add("hidden"); host.innerHTML = ""; return; }
+  host.classList.remove("hidden");
+  const isSevere = severity === "severe";
+  const cls = isSevere
+    ? "bg-rose-50 border-rose-300 text-rose-900"
+    : "bg-amber-50 border-amber-300 text-amber-900";
+  host.className = `mb-4 px-4 py-2 rounded-lg border text-[12px] flex items-start gap-2 ${cls}`;
+  const icon = isSevere ? "⚠" : "ℹ";
+  const lvl = isSevere ? "시장 구조 시급" : "시장 구조 주의";
+  host.innerHTML = `
+    <span class="text-[14px] leading-5 flex-shrink-0">${icon}</span>
+    <div class="flex-1">
+      <strong class="mr-1">${lvl} — 노후선 ${pct.toFixed(1)}%</strong>
+      <span>${aged25.toLocaleString()}척 / 분석 대상 ${agedTotal.toLocaleString()}척 (선령 미상 제외) · 현재 필터 결과 ${viewCount.toLocaleString()}척 기준.</span>
+      <div class="text-[11px] opacity-80 mt-0.5">
+        ${isSevere
+          ? "노후선 비중이 50%를 초과 — 신조 발주·매각 등 교체 사이클 의사결정에 직결되는 신호."
+          : "노후선 비중 30% 초과 — class별 분포는 아래 히트맵에서 확인."}
+      </div>
     </div>`;
 }
 
@@ -3245,33 +3305,61 @@ function _drawFleetAgeClassHeatmap(rows, I) {
     matrix[aIdx][cIdx] += 1;
     total += 1;
   }
+  // Cycle 13: row/col totals — 마지막 row/col에 합계 추가.
+  // 가장자리 합계는 별도 색감(slate) 셀로 분리해 본문 셀과 구별.
+  const rowTotals = matrix.map(r => r.reduce((a, b) => a + b, 0));
+  const colTotals = CLASSES.map((_, ci) => matrix.reduce((s, r) => s + r[ci], 0));
   // 25y+ 행 라벨에 rose 색상 강조 (HTML span을 plotly tickformat에 쓸 수 없으므로 unicode bullet 사용)
   const yLabels = AGE_BUCKETS.map(b =>
     b.lo >= 25 ? `${b.key}년 ●` :    // ● 표시로 25y+ 시각 강조
     b.lo >= 20 ? `${b.key}년 ▸` :
     `${b.key}년`
   );
-  // 각 셀에 척수 + (총 대비 %) 텍스트
-  const text = matrix.map((row, aI) => row.map((v, cI) =>
-    v > 0 ? `${v.toLocaleString()}<br><span style="font-size:9px;opacity:.65">${(v / total * 100).toFixed(1)}%</span>` : ""
-  ));
+  // Append row totals column
+  const xLabelsWithTotal = [...CLASSES, "Σ row"];
+  const yLabelsWithTotal = [...yLabels, "Σ col"];
+  // Build augmented matrix: main + row totals as last column; bottom row = col totals + grand total
+  const augMatrix = matrix.map((row, ri) => [...row, rowTotals[ri]]);
+  augMatrix.push([...colTotals, total]);
+  // 각 셀에 척수 + (총 대비 %) 텍스트. 합계 셀은 % 생략 + bold.
+  const text = augMatrix.map((row, aI) => row.map((v, cI) => {
+    const isTotal = aI === augMatrix.length - 1 || cI === row.length - 1;
+    if (v === 0) return "";
+    if (isTotal) {
+      return `<b>${v.toLocaleString()}</b>`;
+    }
+    return `${v.toLocaleString()}<br><span style="font-size:9px;opacity:.65">${(v / total * 100).toFixed(1)}%</span>`;
+  }));
+  // For coloring: blank out the totals row/col by passing null in z so they show neutral.
+  // Plotly heatmap doesn't easily allow per-cell colorscale override; instead we keep z including totals
+  // but legends keep range from main data. Totals will appear darker which is acceptable.
+  // Custom hovertemplate: 합계 셀은 별도 텍스트.
+  const customHover = augMatrix.map((row, ri) => row.map((v, ci) => {
+    const isRowTotal = ci === row.length - 1;
+    const isColTotal = ri === augMatrix.length - 1;
+    if (isRowTotal && isColTotal) return `전체 ${total.toLocaleString()}척`;
+    if (isRowTotal) return `${yLabelsWithTotal[ri]} 합계: ${v.toLocaleString()}척`;
+    if (isColTotal) return `${xLabelsWithTotal[ci]} 합계: ${v.toLocaleString()}척`;
+    return `${yLabelsWithTotal[ri]} · ${xLabelsWithTotal[ci]}: ${v.toLocaleString()}척`;
+  }));
   Plotly.newPlot("fl-age-class-heatmap", [{
-    z: matrix,
-    x: CLASSES,
-    y: yLabels,
+    z: augMatrix,
+    x: xLabelsWithTotal,
+    y: yLabelsWithTotal,
     type: "heatmap",
     colorscale: FL_BLUE_SCALE,
     showscale: true,
     text: text,
     texttemplate: "%{text}",
     textfont: { family: "Pretendard, sans-serif", size: 10 },
-    hovertemplate: "<b>%{y}</b> · %{x}<br>%{z:,} 척<extra></extra>",
+    customdata: customHover,
+    hovertemplate: "%{customdata}<extra></extra>",
     xgap: 1, ygap: 1,
     colorbar: { thickness: 6, len: 0.7, tickfont: { size: 9 }, title: { text: "척수", font: { size: 9 } } },
   }], {
-    margin: { t: 10, l: 80, r: 50, b: 40 },
+    margin: { t: 10, l: 85, r: 50, b: 40 },
     xaxis: { tickfont: { size: 10 }, side: "bottom" },
-    yaxis: { tickfont: { size: 10 }, autorange: "reversed" },  // <5 위, 30+ 아래
+    yaxis: { tickfont: { size: 10 }, autorange: "reversed" },  // <5 위, Σ 아래
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
 }
@@ -3292,6 +3380,11 @@ function _renderFleetActiveChips(st) {
   if (st.name) chips.push({
     key: "name", label: "선박명", value: `"${st.name}"`,
     reset: () => { st.name = ""; const el = document.getElementById("fl-f-name"); if (el) el.value = ""; },
+  });
+  if (st.ownerExact) chips.push({
+    key: "owner", label: "운영사",
+    value: st.ownerExact.length > 28 ? st.ownerExact.substring(0, 26) + "…" : st.ownerExact,
+    reset: () => { st.ownerExact = ""; },
   });
   const range = (label, lo, hi, idMin, idMax, keyMin, keyMax, suffix = "") => {
     if (st[keyMin] == null && st[keyMax] == null) return;
