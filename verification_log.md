@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 40 검증 — 2026-05-12 (Supply 탭 32차 — 차트 헤더 sub-label 일관성)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 건조 연도별 추이 sub | ✅ Cycle 40 | "건조 연도 분포 (척수)" → "연도별 척수 분포 · 선대 신구 신호" (의미 강화) |
+| 선령 분포 sub | ✅ Cycle 40 | "25년+ = 노후" → "25년+ = 노후 · 클릭 필터" (인터랙티브 신호) |
+| GT 규모별 분포 sub | ✅ Cycle 40 | "소형 / 중형 / 대형 / 초대형 · 클릭 필터" |
+| Flag chart sub | ✅ Cycle 40 | "국적 미상 = Indonesia (default) · 클릭 필터" |
+
+### 횡단
+- 원칙 lint ✅. 인터랙티브 차트의 sub-label에 "클릭 필터" 일관성 명시. 비-인터랙티브(year/scatter/heatmap)는 기존 유지.
+
 ## Cycle 39 검증 — 2026-05-12 (Supply 탭 31차 — JSON export)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
