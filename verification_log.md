@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 41 검증 — 2026-05-12 (Supply 탭 33차 — sister vessels mini-list)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Detail row에 sister vessels mini-list | ✅ Cycle 41 | 같은 owner의 다른 선박 top 5 (GT desc). 헤더 'top 5 of N'. 각 선박은 name + GT + 건조연도/선령 + class 칩 |
+| 화면 결과 (smoke test) | ✅ PT. DANNY SAMUDERA RAYA LINE (283척 owner) 첫 vessel detail에 5 sisters 표시. 헤더 'top 5 of 282' (282 siblings = 283 - self). 'DANNY 147 GT 4,039 2023 · 3y Other Cargo' 형식 | playwright |
+
+### 횡단
+- 원칙 lint ✅. owner 컨텍스트 확장 — 단일 선박 detail에서 같은 fleet 다른 선박 즉시 비교.
+
 ## Cycle 40 검증 — 2026-05-12 (Supply 탭 32차 — 차트 헤더 sub-label 일관성)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

@@ -3123,6 +3123,40 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     const ownerOwn = r[I.owner];
     const oTot = (ownerTotals && ownerOwn) ? ownerTotals.get(ownerOwn) : null;
     const ownerCtx = oTot ? `<span class="text-[10px] opacity-70 ml-1">총 ${oTot.vessels.toLocaleString()}척 · GT ${fmtTon(oTot.sumGt)}</span>` : "";
+    // Cycle 41: sister vessels — same owner의 다른 선박 top 5 (GT 내림차순)
+    let sisterListHtml = "";
+    if (isOpen && r[I.owner] && tabEl._fleetVessels) {
+      const ownerName = r[I.owner];
+      const currentNama = r[I.nama];
+      const allRows = tabEl._fleetVessels.rows;
+      const siblings = [];
+      for (const rr of allRows) {
+        if (rr[I.owner] !== ownerName) continue;
+        if (rr[I.nama] === currentNama && rr[I.tahun] === r[I.tahun]) continue;  // exclude self
+        siblings.push(rr);
+      }
+      siblings.sort((a, b) => (b[I.gt] || 0) - (a[I.gt] || 0));
+      const topSiblings = siblings.slice(0, 5);
+      if (topSiblings.length > 0) {
+        sisterListHtml = `
+          <div class="mt-3 pt-3 border-t border-slate-200">
+            <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">
+              이 운영사의 다른 선박 (top ${topSiblings.length} of ${siblings.length})
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
+              ${topSiblings.map(rr => {
+                const sAge = rr[I.age];
+                return `<div class="flex items-center gap-2 px-2 py-1 bg-white rounded border border-slate-200">
+                  <span class="font-semibold text-slate-800 truncate flex-1" title="${_esc(rr[I.nama])}">${_esc(rr[I.nama])}</span>
+                  <span class="font-mono text-slate-500 text-[10px]">GT ${(rr[I.gt]||0).toLocaleString()}</span>
+                  <span class="font-mono text-[10px] ${sAge != null && sAge >= 25 ? 'text-rose-600 font-semibold' : 'text-slate-400'}">${rr[I.tahun] || '—'} · ${sAge != null ? sAge + 'y' : '—'}</span>
+                  <span class="text-[10px] text-slate-400">${_esc(rr[I.vc])}</span>
+                </div>`;
+              }).join("")}
+            </div>
+          </div>`;
+      }
+    }
     const detailRow = isOpen ? `
       <tr class="fl-detail-row" data-vk="${_esc(k)}">
         <td colspan="14" class="px-4 py-3 bg-slate-50 border-b border-slate-200">
@@ -3140,6 +3174,7 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">엔진</span><span class="font-mono">${_esc(r[I.mesin]) || '—'} <span class="opacity-60">/ ${_esc(r[I.mesin_type]) || '—'}</span></span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">IMO / Call Sign</span><span class="font-mono">${_esc(r[I.imo]) || '—'} / ${_esc(r[I.call_sign]) || '—'}</span></div>
           </div>
+          ${sisterListHtml}
         </td>
       </tr>` : "";
     return `<tr class="hover:bg-slate-50 border-b border-slate-100 fl-vessel-row cursor-pointer" data-vk="${_esc(k)}">
