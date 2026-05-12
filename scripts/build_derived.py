@@ -754,72 +754,13 @@ def build_cargo_ports() -> dict:
     """
     # ---- 1) Build port-code → (name, lat, lng) lookup -------------------
     from backend.build_static import _FLOW_PORT_COORDS  # type: ignore
-
-    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
-
-    # ---- 2) Commodity bucket mapping (raw KOMODITI text → bucket) ------
-    # Buckets mirror jang1117's commodity list where possible plus a couple
-    # of Indonesia-specific additions (NICKEL ORE, BAUXITE, PETIKEMAS).
-    _BUCKET_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
-        # Crude / refined products
-        ("CRUDE OIL",            ("CRUDE OIL", "MINYAK MENTAH")),
-        ("OMAN BLEND CRUDE OIL", ("OMAN BLEND",)),
-        ("CONDENSATE",           ("CONDENSATE", "NAPHTHA", "NAFTA")),
-        ("PERTALITE",            ("PERTALITE",)),
-        ("PERTAMAX",             ("PERTAMAX",)),
-        ("AVTUR",                ("AVTUR", "JET A")),
-        ("HSD",                  ("HSD",)),
-        ("BIO SOLAR",            ("BIO SOLAR", "BIOSOLAR")),
-        ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL")),
-        ("METHANOL",             ("METHANOL",)),
-        ("ASPAL/BITUMEN",        ("ASPAL", "BITUMEN", "ASPHALT")),
-        # Gases
-        ("LPG",                  ("LPG", "ELPIJI", "LIQUEFIED PETROLEUM")),
-        ("LNG",                  ("LNG", "NATURAL GAS")),
-        # Palm
-        ("CPO",                  ("CPO", "PALM OIL", "MINYAK SAWIT")),
-        ("RBD PALM OIL",         ("RBD PALM OIL", "RBD OIL")),
-        ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN")),
-        ("OLEIN",                ("OLEIN",)),
-        ("PKO",                  ("PKO", "PALM KERNEL")),
-        ("STEARIN",              ("STEARIN",)),
-        ("FAME",                 ("FAME", "BIODIESEL", "METIL ESTER")),
-        # Dry bulk
-        ("BATU BARA CURAH KERING", ("BATU BARA", "BATUBARA", "STEAM COAL")),
-        ("COAL",                 ("COAL",)),
-        ("NICKEL ORE",           ("NICKEL", "NIKEL", "BIJIH NIKEL")),
-        ("BAUXITE",              ("BAUXITE", "BAUKSIT")),
-        ("IRON ORE",             ("IRON ORE", "BIJIH BESI")),
-        ("LIMESTONE",            ("LIMESTONE",)),
-        ("WOOD CHIP",            ("WOOD CHIP",)),
-        ("SEMEN CURAH",          ("SEMEN CURAH", "CEMENT BULK")),
-        ("SEMEN",                ("SEMEN", "CEMENT", "KLINKER", "CLINKER")),
-        ("PUPUK",                ("PUPUK", "FERTILIZER", "UREA")),
-        ("BERAS",                ("BERAS", "RICE")),
-        ("SALT",                 ("SALT", "GARAM")),
-        # Container + general
-        ("CONTAINER",            ("CONTAINER", "PETIKEMAS", "KONTAINER", "TEU")),
-        ("GENERAL CARGO",        ("GENERAL CARGO", "BARANG UMUM", "MUATAN UMUM")),
-        ("BARANG",               ("BARANG",)),
-        # Vehicles
-        ("MOBIL",                ("MOBIL", "CAR ", "PASSENGER CAR")),
-        ("TRUK",                 ("TRUK", "TRUCK", "TRONTON")),
-        ("MOTOR",                ("MOTOR ", "MOTORCYCLE", "SEPEDA MOTOR")),
-        # Fish / Livestock
-        ("IKAN",                 ("IKAN", "FISH")),
-        ("TERNAK",               ("TERNAK", "LIVESTOCK")),
-        # Chemicals
-        ("CHEMICAL",             ("CHEMICAL", "KIMIA")),
+    from backend.commodity_taxonomy import (
+        BUCKET_OTHER,
+        bucket_keyword_export,
+        classify_commodity_bucket as _classify,
     )
 
-    def _classify(label: str | None) -> str:
-        if not label:
-            return "기타"
-        s = str(label).upper()
-        for bucket, kws in _BUCKET_KEYWORDS:
-            if any(kw in s for kw in kws):
-                return bucket
-        return "기타"
+    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
 
     # ---- 3) Aggregate via SQL — kind dn/ln × BONGKAR/MUAT × KOMODITI ---
     src_meta = _load_json(DATA / "meta.json")
@@ -885,10 +826,11 @@ def build_cargo_ports() -> dict:
 
     # Stable list of commodities (alphabetical with 기타 last, matching
     # jang1117's UX).
-    commodities = sorted(bucket_seen - {"기타"}) + (["기타"] if "기타" in bucket_seen else [])
+    commodities = sorted(bucket_seen - {BUCKET_OTHER}) + (
+        [BUCKET_OTHER] if BUCKET_OTHER in bucket_seen else [])
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "snapshot_month": snap,
         "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot)",
         "commodities": commodities,
@@ -896,9 +838,8 @@ def build_cargo_ports() -> dict:
         "_notes": {
             "fields": "dU/dS/iU/iS = ton totals for "
                       "(d)omestic/(i)ntl × (U)nloading/(S)hipping",
-            "bucket_keywords": [
-                {"bucket": b, "kws": list(kws)} for b, kws in _BUCKET_KEYWORDS
-            ],
+            "taxonomy": "backend.commodity_taxonomy (Tier-1 buckets)",
+            "bucket_keywords": bucket_keyword_export(),
             "ports_dropped_no_coord": "kode_pelabuhan without lat/lng "
                                        "are not exported (v1 limitation)",
         },
@@ -936,62 +877,12 @@ def build_cargo_ports_periods() -> dict:
     between 24m / 12m / each calendar year without refetching.
     """
     from backend.build_static import _FLOW_PORT_COORDS  # type: ignore
-    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
-
-    # Reuse the exact same bucket taxonomy as build_cargo_ports — keep this
-    # tuple in sync; jang1117 commodity list + Indonesia-specific additions.
-    _BUCKET_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
-        ("CRUDE OIL",            ("CRUDE OIL", "MINYAK MENTAH")),
-        ("OMAN BLEND CRUDE OIL", ("OMAN BLEND",)),
-        ("CONDENSATE",           ("CONDENSATE", "NAPHTHA", "NAFTA")),
-        ("PERTALITE",            ("PERTALITE",)),
-        ("PERTAMAX",             ("PERTAMAX",)),
-        ("AVTUR",                ("AVTUR", "JET A")),
-        ("HSD",                  ("HSD",)),
-        ("BIO SOLAR",            ("BIO SOLAR", "BIOSOLAR")),
-        ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL")),
-        ("METHANOL",             ("METHANOL",)),
-        ("ASPAL/BITUMEN",        ("ASPAL", "BITUMEN", "ASPHALT")),
-        ("LPG",                  ("LPG", "ELPIJI", "LIQUEFIED PETROLEUM")),
-        ("LNG",                  ("LNG", "NATURAL GAS")),
-        ("CPO",                  ("CPO", "PALM OIL", "MINYAK SAWIT")),
-        ("RBD PALM OIL",         ("RBD PALM OIL", "RBD OIL")),
-        ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN")),
-        ("OLEIN",                ("OLEIN",)),
-        ("PKO",                  ("PKO", "PALM KERNEL")),
-        ("STEARIN",              ("STEARIN",)),
-        ("FAME",                 ("FAME", "BIODIESEL", "METIL ESTER")),
-        ("BATU BARA CURAH KERING", ("BATU BARA", "BATUBARA", "STEAM COAL")),
-        ("COAL",                 ("COAL",)),
-        ("NICKEL ORE",           ("NICKEL", "NIKEL", "BIJIH NIKEL")),
-        ("BAUXITE",              ("BAUXITE", "BAUKSIT")),
-        ("IRON ORE",             ("IRON ORE", "BIJIH BESI")),
-        ("LIMESTONE",            ("LIMESTONE",)),
-        ("WOOD CHIP",            ("WOOD CHIP",)),
-        ("SEMEN CURAH",          ("SEMEN CURAH", "CEMENT BULK")),
-        ("SEMEN",                ("SEMEN", "CEMENT", "KLINKER", "CLINKER")),
-        ("PUPUK",                ("PUPUK", "FERTILIZER", "UREA")),
-        ("BERAS",                ("BERAS", "RICE")),
-        ("SALT",                 ("SALT", "GARAM")),
-        ("CONTAINER",            ("CONTAINER", "PETIKEMAS", "KONTAINER", "TEU")),
-        ("GENERAL CARGO",        ("GENERAL CARGO", "BARANG UMUM", "MUATAN UMUM")),
-        ("BARANG",               ("BARANG",)),
-        ("MOBIL",                ("MOBIL", "CAR ", "PASSENGER CAR")),
-        ("TRUK",                 ("TRUK", "TRUCK", "TRONTON")),
-        ("MOTOR",                ("MOTOR ", "MOTORCYCLE", "SEPEDA MOTOR")),
-        ("IKAN",                 ("IKAN", "FISH")),
-        ("TERNAK",               ("TERNAK", "LIVESTOCK")),
-        ("CHEMICAL",             ("CHEMICAL", "KIMIA")),
+    from backend.commodity_taxonomy import (
+        BUCKET_OTHER,
+        bucket_keyword_export,
+        classify_commodity_bucket as _classify,
     )
-
-    def _classify(label: str | None) -> str:
-        if not label:
-            return "기타"
-        s = str(label).upper()
-        for bucket, kws in _BUCKET_KEYWORDS:
-            if any(kw in s for kw in kws):
-                return bucket
-        return "기타"
+    port_coords: dict[str, tuple[float, float]] = dict(_FLOW_PORT_COORDS)
 
     src_meta = _load_json(DATA / "meta.json")
     snap = src_meta.get("latest")
@@ -1095,7 +986,8 @@ def build_cargo_ports_periods() -> dict:
             cb = p["comms"].setdefault(bucket, {"dU": 0.0, "dS": 0.0, "iU": 0.0, "iS": 0.0})
             cb[side] = round(cb[side] + t, 1)
 
-        commodities = sorted(bucket_seen - {"기타"}) + (["기타"] if "기타" in bucket_seen else [])
+        commodities = sorted(bucket_seen - {BUCKET_OTHER}) + (
+            [BUCKET_OTHER] if BUCKET_OTHER in bucket_seen else [])
         n_months = len(keep)
         period_outputs[pd["key"]] = {
             "label": pd["label"],
@@ -1106,15 +998,14 @@ def build_cargo_ports_periods() -> dict:
         }
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "snapshot_month": snap,
         "active_period": "24m",
         "periods": period_outputs,
         "_notes": {
             "fields": "dU/dS/iU/iS per period — same shape as cargo_ports.json",
-            "bucket_keywords": [
-                {"bucket": b, "kws": list(kws)} for b, kws in _BUCKET_KEYWORDS
-            ],
+            "taxonomy": "backend.commodity_taxonomy (Tier-1 buckets)",
+            "bucket_keywords": bucket_keyword_export(),
             "windows": "24m / 12m exclude partial latest month if dropped.",
         },
     }
@@ -1146,20 +1037,27 @@ def build_cargo_ports_periods() -> dict:
 def build_cargo_category_details(top_n: int = 12) -> dict:
     """Per-category top-N KOMODITI breakdown — 24M cumulative + per data_year.
 
-    Schema v2 adds ``years`` / ``months_per_year`` at the top level and
-    ``by_year`` under each category::
+    Schema v3 — categories are derived from the commodity text via
+    ``backend.commodity_taxonomy`` (Tier-2 categories like "Palm Oil",
+    "Petroleum Product"), **not** the vessel-type. Row scope matches
+    cargo_ports_periods (same kode_pelabuhan + port-coord filter) so cv-app
+    commodity totals and cat-details category totals reconcile to the ton.
 
-        categories[cat] = {
+    Output::
+
+        categories[<Tier-2 category>] = {
           ton_total_24m, calls_total_24m, commodity_count, top_commodities,
           by_year: {
             "<YYYY>": { ton_total, calls_total, commodity_count, top_commodities }
           }
         }
     """
-    from backend.taxonomy import (
-        classify_tanker_subclass, classify_vessel_type,
-        CLS_TANKER, SECTOR_CARGO,
+    from backend.build_static import _FLOW_PORT_COORDS  # type: ignore
+    from backend.commodity_taxonomy import (
+        CATEGORY_COLORS, CATEGORY_ORDER,
+        classify_commodity_category,
     )
+    port_coords: set[str] = set(_FLOW_PORT_COORDS.keys())
 
     src_meta = _load_json(DATA / "meta.json")
     snap = src_meta.get("latest")
@@ -1167,20 +1065,18 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
     # JSON pointer helpers — raw_row keys are stringified Python tuples
     def _p(k: str) -> str:
         return ('$."' + k + '"').replace("'", "''")
-    P_JK = _p("('JENIS KAPAL', 'JENIS KAPAL')")
     P_KB = _p("('BONGKAR', 'KOMODITI')")
     P_TB = _p("('BONGKAR', 'TON')")
     P_KM = _p("('MUAT', 'KOMODITI')")
     P_TM = _p("('MUAT', 'TON')")
     ton_expr = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
 
-    # Aggregate (jenis_kapal, komoditi, data_year, side) → ton + calls.
-    # 24M = sum across years. Per-year = filter by data_year.
-    # Key: (jk, kom, year_or_None) where None = all-years (24M) bucket.
-    agg_yr: dict[tuple[str, str, str | None], dict] = defaultdict(
-        lambda: {"ton": 0.0, "calls": 0}
-    )
+    # Aggregate (kode_pelabuhan, komoditi, data_year, side) → ton + calls.
+    # We keep kode_pelabuhan so we can filter to the same mappable-port set
+    # that cv-app uses; the result is consistent ton totals between
+    # cargo_ports_periods (Tier-1 buckets) and this file (Tier-2 categories).
     months_per_year: dict[str, int] = {}
+    raw_rows: list[tuple[str, str, str, float, int]] = []  # (port, kom, yr, ton, calls)
     with sqlite3.connect(DB) as con:
         cur = con.cursor()
 
@@ -1200,30 +1096,27 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
         for P_K, P_T in ((P_KB, P_TB), (P_KM, P_TM)):
             cur.execute(
                 f"SELECT "
-                f"  json_extract(raw_row, '{P_JK}')  AS jk, "
+                f"  kode_pelabuhan                  AS code, "
                 f"  json_extract(raw_row, '{P_K}')   AS kom, "
                 f"  CAST(data_year AS TEXT)          AS yr, "
                 f"  SUM({ton_expr(P_T)})              AS t, "
                 f"  COUNT(*)                          AS calls "
-                f"FROM cargo_snapshot WHERE snapshot_month = ? "
-                f"GROUP BY jk, kom, yr HAVING t > 0",
+                f"FROM cargo_snapshot "
+                f"WHERE snapshot_month = ? "
+                f"  AND kode_pelabuhan IS NOT NULL AND kode_pelabuhan != '' "
+                f"GROUP BY code, kom, yr HAVING t > 0",
                 (snap,),
             )
-            for jk, kom, yr, t, calls in cur:
-                if not jk or not kom:
-                    continue
-                jk_s = jk.strip()
-                kom_s = str(kom).strip()
-                t_f = float(t or 0)
-                calls_i = int(calls or 0)
-                # Per-year
-                agg_yr[(jk_s, kom_s, str(yr))]["ton"]   += t_f
-                agg_yr[(jk_s, kom_s, str(yr))]["calls"] += calls_i
-                # All-years (24M)
-                agg_yr[(jk_s, kom_s, None)]["ton"]      += t_f
-                agg_yr[(jk_s, kom_s, None)]["calls"]    += calls_i
+            for code, kom, yr, t, calls in cur:
+                if code not in port_coords:
+                    continue  # 같은 mappable-port scope 만 집계
+                if not kom:
+                    kom_s = ""
+                else:
+                    kom_s = str(kom).strip()
+                raw_rows.append((code, kom_s, str(yr), float(t or 0), int(calls or 0)))
 
-    # Bucket each (jenis_kapal, komoditi, year) into a category.
+    # Bucket each (komoditi, year) into a Tier-2 category.
     # cat_total[cat][year_or_None] = { ton_total, calls_total, _kom: {kom: {ton, calls}} }
     def _empty_window():
         return {"ton_total": 0.0, "calls_total": 0,
@@ -1232,27 +1125,20 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
     cat_total: dict[str, dict] = defaultdict(
         lambda: defaultdict(_empty_window)
     )
-    for (jk, kom, yr), v in agg_yr.items():
-        sector, vc = classify_vessel_type(jk)
-        if sector != SECTOR_CARGO:
-            continue  # PASSENGER/FISHING/OFFSHORE/NON_COMMERCIAL 제외
-        if vc == CLS_TANKER:
-            cat = classify_tanker_subclass(jk) or "UNKNOWN"
-        else:
-            cat = vc
-        w = cat_total[cat][yr]
-        w["ton_total"]   += v["ton"]
-        w["calls_total"] += v["calls"]
-        w["_kom"][kom]["ton"]   += v["ton"]
-        w["_kom"][kom]["calls"] += v["calls"]
-
-    # Stack order (시계열 차트와 일관). 비탱커 4개 + tanker subclass 7개.
-    STACK_ORDER = (
-        "Bulk Carrier",
-        "Crude Oil", "Product", "LNG", "LPG", "Chemical",
-        "FAME / Vegetable Oil", "Water",
-        "Container", "General Cargo", "Other Cargo", "UNKNOWN",
-    )
+    for (_code, kom, yr, t_f, calls_i) in raw_rows:
+        cat = classify_commodity_category(kom)
+        # Per-year window
+        wy = cat_total[cat][yr]
+        wy["ton_total"]   += t_f
+        wy["calls_total"] += calls_i
+        wy["_kom"][kom]["ton"]   += t_f
+        wy["_kom"][kom]["calls"] += calls_i
+        # All-years (24M) window
+        w24 = cat_total[cat][None]
+        w24["ton_total"]   += t_f
+        w24["calls_total"] += calls_i
+        w24["_kom"][kom]["ton"]   += t_f
+        w24["_kom"][kom]["calls"] += calls_i
 
     def _build_window(w: dict, ton_key: str, calls_key: str) -> dict:
         tot = w["ton_total"]
@@ -1260,7 +1146,7 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
         top_list = []
         for name, v in koms[:top_n]:
             top_list.append({
-                "name": name,
+                "name": name or "(empty)",
                 ton_key: round(v["ton"], 1),
                 "pct": round((v["ton"] / tot * 100.0) if tot > 0 else 0.0, 2),
                 calls_key: int(v["calls"]),
@@ -1274,13 +1160,11 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
 
     categories: dict[str, dict] = {}
     order: list[str] = []
-    for cat in STACK_ORDER:
+    for cat in CATEGORY_ORDER:
         if cat not in cat_total:
             continue
         windows = cat_total[cat]
-        # 24M = year=None
         w24 = windows.get(None, _empty_window())
-        # legacy field names (ton_24m / calls_24m) preserved for back-compat
         legacy = _build_window(w24, "ton_24m", "calls_24m")
         by_year: dict[str, dict] = {}
         for y in years_sorted:
@@ -1289,6 +1173,7 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
                 continue
             by_year[y] = _build_window(wy, "ton_year", "calls_year")
         categories[cat] = {
+            "color":           CATEGORY_COLORS.get(cat),
             "ton_total_24m":   legacy["ton_total"],
             "calls_total_24m": legacy["calls_total"],
             "commodity_count": legacy["commodity_count"],
@@ -1298,7 +1183,7 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
         order.append(cat)
 
     return {
-        "schema_version":   2,
+        "schema_version":   3,
         "snapshot_month":   snap,
         "years":            years_sorted,
         "months_per_year":  months_per_year,
@@ -1306,9 +1191,13 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
         "categories":       categories,
         "top_n_per_cat":    top_n,
         "_notes": {
-            "scope": "CARGO sector only; tanker rows split by subclass.",
-            "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot)",
-            "by_year": "Per-data_year aggregate. 24M legacy fields = sum across all years.",
+            "scope": (
+                "Mappable ports only (kode_pelabuhan in FLOW_PORT_COORDS) "
+                "— matches cargo_ports_periods scope so ton totals reconcile."
+            ),
+            "taxonomy": "backend.commodity_taxonomy (Tier-2 categories)",
+            "source":   "monitoring-inaportnet.dephub.go.id (cargo_snapshot)",
+            "by_year":  "Per-data_year aggregate. 24M legacy fields = sum across all years.",
         },
     }
 

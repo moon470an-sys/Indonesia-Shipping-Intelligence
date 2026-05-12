@@ -580,10 +580,15 @@ def cargo_sector_monthly_payload(month: str) -> dict:
     Pulls aggregated rows grouped by LK3 JENIS KAPAL label, then folds
     them into the canonical (sector, vessel_class) buckets in Python.
     Only ~2-3k aggregated rows leave SQLite, so memory is fine.
+
+    Schema v2 adds ``cargo_category_rows`` — per-(period, kind, Tier-2
+    commodity category) ton aggregation. Mappable-port scoped so totals
+    reconcile with cargo_ports_periods + cargo_category_details.
     """
     import collections
 
     from backend.taxonomy import classify_vessel_type, classify_tanker_subclass
+    from backend.commodity_taxonomy import classify_commodity_category
 
     def _sql_path(key: str) -> str:
         return ('$."' + key + '"').replace("'", "''")
@@ -607,11 +612,27 @@ def cargo_sector_monthly_payload(month: str) -> dict:
             "GROUP BY data_year, data_month, kind, jk"
         ), {"m": month}).fetchall()
 
-        log.info("sector: by tanker subclass (period, kind, JENIS_KAPAL)")
-        # Tanker subclass detail uses the same JENIS_KAPAL column — no
-        # extra groupings needed because subclass is also derived from
-        # the label. We re-use the rows above.
-        pass
+        # Commodity-category aggregation — uses the KOMODITI fields (both
+        # BONGKAR and MUAT) and a mappable-port filter so it lines up with
+        # cv-app's row scope. Single query per side, grouped by
+        # (year, month, kind, code, komoditi).
+        log.info("sector: by (period, kind, code, KOMODITI) — both sides")
+        kom_rows_b = conn.execute(text(
+            f"SELECT data_year, data_month, kind, kode_pelabuhan, "
+            f"       json_extract(raw_row, '{P_K_B}') AS kom, "
+            f"       SUM({_ton_expr(P_T_B)}) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m "
+            "  AND kode_pelabuhan IS NOT NULL AND kode_pelabuhan != '' "
+            "GROUP BY data_year, data_month, kind, kode_pelabuhan, kom"
+        ), {"m": month}).fetchall()
+        kom_rows_m = conn.execute(text(
+            f"SELECT data_year, data_month, kind, kode_pelabuhan, "
+            f"       json_extract(raw_row, '{P_K_M}') AS kom, "
+            f"       SUM({_ton_expr(P_T_M)}) "
+            "FROM cargo_snapshot WHERE snapshot_month=:m "
+            "  AND kode_pelabuhan IS NOT NULL AND kode_pelabuhan != '' "
+            "GROUP BY data_year, data_month, kind, kode_pelabuhan, kom"
+        ), {"m": month}).fetchall()
 
     # Aggregate into (period, kind, sector, vessel_class) buckets.
     bucket: dict = collections.defaultdict(
@@ -635,6 +656,25 @@ def cargo_sector_monthly_payload(month: str) -> dict:
             tanker_bucket[sub_key]["ton_m"] += float(tm or 0)
             tanker_bucket[sub_key]["calls"] += int(n or 0)
 
+    # Mappable-port filter for commodity-category bucketing — same set as
+    # cv-app (cargo_ports_periods) so totals reconcile.
+    from backend.build_static import _FLOW_PORT_COORDS  # self-import OK at runtime  # noqa: F811
+    mappable: set[str] = set(_FLOW_PORT_COORDS.keys())
+
+    cat_bucket: dict = collections.defaultdict(
+        lambda: {"ton": 0.0, "calls": 0}
+    )
+    for kr in (kom_rows_b, kom_rows_m):
+        for yr, mo, kind, code, kom, ton in kr:
+            if code not in mappable:
+                continue
+            cat = classify_commodity_category(kom)
+            period = f"{int(yr)}-{int(mo):02d}"
+            cb = cat_bucket[(period, kind, cat)]
+            cb["ton"] += float(ton or 0)
+            # calls는 합칠 의미가 크지 않아 0으로 둠 (BONGKAR/MUAT 합산 시
+            # 중복 카운트되므로). 필요시 후속에서 별도 SQL 로 보강.
+
     sector_rows = [
         {
             "period": p, "kind": k, "sector": s, "vessel_class": vc,
@@ -655,11 +695,27 @@ def cargo_sector_monthly_payload(month: str) -> dict:
         }
         for (p, k, s), v in sorted(tanker_bucket.items())
     ]
+    cargo_category_rows = [
+        {
+            "period": p, "kind": k, "category": cat,
+            "ton_total": round(v["ton"], 1),
+        }
+        for (p, k, cat), v in sorted(cat_bucket.items())
+    ]
     return {
         "snapshot_month": month,
-        "schema_version": 1,
+        "schema_version": 2,
         "rows": sector_rows,
         "tanker_subclass_rows": tanker_rows,
+        "cargo_category_rows": cargo_category_rows,
+        "_notes": {
+            "rows": "vessel-class breakdown (legacy — kept for back-compat)",
+            "cargo_category_rows": (
+                "Tier-2 commodity category from backend.commodity_taxonomy. "
+                "Mappable-port scoped — totals reconcile with "
+                "cargo_ports_periods and cargo_category_details."
+            ),
+        },
     }
 
 

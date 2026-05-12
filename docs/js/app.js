@@ -1540,26 +1540,41 @@ function renderHomeKpi(payload, mapPayload) {
 // 데이터: cargo_sector_monthly.json (rows + tanker_subclass_rows).
 const homeTsState = { mode: "abs", payload: null };
 
-// Cycle 3 카테고리 팔레트. SUBCLASS_PALETTE(상단 기 정의)와 일관성 유지.
+// Cycle 7+: Tier-2 commodity-category palette. backend/commodity_taxonomy.py
+// 의 CATEGORY_COLORS 와 동기화. cv-app(Tier-1 bucket)/cat-details(Tier-2
+// category)/시계열 차트 모두 동일 색상을 공유.
 const CARGO_CATEGORY_PALETTE = {
-  "Container":             "#9333ea",  // purple
-  "Bulk Carrier":          "#52525b",  // slate-700
-  "General Cargo":         "#f59e0b",  // amber
-  "Other Cargo":           "#94a3b8",  // slate-400
-  // Tanker subclasses (cargo_sector_monthly.tanker_subclass_rows)
+  "Coal":                  "#52525b",
+  "Mineral Ore":           "#71717a",
+  "Other Dry Bulk":        "#a1a1aa",
+  "Wood / Timber":         "#a16207",
+  "Cement":                "#94a3b8",
+  "Fertilizer":            "#84cc16",
+  "Grain / Food":          "#f59e0b",
   "Crude Oil":             "#92400e",
-  "Product":               "#0284c7",
-  "Chemical":              "#059669",
-  "LPG":                   "#d97706",
+  "Petroleum Product":     "#0284c7",
+  "LPG / Gas":             "#d97706",
   "LNG":                   "#7c3aed",
-  "FAME / Vegetable Oil":  "#65a30d",
+  "Chemical":              "#059669",
+  "Palm Oil":              "#16a34a",
+  "Biodiesel (FAME)":      "#65a30d",
+  "Other Vegetable Oil":   "#bef264",
   "Water":                 "#0ea5e9",
-  "UNKNOWN":               "#cbd5e1",
+  "Container":             "#9333ea",
+  "General Cargo":         "#f97316",
+  "Vehicles":              "#ef4444",
+  "Fish & Livestock":      "#06b6d4",
+  "Other":                 "#cbd5e1",
 };
-// Stack order (bottom to top). 가장 큰 카테고리부터 쌓아 변동성 흡수.
+// Stack order (bottom → top). Dry bulk family first (largest), then
+// liquid bulk, then discrete cargoes. Kept in sync with the Python
+// CATEGORY_ORDER tuple.
 const CARGO_CATEGORY_ORDER = [
-  "Bulk Carrier", "Crude Oil", "Product", "LNG", "LPG", "Chemical",
-  "FAME / Vegetable Oil", "Water", "Container", "General Cargo", "Other Cargo", "UNKNOWN",
+  "Coal", "Mineral Ore", "Other Dry Bulk", "Wood / Timber",
+  "Cement", "Fertilizer", "Grain / Food",
+  "Crude Oil", "Petroleum Product", "LPG / Gas", "LNG", "Chemical",
+  "Palm Oil", "Biodiesel (FAME)", "Other Vegetable Oil", "Water",
+  "Container", "General Cargo", "Vehicles", "Fish & Livestock", "Other",
 ];
 
 function renderHomeTimeseries(payload) {
@@ -1568,18 +1583,44 @@ function renderHomeTimeseries(payload) {
   drawHomeTimeseries();
 }
 
-// Cycle 3: CARGO 카테고리별 시계열 구축.
-// 입력: cargo_sector_monthly.rows (sector × vessel_class × period × kind)
-//      + cargo_sector_monthly.tanker_subclass_rows (subclass × period × kind)
-// 출력: { periods: [...], series: [{ name, color, y: [...] }, ...] } —
-// vessel_class=Tanker 행은 제외하고 subclass 행으로 대체해 더 세분화.
+// Cycle 7+: Tier-2 commodity-category 시계열.
+// 입력 우선순위:
+//   1) cargo_sector_monthly.cargo_category_rows  — 신규 commodity-category
+//      breakdown (mappable-port scope, cv-app 와 정합). 본 사이트 표준.
+//   2) (legacy fallback) cargo_sector_monthly.rows + tanker_subclass_rows
+//      — vessel-class 기반 (구 분류). schema v1 데이터일 때만 사용.
+// 출력: { periods, series:[{ name, color, y }] }
 function _buildCargoCategorySeries(cm) {
-  if (!cm || !cm.rows) return null;
+  if (!cm) return null;
+  // 우선 경로: 신규 cargo_category_rows
+  if (Array.isArray(cm.cargo_category_rows) && cm.cargo_category_rows.length) {
+    const periodSet = new Set();
+    const byCat = {};
+    for (const r of cm.cargo_category_rows) {
+      const cat = r.category;
+      if (!cat) continue;
+      periodSet.add(r.period);
+      if (!byCat[cat]) byCat[cat] = {};
+      byCat[cat][r.period] = (byCat[cat][r.period] || 0) + (Number(r.ton_total) || 0);
+    }
+    const periods = [...periodSet].sort();
+    const knownOrder = CARGO_CATEGORY_ORDER.filter(k => byCat[k]);
+    const unknownCats = Object.keys(byCat).filter(k => !CARGO_CATEGORY_ORDER.includes(k));
+    const ordered = [...knownOrder, ...unknownCats];
+    const series = ordered.map(name => ({
+      name,
+      color: CARGO_CATEGORY_PALETTE[name] || "#cbd5e1",
+      y: periods.map(p => byCat[name][p] || 0),
+    }));
+    return { periods, series };
+  }
+  // 폴백: 구 vessel-class 시계열
+  if (!cm.rows) return null;
   const periodSet = new Set();
-  const byCat = {};        // { category: { period: tonTotal } }
+  const byCat = {};
   for (const r of cm.rows) {
     if (r.sector !== "CARGO") continue;
-    if (r.vessel_class === "Tanker") continue;   // subclass rows로 대체
+    if (r.vessel_class === "Tanker") continue;
     periodSet.add(r.period);
     const key = r.vessel_class;
     if (!byCat[key]) byCat[key] = {};
@@ -1592,9 +1633,7 @@ function _buildCargoCategorySeries(cm) {
     byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r.ton_total) || 0);
   }
   const periods = [...periodSet].sort();
-  const knownOrder = CARGO_CATEGORY_ORDER.filter(k => byCat[k]);
-  const unknownCats = Object.keys(byCat).filter(k => !CARGO_CATEGORY_ORDER.includes(k));
-  const ordered = [...knownOrder, ...unknownCats];
+  const ordered = Object.keys(byCat);
   const series = ordered.map(name => ({
     name,
     color: CARGO_CATEGORY_PALETTE[name] || "#cbd5e1",
