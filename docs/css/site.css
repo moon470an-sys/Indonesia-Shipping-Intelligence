@@ -425,4 +425,44 @@ button.scope-chip[style*="outline"] { font-weight: 600; box-shadow: 0 0 0 2px rg
     border-top: 1px solid #94a3b8 !important;
     background: #f1f5f9 !important;
   }
+
+  /* Cycle 38: Supply 탭 print 최적화. */
+  /* 1) 화면 전용 UI는 숨김 */
+  .app-header nav,         /* nav tabs */
+  #fl-fhead, #fl-fbody,    /* 필터 패널 (collapsed/expanded 모두) */
+  #fl-active-chips,        /* 적용 필터 chips */
+  #fl-scroll-top,          /* floating 버튼 */
+  #fl-copy-link, #fl-csv,  /* 액션 버튼 */
+  #fl-page-size, #fl-hide-raw, #fl-csv-ko,
+  label:has(#fl-page-size), label:has(#fl-hide-raw), label:has(#fl-csv-ko),
+  #fl-pgn,                 /* pagination */
+  #fl-table,               /* 테이블 전체 (print에서 차트 위주, 표 생략) */
+  .scope-strip label,      /* 제외 토글 */
+  [data-clickable="1"] .fl-detail-action {
+    display: none !important;
+  }
+  /* 2) 차트 grid를 2-col로 강제하지 않고, 차트들이 break-inside 끊기지 않도록 */
+  #tab-fleet > div > div.bg-white.rounded-xl {
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1;
+  }
+  /* 3) KPI strip는 한 줄로 */
+  #tab-fleet .grid.grid-cols-2.lg\\:grid-cols-4 {
+    display: grid; grid-template-columns: repeat(4, 1fr) !important; gap: 8px;
+  }
+  /* 4) Alert callout — 항상 표시 + 강조 */
+  #fl-aged-alert {
+    page-break-inside: avoid;
+    border: 2px solid currentColor !important;
+  }
+  /* 5) 배경 색상이 인쇄에 살아남게 */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* 6) 페이지 사이즈 + 마진 */
+  @page { size: A4 landscape; margin: 10mm; }
+  /* 7) body padding 줄임 + main container 풀폭 */
+  main { padding: 0 !important; max-width: 100% !important; }
+  /* 8) 헤더는 핵심 정보만 */
+  .app-header { background: white !important; color: #0f172a !important; border-bottom: 2px solid #1A3A6B; }
+  .app-header h1 { color: #0f172a !important; }
 }

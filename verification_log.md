@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 38 검증 — 2026-05-12 (Supply 탭 30차 — print stylesheet)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Print 스타일시트 추가 | ✅ Cycle 38 | @media print: nav tabs / 필터 패널 / chips / 액션버튼 / scroll-top / 테이블 모두 숨김. Alert + 차트 + KPI만 인쇄 |
+| 페이지 설정 | ✅ Cycle 38 | A4 가로, 10mm 마진 |
+| 색상 보존 | ✅ Cycle 38 | -webkit-print-color-adjust: exact |
+| 차트 break-inside avoid | ✅ Cycle 38 | 차트 panel이 페이지 사이 잘리지 않음 |
+| 화면 결과 (smoke test) | ✅ normal: chips/csv visible. print: chips/csv/copy/scrollTop/table all hidden, alert flex 유지 | playwright + page.emulateMedia('print') |
+
+### 횡단
+- 원칙 lint ✅. 인쇄 시 핵심 정보만 (alert + KPI + 차트), 액션 UI 제외 — PDF 공유 친화.
+
 ## Cycle 37 검증 — 2026-05-12 (Supply 탭 29차 — multi-breakpoint visual audit)
 
 ### Supply 탭 (🚢 — id: tab-fleet) — 시각 audit
