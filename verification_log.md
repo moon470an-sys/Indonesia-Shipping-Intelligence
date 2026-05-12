@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 57 검증 — 2026-05-13 (Supply 탭 49차 — owner scatter legend)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Owner scatter legend 표시 | ✅ Cycle 57 | 2 trace (일반 circle + IDX 상장 star) 구분 legend 우상단. 흰 배경 + 회색 border |
+| 화면 결과 (smoke test) | ✅ showlegend: true, legendBBox 64x30px | playwright |
+
+### 횡단
+- 원칙 lint ✅. 시각 구분 명시 — 2 trace의 의미 명확화.
+
 ## Cycle 56 검증 — 2026-05-13 (Supply 탭 48차 — 실 GitHub Pages 배포 확인)
 
 ### 라이브 사이트: https://moon470an-sys.github.io/Indonesia-Shipping-Intelligence/

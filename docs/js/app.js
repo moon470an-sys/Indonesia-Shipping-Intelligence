@@ -4257,6 +4257,7 @@ function _drawFleetOwnerScatter(rows, I) {
   const sortedAges = [...top].map(o => o.age_w / o.gt_w).sort((a, b) => a - b);
   const medV = sortedVessels[Math.floor(sortedVessels.length / 2)] || 1;
   const medA = sortedAges[Math.floor(sortedAges.length / 2)] || 15;
+  // Cycle 57: 2 trace 구분을 위해 legend 표시. 우상단에 컴팩트 배치.
   Plotly.newPlot("fl-owner-scatter", [
     {
       name: "일반",
@@ -4283,7 +4284,11 @@ function _drawFleetOwnerScatter(rows, I) {
       customdata: idxIdx,
     },
   ], {
-    margin: { t: 40, l: 50, r: 10, b: 50 },
+    margin: { t: 40, l: 50, r: 80, b: 50 },
+    showlegend: true,
+    legend: { x: 1.02, y: 1, xanchor: "left", yanchor: "top",
+              font: { size: 9 }, bgcolor: "rgba(255,255,255,0.85)",
+              bordercolor: "#e2e8f0", borderwidth: 1 },
     xaxis: { title: { text: "척수 (log)", font: { size: 10 } }, type: "log",
              tickfont: { size: 10 }, gridcolor: "#eef2f7" },
     yaxis: { title: { text: "평균 선령 (년, GT 가중)", font: { size: 10 } },
