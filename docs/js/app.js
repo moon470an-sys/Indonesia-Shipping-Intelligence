@@ -2124,6 +2124,9 @@ async function renderFleet() {
   }
   // Cycle 28: baseline 평균 GT / LOA — alert 비교용 (cargo + auxiliary 전체 기준)
   tabEl._fleetBaseline = _computeFleetBaseline(fv);
+  // Cycle 35: vessel detail 컨텍스트용 — class median GT + owner total 사전 계산
+  tabEl._fleetClassStats = _computeFleetClassStats(fv);
+  tabEl._fleetOwnerTotals = _computeFleetOwnerTotals(fv);
 
   // Initial state object — jang1117 parity (no sector/subclass/age/owner/flag).
   if (!tabEl._fleetState) {
@@ -2177,6 +2180,46 @@ function _computeFleetBaseline(fv) {
     avgGt: nGt > 0 ? Math.round(sumGt / nGt) : null,
     avgLoa: nLoa > 0 ? (sumLoa / nLoa) : null,
   };
+}
+
+// Cycle 35: class median GT — vessel detail에서 class 대비 표시용. cargo+aux scope만.
+function _computeFleetClassStats(fv) {
+  if (!fv || !fv.cols) return null;
+  const I = {}; fv.cols.forEach((c, i) => I[c] = i);
+  const byClass = new Map();
+  for (const r of fv.rows) {
+    const scope = r[I.scope];
+    if (scope === "excluded" || scope === "unclassified") continue;
+    const gt = r[I.gt] || 0;
+    if (gt <= 0) continue;
+    const cls = r[I.vc] || "Other";
+    if (!byClass.has(cls)) byClass.set(cls, []);
+    byClass.get(cls).push(gt);
+  }
+  const out = {};
+  for (const [cls, arr] of byClass.entries()) {
+    arr.sort((a, b) => a - b);
+    out[cls] = { median: arr[Math.floor(arr.length / 2)], count: arr.length };
+  }
+  return out;
+}
+
+// Cycle 35: owner total — vessel detail에서 owner 컨텍스트 표시. cargo+aux scope만.
+function _computeFleetOwnerTotals(fv) {
+  if (!fv || !fv.cols) return null;
+  const I = {}; fv.cols.forEach((c, i) => I[c] = i);
+  const totals = new Map();
+  for (const r of fv.rows) {
+    const scope = r[I.scope];
+    if (scope === "excluded" || scope === "unclassified") continue;
+    const owner = r[I.owner];
+    if (!owner) continue;
+    const ent = totals.get(owner) || { vessels: 0, sumGt: 0 };
+    ent.vessels += 1;
+    ent.sumGt += r[I.gt] || 0;
+    totals.set(owner, ent);
+  }
+  return totals;
 }
 
 function _markClickableFleetPanels() {
@@ -3030,14 +3073,32 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
       <button type="button" data-fa-${field}="${_esc(value)}"
               class="fl-detail-action ml-1 text-[9px] px-1.5 py-0.5 rounded border border-blue-200 text-blue-700 hover:bg-blue-50"
               title="${_esc(label)} 만 필터링">→ 필터</button>` : "";
+    // Cycle 35: owner total + class median 컨텍스트 텍스트 빌드
+    const classStats = tabEl._fleetClassStats || {};
+    const ownerTotals = tabEl._fleetOwnerTotals;
+    const vc = r[I.vc] || "Other";
+    const cs = classStats[vc] || null;
+    const vGt = r[I.gt] || 0;
+    // Cycle 35: % 표시는 ±200% 안쪽일 때만; 그 외엔 ×N 배수
+    const classCtx = (cs && vGt > 0 && cs.median > 0) ? (() => {
+      const ratio = vGt / cs.median;
+      let label;
+      if (ratio >= 3) label = `×${ratio.toFixed(1)} of median`;
+      else if (ratio >= 0.5) label = `${((ratio - 1) * 100).toFixed(0)}% vs median`;
+      else label = `${(ratio * 100).toFixed(0)}% of median`;
+      return `<span class="text-[10px] opacity-70 ml-1">vs ${vc} median ${cs.median.toLocaleString()} (${label})</span>`;
+    })() : "";
+    const ownerOwn = r[I.owner];
+    const oTot = (ownerTotals && ownerOwn) ? ownerTotals.get(ownerOwn) : null;
+    const ownerCtx = oTot ? `<span class="text-[10px] opacity-70 ml-1">총 ${oTot.vessels.toLocaleString()}척 · GT ${fmtTon(oTot.sumGt)}</span>` : "";
     const detailRow = isOpen ? `
       <tr class="fl-detail-row" data-vk="${_esc(k)}">
         <td colspan="14" class="px-4 py-3 bg-slate-50 border-b border-slate-200">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선박명</span><span class="font-semibold">${_esc(r[I.nama])}</span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선주</span><span>${_esc(r[I.owner])}</span>${faBtn("owner", r[I.owner], r[I.owner])}</div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선주</span><span>${_esc(r[I.owner])}</span>${faBtn("owner", r[I.owner], r[I.owner])}${ownerCtx}</div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Sector</span><span>${_esc(r[I.sector])}</span></div>
-            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Vessel Class</span><span>${_esc(r[I.vc])}</span>${faBtn("vc", r[I.vc], r[I.vc])}</div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Vessel Class</span><span>${_esc(r[I.vc])}</span>${faBtn("vc", r[I.vc], r[I.vc])}${classCtx}</div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">JenisDetailKet</span><span>${_esc(r[I.jenis])}</span>${faBtn("jenis", r[I.jenis], r[I.jenis])}</div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Tanker Subclass</span><span>${_esc(r[I.ts]) || '—'}</span></div>
             <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Scope</span><span>${_esc(r[I.scope])}</span></div>

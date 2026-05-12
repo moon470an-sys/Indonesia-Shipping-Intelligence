@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 35 검증 — 2026-05-12 (Supply 탭 27차 — owner total + class median 컨텍스트)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Detail row owner 카드에 owner total | ✅ Cycle 35 | "총 N척 · GT NNN" — 단일 선박을 보면서 owner 전체 규모 인식 |
+| Detail row Vessel Class에 class median 대비 | ✅ Cycle 35 | "vs Tanker median 904 (×182.1 of median)". ratio ≥3 ×N, 0.5~3 %, <0.5 %of |
+| Class stats 캐시 | ✅ Cycle 35 | `_fleetClassStats[cls] = {median, count}` 1회 계산 (cargo+aux scope만) |
+| Owner totals 캐시 | ✅ Cycle 35 | `_fleetOwnerTotals[owner] = {vessels, sumGt}` Map |
+| 화면 결과 (smoke test) | ✅ QUANTUM HARMONY detail: 'PT PRIMA SENTOSA TANGGUH 총 1척 · GT 164.6K', 'vs Tanker median 904 (×182.1 of median)' — LNG carrier가 Tanker class median의 182배 시각화 | playwright |
+
+### 횡단
+- 원칙 lint ✅. BI 가치: 단일 선박 detail에서 owner / class 컨텍스트가 즉시 비교됨 — '이 선박은 단발성인가 fleet의 일부인가', '이 class에서 큰가 작은가' 답변.
+
 ## Cycle 34 검증 — 2026-05-12 (Supply 탭 26차 — detail row 빠른 필터 버튼)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
