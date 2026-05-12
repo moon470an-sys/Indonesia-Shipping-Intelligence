@@ -3,6 +3,24 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 55 검증 — 2026-05-13 (Supply 탭 47차 — a11y audit)
+
+### Accessibility 점검
+
+| 항목 | 결과 |
+|------|------|
+| 버튼 텍스트/aria-label/title 누락 | 0 issues |
+| 입력 라벨/placeholder 누락 | 0 issues |
+| tab-fleet role="tabpanel" | ✅ |
+| nav 버튼 aria-controls="tab-fleet" | ✅ |
+| Heading hierarchy | h2 단일 ("🚢 Supply — Fleet 공급") — semantic OK |
+| aria-sort (table headers) | Cycle 21에서 적용 |
+| term-info tabindex (KPI tooltips) | Cycle 14에서 적용 |
+
+### 결론
+- a11y 양호. 누적 사이클들 (12 컬럼 dim, 14 KPI ⓘ, 21 sticky aria-sort 등)이 자연스럽게 a11y 표준을 충족.
+- 코드 변경 없음.
+
 ## Cycle 54 검증 — 2026-05-13 (Supply 탭 46차 — 로딩 성능 audit)
 
 ### 성능 지표 (localhost)
