@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 51 검증 — 2026-05-13 (Supply 탭 43차 — 시장 구조 Top 5/10 GT 점유율)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Top 운영사 카드 footer에 시장 구조 신호 | ✅ Cycle 51 | "시장 구조: Top 5 GT N.NM · X.X% of 전체 GT N.NM · Top 10 N.NM · X.X% · N개 운영사" |
+| 화면 결과 (smoke test) | ✅ 기본 (cargo+aux 41,135척): Top 5 GT 1.8M (3.4%), Top 10 6.1%, 15,928 운영사 → 매우 분산된 시장 시그널 | playwright |
+
+### 횡단
+- 원칙 lint ✅. BI 인사이트: Indonesia 화물선 시장 매우 분산 (Top 10이 6.1%만 점유, 15,928 운영사 = avg 2.6척/운영사). HHI 매우 낮음.
+
 ## Cycle 50 검증 — 2026-05-13 (Supply 탭 42차 — 미사용 derived 검토 audit)
 
 ### Supply 탭 derived 파일 활용도 점검

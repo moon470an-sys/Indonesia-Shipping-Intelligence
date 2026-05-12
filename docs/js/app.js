@@ -4026,17 +4026,23 @@ function _drawFleetTopOwners(rows, I) {
   }
   // Cycle 22: sort 선택 — 척수 / 선대 GT / 평균선령(GT 가중)
   const sortMode = (document.getElementById("fl-owner-sort")?.value) || "vessels";
-  const top = [...acc.values()]
-    .sort((a, b) => {
-      if (sortMode === "gt") return b.sum_gt - a.sum_gt;
-      if (sortMode === "age") {
-        const aA = a.gt_weight > 0 ? a.age_weight / a.gt_weight : -1;
-        const bA = b.gt_weight > 0 ? b.age_weight / b.gt_weight : -1;
-        return bA - aA;
-      }
-      return b.vessels - a.vessels;
-    })
-    .slice(0, 10);
+  const sorted = [...acc.values()].sort((a, b) => {
+    if (sortMode === "gt") return b.sum_gt - a.sum_gt;
+    if (sortMode === "age") {
+      const aA = a.gt_weight > 0 ? a.age_weight / a.gt_weight : -1;
+      const bA = b.gt_weight > 0 ? b.age_weight / b.gt_weight : -1;
+      return bA - aA;
+    }
+    return b.vessels - a.vessels;
+  });
+  const top = sorted.slice(0, 10);
+  // Cycle 51: 시장 구조 신호 — Top 5/10/All GT 합산 + 점유율
+  const totalGt = sorted.reduce((s, o) => s + (o.sum_gt || 0), 0);
+  const top5Gt = sorted.slice(0, 5).reduce((s, o) => s + (o.sum_gt || 0), 0);
+  const top10Gt = sorted.slice(0, 10).reduce((s, o) => s + (o.sum_gt || 0), 0);
+  const top5Pct = totalGt > 0 ? (top5Gt / totalGt * 100) : 0;
+  const top10Pct = totalGt > 0 ? (top10Gt / totalGt * 100) : 0;
+  const ownersCount = sorted.length;
   if (!top.length) {
     host.innerHTML = `<div class="text-slate-400 text-[11px] p-4 text-center">필터 결과 운영사 없음</div>`;
     return;
@@ -4149,8 +4155,15 @@ function _drawFleetTopOwners(rows, I) {
           <div class="col-span-3 flex flex-wrap items-center">${labelHtml}${extraHtml}</div>
         </div>`;
     }).join("")}
-    <div class="text-[10px] text-slate-400 px-2 pt-2">
-      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개 · 평균선령 25년+ → rose 강조 · Tbk = IDX 상장사 · row 클릭 시 해당 운영사로 필터</em>
+    <div class="px-2 pt-2 text-[10px] text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-slate-100">
+      <span><strong class="text-slate-700">시장 구조:</strong> Top 5 GT ${fmtTon(top5Gt)} · <strong>${top5Pct.toFixed(1)}%</strong> of 전체 GT ${fmtTon(totalGt)}</span>
+      <span class="text-slate-400">·</span>
+      <span>Top 10 GT ${fmtTon(top10Gt)} · <strong>${top10Pct.toFixed(1)}%</strong></span>
+      <span class="text-slate-400">·</span>
+      <span>${ownersCount.toLocaleString()}개 운영사</span>
+    </div>
+    <div class="text-[10px] text-slate-400 px-2 pt-1">
+      <em>현재 필터 적용 결과 기준 · 평균선령 25년+ → rose · row 클릭 → 필터 · ★ IDX</em>
     </div>`;
   // Cycle 13: row 클릭 시 ownerExact 필터 적용.
   //   - 클릭한 owner의 척수가 차지하는 row가 highlight.
