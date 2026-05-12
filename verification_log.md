@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 22 검증 — 2026-05-12 (Supply 탭 14차 — IDX scatter marker + owner sort)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Owner scatter에 IDX 상장사 별표 마커 | ✅ Cycle 22 | 2 trace 분리: 일반(circle 49) + IDX 상장(star 1, 큰 사이즈 + navy 외곽). customdata로 click index 매핑 |
+| Top 운영사 카드 sort 선택 | ✅ Cycle 22 | 척수 / 선대 GT / 평균선령(GT 가중) — localStorage 영속 (fl_ownerSort) |
+| 화면 결과 (smoke test) | ✅ scatter {names: [일반, IDX 상장], symbols: [circle, star], counts: [49, 1]}. sort 척수→DANNY, age→SAMUDERA GESURI, gt→PERTAMINA, 저장 "gt" | playwright |
+
+### 횡단
+- 원칙 lint ✅. IDX 마커는 회사명에 Tbk-suffix 검출만 — 외부 추정·해석 없음.
+
 ## Cycle 21 검증 — 2026-05-12 (Supply 탭 13차 — sticky thead + sort 강조 + mobile 점검)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

@@ -441,9 +441,17 @@
           <div id="fl-ch-gt-bucket" style="height:260px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
-          <div class="flex items-center justify-between mb-2">
-            <div class="text-xs font-mono text-slate-700">Top 운영사 (선대 척수)</div>
-            <div class="text-[10px] text-slate-400">화물선 기준 · GT 막대 + class mix · 상장사 IDX 칩</div>
+          <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div class="text-xs font-mono text-slate-700">Top 운영사 (상위 10)</div>
+            <div class="flex items-center gap-2 text-[10px] text-slate-500">
+              <span class="font-mono uppercase tracking-wider">정렬</span>
+              <select id="fl-owner-sort" class="border border-slate-200 rounded px-1 py-0.5 text-[11px]">
+                <option value="vessels" selected>척수</option>
+                <option value="gt">선대 GT</option>
+                <option value="age">평균선령</option>
+              </select>
+              <span class="text-slate-400">· row 클릭 → 필터 · ★ IDX</span>
+            </div>
           </div>
           <div id="fl-top-owners" class="text-[12px]"></div>
         </div>

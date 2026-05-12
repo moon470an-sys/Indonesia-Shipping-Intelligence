@@ -2565,6 +2565,17 @@ function _wireFleetFilters() {
       _renderFleetView();
     });
   }
+  // Cycle 22: Top 운영사 sort 선택
+  const os = document.getElementById("fl-owner-sort");
+  if (os && !os.dataset.bound) {
+    os.dataset.bound = "1";
+    const stored = localStorage.getItem("fl_ownerSort");
+    if (stored && ["vessels", "gt", "age"].includes(stored)) os.value = stored;
+    os.addEventListener("change", () => {
+      try { localStorage.setItem("fl_ownerSort", os.value); } catch (e) {}
+      _renderFleetView();
+    });
+  }
   // Cycle 18: CSV 한글/영어 헤더 토글도 영속화
   const ko = document.getElementById("fl-csv-ko");
   if (ko && !ko.dataset.bound) {
@@ -3496,14 +3507,24 @@ function _drawFleetTopOwners(rows, I) {
     ent.class_mix[cls] = (ent.class_mix[cls] || 0) + 1;
     acc.set(owner, ent);
   }
+  // Cycle 22: sort 선택 — 척수 / 선대 GT / 평균선령(GT 가중)
+  const sortMode = (document.getElementById("fl-owner-sort")?.value) || "vessels";
   const top = [...acc.values()]
-    .sort((a, b) => b.vessels - a.vessels)
+    .sort((a, b) => {
+      if (sortMode === "gt") return b.sum_gt - a.sum_gt;
+      if (sortMode === "age") {
+        const aA = a.gt_weight > 0 ? a.age_weight / a.gt_weight : -1;
+        const bA = b.gt_weight > 0 ? b.age_weight / b.gt_weight : -1;
+        return bA - aA;
+      }
+      return b.vessels - a.vessels;
+    })
     .slice(0, 10);
   if (!top.length) {
     host.innerHTML = `<div class="text-slate-400 text-[11px] p-4 text-center">필터 결과 운영사 없음</div>`;
     return;
   }
-  const maxV = top[0].vessels;
+  const maxV = Math.max(...top.map(o => o.vessels));
   const maxGt = Math.max(...top.map(o => o.sum_gt));
 
   // class mix 색상 (작은 dot 묶음)
@@ -3661,22 +3682,55 @@ function _drawFleetOwnerScatter(rows, I) {
     host.innerHTML = `<div class="text-xs text-slate-400 p-4 text-center">필터 결과 운영사 부족 (3척+ 기준)</div>`;
     return;
   }
-  const xs = top.map(o => o.vessels);
-  const ys = top.map(o => o.age_w / o.gt_w);
-  const sizes = top.map(o => Math.max(8, Math.sqrt(o.sum_gt) / 10));
-  const colors = ys.map(a => a >= 25 ? FL_ALERT : a >= 15 ? FL_WARN : FL_PRIMARY);
-  const labels = top.map(o => o.owner.length > 20 ? o.owner.substring(0, 18) + "…" : o.owner);
-  const hovers = top.map(o => `<b>${o.owner}</b><br>척수: ${o.vessels.toLocaleString()}<br>선대 GT: ${o.sum_gt.toLocaleString()}<br>평균선령(GT가중): ${(o.age_w / o.gt_w).toFixed(1)}년${_ownerIsIdxListed(o.owner) ? '<br><i>IDX 상장</i>' : ''}`);
-  Plotly.newPlot("fl-owner-scatter", [{
-    x: xs, y: ys, text: labels, type: "scatter", mode: "markers",
-    marker: {
-      size: sizes, color: colors,
-      line: { color: "white", width: 1 },
-      opacity: 0.78,
+  // Cycle 22: IDX 상장사는 별표(★), 일반은 원(●). 두 trace로 분리.
+  const idxIdx = top.map((o, i) => _ownerIsIdxListed(o.owner) ? i : -1).filter(i => i >= 0);
+  const norIdx = top.map((_, i) => i).filter(i => !idxIdx.includes(i));
+  const mkSubset = (idxArr) => ({
+    xs: idxArr.map(i => top[i].vessels),
+    ys: idxArr.map(i => top[i].age_w / top[i].gt_w),
+    sizes: idxArr.map(i => Math.max(8, Math.sqrt(top[i].sum_gt) / 10)),
+    colors: idxArr.map(i => {
+      const a = top[i].age_w / top[i].gt_w;
+      return a >= 25 ? FL_ALERT : a >= 15 ? FL_WARN : FL_PRIMARY;
+    }),
+    labels: idxArr.map(i => {
+      const n = top[i].owner;
+      return n.length > 20 ? n.substring(0, 18) + "…" : n;
+    }),
+    hovers: idxArr.map(i => {
+      const o = top[i];
+      const idx = _ownerIsIdxListed(o.owner) ? '<br><i style="color:#1d4ed8">★ IDX 상장</i>' : '';
+      return `<b>${o.owner}</b><br>척수: ${o.vessels.toLocaleString()}<br>선대 GT: ${o.sum_gt.toLocaleString()}<br>평균선령(GT가중): ${(o.age_w / o.gt_w).toFixed(1)}년${idx}`;
+    }),
+  });
+  const sNorm = mkSubset(norIdx);
+  const sIdx  = mkSubset(idxIdx);
+  Plotly.newPlot("fl-owner-scatter", [
+    {
+      name: "일반",
+      x: sNorm.xs, y: sNorm.ys, text: sNorm.labels, type: "scatter", mode: "markers",
+      marker: {
+        size: sNorm.sizes, color: sNorm.colors,
+        line: { color: "white", width: 1 },
+        opacity: 0.78,
+        symbol: "circle",
+      },
+      hovertext: sNorm.hovers, hovertemplate: "%{hovertext}<extra>클릭 시 owner 필터</extra>",
+      customdata: norIdx,  // map back to top[] index
     },
-    hovertext: hovers,
-    hovertemplate: "%{hovertext}<extra>클릭 시 owner 필터</extra>",
-  }], {
+    {
+      name: "IDX 상장",
+      x: sIdx.xs, y: sIdx.ys, text: sIdx.labels, type: "scatter", mode: "markers",
+      marker: {
+        size: sIdx.sizes.map(s => s * 1.2), color: sIdx.colors,
+        line: { color: "#1d4ed8", width: 2 },
+        opacity: 0.9,
+        symbol: "star",
+      },
+      hovertext: sIdx.hovers, hovertemplate: "%{hovertext}<extra>★ IDX · 클릭 시 owner 필터</extra>",
+      customdata: idxIdx,  // map back to top[] index
+    },
+  ], {
     margin: { t: 10, l: 50, r: 10, b: 50 },
     xaxis: { title: { text: "척수 (log)", font: { size: 10 } }, type: "log",
              tickfont: { size: 10 }, gridcolor: "#eef2f7" },
@@ -3693,13 +3747,15 @@ function _drawFleetOwnerScatter(rows, I) {
     ],
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
-  // 클릭 → owner 필터
+  // 클릭 → owner 필터. Cycle 22: customdata로 top[] 인덱스 역추적
   if (host) {
     host.removeAllListeners?.("plotly_click");
     host.on("plotly_click", (ev) => {
-      const pi = ev?.points?.[0]?.pointIndex;
-      if (pi == null) return;
-      const owner = top[pi]?.owner;
+      const pt = ev?.points?.[0];
+      if (!pt) return;
+      // pt.customdata 가 top[] 인덱스. 없으면 pointIndex fallback.
+      const idx = pt.customdata != null ? pt.customdata : pt.pointIndex;
+      const owner = top[idx]?.owner;
       if (!owner) return;
       const tabEl = document.getElementById("tab-fleet");
       const stx = tabEl._fleetState;
