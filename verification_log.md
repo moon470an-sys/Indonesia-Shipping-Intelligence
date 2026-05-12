@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 15 검증 — 2026-05-12 (Supply 탭 디자인·데이터 7차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| GT 분포 → 선종별 boxplot | ✅ Cycle 15 | 7 class별 box (median/p25/p75/outliers, log y). 척별 분포 통계 일목요연 |
+| 선령 분포 차트 click → yrMax 필터 | ✅ Cycle 15 | 막대 클릭 시 해당 bucket 시작년 = yrMax. 토글 해제 가능. 누적선 차트 트레이스는 무시 |
+| Scope strip chip 클릭 → scope 필터 | ✅ Cycle 15 | "화물선" / "보조선" chip 버튼화. 클릭 시 ring 강조 + scope 필터 + active chip 표시 |
+| 화면 결과 (smoke test) | ✅ GT 7 box traces (Other Cargo / General Cargo / Tanker / Bulk Carrier / Container / Tug-OSV-AHTS / Other), 화물선 click 41,135→29,574 (cargo total 정합), 토글 해제 41,135. age chart clickBound | playwright |
+
+### 횡단
+- 원칙 lint ✅. 원칙 3 (시계열·비율 우선): boxplot은 단일 snapshot 통계 분포 — 비율/통계 관점 강화.
+
 ## Cycle 14 검증 — 2026-05-12 (Supply 탭 디자인·데이터 6차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

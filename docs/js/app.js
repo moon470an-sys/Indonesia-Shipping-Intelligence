@@ -2116,6 +2116,7 @@ async function renderFleet() {
       jenisExclude: false,             // 제외 모드 toggle
       name: "",                        // 선박명 substring
       ownerExact: "",                  // Cycle 13: Top 운영사 row 클릭 시 set
+      scopeOnly: null,                 // Cycle 15: null = 모두, "cargo" / "auxiliary" 선택 시 해당만
       gtMin: null, gtMax: null,
       yrMin: null, yrMax: null,
       loaMin: null, loaMax: null,
@@ -2183,6 +2184,45 @@ function _wireFleetScopeToggle() {
       _renderFleetJenisList(tabEl._fleetVessels);
     }
   });
+  // Cycle 15: scope chip buttons (화물선 / 보조선) 클릭 토글
+  const cargoBtn = document.getElementById("fl-scope-btn-cargo");
+  const auxBtn   = document.getElementById("fl-scope-btn-aux");
+  const setScope = (target) => {
+    const tabEl = document.getElementById("tab-fleet");
+    const st = tabEl?._fleetState; if (!st) return;
+    st.scopeOnly = st.scopeOnly === target ? null : target;
+    tabEl._fleetPage = 1;
+    _refreshScopeButtonStates();
+    _renderFleetView();
+  };
+  if (cargoBtn && !cargoBtn.dataset.wired) {
+    cargoBtn.dataset.wired = "1";
+    cargoBtn.addEventListener("click", () => setScope("cargo"));
+  }
+  if (auxBtn && !auxBtn.dataset.wired) {
+    auxBtn.dataset.wired = "1";
+    auxBtn.addEventListener("click", () => setScope("auxiliary"));
+  }
+  _refreshScopeButtonStates();
+}
+
+function _refreshScopeButtonStates() {
+  const tabEl = document.getElementById("tab-fleet");
+  const st = tabEl?._fleetState;
+  const cur = st?.scopeOnly;
+  const setActive = (id, target) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (cur === target) {
+      el.classList.add("ring-2", "ring-blue-600");
+      el.style.outline = "2px solid #1A3A6B";
+    } else {
+      el.classList.remove("ring-2", "ring-blue-600");
+      el.style.outline = "";
+    }
+  };
+  setActive("fl-scope-btn-cargo", "cargo");
+  setActive("fl-scope-btn-aux",   "auxiliary");
 }
 
 function _idxOf(fv, name) { return (fv.cols || []).indexOf(name); }
@@ -2322,6 +2362,7 @@ function _wireFleetFilters() {
       st.jenisExclude = false;
       st.name = "";
       st.ownerExact = "";
+      st.scopeOnly = null;
       st.gtMin = st.gtMax = st.yrMin = st.yrMax = null;
       st.loaMin = st.loaMax = null;
       st.widthMin = st.widthMax = st.depthMin = st.depthMax = null;
@@ -2512,6 +2553,8 @@ function _applyFleetFilters() {
     if (nameQ && !(r[I.nama] || "").toUpperCase().includes(nameQ)) return false;
     // Cycle 13: ownerExact 필터 (Top 운영사 row 클릭 시 set)
     if (st.ownerExact && r[I.owner] !== st.ownerExact) return false;
+    // Cycle 15: scopeOnly 필터 (chip 클릭 시 set)
+    if (st.scopeOnly && I.scope != null && r[I.scope] !== st.scopeOnly) return false;
     return true;
   });
 
@@ -2984,32 +3027,54 @@ function _drawFlChartFlag(rows, I) {
   }, { displayModeBar: false, responsive: true });
 }
 
+// Cycle 15: GT log histogram → class별 boxplot. p25/median/p75/whisker 통계로 교체.
+//   class별로 GT 분포 (median 막대 + IQR + outliers).
 function _drawFlChartGtHist(rows, I) {
   if (!document.getElementById("fl-ch-gt-hist")) return;
-  const gts = [];
+  const CLASS_ORDER = [
+    "Other Cargo", "General Cargo", "Tanker",
+    "Bulk Carrier", "Container", "Tug/OSV/AHTS",
+  ];
+  const byClass = new Map();
   for (const r of rows) {
     const g = r[I.gt];
-    if (g && g > 0) gts.push(g);
+    if (!g || g <= 0) continue;
+    let cls = r[I.vc] || "Other";
+    if (!CLASS_ORDER.includes(cls)) cls = "Other";
+    if (!byClass.has(cls)) byClass.set(cls, []);
+    byClass.get(cls).push(g);
   }
-  if (!gts.length) {
-    Plotly.purge("fl-ch-gt-hist");
-    return;
-  }
-  Plotly.newPlot("fl-ch-gt-hist", [{
-    x: gts,
-    type: "histogram",
-    nbinsx: 50,
-    marker: { color: FL_PRIMARY, opacity: 0.8, line: { color: "#fff", width: 0.3 } },
-    hovertemplate: "GT bin %{x:,.0f}<br>%{y:,} 척<extra></extra>",
-  }], {
-    margin: { t: 5, l: 40, r: 10, b: 35 },
-    xaxis: {
+  // 표시할 class만 (rows 가 있는 것)
+  const classes = CLASS_ORDER.filter(c => byClass.has(c));
+  if (classes.includes("Other") === false && byClass.has("Other")) classes.push("Other");
+  if (!classes.length) { Plotly.purge("fl-ch-gt-hist"); return; }
+  const colorMap = {
+    "Other Cargo":     "#65a30d",
+    "General Cargo":   "#0891b2",
+    "Tanker":          FL_PRIMARY,
+    "Bulk Carrier":    "#7c3aed",
+    "Container":       "#0284c7",
+    "Tug/OSV/AHTS":    FL_AUXILIARY,
+    "Other":           "#94a3b8",
+  };
+  const traces = classes.map(cls => ({
+    name: cls,
+    y: byClass.get(cls),
+    type: "box",
+    marker: { color: colorMap[cls] || FL_PRIMARY, size: 3, opacity: 0.4 },
+    line: { color: colorMap[cls] || FL_PRIMARY, width: 1 },
+    fillcolor: (colorMap[cls] || FL_PRIMARY) + "30",
+    boxpoints: "outliers",
+    hovertemplate: `<b>${cls}</b><br>GT %{y:,.0f}<extra></extra>`,
+  }));
+  Plotly.newPlot("fl-ch-gt-hist", traces, {
+    margin: { t: 10, l: 50, r: 10, b: 50 },
+    showlegend: false,
+    xaxis: { tickfont: { size: 9 }, automargin: true, tickangle: -25 },
+    yaxis: {
       type: "log", title: { text: "GT (log)", font: { size: 10 } },
       tickfont: { size: 10 }, gridcolor: "#eef2f7",
     },
-    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
-             gridcolor: "#eef2f7" },
-    bargap: 0.02,
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
 }
@@ -3057,7 +3122,7 @@ function _drawFlChartAge(rows, I) {
       text: counts.map((c, i) => c > 0 ? `${c.toLocaleString()}<br><span style="font-size:9px;opacity:.7">${pcts[i].toFixed(1)}%</span>` : ""),
       textposition: "outside",
       cliponaxis: false,
-      hovertemplate: "<b>%{x}년</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra></extra>",
+      hovertemplate: "<b>%{x}년</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra>클릭 시 yrMax 필터</extra>",
       customdata: pcts,
     },
     {
@@ -3081,6 +3146,31 @@ function _drawFlChartAge(rows, I) {
               range: [0, 105], ticksuffix: "%" },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
+  // Cycle 15: 막대 클릭 시 해당 bucket 이상 노후만 보기 (yrMax = currentYear - bucketLo)
+  const host = document.getElementById("fl-ch-age");
+  if (host && !host.dataset.clickBound) {
+    host.dataset.clickBound = "1";
+    host.on("plotly_click", (ev) => {
+      const pt = ev?.points?.[0];
+      if (!pt || pt.curveNumber !== 0) return;  // 누적선 트레이스 무시
+      const lbl = pt.x;
+      const bucket = BUCKETS.find(b => b.key === lbl);
+      if (!bucket) return;
+      const tabEl = document.getElementById("tab-fleet");
+      const st = tabEl._fleetState;
+      const cutoff = new Date().getFullYear() - bucket.lo;
+      // 토글: 같은 값이면 해제
+      if (st.yrMax === cutoff) {
+        st.yrMax = null;
+        const inp = document.getElementById("fl-f-yr-max"); if (inp) inp.value = "";
+      } else {
+        st.yrMax = cutoff;
+        const inp = document.getElementById("fl-f-yr-max"); if (inp) inp.value = String(cutoff);
+      }
+      tabEl._fleetPage = 1;
+      _renderFleetView();
+    });
+  }
 }
 
 // Cycle 9: GT 규모별 분포 (의미 있는 카테고리 막대).
@@ -3458,6 +3548,12 @@ function _renderFleetActiveChips(st) {
     key: "owner", label: "운영사",
     value: st.ownerExact.length > 28 ? st.ownerExact.substring(0, 26) + "…" : st.ownerExact,
     reset: () => { st.ownerExact = ""; },
+  });
+  if (st.scopeOnly) chips.push({
+    key: "scope", label: "Scope",
+    value: st.scopeOnly === "cargo" ? "화물선만" : "보조선만",
+    reset: () => { st.scopeOnly = null;
+                   _refreshScopeButtonStates(); },
   });
   const range = (label, lo, hi, idMin, idMax, keyMin, keyMax, suffix = "") => {
     if (st[keyMin] == null && st[keyMax] == null) return;

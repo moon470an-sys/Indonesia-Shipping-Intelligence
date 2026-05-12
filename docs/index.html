@@ -205,10 +205,12 @@
         <p class="text-xs text-slate-500 mt-1">어떤 화물선이, 얼마나, 어떻게 늘고 줄어드는가. 선대 탐색기 + 시계열.</p>
       </div>
 
-      <!-- Cycle 1: scope meta-strip + scope filter toggle -->
+      <!-- Cycle 1: scope meta-strip + scope filter toggle. Cycle 15: chip 클릭 → scope 필터. -->
       <div class="scope-strip flex flex-wrap items-center gap-2 mb-3 text-[11px]" data-source="docs/derived/scope_audit.json">
-        <span class="scope-chip scope-cargo">화물선 <strong id="fl-scope-cargo">—</strong>척</span>
-        <span class="scope-chip scope-aux">보조선 (Tug) <strong id="fl-scope-aux">—</strong>척</span>
+        <button type="button" id="fl-scope-btn-cargo" class="scope-chip scope-cargo cursor-pointer hover:opacity-80 transition-opacity"
+                title="화물선만 보기 (클릭 토글)">화물선 <strong id="fl-scope-cargo">—</strong>척</button>
+        <button type="button" id="fl-scope-btn-aux" class="scope-chip scope-aux cursor-pointer hover:opacity-80 transition-opacity"
+                title="보조선만 보기 (클릭 토글)">보조선 (Tug) <strong id="fl-scope-aux">—</strong>척</button>
         <span class="scope-chip scope-excluded" id="fl-scope-excl-chip">제외 <strong id="fl-scope-excl">—</strong>척 <em class="text-slate-400 not-italic">(기본 숨김)</em></span>
         <label class="ml-auto inline-flex items-center gap-1 text-[11px] text-slate-600 cursor-pointer">
           <input id="fl-scope-show-excluded" type="checkbox" class="accent-slate-700">
@@ -455,8 +457,8 @@
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center justify-between mb-2">
-            <div class="text-xs font-mono text-slate-700">Gross Tonnage 분포 (log)</div>
-            <div class="text-[10px] text-slate-400">개별 척 단위 빈도</div>
+            <div class="text-xs font-mono text-slate-700">선종별 GT 분포 (boxplot, log)</div>
+            <div class="text-[10px] text-slate-400">median · p25/75 · whisker</div>
           </div>
           <div id="fl-ch-gt-hist" style="height:260px"></div>
         </div>
