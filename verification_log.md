@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 33 검증 — 2026-05-12 (Supply 탭 25차 — 선박 row 클릭 → detail expand)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 선박 row 클릭 → detail 패널 expand | ✅ Cycle 33 | ▶/▼ 화살표 토글. 12 정보 카드 grid (선박명/선주/Sector/Vessel Class/JenisDetailKet/Tanker Subclass/Scope/국적/건조-선령/제원 4종/엔진/IMO·Call Sign). 클릭 토글 |
+| 시각 분리 (fl-detail-row CSS) | ✅ Cycle 33 | 좌측 navy strip + bg-slate-50. hover bg 미적용 (별도 클래스) |
+| 화면 결과 (smoke test) | ✅ ▶→▼ 토글, 1 detail row, 'QUANTUM HARMONY · PT PRIMA SENTOSA TANGGUH · CARGO · Tanker · Product' 모든 정보 노출. 재클릭 시 0 row | playwright |
+
+### 횡단
+- 원칙 lint ✅. 정보 접근성 강화 — raw 컬럼이 dim되어 있어도 row 클릭으로 즉시 상세 확인.
+
 ## Cycle 32 검증 — 2026-05-12 (Supply 탭 24차 — regression smoke 통과)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

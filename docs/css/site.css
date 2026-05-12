@@ -391,9 +391,12 @@ table tbody tr:hover { background:#fef3c7; }
 }
 
 /* Cycle 28: 선박 목록 row hover 강화. tbody의 모든 td 배경 + 좌측 strip 강조 */
-#fl-tbody tr { transition: background-color 80ms ease; }
-#fl-tbody tr:hover { background: #f0f9ff; }
-#fl-tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 #1A3A6B; padding-left: 5px; }
+#fl-tbody tr.fl-vessel-row { transition: background-color 80ms ease; }
+#fl-tbody tr.fl-vessel-row:hover { background: #f0f9ff; }
+#fl-tbody tr.fl-vessel-row:hover td:first-child { box-shadow: inset 3px 0 0 #1A3A6B; padding-left: 5px; }
+/* Cycle 33: 확장된 detail row는 본 hover 룰에서 제외 + 배경 차별 */
+#fl-tbody tr.fl-detail-row { background: #f8fafc; }
+#fl-tbody tr.fl-detail-row td { border-left: 3px solid #1A3A6B; }
 
 /* Cycle 28: 헤더 freshness 영역 가독성 polish */
 #fl-data-meta { line-height: 1.4; }

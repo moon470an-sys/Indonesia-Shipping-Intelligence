@@ -3013,13 +3013,39 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     return esc.replace(new RegExp(`(${escQ})`, "ig"),
       '<mark class="bg-amber-200 text-slate-900 px-0.5 rounded">$1</mark>');
   };
+  // Cycle 33: row 확장 상태 트래킹. set of "nama|tahun" keys
+  if (!tabEl._fleetExpanded) tabEl._fleetExpanded = new Set();
+  const exp = tabEl._fleetExpanded;
+  const vKey = (r) => `${r[I.nama] || ""}|${r[I.tahun] || ""}`;
   // Cycle 12: 헤더 순서와 일치하도록 셀 순서 재정렬. raw 4개(엔진/엔진타입/IMO/Call Sign)는 dim 처리.
   body.innerHTML = top.map(r => {
     const flag = r[I.flag] || "Indonesia";
     const age = r[I.age];
     const yr = r[I.tahun];
-    return `<tr class="hover:bg-slate-50 border-b border-slate-100">
-      <td class="px-2 py-1 font-medium text-slate-800">${hl(r[I.nama])}</td>
+    const k = vKey(r);
+    const isOpen = exp.has(k);
+    const expandArrow = isOpen ? "▼" : "▶";
+    const detailRow = isOpen ? `
+      <tr class="fl-detail-row" data-vk="${_esc(k)}">
+        <td colspan="14" class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선박명</span><span class="font-semibold">${_esc(r[I.nama])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">선주</span><span>${_esc(r[I.owner])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Sector</span><span>${_esc(r[I.sector])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Vessel Class</span><span>${_esc(r[I.vc])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">JenisDetailKet</span><span>${_esc(r[I.jenis])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Tanker Subclass</span><span>${_esc(r[I.ts]) || '—'}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">Scope</span><span>${_esc(r[I.scope])}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">국적</span><span>${_esc(flag)}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">건조 / 선령</span><span class="font-mono ${age != null && age >= 25 ? 'text-rose-600 font-bold' : ''}">${yr || '—'} · ${age != null ? age + '년' : '—'}</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">GT × LOA × W × D</span><span class="font-mono">${(r[I.gt]||0).toLocaleString()} · ${(r[I.loa]||0).toFixed(1)}m · ${(r[I.lebar]||0).toFixed(1)}m · ${(r[I.dalam]||0).toFixed(1)}m</span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">엔진</span><span class="font-mono">${_esc(r[I.mesin]) || '—'} <span class="opacity-60">/ ${_esc(r[I.mesin_type]) || '—'}</span></span></div>
+            <div><span class="text-slate-500 font-mono uppercase text-[9px] mb-0.5 block">IMO / Call Sign</span><span class="font-mono">${_esc(r[I.imo]) || '—'} / ${_esc(r[I.call_sign]) || '—'}</span></div>
+          </div>
+        </td>
+      </tr>` : "";
+    return `<tr class="hover:bg-slate-50 border-b border-slate-100 fl-vessel-row cursor-pointer" data-vk="${_esc(k)}">
+      <td class="px-2 py-1 font-medium text-slate-800"><span class="text-slate-400 mr-1 text-[10px]">${expandArrow}</span>${hl(r[I.nama])}</td>
       <td class="px-2 py-1 text-slate-600">${_esc(r[I.owner])}</td>
       <td class="px-2 py-1">${_esc(r[I.jenis])}</td>
       <td class="px-2 py-1 text-[11px] text-slate-600">${_esc(flag)}</td>
@@ -3033,8 +3059,21 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
       <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50">${_esc(r[I.mesin_type])}</td>
       <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50 font-mono">${_esc(r[I.imo])}</td>
       <td class="px-2 py-1 text-[10px] text-slate-400 bg-slate-50/50 font-mono">${_esc(r[I.call_sign])}</td>
-    </tr>`;
+    </tr>${detailRow}`;
   }).join("");
+  // Cycle 33: row click → toggle expand
+  if (!body.dataset.clickBound) {
+    body.dataset.clickBound = "1";
+    body.addEventListener("click", (e) => {
+      const tr = e.target.closest("tr.fl-vessel-row");
+      if (!tr) return;
+      const tabElX = document.getElementById("tab-fleet");
+      const setExp = tabElX._fleetExpanded || (tabElX._fleetExpanded = new Set());
+      const key = tr.dataset.vk;
+      if (setExp.has(key)) setExp.delete(key); else setExp.add(key);
+      _renderFleetView();
+    });
+  }
 }
 
 function _esc(s) {
