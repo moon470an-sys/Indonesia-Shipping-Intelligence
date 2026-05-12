@@ -3,6 +3,38 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 54 검증 — 2026-05-13 (Supply 탭 46차 — 로딩 성능 audit)
+
+### 성능 지표 (localhost)
+
+| 지표 | 값 |
+|------|-----|
+| 전체 페이지 load | 1.4s |
+| DOMContentLoaded | 1.6s |
+| Fleet 탭 ready (KPI 렌더 완료) | 약 1-2s (after 데이터 load) |
+
+### derived 파일 크기 (서버 응답 기준)
+
+| 파일 | 크기 |
+|------|------|
+| meta.json | 468B |
+| scope_audit.json | 658B |
+| home_kpi.json | 2.4K |
+| timeseries.json | 3.8K |
+| cargo_yearly.json | 53K |
+| owner_profile.json | 14.5K |
+| fleet_owners.json | 7.9K |
+| owner_ticker_map.json | 634B |
+| map_flow.json | 19.4K |
+| cargo_category_details.json | 176K |
+| cargo_ports_periods.json | 1.6MB |
+| **fleet_vessels.json** | ~14MB |
+
+### 결론
+- 페이지 로딩 / 차트 렌더 성능 양호.
+- fleet_vessels.json 14MB가 가장 큰 페이로드 — GitHub Pages는 자동 gzip 적용되어 wire에서는 ~3MB로 추정. 사용자 경험 OK.
+- 코드 변경 없음.
+
 ## Cycle 53 검증 — 2026-05-13 (Supply 탭 45차 — 데이터 무결성 audit)
 
 ### fleet_vessels.json (91,807 rows) 필드 완전성
