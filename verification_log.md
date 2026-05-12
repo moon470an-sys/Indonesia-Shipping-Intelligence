@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 48 검증 — 2026-05-12 (Supply 탭 40차 — 40 사이클 누적 기능 regression smoke)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 시나리오 | 결과 |
+|---------|------|
+| URL deep-link boot (`#fleet?aged=1&scope=cargo&vc=Tanker`) | activeTab=fleet, count 667척, GT 2.2M, 평균 선령 33.8년, 3 chips, 8 charts SVG ✅ |
+| Vessel detail 확장 (Tanker) | Tanker profile + sister + IMO equasis link + close-all 모두 표시 ✅ |
+| 'close all' button count | "1" 정확 표시 ✅ |
+| '모두 해제' chip clear | count 41,135 복귀, 0 chips, URL `#fleet` ✅ |
+
+### 횡단
+- 코드 변경 없음. 40 사이클 누적 기능이 모두 회귀 없이 합성 동작.
+- BI 인사이트: Tanker 25y+ cargo = 667척, GT 2.2M (전체 노후 25y+ 12,433척 중 5.4%), 평균 선령 33.8년.
+
 ## Cycle 47 검증 — 2026-05-12 (Supply 탭 39차 — Tanker detail에 owner_profile 활용)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
