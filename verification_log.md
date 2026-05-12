@@ -3,6 +3,32 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 9 검증 — 2026-05-12 (Supply 탭 디자인·데이터 1차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| KPI 4번째 카드 | ✅ 교체 | "평균 건조연도" → "노후선 (25년+) 척수 + 전체 %" — 의사결정 직결 |
+| 차트 색상 통일 | ✅ Cycle 9 | navy(#1A3A6B) 단일 primary + slate(보조선) / stone(제외) / rose(25y+) / amber(20-24y) — 시멘틱 일관성 |
+| 선령 분포 차트 (5년 buckets) | ✅ 신규 | <5/5-10/10-15/15-20/20-25/25-30/30+ — 25년+ 빨강 강조 |
+| GT 규모별 분포 | ✅ 신규 | 소형/중형/대형/초대형 + GT 점유율 보조축 (대형 자산 집중도 가시화) |
+| Top 운영사 카드 | ✅ 신규 | fleet_owners.json 활용. 척수/선대GT/평균선령/선종 mix 1줄 — 10개 |
+| 화면 결과 (smoke test) | ✅ 41,135척, 12,433척 25년+ (31.8%), 평균선령 17.2년 | playwright 검증 |
+| Vessel Type TOP15 scope 색상 | ✅ Cycle 9 | byJenis.scope 메타 활용 — cargo/auxiliary/excluded 구별 가능 |
+| Flag chart log 스케일 | ✅ Cycle 9 | Indonesia 단일 척수 압도 → log scale + Indonesia만 강조색 |
+| 차트 패널 헤더 sub-label | ✅ Cycle 9 | 우측 작은 부제 ("색상 = scope", "25년+ = 노후", "소형/중형..." 등) |
+| 시계열 (월별 신규/소멸) | ❌ 미구현 | Cycle 10 — vessels_changes 필요 |
+| 운영사 시계열 | ❌ 미구현 | Cycle 10+ |
+| 노후선 × class 매트릭스 | ❌ 미구현 | Cycle 10 후보 |
+
+### 횡단 점검
+
+- 원칙 1·2 (공식 데이터·3축) — 본 사이클 변경은 fleet_vessels + fleet_owners (kapal.dephub.go.id) 원천만 사용. 위반 없음.
+- 원칙 4 (결측 처리) — 선령 결측은 25y+ % 계산에서 분모 제외. KPI에 "—" 처리.
+- 원칙 5 (운영 결정에 미연결 KPI 삭제) — "평균 건조연도"는 평균 선령 KPI sub-label과 중복이라 삭제. 노후 25y+로 교체.
+- lint_language.py — ✅ 통과 (0건).
+
 ## Cycle 1 검증 — 2026-05-11
 
 ### Demand 탭 (📦 — id: tab-overview)

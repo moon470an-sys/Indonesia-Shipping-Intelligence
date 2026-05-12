@@ -340,10 +340,10 @@
           <div class="text-[11px] text-slate-500">gross_tonnage avg</div>
         </div>
         <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
-          <div class="absolute top-0 left-0 right-0 h-0.5 bg-green-500"></div>
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">평균 건조연도</div>
-          <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-avgyr">—</div>
-          <div class="text-[11px] text-slate-500" id="fl-kpi-avgage">—</div>
+          <div class="absolute top-0 left-0 right-0 h-0.5 bg-rose-500"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">노후선 (25년+)</div>
+          <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-aged25">—</div>
+          <div class="text-[11px] text-slate-500" id="fl-kpi-aged25-pct">평균 선령 —</div>
         </div>
       </div>
 
@@ -377,19 +377,52 @@
       <!-- 2-col chart grid (only 4 visible by default; engine charts hidden) -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="text-xs font-mono text-slate-700 mb-2">건조 연도별 추이</div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">건조 연도별 추이</div>
+            <div class="text-[10px] text-slate-400">건조 연도 분포 (척수)</div>
+          </div>
           <div id="fl-ch-year" style="height:300px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="text-xs font-mono text-slate-700 mb-2">Vessel Type TOP 15 <span class="text-[10px] text-slate-400">(클릭 필터)</span></div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">Vessel Type TOP 15 <span class="text-[10px] text-slate-400">(클릭 필터)</span></div>
+            <div class="text-[10px] text-slate-400">색상 = scope</div>
+          </div>
           <div id="fl-ch-type" style="height:300px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="text-xs font-mono text-slate-700 mb-2">국적(Flag State) TOP 12</div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">선령 분포 (5년 buckets)</div>
+            <div class="text-[10px] text-slate-400">25년+ = 노후</div>
+          </div>
+          <div id="fl-ch-age" style="height:260px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">GT 규모별 분포</div>
+            <div class="text-[10px] text-slate-400">소형 / 중형 / 대형 / 초대형</div>
+          </div>
+          <div id="fl-ch-gt-bucket" style="height:260px"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">Top 운영사 (선대 척수)</div>
+            <div class="text-[10px] text-slate-400">화물선 기준 · GT 막대 + class mix</div>
+          </div>
+          <div id="fl-top-owners" class="text-[12px]"></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">국적(Flag State) TOP 12</div>
+            <div class="text-[10px] text-slate-400">국적 미상 = Indonesia (default)</div>
+          </div>
           <div id="fl-ch-flag" style="height:260px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="text-xs font-mono text-slate-700 mb-2">Gross Tonnage 분포</div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">Gross Tonnage 분포 (log)</div>
+            <div class="text-[10px] text-slate-400">개별 척 단위 빈도</div>
+          </div>
           <div id="fl-ch-gt-hist" style="height:260px"></div>
         </div>
         <!-- Engine charts hidden by default (jang1117 parity) -->

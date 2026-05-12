@@ -2086,9 +2086,8 @@ const FLEET_TANKER_SUBS = [
 async function renderFleet() {
   setupSourceLabels(document.getElementById("tab-fleet"));
 
-  // jang1117 mirror no longer renders the "Top 25 owners" card, so we
-  // only fetch fleet_vessels.json here. fleet_owners.json stays in the
-  // bundle for other consumers but is not required for the tab.
+  // Cycle 9: Top Owner 카드를 위해 fleet_owners.json 함께 로드. 실패해도
+  // 메인 패널은 살아남도록 try/catch 분리.
   let fv;
   try {
     fv = await loadDerived("fleet_vessels.json");
@@ -2102,6 +2101,12 @@ async function renderFleet() {
   // Stash payloads on the tab element so filter handlers can re-read.
   const tabEl = document.getElementById("tab-fleet");
   tabEl._fleetVessels = fv;
+  try {
+    tabEl._fleetOwners = await loadDerived("fleet_owners.json");
+  } catch (e) {
+    tabEl._fleetOwners = null;
+    console.warn("fleet_owners.json 로드 실패:", e.message);
+  }
 
   // Initial state object — jang1117 parity (no sector/subclass/age/owner/flag).
   if (!tabEl._fleetState) {
@@ -2436,15 +2441,20 @@ function _renderFleetView() {
   const st = tabEl._fleetState;
 
   // ---- KPI strip (5 cards · jang1117 layout) ----
-  let sumGt = 0, nGt = 0, sumAgeGt = 0, sumYrW = 0;
+  let sumGt = 0, nGt = 0, sumAgeGt = 0;
   let sumLoa = 0, nLoa = 0, sumW = 0, nW = 0, sumD = 0, nD = 0;
+  let aged25 = 0, agedTotalForPct = 0;
   const jenisSet = new Set();
   for (const r of rows) {
     const gt = r[I.gt] || 0;
     if (gt > 0) { sumGt += gt; nGt++; }
     const age = r[I.age];
-    const yr = r[I.tahun];
-    if (gt > 0 && yr) { sumAgeGt += age * gt; sumYrW += yr * gt; }
+    if (gt > 0 && age != null) { sumAgeGt += age * gt; }
+    // Cycle 9: 25년+ 노후선 카운트. age는 정수형(가용시), 결측은 KPI에서 제외.
+    if (age != null) {
+      agedTotalForPct += 1;
+      if (age >= 25) aged25 += 1;
+    }
     if ((r[I.loa] || 0) > 0)   { sumLoa += r[I.loa]; nLoa++; }
     if ((r[I.lebar] || 0) > 0) { sumW   += r[I.lebar]; nW++; }
     if ((r[I.dalam] || 0) > 0) { sumD   += r[I.dalam]; nD++; }
@@ -2452,7 +2462,6 @@ function _renderFleetView() {
   }
   const avgGt = nGt > 0 ? sumGt / nGt : 0;
   const avgAge = sumGt > 0 ? sumAgeGt / sumGt : null;
-  const avgYr = sumGt > 0 ? sumYrW / sumGt : null;
   // jang1117 KPI writes — every setter guarded so a missing element
   // can't kill the render. Existence-checked once at the top to keep
   // hot path lean.
@@ -2466,8 +2475,12 @@ function _renderFleetView() {
     (totalRows > 0 ? ` (${(rows.length / totalRows * 100).toFixed(1)}%)` : ""));
   set("fl-kpi-jenis", fmtCount(jenisSet.size));
   set("fl-kpi-avggt", avgGt ? fmtCount(Math.round(avgGt)) : "—");
-  set("fl-kpi-avgyr", avgYr ? `${avgYr.toFixed(0)}` : "—");
-  set("fl-kpi-avgage", avgAge != null ? `선령 ${avgAge.toFixed(1)}년` : "선령 —");
+  // Cycle 9: "평균 건조연도" 대신 노후선 25년+ (척수 + %). 의사결정 직결.
+  const agedPct = agedTotalForPct > 0 ? (aged25 / agedTotalForPct) * 100 : null;
+  set("fl-kpi-aged25", aged25 ? fmtCount(aged25) : "—");
+  set("fl-kpi-aged25-pct",
+    (agedPct != null ? `전체 ${agedPct.toFixed(1)}% · ` : "") +
+    (avgAge != null ? `평균 선령 ${avgAge.toFixed(1)}년` : "평균 선령 —"));
   // 평균 제원 (치수 요약) — 4 sub-values
   set("fl-avg-gt",  avgGt ? fmtCount(Math.round(avgGt)) : "—");
   set("fl-avg-loa", nLoa ? (sumLoa / nLoa).toFixed(1) : "—");
@@ -2475,12 +2488,15 @@ function _renderFleetView() {
   set("fl-avg-d",   nD   ? (sumD   / nD).toFixed(1)   : "—");
 
   // ---- charts (each guarded — missing target = no-op, no throw) ----
-  try { _drawFlChartYear(rows, I); }       catch (e) { console.error("Year chart:", e); }
-  try { _drawFlChartType(rows, I); }       catch (e) { console.error("Type chart:", e); }
-  try { _drawFlChartEngineType(rows, I); } catch (e) { console.error("EngineType chart:", e); }
-  try { _drawFlChartEngineName(rows, I); } catch (e) { console.error("EngineName chart:", e); }
-  try { _drawFlChartFlag(rows, I); }       catch (e) { console.error("Flag chart:", e); }
-  try { _drawFlChartGtHist(rows, I); }     catch (e) { console.error("GT hist:", e); }
+  try { _drawFlChartYear(rows, I); }        catch (e) { console.error("Year chart:", e); }
+  try { _drawFlChartType(rows, I); }        catch (e) { console.error("Type chart:", e); }
+  try { _drawFlChartAge(rows, I); }         catch (e) { console.error("Age chart:", e); }
+  try { _drawFlChartGtBucket(rows, I); }    catch (e) { console.error("GT bucket:", e); }
+  try { _drawFlChartEngineType(rows, I); }  catch (e) { console.error("EngineType chart:", e); }
+  try { _drawFlChartEngineName(rows, I); }  catch (e) { console.error("EngineName chart:", e); }
+  try { _drawFlChartFlag(rows, I); }        catch (e) { console.error("Flag chart:", e); }
+  try { _drawFlChartGtHist(rows, I); }      catch (e) { console.error("GT hist:", e); }
+  try { _drawFleetTopOwners(rows, I); }     catch (e) { console.error("Top Owners:", e); }
 
   // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
@@ -2643,10 +2659,22 @@ function _fleetCsvDownload() {
 }
 
 // ────────────────────────────────────────────────────────────
-// PR — jang1117/vessels-style 6-chart grid for the Fleet tab.
-// All charts react to the filter; bar charts on Type / Flag are
-// click-to-filter (mirrors the reference site UX).
+// Cycle 9: Supply 탭 차트 디자인 통일.
+//   - Primary palette: navy(#1A3A6B) — design system tokens
+//   - Polar scope colors: cargo=navy, auxiliary=slate, excluded=stone
+//   - Semantic alert: rose(#dc2626) for aged 25+, amber for warnings
 // ────────────────────────────────────────────────────────────
+const FL_PRIMARY    = "#1A3A6B";    // navy — design system
+const FL_PRIMARY_F  = "rgba(26,58,107,0.18)";
+const FL_AUXILIARY  = "#64748b";    // slate-500
+const FL_EXCLUDED   = "#a8a29e";    // stone-400
+const FL_ALERT      = "#dc2626";    // rose-600 — 25y+ 노후
+const FL_WARN       = "#f59e0b";    // amber-500 — 20–24y
+const FL_BLUE_SCALE = [
+  [0.0,  "#dbeafe"], [0.25, "#93c5fd"],
+  [0.55, "#3b82f6"], [1.0,  "#1A3A6B"],
+];
+
 function _drawFlChartYear(rows, I) {
   if (!document.getElementById("fl-ch-year")) return;
   const counts = new Map();
@@ -2659,18 +2687,25 @@ function _drawFlChartYear(rows, I) {
   Plotly.newPlot("fl-ch-year", [{
     x: years, y: ys,
     type: "scatter", mode: "lines", fill: "tozeroy",
-    line: { color: "#1f77b4", width: 1.5 },
-    fillcolor: "rgba(31,119,180,0.25)",
+    line: { color: FL_PRIMARY, width: 1.6, shape: "spline" },
+    fillcolor: FL_PRIMARY_F,
     hovertemplate: "<b>%{x}</b><br>%{y:,} 척<extra></extra>",
   }], {
     margin: { t: 10, l: 40, r: 10, b: 30 },
-    xaxis: { title: { text: "건조 연도", font: { size: 10 } }, tickfont: { size: 10 } },
-    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 } },
+    xaxis: { title: { text: "건조 연도", font: { size: 10 } }, tickfont: { size: 10 },
+             showgrid: false },
+    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
+             gridcolor: "#eef2f7" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
 }
 
 function _drawFlChartType(rows, I) {
   if (!document.getElementById("fl-ch-type")) return;
+  // Cycle 9: scope별 색상 분기. cargo는 navy, auxiliary(Tug)는 slate, excluded는 stone.
+  // fleet_vessels.json totals.by_jenis 에 scope 메타가 있음.
+  const fv = document.getElementById("tab-fleet")._fleetVessels;
+  const byJenis = (fv && fv.totals && fv.totals.by_jenis) || {};
   const counts = new Map();
   for (const r of rows) {
     const j = r[I.jenis] || "(blank)";
@@ -2679,21 +2714,26 @@ function _drawFlChartType(rows, I) {
   const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
   const labels = top.map(t => t[0]).reverse();
   const ys = top.map(t => t[1]).reverse();
+  const SCOPE_COLOR = {
+    cargo: FL_PRIMARY, auxiliary: FL_AUXILIARY,
+    excluded: FL_EXCLUDED, unclassified: FL_ALERT,
+  };
+  const colors = labels.map(lbl => {
+    const scope = (byJenis[lbl] && byJenis[lbl].scope) || "cargo";
+    return SCOPE_COLOR[scope] || FL_PRIMARY;
+  });
   Plotly.newPlot("fl-ch-type", [{
     x: ys, y: labels, type: "bar", orientation: "h",
-    marker: {
-      color: ys,
-      colorscale: "Blues", cmin: 0,
-      line: { color: "#1e293b", width: 0.3 },
-    },
+    marker: { color: colors, line: { color: "#fff", width: 0.5 } },
     text: ys.map(v => v.toLocaleString()),
     textposition: "outside",
     cliponaxis: false,
     hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra>클릭 시 필터</extra>",
   }], {
     margin: { t: 5, l: 140, r: 50, b: 30 },
-    xaxis: { tickfont: { size: 10 } },
+    xaxis: { tickfont: { size: 10 }, gridcolor: "#eef2f7" },
     yaxis: { tickfont: { size: 10 } },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Click-to-filter on Vessel Type bars
   const host = document.getElementById("fl-ch-type");
@@ -2788,24 +2828,21 @@ function _drawFlChartFlag(rows, I) {
   const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12);
   const labels = top.map(t => t[0]).reverse();
   const ys = top.map(t => t[1]).reverse();
+  // Cycle 9: Indonesia 1척만 압도적이라 색 분기 — 자국기는 navy, 외국기는 slate.
+  const colors = labels.map(l => l === "Indonesia" ? FL_PRIMARY : FL_AUXILIARY);
   Plotly.newPlot("fl-ch-flag", [{
     x: ys, y: labels, type: "bar", orientation: "h",
-    marker: {
-      color: ys,
-      colorscale: "Oranges", cmin: 0,
-      line: { color: "#1e293b", width: 0.3 },
-    },
+    marker: { color: colors, line: { color: "#fff", width: 0.5 } },
     text: ys.map(v => v.toLocaleString()),
     textposition: "outside",
     cliponaxis: false,
-    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra>클릭 시 필터</extra>",
+    hovertemplate: "<b>%{y}</b><br>%{x:,} 척<extra></extra>",
   }], {
     margin: { t: 5, l: 90, r: 50, b: 30 },
-    xaxis: { tickfont: { size: 10 } },
+    xaxis: { tickfont: { size: 10 }, gridcolor: "#eef2f7", type: "log" },
     yaxis: { tickfont: { size: 10 } },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
-  // Flag chart is informational only in the jang1117 mirror (no
-  // separate flag filter control on the sidebar). No click handler.
 }
 
 function _drawFlChartGtHist(rows, I) {
@@ -2823,17 +2860,226 @@ function _drawFlChartGtHist(rows, I) {
     x: gts,
     type: "histogram",
     nbinsx: 50,
-    marker: { color: "#6c5ce7", line: { color: "#fff", width: 0.3 } },
+    marker: { color: FL_PRIMARY, opacity: 0.8, line: { color: "#fff", width: 0.3 } },
     hovertemplate: "GT bin %{x:,.0f}<br>%{y:,} 척<extra></extra>",
   }], {
     margin: { t: 5, l: 40, r: 10, b: 35 },
     xaxis: {
       type: "log", title: { text: "GT (log)", font: { size: 10 } },
-      tickfont: { size: 10 },
+      tickfont: { size: 10 }, gridcolor: "#eef2f7",
     },
-    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 } },
+    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
+             gridcolor: "#eef2f7" },
     bargap: 0.02,
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
+}
+
+// Cycle 9: 선령 분포 차트 (5년 buckets). 25년+은 알림 색상으로 강조.
+//   <5y / 5–10y / 10–15y / 15–20y / 20–25y / 25–30y / 30y+
+function _drawFlChartAge(rows, I) {
+  if (!document.getElementById("fl-ch-age")) return;
+  const BUCKETS = [
+    { key: "<5",    lo: 0,  hi: 5  },
+    { key: "5–10",  lo: 5,  hi: 10 },
+    { key: "10–15", lo: 10, hi: 15 },
+    { key: "15–20", lo: 15, hi: 20 },
+    { key: "20–25", lo: 20, hi: 25 },
+    { key: "25–30", lo: 25, hi: 30 },
+    { key: "30+",   lo: 30, hi: 999 },
+  ];
+  const counts = BUCKETS.map(() => 0);
+  let totalCounted = 0;
+  for (const r of rows) {
+    const age = r[I.age];
+    if (age == null || age < 0) continue;
+    for (let i = 0; i < BUCKETS.length; i++) {
+      if (age >= BUCKETS[i].lo && age < BUCKETS[i].hi) {
+        counts[i] += 1; totalCounted += 1; break;
+      }
+    }
+  }
+  const labels = BUCKETS.map(b => b.key);
+  const colors = BUCKETS.map(b =>
+    b.lo >= 25 ? FL_ALERT :       // 25y+ 노후 — 빨강
+    b.lo >= 20 ? FL_WARN  :       // 20–25y 경계 — 앰버
+    FL_PRIMARY                    // 청정 — 네이비
+  );
+  const pcts = counts.map(c => totalCounted > 0 ? (c / totalCounted * 100) : 0);
+  Plotly.newPlot("fl-ch-age", [{
+    x: labels, y: counts, type: "bar",
+    marker: { color: colors, line: { color: "#fff", width: 0.5 } },
+    text: counts.map((c, i) => c > 0 ? `${c.toLocaleString()}<br><span style="font-size:9px;opacity:.7">${pcts[i].toFixed(1)}%</span>` : ""),
+    textposition: "outside",
+    cliponaxis: false,
+    hovertemplate: "<b>%{x}년</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra></extra>",
+    customdata: pcts,
+  }], {
+    margin: { t: 25, l: 40, r: 10, b: 35 },
+    xaxis: { title: { text: "선령 (년)", font: { size: 10 } }, tickfont: { size: 10 } },
+    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
+             gridcolor: "#eef2f7" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
+  }, { displayModeBar: false, responsive: true });
+}
+
+// Cycle 9: GT 규모별 분포 (의미 있는 카테고리 막대).
+//   소형 <500 / 중형 500–5,000 / 대형 5,000–25,000 / 초대형 25,000+
+function _drawFlChartGtBucket(rows, I) {
+  if (!document.getElementById("fl-ch-gt-bucket")) return;
+  const BUCKETS = [
+    { key: "소형 (<500)",          lo: 0,     hi: 500    },
+    { key: "중형 (500–5k)",        lo: 500,   hi: 5000   },
+    { key: "대형 (5k–25k)",        lo: 5000,  hi: 25000  },
+    { key: "초대형 (25k+)",        lo: 25000, hi: Infinity },
+  ];
+  const counts = BUCKETS.map(() => 0);
+  const sumGt  = BUCKETS.map(() => 0);
+  let totalCounted = 0, totalGt = 0;
+  for (const r of rows) {
+    const g = r[I.gt];
+    if (!g || g <= 0) continue;
+    for (let i = 0; i < BUCKETS.length; i++) {
+      if (g >= BUCKETS[i].lo && g < BUCKETS[i].hi) {
+        counts[i] += 1; sumGt[i] += g;
+        totalCounted += 1; totalGt += g; break;
+      }
+    }
+  }
+  const labels = BUCKETS.map(b => b.key);
+  const pcts = counts.map(c => totalCounted > 0 ? (c / totalCounted * 100) : 0);
+  const gtShares = sumGt.map(s => totalGt > 0 ? (s / totalGt * 100) : 0);
+  const colors = ["#cbd5e1", "#93c5fd", "#3b82f6", FL_PRIMARY];  // light → navy
+  Plotly.newPlot("fl-ch-gt-bucket", [
+    {
+      name: "척수",
+      x: labels, y: counts, type: "bar", yaxis: "y",
+      marker: { color: colors, line: { color: "#fff", width: 0.5 } },
+      text: counts.map((c, i) => c > 0 ? `${c.toLocaleString()}` : ""),
+      textposition: "outside",
+      cliponaxis: false,
+      hovertemplate: "<b>%{x}</b><br>%{y:,} 척 (%{customdata:.1f}%)<extra></extra>",
+      customdata: pcts,
+    },
+    {
+      name: "GT 점유 %",
+      x: labels, y: gtShares, type: "scatter", mode: "lines+markers",
+      yaxis: "y2",
+      line: { color: FL_ALERT, width: 1.6, dash: "dot" },
+      marker: { color: FL_ALERT, size: 7 },
+      hovertemplate: "<b>%{x}</b><br>GT 점유 %{y:.1f}%<extra></extra>",
+    }
+  ], {
+    margin: { t: 30, l: 40, r: 50, b: 35 },
+    showlegend: true,
+    legend: { font: { size: 9 }, orientation: "h", y: 1.18, x: 0 },
+    xaxis: { tickfont: { size: 10 } },
+    yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
+             gridcolor: "#eef2f7" },
+    yaxis2: { title: { text: "GT 점유 %", font: { size: 10 } }, overlaying: "y",
+              side: "right", tickfont: { size: 10 }, showgrid: false,
+              rangemode: "tozero", ticksuffix: "%" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
+  }, { displayModeBar: false, responsive: true });
+}
+
+// Cycle 9: Top 운영사 카드.
+//   fleet_owners.json (전체 cargo fleet 기준 사전계산) + 현 필터의 척수 cross-check.
+//   필터가 활성화되어 있으면 "현재 필터 적용" 알림 + 필터된 rows에서 재계산.
+function _drawFleetTopOwners(rows, I) {
+  const host = document.getElementById("fl-top-owners");
+  if (!host) return;
+  const tabEl = document.getElementById("tab-fleet");
+  const ownerPayload = tabEl._fleetOwners;
+
+  // 현재 rows 기준으로 owner 재계산. 필터 활성 여부 무관하게 always-fresh.
+  const acc = new Map();
+  for (const r of rows) {
+    const owner = (r[I.owner] || "").trim();
+    if (!owner) continue;
+    const gt = r[I.gt] || 0;
+    const age = r[I.age];
+    const cls = r[I.vc] || "Other";
+    const ent = acc.get(owner) || { owner, vessels: 0, sum_gt: 0,
+                                     age_weight: 0, gt_weight: 0,
+                                     class_mix: {} };
+    ent.vessels += 1;
+    ent.sum_gt += gt;
+    if (gt > 0 && age != null) { ent.age_weight += age * gt; ent.gt_weight += gt; }
+    ent.class_mix[cls] = (ent.class_mix[cls] || 0) + 1;
+    acc.set(owner, ent);
+  }
+  const top = [...acc.values()]
+    .sort((a, b) => b.vessels - a.vessels)
+    .slice(0, 10);
+  if (!top.length) {
+    host.innerHTML = `<div class="text-slate-400 text-[11px] p-4 text-center">필터 결과 운영사 없음</div>`;
+    return;
+  }
+  const maxV = top[0].vessels;
+  const maxGt = Math.max(...top.map(o => o.sum_gt));
+
+  // class mix 색상 (작은 dot 묶음)
+  const CLS_COLOR = {
+    "Container":         "#0284c7",
+    "Bulk Carrier":      "#7c3aed",
+    "Tanker":            "#1A3A6B",
+    "General Cargo":     "#0891b2",
+    "Other Cargo":       "#65a30d",
+    "Passenger Ship":    "#0d9488",
+    "Ferry":             "#14b8a6",
+    "Fishing Vessel":    "#d97706",
+    "Tug/OSV/AHTS":      "#64748b",
+    "Dredger/Special":   "#a8a29e",
+    "Government/Navy/Other": "#6b7280",
+    "UNMAPPED":          "#dc2626",
+    "Other":             "#94a3b8",
+  };
+
+  host.innerHTML = `
+    <div class="grid grid-cols-12 gap-2 text-[10px] font-mono uppercase tracking-wider text-slate-500 px-2 py-1 border-b border-slate-100">
+      <div class="col-span-1 text-right">#</div>
+      <div class="col-span-5">운영사</div>
+      <div class="col-span-2 text-right">척수</div>
+      <div class="col-span-2 text-right">선대 GT</div>
+      <div class="col-span-1 text-right">평균선령</div>
+      <div class="col-span-1">선종 mix</div>
+    </div>
+    ${top.map((o, idx) => {
+      const avgAge = o.gt_weight > 0 ? (o.age_weight / o.gt_weight) : null;
+      const vPct = (o.vessels / maxV * 100).toFixed(1);
+      const gtPct = (o.sum_gt / maxGt * 100).toFixed(1);
+      const totalClass = Object.values(o.class_mix).reduce((a, b) => a + b, 0);
+      const mix = Object.entries(o.class_mix)
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => {
+          const w = (v / totalClass * 100).toFixed(1);
+          const c = CLS_COLOR[k] || "#94a3b8";
+          return `<span class="inline-block h-2.5" style="background:${c};width:${w}%" title="${_esc(k)} ${v}척"></span>`;
+        }).join("");
+      return `
+        <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50">
+          <div class="col-span-1 text-right font-mono text-[10px] text-slate-400">${idx + 1}</div>
+          <div class="col-span-5 truncate text-slate-800" title="${_esc(o.owner)}">${_esc(o.owner)}</div>
+          <div class="col-span-2 text-right font-mono">
+            <div class="text-[11px]">${o.vessels.toLocaleString()}</div>
+            <div class="h-1 rounded bg-slate-100 mt-0.5">
+              <div class="h-1 rounded" style="width:${vPct}%;background:${FL_PRIMARY}"></div>
+            </div>
+          </div>
+          <div class="col-span-2 text-right font-mono">
+            <div class="text-[11px]">${fmtTon(o.sum_gt)}</div>
+            <div class="h-1 rounded bg-slate-100 mt-0.5">
+              <div class="h-1 rounded" style="width:${gtPct}%;background:#3b82f6"></div>
+            </div>
+          </div>
+          <div class="col-span-1 text-right font-mono text-[11px] ${avgAge != null && avgAge >= 25 ? 'text-rose-600' : 'text-slate-700'}">${avgAge != null ? avgAge.toFixed(1) : '—'}</div>
+          <div class="col-span-1 flex h-2.5 rounded overflow-hidden">${mix}</div>
+        </div>`;
+    }).join("")}
+    <div class="text-[10px] text-slate-400 px-2 pt-2">
+      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개</em>
+    </div>`;
 }
 
 const _FLEET_CLASS_COLORS = {
