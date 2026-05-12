@@ -415,8 +415,11 @@
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center justify-between mb-1">
-            <div class="text-xs font-mono text-slate-700">Vessel Type TOP 15 <span class="text-[10px] text-slate-400">(클릭 필터)</span></div>
-            <div class="text-[10px] text-slate-400">색상 = scope</div>
+            <div class="text-xs font-mono text-slate-700"><span id="fl-type-title">Vessel Type TOP 15</span> <span class="text-[10px] text-slate-400">(클릭 필터)</span></div>
+            <label class="text-[10px] text-slate-500 inline-flex items-center gap-1 cursor-pointer">
+              <input id="fl-type-show-all" type="checkbox" class="accent-slate-700">
+              <span>전체 보기</span>
+            </label>
           </div>
           <!-- Cycle 12: scope 색상 범례 — Vessel Type 차트 막대 색상 의미 명시 -->
           <div class="flex items-center gap-3 mb-2 text-[10px] text-slate-600">

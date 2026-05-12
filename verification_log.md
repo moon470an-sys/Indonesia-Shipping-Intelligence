@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 26 검증 — 2026-05-12 (Supply 탭 18차 — Type 전체 보기 + thead shadow)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Vessel Type 차트 "전체 보기" 토글 | ✅ Cycle 26 | TOP 15 ↔ ALL (53). 동적 height (53 × 18 = 954px). localStorage 영속 |
+| sticky thead box-shadow | ✅ Cycle 26 | 스크롤 시 thead와 본문 분리 — rgba(15,23,42,0.08) 0 2px 4px -2px |
+| 화면 결과 (smoke test) | ✅ default: "TOP 15" / 15 bars / 280px. ALL: "Vessel Type ALL (53)" / 53 bars / 954px. thead shadow 적용 | playwright |
+
+### 횡단
+- 원칙 lint ✅. 정보 접근성 강화 — TOP 15 외 추가 53개 type까지 조회 가능.
+
 ## Cycle 25 검증 — 2026-05-12 (Supply 탭 17차 — chips sticky + filter badge + pagination polish)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

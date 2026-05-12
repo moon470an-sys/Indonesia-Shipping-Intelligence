@@ -2565,6 +2565,17 @@ function _wireFleetFilters() {
       _renderFleetView();
     });
   }
+  // Cycle 26: Vessel Type 차트 "전체 보기" 토글
+  const tsa = document.getElementById("fl-type-show-all");
+  if (tsa && !tsa.dataset.bound) {
+    tsa.dataset.bound = "1";
+    const stored = localStorage.getItem("fl_typeShowAll");
+    if (stored === "1") tsa.checked = true;
+    tsa.addEventListener("change", () => {
+      try { localStorage.setItem("fl_typeShowAll", tsa.checked ? "1" : "0"); } catch (e) {}
+      _renderFleetView();
+    });
+  }
   // Cycle 22: Top 운영사 sort 선택
   const os = document.getElementById("fl-owner-sort");
   if (os && !os.dataset.bound) {
@@ -3101,7 +3112,17 @@ function _drawFlChartType(rows, I) {
     const j = r[I.jenis] || "(blank)";
     counts.set(j, (counts.get(j) || 0) + 1);
   }
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
+  // Cycle 26: 전체 보기 토글
+  const showAll = document.getElementById("fl-type-show-all")?.checked || false;
+  const limit = showAll ? 999 : 15;
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+  const totalShown = top.length;
+  const titleEl = document.getElementById("fl-type-title");
+  if (titleEl) {
+    titleEl.textContent = showAll
+      ? `Vessel Type ALL (${totalShown.toLocaleString()})`
+      : `Vessel Type TOP 15`;
+  }
   const labels = top.map(t => t[0]).reverse();
   const ys = top.map(t => t[1]).reverse();
   const SCOPE_COLOR = {
@@ -3112,6 +3133,13 @@ function _drawFlChartType(rows, I) {
     const scope = (byJenis[lbl] && byJenis[lbl].scope) || "cargo";
     return SCOPE_COLOR[scope] || FL_PRIMARY;
   });
+  // Cycle 26: showAll 시 chart height 증가 (rows × ~18px). 부모 컨테이너 height inline 설정.
+  const chartEl = document.getElementById("fl-ch-type");
+  if (chartEl && showAll) {
+    chartEl.style.height = Math.max(280, totalShown * 18) + "px";
+  } else if (chartEl) {
+    chartEl.style.height = "280px";
+  }
   Plotly.newPlot("fl-ch-type", [{
     x: ys, y: labels, type: "bar", orientation: "h",
     marker: { color: colors, line: { color: "#fff", width: 0.5 } },
