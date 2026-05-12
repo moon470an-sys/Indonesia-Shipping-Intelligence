@@ -166,3 +166,32 @@
 
 ### 사이클 종료
 - Cycle 4 완료. 사용자 요청 4건 (①②③④) 모두 처리됨.
+
+## Cycle 5 검증 — 2026-05-12
+
+### Demand 탭
+
+- ✅ scope-strip(화물선/보조선/제외) 삭제 — Demand 탭 한정. 다른 탭은 유지.
+- ✅ 시계열 차트 — stacked area → 월별 stacked bar. YoY 토글 제거.
+  절대값(ton) 고정, x축 category, bargap 0.18.
+- ✅ cv-app 코모디티 패널 — 40개 평면 목록 → 7개 카테고리(Crude/Gas/
+  Palm/Bulk/Container/Vehicle/Other) 드롭다운 트리. 펼침/접힘 토글
+  유지, 선택 코모디티 자동 펼침.
+- ✅ 항만 tooltip — 4셀(DOM/INTL × 하역/선적)은 _cvBuildPorts가 이미
+  선택 코모디티 한정 합산. footer 라벨 "선택 화물 N종 합계" 명시.
+- ✅ 라우트 tooltip — 신규 CV_COMM_TO_ROUTE_CAT 매핑으로 선택 화물에
+  매칭되는 카테고리만 breakdown 표시. footer total 필터 후 합산.
+- ✅ 라우트 곡선 — 직선 polyline → 33점 quadratic Bezier 곡선. 컨트롤
+  포인트 = perpendicular offset 18% (시계방향 90°). 입자 애니메이션도
+  동일 곡선 위에서 보간. STS 자기루프는 곡선 미적용.
+
+### Supply / Balance / Explorer 탭
+- 본 사이클 변경 없음. scope-strip 유지.
+
+### 횡단(원칙) 위반 점검
+- 원칙 1·2·4·5·6 통과.
+- 원칙 3 (시계열·탐색 병행) — bar chart 가 stacked area 보다 월별
+  관측에 더 적합. 카테고리 드롭다운으로 세부 화물 탐색성 강화. 통과.
+
+### 사이클 종료
+- Cycle 5 완료. 사용자 요청 5건 (①②③④⑤) 모두 처리됨.
