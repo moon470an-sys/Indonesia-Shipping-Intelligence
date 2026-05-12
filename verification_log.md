@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 37 검증 — 2026-05-12 (Supply 탭 29차 — multi-breakpoint visual audit)
+
+### Supply 탭 (🚢 — id: tab-fleet) — 시각 audit
+
+| Breakpoint | 가로 overflow | KPI | 8 차트 SVG | 비고 |
+|------------|---------------|-----|-----------|------|
+| desktop_1400 | 없음 | OK | 모두 정상 | 4-col KPI grid |
+| tablet_1024 | 없음 | OK | 모두 정상 | 2-col KPI grid (lg breakpoint 적용) |
+| tablet_768 | 없음 | OK | 모두 정상 | 2-col KPI grid, alert breakdown 깨지지 않음 |
+| mobile_390 | 없음 | OK | 모두 정상 | 2x2 KPI, scope chips wrap, 차트 단일 column |
+
+### 횡단
+- 코드 변경 없음 (시각 audit only). 모든 breakpoint에서 정상 동작 확인.
+
 ## Cycle 36 검증 — 2026-05-12 (Supply 탭 28차 — scroll-to-top 버튼)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
