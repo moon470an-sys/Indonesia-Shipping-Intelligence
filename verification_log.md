@@ -3,6 +3,32 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 53 검증 — 2026-05-13 (Supply 탭 45차 — 데이터 무결성 audit)
+
+### fleet_vessels.json (91,807 rows) 필드 완전성
+
+| 필드 | 결측/zero | 비율 | 처리 |
+|------|----------|------|------|
+| nama | 1 | 0.0% | 무시 가능 |
+| owner | 0 | 0.0% | 완전 |
+| jenis | 0 | 0.0% | 완전 |
+| gt | 24 | 0.0% | KPI/차트에서 gt>0만 집계 (이미 처리) |
+| loa | 1,560 | 1.7% | 평균 계산 시 0 제외 (이미 처리) |
+| tahun | 2,016 | 2.2% | age 결측과 일치 |
+| age | 2,016 | 2.2% | KPI/노후 계산에서 결측 분모 제외 (이미 처리) |
+| flag | 88,959 | **96.9%** | 'Indonesia' default fallback (이미 처리) — 데이터 원천 한계 |
+| scope | 0 | 0.0% | 완전 |
+
+### 통계 범위 sanity
+- age: 0 ~ 126년 (126y vessel = 1900년 건조, 30+ bucket 처리)
+- gt: 0.8 ~ 164,630 (소형 보트 ~ LNG carrier)
+- scope: cargo 29,574 / auxiliary 11,561 / excluded 50,580 / unclassified 92 (scope_audit.json과 일치)
+
+### 결론
+- 데이터 무결성 양호. 모든 결측 케이스가 dashboard 코드에서 이미 안전하게 처리됨.
+- flag 96.9% 결측은 원천 데이터 (kapal.dephub.go.id) 한계 — 변경 불가.
+- 코드 변경 없음.
+
 ## Cycle 52 검증 — 2026-05-13 (Supply 탭 44차 — HHI 시장 집중도)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
