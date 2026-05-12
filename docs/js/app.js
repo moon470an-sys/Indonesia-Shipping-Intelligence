@@ -2133,6 +2133,19 @@ async function renderFleet() {
   } catch (e) {
     tabEl._fleetOwnerProfile = null;
   }
+  // Cycle 49: owner_ticker_map.json — IDX 상장사 ticker → owner name 매핑.
+  //   각 owner를 normalize해 비교. 매치 시 정확한 ticker 표시.
+  try {
+    const tmap = await loadDerived("owner_ticker_map.json");
+    const reverse = new Map();  // owner_norm → ticker
+    const norm = (s) => String(s || "").toUpperCase().replace(/PT\.?\s*/g, "").replace(/[^A-Z0-9]/g, "");
+    for (const [ticker, owners] of Object.entries(tmap.tickers || {})) {
+      for (const o of owners) reverse.set(norm(o), ticker);
+    }
+    tabEl._fleetOwnerTicker = reverse;
+  } catch (e) {
+    tabEl._fleetOwnerTicker = null;
+  }
   // Cycle 28: baseline 평균 GT / LOA — alert 비교용 (cargo + auxiliary 전체 기준)
   tabEl._fleetBaseline = _computeFleetBaseline(fv);
   // Cycle 35: vessel detail 컨텍스트용 — class median GT + owner total 사전 계산
@@ -4112,9 +4125,13 @@ function _drawFleetTopOwners(rows, I) {
         <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50 transition-colors"
              data-owner-row="${_esc(o.owner)}" title="${_esc(tooltip)}">
           <div class="col-span-1 text-right">${rankBadge}</div>
-          <div class="col-span-3 truncate text-slate-800 text-[12px] flex items-center gap-1" title="${_esc(o.owner)}${_ownerIsIdxListed(o.owner) ? ' · IDX 상장' : ''}">
+          <div class="col-span-3 truncate text-slate-800 text-[12px] flex items-center gap-1" title="${_esc(o.owner)}${_ownerIdxTicker(o.owner) ? ' · IDX ' + _ownerIdxTicker(o.owner) : ''}">
             <span class="truncate">${_esc(o.owner)}</span>
-            ${_ownerIsIdxListed(o.owner) ? '<span class="inline-block px-1 py-px text-[8px] font-mono rounded bg-blue-100 text-blue-700 flex-shrink-0" title="인도네시아 IDX 상장사 (Tbk-suffix)">IDX</span>' : ''}
+            ${(() => {
+              const t = _ownerIdxTicker(o.owner);
+              if (!t) return '';
+              return `<span class="inline-block px-1 py-px text-[8px] font-mono rounded bg-blue-100 text-blue-700 flex-shrink-0" title="IDX 상장사 — 티커 ${_esc(t)}">${_esc(t)}</span>`;
+            })()}
           </div>
           <div class="col-span-2 text-right font-mono">
             <div class="text-[11px]">${o.vessels.toLocaleString()}</div>
@@ -4406,13 +4423,24 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal, st) {
 }
 
 // Cycle 11: 운영사명에서 IDX 상장 여부 추정.
-//   ".Tbk" 또는 " TBK" 가 회사명 말미에 붙어 있으면 인도네시아 상장.
-//   memory note: IDX-listed tanker owners = AKRA / BLTA / BULL / GTSI (Tbk-suffix).
-//   해당 회사들은 owner 문자열에 명시적 'Tbk' 가 들어있다.
-function _ownerIsIdxListed(owner) {
-  if (!owner) return false;
+//   ".Tbk" / "TBK" suffix 매치 OR owner_ticker_map.json 명시적 매핑.
+// Cycle 49: owner_ticker_map.json 매핑 우선 (정확한 ticker 반환), fallback Tbk regex.
+function _ownerIdxTicker(owner) {
+  if (!owner) return null;
+  const tabEl = document.getElementById("tab-fleet");
+  const map = tabEl?._fleetOwnerTicker;
+  if (map) {
+    const norm = String(owner).toUpperCase().replace(/PT\.?\s*/g, "").replace(/[^A-Z0-9]/g, "");
+    const t = map.get(norm);
+    if (t) return t;
+  }
+  // Fallback: Tbk-suffix detection (ticker unknown → return "Tbk")
   const s = String(owner).toUpperCase();
-  return /\.\s*TBK\b/.test(s) || /\bTBK\b/.test(s);
+  if (/\.\s*TBK\b/.test(s) || /\bTBK\b/.test(s)) return "Tbk";
+  return null;
+}
+function _ownerIsIdxListed(owner) {
+  return _ownerIdxTicker(owner) !== null;
 }
 
 // Cycle 11: 노후 × class 히트맵. 7 age bucket × 7 class.

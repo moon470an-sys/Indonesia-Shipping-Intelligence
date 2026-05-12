@@ -3,6 +3,20 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 49 검증 — 2026-05-13 (Supply 탭 41차 — IDX ticker 정확 매핑)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| owner_ticker_map.json 로드 | ✅ Cycle 49 | 7 IDX 상장사 mapping (BLTA/BULL/SMDR/ELPI/SOCI/GTSI/HUMI) → owner_norm Map |
+| _ownerIdxTicker() 함수 | ✅ Cycle 49 | map 매치 우선 (정확한 ticker), fallback Tbk-suffix regex → "Tbk" |
+| Top 운영사 chip — IDX → ticker | ✅ Cycle 49 | "IDX" → 실제 ticker (SMDR/BLTA/HUMI 등) 표시 |
+| 화면 결과 (smoke test) | ✅ PT. SAMUDERA INDONESIA → 'SMDR' chip 정확 표시. map.get('SAMUDERAINDONESIA') → 'SMDR' | playwright |
+
+### 횡단
+- 원칙 lint ✅. 미사용 derived 파일 활용 — IDX 식별 정확도 향상.
+
 ## Cycle 48 검증 — 2026-05-12 (Supply 탭 40차 — 40 사이클 누적 기능 regression smoke)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
