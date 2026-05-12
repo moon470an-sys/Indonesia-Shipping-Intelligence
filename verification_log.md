@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 39 검증 — 2026-05-12 (Supply 탭 31차 — JSON export)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| JSON export 옵션 | ✅ Cycle 39 | CSV 옆 `{ } JSON` 버튼. 적용 필터 메타 + 데이터 배열을 JSON으로 다운로드 |
+| 메타 페이로드 구조 | ✅ Cycle 39 | exported_at, source, snapshot_month, build_at, filters{...}, total_rows_full, rows_in_export, data[] |
+| 화면 결과 (smoke test) | ✅ 25y+ 필터 적용 후 JSON 다운로드 → 12,433 rows, filters: {tahun_max: 2001}, firstRow LNG LADY EVA 완전 object | playwright |
+
+### 횡단
+- 원칙 lint ✅. 데이터 분석가 친화 — Python pandas, Excel Power Query 등에서 직접 로드 가능. 메타데이터로 재현성 보장.
+
 ## Cycle 38 검증 — 2026-05-12 (Supply 탭 30차 — print stylesheet)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

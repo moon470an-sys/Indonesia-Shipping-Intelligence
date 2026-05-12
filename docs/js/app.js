@@ -2648,6 +2648,12 @@ function _wireFleetFilters() {
     csv.dataset.bound = "1";
     csv.addEventListener("click", _fleetCsvDownload);
   }
+  // Cycle 39: JSON export
+  const jsn = document.getElementById("fl-json");
+  if (jsn && !jsn.dataset.bound) {
+    jsn.dataset.bound = "1";
+    jsn.addEventListener("click", _fleetJsonDownload);
+  }
   // Cycle 14: page size 선택. Cycle 18: 변경 시 localStorage 저장.
   const ps = document.getElementById("fl-page-size");
   if (ps && !ps.dataset.bound) {
@@ -3192,6 +3198,75 @@ function _esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
+}
+
+// Cycle 39: JSON export — 적용 필터 메타데이터 + 데이터 배열
+function _fleetJsonDownload() {
+  const tabEl = document.getElementById("tab-fleet");
+  const fv = tabEl._fleetVessels;
+  if (!fv) return;
+  const { rows, I } = _applyFleetFilters();
+  const st = tabEl._fleetState;
+  // 필터 메타데이터
+  const filters = {};
+  if (st.scopeOnly) filters.scope_only = st.scopeOnly;
+  if (st.vcFilter) filters.vessel_class = st.vcFilter;
+  if (st.flagFilter) filters.flag = st.flagFilter;
+  if (st.ownerExact) filters.owner_exact = st.ownerExact;
+  if (st.name) filters.name_substring = st.name;
+  if (st.jenis.size) filters.jenis_detail_ket = { values: [...st.jenis], exclude: st.jenisExclude };
+  if (st.yrMin != null) filters.tahun_min = st.yrMin;
+  if (st.yrMax != null) filters.tahun_max = st.yrMax;
+  if (st.gtMin != null) filters.gt_min = st.gtMin;
+  if (st.gtMax != null) filters.gt_max = st.gtMax;
+  if (st.loaMin != null) filters.loa_min = st.loaMin;
+  if (st.loaMax != null) filters.loa_max = st.loaMax;
+  if (st.widthMin != null) filters.width_min = st.widthMin;
+  if (st.widthMax != null) filters.width_max = st.widthMax;
+  if (st.depthMin != null) filters.depth_min = st.depthMin;
+  if (st.depthMax != null) filters.depth_max = st.depthMax;
+  if (scopeState.hideExcluded === false) filters.include_excluded = true;
+  // 데이터 변환 (object 배열로)
+  const data = rows.map(r => ({
+    nama_kapal: r[I.nama],
+    nama_pemilik: r[I.owner],
+    sector: r[I.sector],
+    vessel_class: r[I.vc],
+    jenis_detail_ket: r[I.jenis],
+    tanker_subclass: r[I.ts] || null,
+    gt: r[I.gt],
+    loa: r[I.loa],
+    lebar: r[I.lebar],
+    dalam: r[I.dalam],
+    tahun: r[I.tahun],
+    age: r[I.age],
+    flag: r[I.flag] || "Indonesia",
+    mesin: r[I.mesin] || null,
+    mesin_type: r[I.mesin_type] || null,
+    imo: r[I.imo] || null,
+    call_sign: r[I.call_sign] || null,
+    scope: r[I.scope],
+  }));
+  const meta = state.meta || {};
+  const payload = {
+    exported_at: new Date().toISOString(),
+    source: "kapal.dephub.go.id (vessels snapshot)",
+    snapshot_month: meta.latest_vessel_snapshot_month || null,
+    build_at: meta.build_at || null,
+    filters,
+    total_rows_full: fv.rows.length,
+    rows_in_export: data.length,
+    data,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `fleet_${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
 }
 
 function _fleetCsvDownload() {
