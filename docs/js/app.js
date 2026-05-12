@@ -1138,11 +1138,8 @@ async function boot() {
 // Single source of truth — each tab's strip pulls its counts from state.scope.
 function populateScopeStrips() {
   const s = state.scope?.totals || {};
+  // Cycle 5: Demand 탭의 scope-n-* 키들은 HTML에서 제거됨 — populator에서도 누락.
   const ids = {
-    "scope-n-cargo":  s.cargo,
-    "scope-n-aux":    s.auxiliary,
-    "scope-n-excl":   s.excluded,
-    "scope-n-unc":    s.unclassified,
     "fl-scope-cargo": s.cargo,
     "fl-scope-aux":   s.auxiliary,
     "fl-scope-excl":  s.excluded,
@@ -1419,28 +1416,7 @@ const CARGO_CATEGORY_ORDER = [
 
 function renderHomeTimeseries(payload) {
   homeTsState.payload = payload;
-  const toggleHost = document.getElementById("home-ts-toggle");
-  if (toggleHost && !toggleHost.dataset.wired) {
-    toggleHost.innerHTML = `
-      <button data-mode="abs" class="px-2 py-1 rounded border border-slate-200 bg-slate-800 text-white">절대값</button>
-      <button data-mode="yoy" class="px-2 py-1 rounded border border-slate-200 bg-white hover:bg-slate-100">YoY %</button>`;
-    toggleHost.dataset.wired = "1";
-    toggleHost.addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-      homeTsState.mode = btn.dataset.mode;
-      toggleHost.querySelectorAll("button").forEach(b => {
-        if (b.dataset.mode === homeTsState.mode) {
-          b.classList.add("bg-slate-800", "text-white");
-          b.classList.remove("bg-white", "hover:bg-slate-100");
-        } else {
-          b.classList.remove("bg-slate-800", "text-white");
-          b.classList.add("bg-white", "hover:bg-slate-100");
-        }
-      });
-      drawHomeTimeseries();
-    });
-  }
+  homeTsState.mode = "abs";   // Cycle 5: 절대값 고정, YoY 토글 제거
   drawHomeTimeseries();
 }
 
@@ -1479,6 +1455,7 @@ function _buildCargoCategorySeries(cm) {
   return { periods, series };
 }
 
+// Cycle 5: stacked area → 월별 stacked bar (절대값만). YoY 토글 제거.
 function drawHomeTimeseries() {
   const cm = homeState && homeState.cargoMonthly;
   const built = _buildCargoCategorySeries(cm);
@@ -1487,7 +1464,6 @@ function drawHomeTimeseries() {
     periods = built.periods;
     series  = built.series;
   } else {
-    // Fallback: legacy sector stacked area (CARGO만 필터).
     const payload = homeTsState.payload;
     if (!payload) return;
     periods = payload.periods || [];
@@ -1496,36 +1472,29 @@ function drawHomeTimeseries() {
       .map(s => ({ name: "CARGO", color: "#1A3A6B", y: (s.ton_by_period || []).slice() }));
   }
 
-  const traces = series.map(s => {
-    let y = s.y.slice();
-    if (homeTsState.mode === "yoy") {
-      y = y.map((v, i) => {
-        if (i < 12 || !s.y[i - 12]) return null;
-        return ((v - s.y[i - 12]) / s.y[i - 12]) * 100;
-      });
-    }
-    return {
-      x: periods, y,
-      name: s.name,
-      type: "scatter",
-      mode: "lines",
-      stackgroup: homeTsState.mode === "abs" ? "cargo" : null,
-      line: { color: s.color, width: homeTsState.mode === "abs" ? 0.5 : 2 },
-      fillcolor: s.color,
-      hovertemplate: homeTsState.mode === "abs"
-        ? `<b>%{x}</b><br>${s.name}: %{y:,.0f} tons<extra></extra>`
-        : `<b>%{x}</b><br>${s.name}: %{y:.1f}%<extra></extra>`,
-    };
-  });
+  const traces = series.map(s => ({
+    x: periods,
+    y: s.y.slice(),
+    name: s.name,
+    type: "bar",
+    marker: { color: s.color, line: { width: 0 } },
+    hovertemplate: `<b>%{x}</b><br>${s.name}: %{y:,.0f} tons<extra></extra>`,
+  }));
 
   Plotly.newPlot("home-timeseries", traces, {
-    margin: { t: 10, l: 60, r: 20, b: 50 },
-    xaxis: { tickangle: -40 },
-    yaxis: {
-      title: homeTsState.mode === "abs" ? "ton (CARGO 카테고리 stacked)" : "YoY %",
-      zeroline: homeTsState.mode === "yoy",
+    barmode: "stack",
+    bargap: 0.18,
+    margin: { t: 10, l: 60, r: 20, b: 60 },
+    xaxis: {
+      tickangle: -40,
+      type: "category",
+      tickfont: { size: 10 },
     },
-    legend: { orientation: "h", y: -0.25, font: { size: 10 } },
+    yaxis: {
+      title: "ton (CARGO 카테고리 stacked)",
+      tickformat: "~s",
+    },
+    legend: { orientation: "h", y: -0.32, font: { size: 10 } },
     hovermode: "x unified",
   }, { displayModeBar: false, responsive: true });
 }
@@ -2932,36 +2901,36 @@ function _cvDrawFlowFrame(dtMs) {
     const r = routes[part.routeIdx];
     if (!r || r.origin === r.destination) continue;
     part.t = (part.t + dtMs * _CV_FLOW_SPEED) % 1;
-    const o = _cvState.map.latLngToContainerPoint([r.lat_o, r.lon_o]);
-    const d = _cvState.map.latLngToContainerPoint([r.lat_d, r.lon_d]);
-    const x = o.x + (d.x - o.x) * part.t;
-    const y = o.y + (d.y - o.y) * part.t;
+    // Cycle 5: 입자 위치도 quadratic Bezier 곡선 위에서 보간.
+    const headLatLon = _cvBezierAt(r, part.t);
+    if (!headLatLon) continue;
+    const tailT = Math.max(0, part.t - 0.06);
+    const tailLatLon = _cvBezierAt(r, tailT);
+    const head = _cvState.map.latLngToContainerPoint([headLatLon.lat, headLatLon.lon]);
+    const tail = _cvState.map.latLngToContainerPoint([tailLatLon.lat, tailLatLon.lon]);
     const color = _cvCatColor(r.category);
     const v = r.ton_24m || 0;
     const radius = 1.8 + Math.sqrt(v / maxV) * 2.6;
-    // Glow trail (back-tail of length 0.07 of segment)
-    const tailT = Math.max(0, part.t - 0.06);
-    const tx = o.x + (d.x - o.x) * tailT;
-    const ty = o.y + (d.y - o.y) * tailT;
-    const grd = ctx.createLinearGradient(tx, ty, x, y);
+    // Trail (back-tail along the curve)
+    const grd = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
     grd.addColorStop(0, color + "00");
     grd.addColorStop(1, color + "cc");
     ctx.strokeStyle = grd;
     ctx.lineWidth = radius * 0.9;
     ctx.lineCap = "round";
     ctx.beginPath();
-    ctx.moveTo(tx, ty);
-    ctx.lineTo(x, y);
+    ctx.moveTo(tail.x, tail.y);
+    ctx.lineTo(head.x, head.y);
     ctx.stroke();
     // Bright head dot
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.arc(head.x, head.y, radius, 0, Math.PI * 2);
     ctx.fill();
     // White inner highlight
     ctx.fillStyle = "rgba(255,255,255,0.85)";
     ctx.beginPath();
-    ctx.arc(x, y, radius * 0.35, 0, Math.PI * 2);
+    ctx.arc(head.x, head.y, radius * 0.35, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -3058,25 +3027,102 @@ function _cvCommodityTotals(key) {
 function _cvFmt(n) { return (n || 0).toLocaleString("ko-KR"); }
 function _cvFmtM(n) { return ((n || 0) / 1e6).toFixed(2) + "M"; }
 
+// Cycle 5: cv-app 코모디티 패널을 카테고리 그룹 드롭다운으로 재구성.
+// 각 카테고리는 헤더 (이름 + 합계 + ▼/▶ 토글) + 펼침 상태의 세부 코모디티
+// 리스트로 구성. 카테고리 토글 상태는 _cvState.openCategories Set 에 보존.
+const CV_CATEGORY_GROUPS = [
+  { key: "crude",      label: "Crude / 정제유 (BBM)",  members: ["CRUDE OIL","OMAN BLEND CRUDE OIL","CONDENSATE","PERTALITE","PERTAMAX","AVTUR","HSD","BIO SOLAR","MFO/HSFO","METHANOL","ASPAL/BITUMEN"] },
+  { key: "gas",        label: "Gas (LPG·LNG)",         members: ["LPG","LNG"] },
+  { key: "palm",       label: "Palm / 식용유",         members: ["CPO","RBD PALM OIL","RBD PALM OLEIN","OLEIN","PKO","STEARIN","FAME"] },
+  { key: "bulk",       label: "Dry Bulk (광물·곡물·시멘트)", members: ["BATU BARA CURAH KERING","COAL","NICKEL ORE","BAUXITE","IRON ORE","LIMESTONE","WOOD CHIP","SEMEN CURAH","SEMEN","PUPUK","BERAS","SALT","CHEMICAL"] },
+  { key: "container",  label: "Container / General",   members: ["CONTAINER","GENERAL CARGO","BARANG"] },
+  { key: "vehicle",    label: "차량",                  members: ["MOBIL","TRUK","MOTOR"] },
+  { key: "other",      label: "기타 (어획·가축·미분류)",     members: ["IKAN","TERNAK","기타"] },
+];
+
+function _cvCategoryOf(commKey) {
+  for (const g of CV_CATEGORY_GROUPS) {
+    if (g.members.includes(commKey)) return g.key;
+  }
+  return "other";
+}
+
 function _cvBuildCommodityList() {
   const list = document.getElementById("cv-comm-list");
   if (!list) return;
+  if (!_cvState.openCategories) {
+    _cvState.openCategories = new Set();   // 초기: 모두 접힘
+  }
   list.innerHTML = "";
+
+  // Pre-compute totals + presence per category.
+  const byCat = new Map();
   for (const c of _cvState.COMMS) {
-    const nat = _cvCommodityTotals(c.key);
-    const tot = (nat.dU + nat.dS + nat.iU + nat.iS) / 1e6;
-    const on = _cvState.selComms.has(c.key);
-    const row = document.createElement("div");
-    row.className = "cv-comm-row" + (on ? " selected" : "");
-    row.style.color = c.col;
-    row.dataset.key = c.key;
-    row.innerHTML =
-      `<div class="cv-chk"><svg class="cv-chk-svg" viewBox="0 0 10 10" fill="none"><path d="M1.5 5L4 7.5L8.5 2.5" stroke="${c.col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` +
-      `<span class="cv-sw" style="background:${c.col}"></span>` +
-      `<span class="cv-comm-name">${c.lbl}</span>` +
-      `<span class="cv-comm-vol">${tot.toFixed(1)}M</span>`;
-    row.onclick = () => _cvHandleCommClick(c.key);
-    list.appendChild(row);
+    const catKey = _cvCategoryOf(c.key);
+    if (!byCat.has(catKey)) byCat.set(catKey, []);
+    byCat.get(catKey).push(c);
+  }
+
+  for (const g of CV_CATEGORY_GROUPS) {
+    const items = byCat.get(g.key) || [];
+    if (!items.length) continue;
+    // Category-level aggregate ton + any-selected indicator
+    let catTon = 0, anySelected = false;
+    for (const c of items) {
+      const nat = _cvCommodityTotals(c.key);
+      catTon += (nat.dU + nat.dS + nat.iU + nat.iS);
+      if (_cvState.selComms.has(c.key)) anySelected = true;
+    }
+    const open = _cvState.openCategories.has(g.key);
+    const caret = open ? "▼" : "▶";
+    const head = document.createElement("div");
+    head.className = "cv-cat-head";
+    head.dataset.cat = g.key;
+    head.innerHTML =
+      `<span class="cv-cat-caret">${caret}</span>` +
+      `<span class="cv-cat-name">${g.label}</span>` +
+      (anySelected ? `<span class="cv-cat-dot" title="이 카테고리 내 선택 중"></span>` : "") +
+      `<span class="cv-cat-vol">${(catTon/1e6).toFixed(1)}M</span>`;
+    head.onclick = () => {
+      if (_cvState.openCategories.has(g.key)) _cvState.openCategories.delete(g.key);
+      else _cvState.openCategories.add(g.key);
+      _cvBuildCommodityList();
+    };
+    list.appendChild(head);
+
+    if (!open) continue;
+    // Sort items inside the category by ton desc.
+    items.sort((a, b) => {
+      const va = (() => { const x = _cvCommodityTotals(a.key); return x.dU+x.dS+x.iU+x.iS; })();
+      const vb = (() => { const x = _cvCommodityTotals(b.key); return x.dU+x.dS+x.iU+x.iS; })();
+      return vb - va;
+    });
+    for (const c of items) {
+      const nat = _cvCommodityTotals(c.key);
+      const tot = (nat.dU + nat.dS + nat.iU + nat.iS) / 1e6;
+      const on = _cvState.selComms.has(c.key);
+      const row = document.createElement("div");
+      row.className = "cv-comm-row cv-comm-row-nested" + (on ? " selected" : "");
+      row.style.color = c.col;
+      row.dataset.key = c.key;
+      row.innerHTML =
+        `<div class="cv-chk"><svg class="cv-chk-svg" viewBox="0 0 10 10" fill="none"><path d="M1.5 5L4 7.5L8.5 2.5" stroke="${c.col}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>` +
+        `<span class="cv-sw" style="background:${c.col}"></span>` +
+        `<span class="cv-comm-name">${c.lbl}</span>` +
+        `<span class="cv-comm-vol">${tot.toFixed(1)}M</span>`;
+      row.onclick = () => _cvHandleCommClick(c.key);
+      list.appendChild(row);
+    }
+  }
+
+  // If a selected commodity falls into a folded category, auto-open it once.
+  for (const k of _cvState.selComms) {
+    const catKey = _cvCategoryOf(k);
+    if (!_cvState.openCategories.has(catKey)) {
+      _cvState.openCategories.add(catKey);
+      _cvBuildCommodityList();   // re-render to reflect the auto-open
+      return;
+    }
   }
 }
 
@@ -3185,10 +3231,14 @@ function _cvToggleAll() {
   _cvRebuild();
 }
 
+// Cycle 5: tooltip 4셀 + 총합을 **선택 화물 한정 값**으로 계산. p의 dU/dS/iU/iS
+// 는 _cvBuildPorts 가 이미 선택 코모디티만 합산한 값을 넣어주므로 그대로 사용.
+// 헤더에 선택 화물 라벨 명시.
 function _cvTooltip(p) {
   const selArr = [..._cvState.selComms];
+  const COMMS = _cvState.COMMS;
   const tags = selArr.slice(0, 8).map(k => {
-    const c = _cvState.COMMS.find(x => x.key === k);
+    const c = COMMS.find(x => x.key === k);
     if (!c) return "";
     return `<span class="cv-tt-tag" style="background:${c.col}20;color:${c.col};border:1px solid ${c.col}40">${c.lbl}</span>`;
   }).join("") + (selArr.length > 8 ? `<span class="cv-tt-tag" style="background:#fff1;color:#7A8FB5">+${selArr.length - 8}</span>` : "");
@@ -3203,7 +3253,7 @@ function _cvTooltip(p) {
       <div class="cv-tt-cell"><div class="cv-tt-cl">🔵 INTL 선적</div><div class="cv-tt-cv" style="color:#1E3A8A">${_cvFmt(p.iS || 0)}</div></div>
     </div>
     <hr class="cv-tt-sep">
-    <div class="cv-tt-foot"><span class="cv-tt-fl">선택 화물 전체 합계</span><span class="cv-tt-fv">${_cvFmt(total)} TON</span></div>`;
+    <div class="cv-tt-foot"><span class="cv-tt-fl">선택 화물 ${selArr.length}종 합계</span><span class="cv-tt-fv">${_cvFmt(total)} TON</span></div>`;
 }
 
 // Cycle 4: 항만 동그라미는 더 이상 톤에 비례한 큰 마커가 아니라,
@@ -3289,29 +3339,111 @@ function _cvCatColor(name) {
   return (cat && cat.color) || "#475569";
 }
 
+// Cycle 5: route tooltip 을 **선택 화물과 매칭되는 카테고리만** 표시하도록 변경.
+// cv-app commodity (e.g. "CRUDE OIL") → map_flow 카테고리 (e.g. "Crude") 매핑을
+// 사용. 선택 화물 매칭이 없으면 안내 메시지.
+const CV_COMM_TO_ROUTE_CAT = {
+  "CRUDE OIL": "Crude", "OMAN BLEND CRUDE OIL": "Crude",
+  "PERTALITE": "Product / BBM", "PERTAMAX": "Product / BBM", "AVTUR": "Product / BBM",
+  "HSD": "Product / BBM", "BIO SOLAR": "Product / BBM", "MFO/HSFO": "Product / BBM",
+  "METHANOL": "Product / BBM", "ASPAL/BITUMEN": "Product / BBM", "CONDENSATE": "Product / BBM",
+  "CHEMICAL": "Chemical",
+  "LPG": "LPG / LNG", "LNG": "LPG / LNG",
+  "CPO": "FAME / Edible", "RBD PALM OIL": "FAME / Edible", "RBD PALM OLEIN": "FAME / Edible",
+  "OLEIN": "FAME / Edible", "PKO": "FAME / Edible", "STEARIN": "FAME / Edible", "FAME": "FAME / Edible",
+  "COAL": "Coal", "BATU BARA CURAH KERING": "Coal",
+  "NICKEL ORE": "Nickel / Mineral Ore", "BAUXITE": "Nickel / Mineral Ore",
+  "IRON ORE": "Nickel / Mineral Ore", "LIMESTONE": "Nickel / Mineral Ore",
+  "CONTAINER": "Container / Gen Cargo", "GENERAL CARGO": "Container / Gen Cargo",
+  "BARANG": "Container / Gen Cargo", "SEMEN": "Container / Gen Cargo", "SEMEN CURAH": "Container / Gen Cargo",
+};
+
+function _cvSelectedRouteCategories() {
+  const out = new Set();
+  for (const k of _cvState.selComms) {
+    const cat = CV_COMM_TO_ROUTE_CAT[k];
+    if (cat) out.add(cat);
+  }
+  return out;
+}
+
 function _cvRouteTooltip(r) {
   const o = r.origin, d = r.destination;
   const sameOD = o === d;
   const heading = sameOD ? `🔁 ${o} (STS)` : `${o} <span style="color:#7A8FB5">→</span> ${d}`;
-  const breakdown = Object.entries(r.category_ton || {})
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([k, v]) => {
-      const col = _cvCatColor(k);
-      return `<div class="cv-tt-cell"><div class="cv-tt-cl" style="color:${col}">${k}</div><div class="cv-tt-cv">${_cvFmt(v)}</div></div>`;
-    }).join("");
+  const allCatTon = r.category_ton || {};
+  const selCats = _cvSelectedRouteCategories();
+  const filtered = selCats.size
+    ? Object.fromEntries(Object.entries(allCatTon).filter(([k]) => selCats.has(k)))
+    : allCatTon;
+  const filteredEntries = Object.entries(filtered).sort((a, b) => b[1] - a[1]);
+  const filteredTotal = filteredEntries.reduce((s, [, v]) => s + (v || 0), 0);
+  const breakdown = filteredEntries.slice(0, 4).map(([k, v]) => {
+    const col = _cvCatColor(k);
+    return `<div class="cv-tt-cell"><div class="cv-tt-cl" style="color:${col}">${k}</div><div class="cv-tt-cv">${_cvFmt(v)}</div></div>`;
+  }).join("") || `<div class="cv-tt-cell" style="grid-column:1 / -1"><div class="cv-tt-cl" style="color:#7A8FB5">선택 화물과 매칭되는 카테고리 없음</div></div>`;
+  // Primary tag — show only if it survived the filter; else fall back to "선택 화물 한정" 안내.
+  const showPrimary = !selCats.size || selCats.has(r.category);
+  const tag = showPrimary
+    ? `<span class="cv-tt-tag" style="background:${_cvCatColor(r.category)}20;color:${_cvCatColor(r.category)};border:1px solid ${_cvCatColor(r.category)}40">${r.category}</span>`
+    : `<span class="cv-tt-tag" style="background:#fff1;color:#7A8FB5">선택 화물 한정 보기</span>`;
   return `<div class="cv-tt-name">${heading}</div>
-    <div class="cv-tt-tags">
-      <span class="cv-tt-tag" style="background:${_cvCatColor(r.category)}20;color:${_cvCatColor(r.category)};border:1px solid ${_cvCatColor(r.category)}40">${r.category}</span>
-    </div>
+    <div class="cv-tt-tags">${tag}</div>
     <div class="cv-tt-grid">${breakdown}</div>
     <hr class="cv-tt-sep">
-    <div class="cv-tt-foot"><span class="cv-tt-fl">24M 합계 · 항해 ${r.calls||0} · 선박 ${r.vessels||0}</span><span class="cv-tt-fv">${_cvFmt(r.ton_24m||0)} TON</span></div>`;
+    <div class="cv-tt-foot"><span class="cv-tt-fl">선택 화물 24M 합계 · 항해 ${r.calls||0} · 선박 ${r.vessels||0}</span><span class="cv-tt-fv">${_cvFmt(filteredTotal)} TON</span></div>`;
 }
 
-// Cycle 4: 정적 라인은 흐름 입자의 "트랙"역할만 한다 — 얇고 옅은
-// 배경. 톤 강조는 라인 두께 ∝ 톤 으로 유지하되 opacity 를 0.22로 낮춰
-// 입자가 메인 시각 신호가 되도록.
+// Cycle 5: 라우트를 quadratic Bezier 곡선으로 표현. 두 항만 사이 중간점에
+// perpendicular offset(거리의 18%)를 적용한 컨트롤 포인트로 휘어진 곡선.
+// 같은 방향(rotate 90° clockwise)으로 일관되게 휘어 시각적 통일.
+// 입자도 동일 곡선 위에서 보간되도록 _route._curve 캐시 사용.
+const _CV_BEZIER_SAMPLES = 32;
+const _CV_BEZIER_OFFSET = 0.18;
+
+function _cvComputeRouteCurve(r) {
+  if (r._curve) return r._curve;
+  const latO = r.lat_o, lonO = r.lon_o;
+  const latD = r.lat_d, lonD = r.lon_d;
+  if (r.origin === r.destination) {
+    r._curve = null;
+    return null;
+  }
+  const dLat = latD - latO;
+  const dLon = lonD - lonO;
+  const len = Math.sqrt(dLat * dLat + dLon * dLon) || 1;
+  // Perpendicular vector — rotate (dLat, dLon) 90° clockwise: (dLon, -dLat)
+  // 정규화 후 길이의 일정 비율로 offset.
+  const pLat = dLon / len;
+  const pLon = -dLat / len;
+  const mLat = (latO + latD) / 2;
+  const mLon = (lonO + lonD) / 2;
+  const cLat = mLat + pLat * len * _CV_BEZIER_OFFSET;
+  const cLon = mLon + pLon * len * _CV_BEZIER_OFFSET;
+  const points = [];
+  for (let i = 0; i <= _CV_BEZIER_SAMPLES; i++) {
+    const t = i / _CV_BEZIER_SAMPLES;
+    const mt = 1 - t;
+    points.push([
+      mt * mt * latO + 2 * mt * t * cLat + t * t * latD,
+      mt * mt * lonO + 2 * mt * t * cLon + t * t * lonD,
+    ]);
+  }
+  r._curve = { points, ctrlLat: cLat, ctrlLon: cLon };
+  return r._curve;
+}
+
+// Bezier 곡선 위의 점 — 입자 애니메이션에서 매 프레임 호출.
+function _cvBezierAt(r, t) {
+  const curve = _cvComputeRouteCurve(r);
+  if (!curve) return null;
+  const mt = 1 - t;
+  return {
+    lat: mt * mt * r.lat_o + 2 * mt * t * curve.ctrlLat + t * t * r.lat_d,
+    lon: mt * mt * r.lon_o + 2 * mt * t * curve.ctrlLon + t * t * r.lon_d,
+  };
+}
+
 function _cvRenderLines() {
   for (const l of _cvState.lines) l.remove();
   _cvState.lines = [];
@@ -3325,7 +3457,7 @@ function _cvRenderLines() {
     const w = 0.5 + Math.sqrt(v / maxV) * 3.5;
     const color = _cvCatColor(r.category);
     if (r.origin === r.destination) {
-      // STS 자기루프는 점선 동심원 그대로 (입자 미적용)
+      // STS 자기루프 — 점선 동심원
       const m = L.circleMarker([r.lat_o, r.lon_o], {
         radius: Math.max(4, w * 1.4), fillColor: color, color: color,
         weight: 1.0, opacity: 0.5, fillOpacity: 0,
@@ -3336,8 +3468,9 @@ function _cvRenderLines() {
       _cvState.lines.push(m);
       return;
     }
-    const line = L.polyline([[r.lat_o, r.lon_o], [r.lat_d, r.lon_d]], {
-      color, weight: w, opacity: 0.22, lineCap: "round",
+    const curve = _cvComputeRouteCurve(r);
+    const line = L.polyline(curve.points, {
+      color, weight: w, opacity: 0.22, lineCap: "round", smoothFactor: 1.0,
     });
     line.bindTooltip(_cvRouteTooltip(r), { className: "cv-tt", sticky: true, opacity: 1 });
     line.addTo(_cvState.map);

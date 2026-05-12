@@ -225,10 +225,63 @@
        위치는 매 프레임 latLngToContainerPoint 재호출이라 별도 처리
        불필요.
 
-### 다음 사이클 후보 (Cycle 5+)
+### 다음 사이클 후보 (Cycle 6+)
 - [ ] cargo_flows_periods 빌더 — 기간별 정확한 O→D 데이터
 - [ ] document.hidden 시 flow animation 일시정지 (battery 절약)
-- [ ] 입자 색상/크기를 cv-app의 commodity 필터와 연동
-  (현재 lines는 항상 모든 카테고리 표시)
+- [ ] 입자도 선택 화물에 따라 표시/숨김 (현재는 모든 항로 입자 동시 흐름)
 - [ ] Balance 탭 전 sector 확장 (Container/Bulk/General 톤·GT 매칭)
 - [ ] Supply 시계열 (vessels_snapshot 다중 월)
+
+## Cycle 5 — 2026-05-12
+
+**Scope**: 사용자 추가 요청 5건 처리 (시계열 stacked area→stacked bar,
+scope-strip 제거, 카테고리 드롭다운, 선택 화물 한정 tooltip, 곡선 라우트).
+
+### 변경 사항
+
+1. **Demand 탭 scope-strip 제거 (요청 ①)**
+   - `#scope-meta-strip` HTML 제거 (Demand 한정). populateScopeStrips
+     에서 scope-n-* keys 누락. 다른 탭(Supply/Balance/Explorer)의 strip
+     은 유지.
+
+2. **시계열 stacked area → 월별 stacked bar (요청 ②)**
+   - `drawHomeTimeseries` trace type을 `scatter+stackgroup` →
+     `bar+barmode=stack`. `xaxis.type="category"`, `bargap=0.18`.
+   - 절대값 고정 — `renderHomeTimeseries` 에서 YoY 토글 wiring 제거,
+     `home-ts-toggle` 컨테이너 제거.
+   - y축 라벨 "ton (CARGO 카테고리 stacked)" 유지.
+
+3. **카테고리 → 세부 화물 드롭다운 (요청 ③)**
+   - cv-app 좌측 commodity 패널을 7개 카테고리 그룹 트리로 재구성:
+     Crude/정제유 · Gas · Palm/식용유 · Dry Bulk · Container/General ·
+     차량 · 기타. `CV_CATEGORY_GROUPS` 매핑.
+   - 각 카테고리 헤더(이름 + 합계 + ▼/▶ 토글) 클릭 시 펼침/접힘.
+     `_cvState.openCategories` Set 상태 보존. 선택된 코모디티가 있는
+     카테고리는 자동 펼침.
+   - 카테고리 내 코모디티는 톤 desc 정렬, 기존 체크박스 선택 동작 유지.
+   - 신규 CSS — `.cv-cat-head`, `.cv-cat-caret`, `.cv-cat-dot`,
+     `.cv-comm-row-nested`.
+
+4. **항만·라우트 tooltip — 선택 화물 한정 (요청 ④)**
+   - `_cvTooltip` 의 4셀(DOM 하역/선적, INTL 하역/선적)은 이미
+     `_cvBuildPorts` 가 선택 코모디티 합산값을 넣어주므로 그대로 정확.
+     footer 라벨을 "선택 화물 N종 합계" 로 명시.
+   - `_cvRouteTooltip` 신규 `CV_COMM_TO_ROUTE_CAT` 매핑 — cv-app
+     commodity (40개) → map_flow 카테고리 (8개). 선택 화물이 매핑되는
+     카테고리만 category_ton 에서 필터해 표시. 매칭이 없으면 "선택
+     화물과 매칭되는 카테고리 없음" 안내. footer total 도 필터 후 합산.
+
+5. **라우트 곡선 (Quadratic Bezier) (요청 ⑤)**
+   - 직선 `L.polyline([o, d])` → 33점 샘플링된 곡선 polyline.
+   - `_cvComputeRouteCurve(r)` — 중간점 + perpendicular offset 18%
+     으로 컨트롤 포인트. 시계방향 90° 회전으로 일관된 방향(항상 같은
+     쪽으로 휨). 결과를 `r._curve` 캐시.
+   - `_cvBezierAt(r, t)` — 입자 애니메이션에서 매 프레임 같은
+     베지어 공식으로 위치 계산. 트레일도 곡선 따라 보간.
+   - STS 자기루프(origin==destination) 는 곡선 처리 없음 — 점선 동심원
+     유지.
+
+### 검증
+- node --check docs/js/app.js 통과.
+- CV_CATEGORY_GROUPS 7개 + CV_COMM_TO_ROUTE_CAT 약 30개 매핑 정의.
+- 베지어 샘플 N=33, offset 0.18 — 적당히 휘면서 직관적 방향성 유지.

@@ -62,14 +62,9 @@
         <p class="text-xs text-slate-500 mt-1">화물(LK3)이 어디서, 무엇을, 얼마나, 어떻게 움직이는가. 흐름 지도 + 시계열.</p>
       </div>
 
-      <!-- Cycle 1: scope meta-strip — 화물선 n / 보조선 k / 제외 m / 분류 미정 u -->
-      <div id="scope-meta-strip" class="scope-strip flex flex-wrap items-center gap-2 mb-3 text-[11px]" data-source="docs/derived/scope_audit.json">
-        <span class="scope-chip scope-cargo">화물선 <strong id="scope-n-cargo">—</strong>척</span>
-        <span class="scope-chip scope-aux">보조선 (Tug) <strong id="scope-n-aux">—</strong>척</span>
-        <span class="scope-chip scope-excluded">제외 <strong id="scope-n-excl">—</strong>척</span>
-        <span class="scope-chip scope-unclassified">분류 미정 <strong id="scope-n-unc">—</strong>척</span>
-        <a href="./cargo_scope_definition.md" class="text-[10.5px] text-slate-500 hover:underline ml-1" target="_blank" rel="noopener" title="화물선 / 보조선 / 제외 분류 규칙">분류 규칙 ↗</a>
-      </div>
+      <!-- Cycle 5: Demand 탭의 scope-strip (화물선/보조선/제외) 제거.
+           Demand는 화물(LK3) 수요만 다루므로 선박 분류 카운트가 부적합.
+           scope-strip은 Supply/Balance/Explorer 에서 유지. -->
 
       <!-- 4.1 Header KPI 4 (PR-3 fills; PR-7 skeleton until JS swaps) -->
       <!-- PR-32: year selector — replaces "12M" labeling with calendar-year cuts. -->
@@ -95,17 +90,15 @@
            topojson 의존성과 sector 사이드바도 함께 제거. 흐름 라인 + 입자
            애니메이션은 Cycle 4에서 cv-app에 직접 적용 예정. -->
 
-      <!-- Cycle 3: timeseries 차트를 CARGO 한정 + 카테고리(Container/
-           Bulk/Tanker subclass/General/Other) stacked area로 재구성.
-           PASSENGER/FISHING 등 비화물 sector는 표시하지 않음. -->
+      <!-- Cycle 3·5: CARGO 한정 + 카테고리별 stacked. Cycle 5 부터 월별
+           stacked bar (절대값만, YoY 토글 제거). -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/data/cargo_sector_monthly.json">
         <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 화물(Cargo) 물동량 24개월 추이 <span class="text-xs text-slate-500 font-normal">— 카테고리별 stacked</span></h3>
-          <div class="flex gap-1 text-xs" id="home-ts-toggle"></div>
+          <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량 <span class="text-xs text-slate-500 font-normal">— 카테고리별 stacked bar</span></h3>
         </div>
         <div id="home-timeseries" style="height:360px"></div>
         <p class="text-[10.5px] text-slate-400 mt-1">
-          카테고리: Bulk Carrier · Container · General Cargo · Other Cargo · Tanker subclass (Crude / Product / Chemical / LPG / LNG / FAME / Water). PASSENGER · FISHING · OFFSHORE · NON_COMMERCIAL은 제외.
+          카테고리: Bulk Carrier · Container · General Cargo · Other Cargo · Tanker subclass (Product / Chemical / LPG / LNG / FAME / Water). PASSENGER · FISHING · OFFSHORE · NON_COMMERCIAL은 제외. 절대값(ton).
         </p>
       </div>
 
@@ -474,6 +467,14 @@
         .cv-comm-wrap{flex:1;overflow-y:auto;padding:8px 10px}
         .cv-comm-wrap::-webkit-scrollbar{width:3px}
         .cv-comm-wrap::-webkit-scrollbar-thumb{background:var(--cv-b2);border-radius:2px}
+        /* Cycle 5: 카테고리 그룹 헤더 (드롭다운) */
+        .cv-cat-head{display:flex;align-items:center;gap:6px;padding:6px 7px;border-radius:6px;cursor:pointer;user-select:none;background:var(--cv-s2);font-size:11px;color:var(--cv-text);font-weight:600;margin:5px 0 2px}
+        .cv-cat-head:hover{background:#E8ECF3}
+        .cv-cat-caret{font-size:9px;color:var(--cv-muted);width:10px;text-align:center}
+        .cv-cat-name{flex:1;line-height:1.2}
+        .cv-cat-vol{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cv-muted);font-weight:600}
+        .cv-cat-dot{width:6px;height:6px;border-radius:50%;background:var(--cv-purple)}
+        .cv-comm-row-nested{margin-left:14px}
         .cv-comm-row{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:7px;cursor:pointer;transition:background .1s;margin-bottom:2px;border:1px solid transparent;user-select:none}
         .cv-comm-row:hover{background:var(--cv-s2)}
         .cv-comm-row.selected{background:var(--cv-comm-sel-bg);border-color:var(--cv-b2)}
