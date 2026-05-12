@@ -3,6 +3,24 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 11 검증 — 2026-05-12 (Supply 탭 디자인·데이터 3차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 선령 × 선종 매트릭스 히트맵 | ✅ Cycle 11 | 7 age × 7 class. 25y+ 행 ● 강조, blue scale, 셀=척수+% |
+| Active filter chips | ✅ Cycle 11 | 적용 필터 chip 표시, 각 X 버튼 + "모두 해제". 필터 없으면 hidden |
+| IDX-listed 자동 라벨 | ✅ Cycle 11 | Tbk-suffix 정규식 detection. Top 운영사 owner명 옆 IDX chip (blue) |
+| Top 운영사에 IDX 데이터 노출 | ⚠️ 0건 (default top10) | 인도네시아 시장 구조상 거인 운영사가 비상장. Tanker 필터해도 top10 모두 비상장. 134개 Tbk 운영사 존재하나 fleet 작음 — 정상 |
+| 화면 결과 (smoke test) | ✅ heatmap 렌더 (1 trace), 25y+ KPI 클릭 시 chip 1개 등장, X 클릭 시 chip + filter 해제, Tanker 필터 후 chip 1개 + 2,415척 정상 | playwright |
+
+### 횡단
+
+- 원칙 lint: ✅ 통과.
+- 원칙 1 (공식 데이터): IDX 라벨은 owner 문자열의 "Tbk" suffix 패턴 매칭만 사용 — 외부 추정·해석 없음.
+- 원칙 4 (결측): 히트맵에서 age 결측 / class=Other 처리 모두 명시. 컬러바 = 척수.
+
 ## Cycle 10 검증 — 2026-05-12 (Supply 탭 디자인·데이터 2차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

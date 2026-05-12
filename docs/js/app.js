@@ -2542,6 +2542,8 @@ function _renderFleetView() {
   try { _drawFlChartFlag(rows, I); }        catch (e) { console.error("Flag chart:", e); }
   try { _drawFlChartGtHist(rows, I); }      catch (e) { console.error("GT hist:", e); }
   try { _drawFleetTopOwners(rows, I); }     catch (e) { console.error("Top Owners:", e); }
+  try { _drawFleetAgeClassHeatmap(rows, I); } catch (e) { console.error("Age×Class:", e); }
+  try { _renderFleetActiveChips(st); }      catch (e) { console.error("Active chips:", e); }
 
   // ---- Active filter count badge (.fcount style: hidden when 0) ----
   const active = (st.jenis.size > 0 ? 1 : 0)
@@ -3153,7 +3155,10 @@ function _drawFleetTopOwners(rows, I) {
       return `
         <div class="grid grid-cols-12 gap-2 items-center px-2 py-1.5 hover:bg-slate-50 border-b border-slate-50">
           <div class="col-span-1 text-right font-mono text-[10px] text-slate-400">${idx + 1}</div>
-          <div class="col-span-3 truncate text-slate-800 text-[12px]" title="${_esc(o.owner)}">${_esc(o.owner)}</div>
+          <div class="col-span-3 truncate text-slate-800 text-[12px] flex items-center gap-1" title="${_esc(o.owner)}${_ownerIsIdxListed(o.owner) ? ' · IDX 상장' : ''}">
+            <span class="truncate">${_esc(o.owner)}</span>
+            ${_ownerIsIdxListed(o.owner) ? '<span class="inline-block px-1 py-px text-[8px] font-mono rounded bg-blue-100 text-blue-700 flex-shrink-0" title="인도네시아 IDX 상장사 (Tbk-suffix)">IDX</span>' : ''}
+          </div>
           <div class="col-span-2 text-right font-mono">
             <div class="text-[11px]">${o.vessels.toLocaleString()}</div>
             <div class="h-1 rounded bg-slate-100 mt-0.5">
@@ -3171,8 +3176,167 @@ function _drawFleetTopOwners(rows, I) {
         </div>`;
     }).join("")}
     <div class="text-[10px] text-slate-400 px-2 pt-2">
-      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개 · 평균선령 25년+ → rose 강조</em>
+      <em>현재 필터 적용 결과 기준 · ${acc.size.toLocaleString()}개 운영사 중 상위 10개 · 평균선령 25년+ → rose 강조 · Tbk = IDX 상장사</em>
     </div>`;
+}
+
+// Cycle 11: 운영사명에서 IDX 상장 여부 추정.
+//   ".Tbk" 또는 " TBK" 가 회사명 말미에 붙어 있으면 인도네시아 상장.
+//   memory note: IDX-listed tanker owners = AKRA / BLTA / BULL / GTSI (Tbk-suffix).
+//   해당 회사들은 owner 문자열에 명시적 'Tbk' 가 들어있다.
+function _ownerIsIdxListed(owner) {
+  if (!owner) return false;
+  const s = String(owner).toUpperCase();
+  return /\.\s*TBK\b/.test(s) || /\bTBK\b/.test(s);
+}
+
+// Cycle 11: 노후 × class 히트맵. 7 age bucket × 7 class.
+function _drawFleetAgeClassHeatmap(rows, I) {
+  const host = document.getElementById("fl-age-class-heatmap");
+  if (!host) return;
+  const AGE_BUCKETS = [
+    { key: "<5",    lo: 0,  hi: 5  },
+    { key: "5–10",  lo: 5,  hi: 10 },
+    { key: "10–15", lo: 10, hi: 15 },
+    { key: "15–20", lo: 15, hi: 20 },
+    { key: "20–25", lo: 20, hi: 25 },
+    { key: "25–30", lo: 25, hi: 30 },
+    { key: "30+",   lo: 30, hi: 999 },
+  ];
+  // Cargo + auxiliary 7 classes — order = market priority (큰→작은)
+  const CLASSES = [
+    "Other Cargo", "General Cargo", "Tanker", "Bulk Carrier", "Container",
+    "Tug/OSV/AHTS", "Other",
+  ];
+  // matrix[ageIdx][classIdx] = count
+  const matrix = AGE_BUCKETS.map(() => CLASSES.map(() => 0));
+  let total = 0;
+  for (const r of rows) {
+    const age = r[I.age];
+    if (age == null || age < 0) continue;
+    let cls = r[I.vc] || "Other";
+    if (!CLASSES.includes(cls)) cls = "Other";
+    let aIdx = -1;
+    for (let i = 0; i < AGE_BUCKETS.length; i++) {
+      if (age >= AGE_BUCKETS[i].lo && age < AGE_BUCKETS[i].hi) { aIdx = i; break; }
+    }
+    if (aIdx < 0) continue;
+    const cIdx = CLASSES.indexOf(cls);
+    matrix[aIdx][cIdx] += 1;
+    total += 1;
+  }
+  // 25y+ 행 라벨에 rose 색상 강조 (HTML span을 plotly tickformat에 쓸 수 없으므로 unicode bullet 사용)
+  const yLabels = AGE_BUCKETS.map(b =>
+    b.lo >= 25 ? `${b.key}년 ●` :    // ● 표시로 25y+ 시각 강조
+    b.lo >= 20 ? `${b.key}년 ▸` :
+    `${b.key}년`
+  );
+  // 각 셀에 척수 + (총 대비 %) 텍스트
+  const text = matrix.map((row, aI) => row.map((v, cI) =>
+    v > 0 ? `${v.toLocaleString()}<br><span style="font-size:9px;opacity:.65">${(v / total * 100).toFixed(1)}%</span>` : ""
+  ));
+  Plotly.newPlot("fl-age-class-heatmap", [{
+    z: matrix,
+    x: CLASSES,
+    y: yLabels,
+    type: "heatmap",
+    colorscale: FL_BLUE_SCALE,
+    showscale: true,
+    text: text,
+    texttemplate: "%{text}",
+    textfont: { family: "Pretendard, sans-serif", size: 10 },
+    hovertemplate: "<b>%{y}</b> · %{x}<br>%{z:,} 척<extra></extra>",
+    xgap: 1, ygap: 1,
+    colorbar: { thickness: 6, len: 0.7, tickfont: { size: 9 }, title: { text: "척수", font: { size: 9 } } },
+  }], {
+    margin: { t: 10, l: 80, r: 50, b: 40 },
+    xaxis: { tickfont: { size: 10 }, side: "bottom" },
+    yaxis: { tickfont: { size: 10 }, autorange: "reversed" },  // <5 위, 30+ 아래
+    plot_bgcolor: "white", paper_bgcolor: "white",
+  }, { displayModeBar: false, responsive: true });
+}
+
+// Cycle 11: 적용된 필터를 chip으로 시각화. 각 chip에 X 버튼.
+function _renderFleetActiveChips(st) {
+  const host = document.getElementById("fl-active-chips");
+  if (!host) return;
+  const chips = [];
+  if (st.jenis.size) {
+    chips.push({
+      key: "jenis", label: `Vessel Type ${st.jenisExclude ? "≠" : "="}`,
+      value: `${st.jenis.size}개 선택`,
+      reset: () => { st.jenis.clear(); st.jenisExclude = false;
+                     const ex = document.getElementById("fl-f-jenis-exclude"); if (ex) ex.checked = false; },
+    });
+  }
+  if (st.name) chips.push({
+    key: "name", label: "선박명", value: `"${st.name}"`,
+    reset: () => { st.name = ""; const el = document.getElementById("fl-f-name"); if (el) el.value = ""; },
+  });
+  const range = (label, lo, hi, idMin, idMax, keyMin, keyMax, suffix = "") => {
+    if (st[keyMin] == null && st[keyMax] == null) return;
+    let v = "";
+    if (st[keyMin] != null && st[keyMax] != null) v = `${st[keyMin]}–${st[keyMax]}`;
+    else if (st[keyMin] != null) v = `≥${st[keyMin]}`;
+    else v = `≤${st[keyMax]}`;
+    chips.push({
+      key: keyMin, label, value: v + suffix,
+      reset: () => {
+        st[keyMin] = null; st[keyMax] = null;
+        const a = document.getElementById(idMin); if (a) a.value = "";
+        const b = document.getElementById(idMax); if (b) b.value = "";
+      },
+    });
+  };
+  range("건조", "yr", "yr", "fl-f-yr-min", "fl-f-yr-max", "yrMin", "yrMax", "년");
+  range("GT", "gt", "gt", "fl-f-gt-min", "fl-f-gt-max", "gtMin", "gtMax");
+  range("LOA", "loa", "loa", "fl-f-loa-min", "fl-f-loa-max", "loaMin", "loaMax", "m");
+  range("Width", "w", "w", "fl-f-w-min", "fl-f-w-max", "widthMin", "widthMax", "m");
+  range("Depth", "d", "d", "fl-f-d-min", "fl-f-d-max", "depthMin", "depthMax", "m");
+
+  if (!chips.length) {
+    host.classList.add("hidden");
+    host.innerHTML = "";
+    return;
+  }
+  host.classList.remove("hidden");
+  host.innerHTML = `
+    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mr-1">적용 필터 (${chips.length})</span>
+    ${chips.map((c, i) => `
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-slate-300 text-slate-700"
+            data-chip-idx="${i}">
+        <span class="font-mono text-[10px] text-slate-500">${c.label}</span>
+        <span class="font-semibold">${c.value}</span>
+        <button type="button" data-chip-x="${i}" class="text-slate-400 hover:text-rose-600 ml-0.5"
+                title="이 필터 제거" aria-label="이 필터 제거">×</button>
+      </span>
+    `).join("")}
+    <button type="button" id="fl-chips-clear" class="ml-2 px-2 py-0.5 rounded border border-slate-300 text-slate-600 text-[10px] hover:bg-rose-50 hover:border-rose-400 hover:text-rose-600">
+      모두 해제
+    </button>`;
+  // Bind X buttons
+  host.querySelectorAll("button[data-chip-x]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.chipX);
+      const chip = chips[idx];
+      if (!chip) return;
+      chip.reset();
+      const tabEl = document.getElementById("tab-fleet");
+      if (tabEl) {
+        tabEl._fleetPage = 1;
+        _renderFleetJenisList(tabEl._fleetVessels);
+        _renderFleetView();
+      }
+    });
+  });
+  // Clear all
+  const clearBtn = document.getElementById("fl-chips-clear");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      const resetTopBtn = document.getElementById("fl-reset");
+      if (resetTopBtn) resetTopBtn.click();
+    });
+  }
 }
 
 const _FLEET_CLASS_COLORS = {

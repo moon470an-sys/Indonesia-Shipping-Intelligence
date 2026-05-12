@@ -216,6 +216,9 @@
         </label>
       </div>
 
+      <!-- Cycle 11: active filter chips. JS가 동적으로 채움. 아무 필터도 없을 때는 hidden. -->
+      <div id="fl-active-chips" class="hidden bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-3 flex flex-wrap items-center gap-2 text-[11px]"></div>
+
       <!-- Cycle 10: jang1117 mirror의 중복 sub-header 제거. row count는 scope-strip 우측으로 흡수.
            h1 "🚢 Supply — Fleet 공급"이 이미 panel 헤더 역할을 한다. -->
       <div class="flex items-center justify-end mb-3">
@@ -406,9 +409,18 @@
         <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
           <div class="flex items-center justify-between mb-2">
             <div class="text-xs font-mono text-slate-700">Top 운영사 (선대 척수)</div>
-            <div class="text-[10px] text-slate-400">화물선 기준 · GT 막대 + class mix</div>
+            <div class="text-[10px] text-slate-400">화물선 기준 · GT 막대 + class mix · 상장사 IDX 칩</div>
           </div>
           <div id="fl-top-owners" class="text-[12px]"></div>
+        </div>
+        <!-- Cycle 11: 노후 × class 히트맵. 25y+ 행을 rose-tinted 라벨로 강조해
+             "어느 class에 25년+ 노후가 집중되어 있는가"를 한 컷에 보여준다. -->
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-mono text-slate-700">선령 × 선종 매트릭스 — 노후선 집중도</div>
+            <div class="text-[10px] text-slate-400">셀 = 척수 · 25년+ rose 라벨 강조</div>
+          </div>
+          <div id="fl-age-class-heatmap" style="height:340px"></div>
         </div>
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex items-center justify-between mb-2">
