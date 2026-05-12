@@ -3,6 +3,23 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 58 검증 — 2026-05-13 (Supply 탭 50차 — 라이브 종합 시각 확인)
+
+### 라이브 사이트 (https://moon470an-sys.github.io/Indonesia-Shipping-Intelligence/#fleet) 시각 audit
+
+| 영역 | 라이브 상태 |
+|------|-----------|
+| 헤더 | 'Supply — Fleet 공급', vessel snapshot 2026-05, LK3 2026-04, build 2026-05-12 04:38 ✅ |
+| Scope strip | 화물선 29,574 / 보조선 11,561 / 제외 50,580 ✅ |
+| KPI 4 cards | 선박 수 41,135 + GT 53.1M / Vessel Type 53 / 평균 GT 1,292 / 노후선 12,433 + GT 11.5M ✅ |
+| Alert callout | 시장 구조 주의 — 노후선 31.8% + class 집중도 (GC 52%, OC 23%, Tug 18%, Tanker 5%) + 평균 GT/LOA + baseline 비교 ✅ |
+| 차트 8 | 건조 연도 area / Vessel Type TOP 15 (scope 색상) / 선령 분포 + 누적 % + GT 가중 평균 17.4년 annotation / GT 규모별 분포 + 점유율 보조축 / Flag log / GT boxplot / Heatmap / Owner scatter (legend visible) ✅ |
+| Top 운영사 | DANNY 283척 GT 524.0K (Tug/OSV 51% + Other 49% + Tanker 0%) ✅ |
+| 시장 구조 footer | HHI 22 (분산) ✅ |
+
+### 결론
+- 50 사이클 누적 변경사항 모두 라이브 정상 반영. 코드 변경 없음.
+
 ## Cycle 57 검증 — 2026-05-13 (Supply 탭 49차 — owner scatter legend)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
