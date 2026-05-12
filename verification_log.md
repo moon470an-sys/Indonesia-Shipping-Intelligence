@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 23 검증 — 2026-05-12 (Supply 탭 15차 — 노후 dims + GT 통계 + age 평균 라인)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Alert callout 노후 평균 GT/LOA | ✅ Cycle 23 | "노후선 평균 제원: 평균 GT 923 · 평균 LOA 53.5m" — 척수 외 dimension 정보 |
+| GT boxplot 통계 mini row | ✅ Cycle 23 | p25/median/p75/max 4-cell row. 필터 결과 기준 |
+| 선령 분포에 GT 가중 평균 annotation | ✅ Cycle 23 | 분포 안에 "GT 가중 평균 N.N년" 화살표 라벨 |
+| 화면 결과 (smoke test) | ✅ 노후 평균 GT 923, LOA 53.5m. GT stats {p25: 86, median: 223, p75: 1,440, max: 164,630}. age annotation "GT 가중 평균 17.4년" | playwright |
+
+### 횡단
+- 원칙 lint ✅. 데이터 dimensions 정보만 추가 — 외부 추정·해석 없음.
+- 의미: 노후선 평균 GT 923 (소형선 중심), General Cargo가 노후의 52% — 시장 구조 신호 강화.
+
 ## Cycle 22 검증 — 2026-05-12 (Supply 탭 14차 — IDX scatter marker + owner sort)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

@@ -3297,6 +3297,31 @@ function _drawFlChartGtHist(rows, I) {
     },
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
+
+  // Cycle 23: GT 전체 통계 (필터 결과). p25, median, p75, max
+  const allGts = [];
+  for (const arr of byClass.values()) for (const v of arr) allGts.push(v);
+  allGts.sort((a, b) => a - b);
+  const quantile = (arr, q) => {
+    if (!arr.length) return null;
+    const pos = (arr.length - 1) * q;
+    const lo = Math.floor(pos), hi = Math.ceil(pos);
+    if (lo === hi) return arr[lo];
+    return arr[lo] * (hi - pos) + arr[hi] * (pos - lo);
+  };
+  const p25 = quantile(allGts, 0.25);
+  const p50 = quantile(allGts, 0.50);
+  const p75 = quantile(allGts, 0.75);
+  const max = allGts.length ? allGts[allGts.length - 1] : null;
+  const statsHost = document.getElementById("fl-gt-stats");
+  if (statsHost) {
+    const fmtGt = (v) => v == null ? "—" : v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+    statsHost.innerHTML = `
+      <div class="bg-slate-50 rounded px-2 py-1 text-center"><div class="text-slate-400 text-[9px] uppercase">p25</div><div>${fmtGt(p25)}</div></div>
+      <div class="bg-slate-50 rounded px-2 py-1 text-center"><div class="text-slate-400 text-[9px] uppercase">median</div><div class="font-semibold text-slate-800">${fmtGt(p50)}</div></div>
+      <div class="bg-slate-50 rounded px-2 py-1 text-center"><div class="text-slate-400 text-[9px] uppercase">p75</div><div>${fmtGt(p75)}</div></div>
+      <div class="bg-slate-50 rounded px-2 py-1 text-center"><div class="text-slate-400 text-[9px] uppercase">max</div><div>${fmtGt(max)}</div></div>`;
+  }
 }
 
 // Cycle 9: 선령 분포 차트 (5년 buckets). 25년+은 알림 색상으로 강조.
@@ -3314,6 +3339,8 @@ function _drawFlChartAge(rows, I) {
   ];
   const counts = BUCKETS.map(() => 0);
   let totalCounted = 0;
+  // Cycle 23: GT 가중 평균 선령 계산 — 화물 capacity 가중 기준
+  let sumAgeGt = 0, sumGtA = 0;
   for (const r of rows) {
     const age = r[I.age];
     if (age == null || age < 0) continue;
@@ -3322,7 +3349,10 @@ function _drawFlChartAge(rows, I) {
         counts[i] += 1; totalCounted += 1; break;
       }
     }
+    const gt = r[I.gt] || 0;
+    if (gt > 0) { sumAgeGt += age * gt; sumGtA += gt; }
   }
+  const avgAgeWeighted = sumGtA > 0 ? (sumAgeGt / sumGtA) : null;
   const labels = BUCKETS.map(b => b.key);
   const colors = BUCKETS.map(b =>
     b.lo >= 25 ? FL_ALERT :       // 25y+ 노후 — 빨강
@@ -3364,6 +3394,26 @@ function _drawFlChartAge(rows, I) {
     yaxis2: { title: { text: "누적 %", font: { size: 10 } }, overlaying: "y",
               side: "right", tickfont: { size: 10 }, showgrid: false,
               range: [0, 105], ticksuffix: "%" },
+    // Cycle 23: GT 가중 평균 선령 annotation — 분포 안 평균 위치 표시
+    annotations: avgAgeWeighted != null ? [
+      {
+        xref: "x", yref: "paper",
+        x: (() => {
+          // 평균 연령이 속하는 bucket 인덱스로 x 좌표 변환
+          for (let i = 0; i < BUCKETS.length; i++) {
+            if (avgAgeWeighted >= BUCKETS[i].lo && avgAgeWeighted < BUCKETS[i].hi) return BUCKETS[i].key;
+          }
+          return BUCKETS[BUCKETS.length - 1].key;
+        })(),
+        y: 1.05,
+        text: `GT 가중 평균 ${avgAgeWeighted.toFixed(1)}년`,
+        showarrow: true, arrowhead: 0, arrowwidth: 1, arrowcolor: "#475569",
+        ax: 0, ay: -22,
+        font: { size: 9, color: "#475569" },
+        bgcolor: "rgba(255,255,255,0.85)",
+        bordercolor: "#cbd5e1", borderwidth: 1, borderpad: 2,
+      },
+    ] : [],
     plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Cycle 15: 막대 클릭 시 해당 bucket 이상 노후만 보기. Cycle 18: re-bind every render.
@@ -3785,16 +3835,30 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal, st) {
     ? `<span class="ml-2 inline-block px-2 py-0.5 rounded bg-white/40 text-[11px] font-mono" title="현재 운영사 필터 적용 중">📌 ${_esc(st.ownerExact.length > 32 ? st.ownerExact.substring(0,30) + '…' : st.ownerExact)}</span>`
     : "";
 
-  // class별 25y+ 척수 집계
+  // class별 25y+ 척수 집계 + Cycle 23: 평균 GT / 평균 LOA 집계
   const byClass = new Map();
   let agedTotalByClass = 0;
+  let agedSumGt = 0, agedNGt = 0, agedSumLoa = 0, agedNLoa = 0;
   for (const r of rows) {
     const age = r[I.age];
     if (age == null || age < 25) continue;
     let cls = r[I.vc] || "Other";
     byClass.set(cls, (byClass.get(cls) || 0) + 1);
     agedTotalByClass += 1;
+    const gt = r[I.gt] || 0;
+    if (gt > 0) { agedSumGt += gt; agedNGt += 1; }
+    const loa = r[I.loa] || 0;
+    if (loa > 0) { agedSumLoa += loa; agedNLoa += 1; }
   }
+  const agedAvgGt = agedNGt > 0 ? Math.round(agedSumGt / agedNGt) : null;
+  const agedAvgLoa = agedNLoa > 0 ? (agedSumLoa / agedNLoa) : null;
+  const dimsLine = (agedAvgGt != null || agedAvgLoa != null) ?
+    `<div class="text-[11px] opacity-90 mt-1 leading-5">
+       <span class="opacity-75 mr-1">노후선 평균 제원:</span>
+       ${agedAvgGt != null ? `<strong>평균 GT</strong> ${agedAvgGt.toLocaleString()}` : ''}
+       ${agedAvgGt != null && agedAvgLoa != null ? '<span class="opacity-50 mx-2">·</span>' : ''}
+       ${agedAvgLoa != null ? `<strong>평균 LOA</strong> ${agedAvgLoa.toFixed(1)}m` : ''}
+     </div>` : '';
   const topClasses = [...byClass.entries()]
     .sort((a, b) => b[1] - a[1]).slice(0, 4);
   // Cycle 18: 각 chip은 button — 클릭 시 vcFilter + yrMax(25y+) 즉시 적용
@@ -3823,6 +3887,7 @@ function _renderFleetAgedAlert(rows, I, aged25, agedTotal, st) {
       <div class="text-[11px] opacity-90 mt-1 leading-5">
         <span class="opacity-75 mr-1">노후선 25년+ 집중도:</span> ${breakdown || "<em class=\"opacity-60\">데이터 없음</em>"}
       </div>
+      ${dimsLine}
       <div class="text-[11px] opacity-70 mt-0.5">
         ${isSevere
           ? "노후선 비중이 50%를 초과 — 신조 발주·매각 등 교체 사이클 의사결정에 직결되는 신호."
