@@ -374,6 +374,22 @@ table tbody tr:hover { background:#fef3c7; }
 #fl-table thead th[aria-sort="descending"] { background: #dbeafe; color: #1e3a8a; }
 #fl-table thead th[aria-sort] [data-sort-marker] { color: #1A3A6B; }
 
+/* Cycle 27: sortable column visual hint — unsorted columns show ↕ on hover */
+#fl-table thead th[data-col]:not([aria-sort]) [data-sort-marker]::before {
+  content: "↕"; color: #cbd5e1; font-size: 10px; opacity: 0;
+  transition: opacity 120ms ease;
+}
+#fl-table thead th[data-col]:hover [data-sort-marker]::before { opacity: 1; }
+
+/* Cycle 27: 클릭 가능한 차트 panel 시각 hint — hover 시 ring 효과로 인터랙티브임을 알림.
+   data-clickable="1" 으로 marker 된 panel에만 적용 (JS가 추가). */
+.bg-white.rounded-xl.shadow[data-clickable="1"] {
+  transition: box-shadow 200ms ease, transform 80ms ease;
+}
+.bg-white.rounded-xl.shadow[data-clickable="1"]:hover {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15), 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+}
+
 /* Cycle 17: button.scope-chip (클릭 가능한 scope 필터). active 상태 */
 button.scope-chip { cursor: pointer; }
 button.scope-chip:hover { filter: brightness(0.95); }

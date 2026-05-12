@@ -3,6 +3,19 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 27 검증 — 2026-05-12 (Supply 탭 19차 — click hint + sortable indicator)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 클릭 가능 차트 panel hover hint | ✅ Cycle 27 | data-clickable="1" 마커 + hover ring (blue 15% alpha) + shadow. 6개 차트 적용 (type/age/gt-bucket/heatmap/scatter/flag) |
+| Sortable column hover indicator | ✅ Cycle 27 | aria-sort 없는 컬럼 hover 시 ↕ 표시 — 정렬 가능성 시각화 |
+| 화면 결과 (smoke test) | ✅ 6개 panel data-clickable 적용, CSS rule 적용 확인 | playwright |
+
+### 횡단
+- 원칙 lint ✅. CSS hover hint만 추가 — 동작 무변경.
+
 ## Cycle 26 검증 — 2026-05-12 (Supply 탭 18차 — Type 전체 보기 + thead shadow)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

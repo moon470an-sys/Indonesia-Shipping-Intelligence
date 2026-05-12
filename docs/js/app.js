@@ -2151,7 +2151,22 @@ async function renderFleet() {
   // Cycle 19: URL hash 파라미터 적용 (boot 시 한 번)
   _applyFleetUrlState();
   _wireFleetCopyLink();
+  // Cycle 27: 클릭 가능한 차트 panel에 hover 강조 마커
+  _markClickableFleetPanels();
   _renderFleetView();
+}
+
+function _markClickableFleetPanels() {
+  // 각 클릭 가능한 차트 div의 부모 panel(.bg-white.rounded-xl.shadow)에 data-clickable=1
+  const ids = ["fl-ch-type", "fl-ch-age", "fl-ch-gt-bucket", "fl-ch-flag",
+               "fl-age-class-heatmap", "fl-owner-scatter"];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let p = el.parentElement;
+    while (p && !p.classList.contains("rounded-xl")) p = p.parentElement;
+    if (p) p.dataset.clickable = "1";
+  });
 }
 
 // Cycle 19: URL hash 파라미터로 필터 상태 공유.
