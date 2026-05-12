@@ -1,6 +1,16 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "snapshot_month": "2026-05",
+  "years": [
+    "2024",
+    "2025",
+    "2026"
+  ],
+  "months_per_year": {
+    "2024": 7,
+    "2025": 12,
+    "2026": 5
+  },
   "order": [
     "Bulk Carrier",
     "Product",
@@ -16,7 +26,7 @@
   "categories": {
     "Bulk Carrier": {
       "ton_total_24m": 1983014073.7,
-      "calls_total_24m": 98372,
+      "calls_total_24m": 98322,
       "commodity_count": 3593,
       "top_commodities": [
         {
@@ -91,11 +101,250 @@
           "pct": 0.44,
           "calls_24m": 224
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 636624493.7,
+          "calls_total": 32407,
+          "commodity_count": 1747,
+          "top_commodities": [
+            {
+              "name": "BATU BARA",
+              "ton_year": 271762202.5,
+              "pct": 42.69,
+              "calls_year": 4265
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 144164522.6,
+              "pct": 22.65,
+              "calls_year": 2515
+            },
+            {
+              "name": "COAL",
+              "ton_year": 19362168.9,
+              "pct": 3.04,
+              "calls_year": 318
+            },
+            {
+              "name": "INDONESIAN STEAM COAL IN BULK",
+              "ton_year": 18768517.0,
+              "pct": 2.95,
+              "calls_year": 342
+            },
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 10438216.1,
+              "pct": 1.64,
+              "calls_year": 189
+            },
+            {
+              "name": "INDONESIAN STEAM COAL",
+              "ton_year": 6984549.0,
+              "pct": 1.1,
+              "calls_year": 120
+            },
+            {
+              "name": "MUAT BATU BARA",
+              "ton_year": 6837639.0,
+              "pct": 1.07,
+              "calls_year": 91
+            },
+            {
+              "name": "STEAM COAL",
+              "ton_year": 6532819.0,
+              "pct": 1.03,
+              "calls_year": 80
+            },
+            {
+              "name": "SEMEN CURAH",
+              "ton_year": 4487637.6,
+              "pct": 0.7,
+              "calls_year": 792
+            },
+            {
+              "name": "CLINKER",
+              "ton_year": 3912097.8,
+              "pct": 0.61,
+              "calls_year": 126
+            },
+            {
+              "name": "ALAT BERAT",
+              "ton_year": 3880579.5,
+              "pct": 0.61,
+              "calls_year": 541
+            },
+            {
+              "name": "GANDUM",
+              "ton_year": 3607571.0,
+              "pct": 0.57,
+              "calls_year": 107
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 1024528679.3,
+          "calls_total": 50164,
+          "commodity_count": 2088,
+          "top_commodities": [
+            {
+              "name": "BATU BARA",
+              "ton_year": 443520911.2,
+              "pct": 43.29,
+              "calls_year": 7051
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 215345903.8,
+              "pct": 21.02,
+              "calls_year": 3637
+            },
+            {
+              "name": "INDONESIAN STEAM COAL IN BULK",
+              "ton_year": 30074334.9,
+              "pct": 2.94,
+              "calls_year": 596
+            },
+            {
+              "name": "COAL",
+              "ton_year": 29985366.7,
+              "pct": 2.93,
+              "calls_year": 506
+            },
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 18897338.7,
+              "pct": 1.84,
+              "calls_year": 345
+            },
+            {
+              "name": "MUAT BATU BARA",
+              "ton_year": 12695949.5,
+              "pct": 1.24,
+              "calls_year": 177
+            },
+            {
+              "name": "INDONESIAN STEAM COAL",
+              "ton_year": 11270536.7,
+              "pct": 1.1,
+              "calls_year": 222
+            },
+            {
+              "name": "STEAM COAL",
+              "ton_year": 10896965.2,
+              "pct": 1.06,
+              "calls_year": 153
+            },
+            {
+              "name": "CLINKER",
+              "ton_year": 5809859.1,
+              "pct": 0.57,
+              "calls_year": 177
+            },
+            {
+              "name": "GANDUM",
+              "ton_year": 5784086.7,
+              "pct": 0.56,
+              "calls_year": 168
+            },
+            {
+              "name": "SEMEN CURAH",
+              "ton_year": 5515907.2,
+              "pct": 0.54,
+              "calls_year": 973
+            },
+            {
+              "name": "ALUMINA",
+              "ton_year": 5024463.2,
+              "pct": 0.49,
+              "calls_year": 155
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 321860900.6,
+          "calls_total": 15751,
+          "commodity_count": 972,
+          "top_commodities": [
+            {
+              "name": "BATUBARA",
+              "ton_year": 133215702.4,
+              "pct": 41.39,
+              "calls_year": 2165
+            },
+            {
+              "name": "BATU BARA",
+              "ton_year": 66248705.9,
+              "pct": 20.58,
+              "calls_year": 1038
+            },
+            {
+              "name": "COAL",
+              "ton_year": 11907100.0,
+              "pct": 3.7,
+              "calls_year": 197
+            },
+            {
+              "name": "INDONESIAN STEAM COAL IN BULK",
+              "ton_year": 9761072.0,
+              "pct": 3.03,
+              "calls_year": 183
+            },
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 6060627.8,
+              "pct": 1.88,
+              "calls_year": 111
+            },
+            {
+              "name": "MUAT BATU BARA",
+              "ton_year": 3996761.0,
+              "pct": 1.24,
+              "calls_year": 55
+            },
+            {
+              "name": "INDONESIAN STEAM COAL",
+              "ton_year": 3032585.0,
+              "pct": 0.94,
+              "calls_year": 62
+            },
+            {
+              "name": "STEAM COAL",
+              "ton_year": 2404427.0,
+              "pct": 0.75,
+              "calls_year": 48
+            },
+            {
+              "name": "GANDUM",
+              "ton_year": 2340689.0,
+              "pct": 0.73,
+              "calls_year": 62
+            },
+            {
+              "name": "ALUMINA",
+              "ton_year": 1839956.9,
+              "pct": 0.57,
+              "calls_year": 58
+            },
+            {
+              "name": "SEMEN CURAH",
+              "ton_year": 1828223.3,
+              "pct": 0.57,
+              "calls_year": 335
+            },
+            {
+              "name": "CLINKER",
+              "ton_year": 1806355.7,
+              "pct": 0.56,
+              "calls_year": 57
+            }
+          ]
+        }
+      }
     },
     "Product": {
       "ton_total_24m": 550655753.7,
-      "calls_total_24m": 204485,
+      "calls_total_24m": 168760,
       "commodity_count": 3843,
       "top_commodities": [
         {
@@ -170,7 +419,246 @@
           "pct": 1.88,
           "calls_24m": 8177
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 174210993.8,
+          "calls_total": 61106,
+          "commodity_count": 1795,
+          "top_commodities": [
+            {
+              "name": "CRUDE OIL",
+              "ton_year": 18040207.8,
+              "pct": 10.36,
+              "calls_year": 615
+            },
+            {
+              "name": "PERTALITE",
+              "ton_year": 12837102.0,
+              "pct": 7.37,
+              "calls_year": 5517
+            },
+            {
+              "name": "CPO",
+              "ton_year": 9736691.3,
+              "pct": 5.59,
+              "calls_year": 2325
+            },
+            {
+              "name": "SOLAR",
+              "ton_year": 9670942.9,
+              "pct": 5.55,
+              "calls_year": 1213
+            },
+            {
+              "name": "BUCO",
+              "ton_year": 8390921.0,
+              "pct": 4.82,
+              "calls_year": 173
+            },
+            {
+              "name": "BBM",
+              "ton_year": 6700765.4,
+              "pct": 3.85,
+              "calls_year": 1534
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 6006555.6,
+              "pct": 3.45,
+              "calls_year": 1512
+            },
+            {
+              "name": "BIO SOLAR",
+              "ton_year": 4941031.4,
+              "pct": 2.84,
+              "calls_year": 5363
+            },
+            {
+              "name": "AVTUR",
+              "ton_year": 4330830.0,
+              "pct": 2.49,
+              "calls_year": 724
+            },
+            {
+              "name": "Crude Oil",
+              "ton_year": 3855860.0,
+              "pct": 2.21,
+              "calls_year": 73
+            },
+            {
+              "name": "FAME",
+              "ton_year": 3522940.4,
+              "pct": 2.02,
+              "calls_year": 811
+            },
+            {
+              "name": "BIOSOLAR",
+              "ton_year": 2999830.7,
+              "pct": 1.72,
+              "calls_year": 2433
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 279422488.0,
+          "calls_total": 75950,
+          "commodity_count": 2469,
+          "top_commodities": [
+            {
+              "name": "PERTALITE",
+              "ton_year": 21760706.2,
+              "pct": 7.79,
+              "calls_year": 10091
+            },
+            {
+              "name": "CPO",
+              "ton_year": 19223436.4,
+              "pct": 6.88,
+              "calls_year": 4444
+            },
+            {
+              "name": "CRUDE OIL",
+              "ton_year": 19040438.2,
+              "pct": 6.81,
+              "calls_year": 846
+            },
+            {
+              "name": "SOLAR",
+              "ton_year": 16545939.7,
+              "pct": 5.92,
+              "calls_year": 2870
+            },
+            {
+              "name": "BUCO",
+              "ton_year": 12729572.7,
+              "pct": 4.56,
+              "calls_year": 240
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 10668833.2,
+              "pct": 3.82,
+              "calls_year": 2687
+            },
+            {
+              "name": "BBM",
+              "ton_year": 8980592.5,
+              "pct": 3.21,
+              "calls_year": 2382
+            },
+            {
+              "name": "BIO SOLAR",
+              "ton_year": 8022430.5,
+              "pct": 2.87,
+              "calls_year": 8803
+            },
+            {
+              "name": "FAME",
+              "ton_year": 7061951.0,
+              "pct": 2.53,
+              "calls_year": 1390
+            },
+            {
+              "name": "AVTUR",
+              "ton_year": 6944800.1,
+              "pct": 2.49,
+              "calls_year": 1300
+            },
+            {
+              "name": "PERTAMAX",
+              "ton_year": 5729035.7,
+              "pct": 2.05,
+              "calls_year": 3683
+            },
+            {
+              "name": "BIOSOLAR",
+              "ton_year": 5413703.5,
+              "pct": 1.94,
+              "calls_year": 4237
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 97022271.9,
+          "calls_total": 31704,
+          "commodity_count": 1347,
+          "top_commodities": [
+            {
+              "name": "CRUDE OIL",
+              "ton_year": 9578918.2,
+              "pct": 9.87,
+              "calls_year": 335
+            },
+            {
+              "name": "CPO",
+              "ton_year": 7300904.4,
+              "pct": 7.52,
+              "calls_year": 1522
+            },
+            {
+              "name": "PERTALITE",
+              "ton_year": 6826469.4,
+              "pct": 7.04,
+              "calls_year": 3396
+            },
+            {
+              "name": "SOLAR",
+              "ton_year": 6186573.9,
+              "pct": 6.38,
+              "calls_year": 1091
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 3726656.5,
+              "pct": 3.84,
+              "calls_year": 894
+            },
+            {
+              "name": "BUCO",
+              "ton_year": 3498428.9,
+              "pct": 3.61,
+              "calls_year": 74
+            },
+            {
+              "name": "AVTUR",
+              "ton_year": 3291747.4,
+              "pct": 3.39,
+              "calls_year": 514
+            },
+            {
+              "name": "BIO SOLAR",
+              "ton_year": 2873558.0,
+              "pct": 2.96,
+              "calls_year": 2742
+            },
+            {
+              "name": "FAME",
+              "ton_year": 2585704.7,
+              "pct": 2.67,
+              "calls_year": 586
+            },
+            {
+              "name": "BBM",
+              "ton_year": 2481425.8,
+              "pct": 2.56,
+              "calls_year": 785
+            },
+            {
+              "name": "PERTAMAX",
+              "ton_year": 2084054.5,
+              "pct": 2.15,
+              "calls_year": 1348
+            },
+            {
+              "name": "BIOSOLAR",
+              "ton_year": 1941497.6,
+              "pct": 2.0,
+              "calls_year": 1507
+            }
+          ]
+        }
+      }
     },
     "LNG": {
       "ton_total_24m": 40380884.7,
@@ -249,11 +737,226 @@
           "pct": 0.16,
           "calls_24m": 3
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 11522590.8,
+          "calls_total": 266,
+          "commodity_count": 14,
+          "top_commodities": [
+            {
+              "name": "LNG",
+              "ton_year": 8379746.9,
+              "pct": 72.72,
+              "calls_year": 172
+            },
+            {
+              "name": "LIQUEFIED NATURAL GAS",
+              "ton_year": 1498475.0,
+              "pct": 13.0,
+              "calls_year": 32
+            },
+            {
+              "name": "LNG / GAS CAIR",
+              "ton_year": 473406.0,
+              "pct": 4.11,
+              "calls_year": 11
+            },
+            {
+              "name": "Liquefied Natural Gas",
+              "ton_year": 455046.0,
+              "pct": 3.95,
+              "calls_year": 7
+            },
+            {
+              "name": "LIQUID NATURAL GAS",
+              "ton_year": 309162.0,
+              "pct": 2.68,
+              "calls_year": 5
+            },
+            {
+              "name": "LIQUIFEID NATURAL GAS",
+              "ton_year": 191699.0,
+              "pct": 1.66,
+              "calls_year": 4
+            },
+            {
+              "name": "PETIKEMAS FULL",
+              "ton_year": 115030.0,
+              "pct": 1.0,
+              "calls_year": 10
+            },
+            {
+              "name": "FULLY REFRIGERATED ANHYDROUS AMMONIA",
+              "ton_year": 39900.0,
+              "pct": 0.35,
+              "calls_year": 1
+            },
+            {
+              "name": "PETIKEMAS",
+              "ton_year": 36280.0,
+              "pct": 0.31,
+              "calls_year": 10
+            },
+            {
+              "name": "LIQUEFIED NATURAL GAS (LNG)",
+              "ton_year": 12005.0,
+              "pct": 0.1,
+              "calls_year": 1
+            },
+            {
+              "name": "HYDROCARBON CONDENSATE",
+              "ton_year": 5500.0,
+              "pct": 0.05,
+              "calls_year": 1
+            },
+            {
+              "name": "GAS/L.P.G",
+              "ton_year": 5237.9,
+              "pct": 0.05,
+              "calls_year": 9
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 21280906.2,
+          "calls_total": 488,
+          "commodity_count": 14,
+          "top_commodities": [
+            {
+              "name": "LNG",
+              "ton_year": 13108064.2,
+              "pct": 61.6,
+              "calls_year": 316
+            },
+            {
+              "name": "LIQUEFIED NATURAL GAS",
+              "ton_year": 2797262.4,
+              "pct": 13.14,
+              "calls_year": 56
+            },
+            {
+              "name": "LNG / GAS CAIR",
+              "ton_year": 1843290.0,
+              "pct": 8.66,
+              "calls_year": 22
+            },
+            {
+              "name": "LIQUIFEID NATURAL GAS",
+              "ton_year": 1766809.0,
+              "pct": 8.3,
+              "calls_year": 32
+            },
+            {
+              "name": "Liquefied Natural Gas",
+              "ton_year": 1266219.0,
+              "pct": 5.95,
+              "calls_year": 19
+            },
+            {
+              "name": "LNG GAS CAIR",
+              "ton_year": 232180.0,
+              "pct": 1.09,
+              "calls_year": 4
+            },
+            {
+              "name": "LIQUEFIED NATURAL GAS (LNG)",
+              "ton_year": 81626.0,
+              "pct": 0.38,
+              "calls_year": 2
+            },
+            {
+              "name": "LNG/GAS CAIR",
+              "ton_year": 65310.0,
+              "pct": 0.31,
+              "calls_year": 2
+            },
+            {
+              "name": "PETIKEMAS",
+              "ton_year": 44217.0,
+              "pct": 0.21,
+              "calls_year": 5
+            },
+            {
+              "name": "LNG GAS",
+              "ton_year": 44000.0,
+              "pct": 0.21,
+              "calls_year": 1
+            },
+            {
+              "name": "GAS/L.P.G",
+              "ton_year": 16338.0,
+              "pct": 0.08,
+              "calls_year": 3
+            },
+            {
+              "name": "NATURAL GAS",
+              "ton_year": 11954.0,
+              "pct": 0.06,
+              "calls_year": 24
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 7577387.6,
+          "calls_total": 170,
+          "commodity_count": 8,
+          "top_commodities": [
+            {
+              "name": "LNG",
+              "ton_year": 4066218.1,
+              "pct": 53.66,
+              "calls_year": 105
+            },
+            {
+              "name": "LIQUEFIED NATURAL GAS",
+              "ton_year": 1022249.0,
+              "pct": 13.49,
+              "calls_year": 19
+            },
+            {
+              "name": "Liquefied Natural Gas",
+              "ton_year": 1000333.0,
+              "pct": 13.2,
+              "calls_year": 16
+            },
+            {
+              "name": "LIQUIFEID NATURAL GAS",
+              "ton_year": 704391.5,
+              "pct": 9.3,
+              "calls_year": 16
+            },
+            {
+              "name": "LNG / GAS CAIR",
+              "ton_year": 677935.0,
+              "pct": 8.95,
+              "calls_year": 6
+            },
+            {
+              "name": "LNG GAS",
+              "ton_year": 55085.0,
+              "pct": 0.73,
+              "calls_year": 1
+            },
+            {
+              "name": "Tangguh LNG",
+              "ton_year": 48561.0,
+              "pct": 0.64,
+              "calls_year": 2
+            },
+            {
+              "name": "NATURAL GAS",
+              "ton_year": 2615.0,
+              "pct": 0.03,
+              "calls_year": 5
+            }
+          ]
+        }
+      }
     },
     "LPG": {
       "ton_total_24m": 55707796.0,
-      "calls_total_24m": 15676,
+      "calls_total_24m": 13545,
       "commodity_count": 174,
       "top_commodities": [
         {
@@ -328,11 +1031,250 @@
           "pct": 2.01,
           "calls_24m": 29
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 16890362.5,
+          "calls_total": 4705,
+          "commodity_count": 95,
+          "top_commodities": [
+            {
+              "name": "LPG",
+              "ton_year": 8511651.4,
+              "pct": 50.39,
+              "calls_year": 2113
+            },
+            {
+              "name": "LNG",
+              "ton_year": 1166294.0,
+              "pct": 6.91,
+              "calls_year": 22
+            },
+            {
+              "name": "LPG MIX",
+              "ton_year": 991358.0,
+              "pct": 5.87,
+              "calls_year": 224
+            },
+            {
+              "name": "PROPANE",
+              "ton_year": 611181.5,
+              "pct": 3.62,
+              "calls_year": 138
+            },
+            {
+              "name": "BUTANE",
+              "ton_year": 562444.0,
+              "pct": 3.33,
+              "calls_year": 136
+            },
+            {
+              "name": "ETHYLENE",
+              "ton_year": 534970.3,
+              "pct": 3.17,
+              "calls_year": 105
+            },
+            {
+              "name": "PROPANE/BUTANE",
+              "ton_year": 419346.0,
+              "pct": 2.48,
+              "calls_year": 8
+            },
+            {
+              "name": "FULLY REFRIGERATED ANHYDROUS AMMONIA",
+              "ton_year": 388230.0,
+              "pct": 2.3,
+              "calls_year": 15
+            },
+            {
+              "name": "GAS LPG",
+              "ton_year": 351745.8,
+              "pct": 2.08,
+              "calls_year": 149
+            },
+            {
+              "name": "AMONIAK",
+              "ton_year": 338807.6,
+              "pct": 2.01,
+              "calls_year": 40
+            },
+            {
+              "name": "FULLY REFRIGERATED PROPANE",
+              "ton_year": 294009.0,
+              "pct": 1.74,
+              "calls_year": 14
+            },
+            {
+              "name": "PROPYLENE",
+              "ton_year": 274007.7,
+              "pct": 1.62,
+              "calls_year": 117
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 29003049.1,
+          "calls_total": 6762,
+          "commodity_count": 112,
+          "top_commodities": [
+            {
+              "name": "LPG",
+              "ton_year": 14326642.6,
+              "pct": 49.4,
+              "calls_year": 3574
+            },
+            {
+              "name": "LPG MIX",
+              "ton_year": 2533567.2,
+              "pct": 8.74,
+              "calls_year": 652
+            },
+            {
+              "name": "PROPANE",
+              "ton_year": 1015086.0,
+              "pct": 3.5,
+              "calls_year": 299
+            },
+            {
+              "name": "LNG",
+              "ton_year": 1014237.0,
+              "pct": 3.5,
+              "calls_year": 22
+            },
+            {
+              "name": "BUTANE",
+              "ton_year": 940221.7,
+              "pct": 3.24,
+              "calls_year": 302
+            },
+            {
+              "name": "PROPANE/BUTANE",
+              "ton_year": 849504.6,
+              "pct": 2.93,
+              "calls_year": 19
+            },
+            {
+              "name": "AMMONIA",
+              "ton_year": 833974.6,
+              "pct": 2.88,
+              "calls_year": 86
+            },
+            {
+              "name": "ETHYLENE",
+              "ton_year": 702773.6,
+              "pct": 2.42,
+              "calls_year": 159
+            },
+            {
+              "name": "AMONIAK",
+              "ton_year": 699722.5,
+              "pct": 2.41,
+              "calls_year": 88
+            },
+            {
+              "name": "GAS LPG",
+              "ton_year": 696850.1,
+              "pct": 2.4,
+              "calls_year": 362
+            },
+            {
+              "name": "PROPANE & BUTANE",
+              "ton_year": 605584.0,
+              "pct": 2.09,
+              "calls_year": 15
+            },
+            {
+              "name": "FULLY REFRIGERATED PROPANE",
+              "ton_year": 565284.0,
+              "pct": 1.95,
+              "calls_year": 37
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 9814384.4,
+          "calls_total": 2078,
+          "commodity_count": 74,
+          "top_commodities": [
+            {
+              "name": "LPG",
+              "ton_year": 4154140.0,
+              "pct": 42.33,
+              "calls_year": 992
+            },
+            {
+              "name": "LPG MIX",
+              "ton_year": 1071576.0,
+              "pct": 10.92,
+              "calls_year": 218
+            },
+            {
+              "name": "PROPANE",
+              "ton_year": 434271.0,
+              "pct": 4.42,
+              "calls_year": 125
+            },
+            {
+              "name": "AMMONIA",
+              "ton_year": 427573.1,
+              "pct": 4.36,
+              "calls_year": 41
+            },
+            {
+              "name": "BUTANE",
+              "ton_year": 407630.0,
+              "pct": 4.15,
+              "calls_year": 125
+            },
+            {
+              "name": "LNG",
+              "ton_year": 401211.0,
+              "pct": 4.09,
+              "calls_year": 8
+            },
+            {
+              "name": "PROPANE & BUTANE",
+              "ton_year": 352311.1,
+              "pct": 3.59,
+              "calls_year": 10
+            },
+            {
+              "name": "LIQUIFEID NATURAL GAS",
+              "ton_year": 288764.0,
+              "pct": 2.94,
+              "calls_year": 5
+            },
+            {
+              "name": "GAS LPG",
+              "ton_year": 275591.7,
+              "pct": 2.81,
+              "calls_year": 122
+            },
+            {
+              "name": "AMONIAK",
+              "ton_year": 263647.8,
+              "pct": 2.69,
+              "calls_year": 31
+            },
+            {
+              "name": "FULLY REFRIGERATED PROPANE",
+              "ton_year": 262937.0,
+              "pct": 2.68,
+              "calls_year": 10
+            },
+            {
+              "name": "FULLY REFRIGERATED BUTANE",
+              "ton_year": 250356.0,
+              "pct": 2.55,
+              "calls_year": 9
+            }
+          ]
+        }
+      }
     },
     "Chemical": {
       "ton_total_24m": 117966611.9,
-      "calls_total_24m": 34519,
+      "calls_total_24m": 28036,
       "commodity_count": 1823,
       "top_commodities": [
         {
@@ -407,16 +1349,255 @@
           "pct": 1.77,
           "calls_24m": 88
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 35909314.3,
+          "calls_total": 7286,
+          "commodity_count": 894,
+          "top_commodities": [
+            {
+              "name": "RBD PALM OLEIN",
+              "ton_year": 3441230.5,
+              "pct": 9.58,
+              "calls_year": 451
+            },
+            {
+              "name": "RBD PALM OIL",
+              "ton_year": 2243058.1,
+              "pct": 6.25,
+              "calls_year": 193
+            },
+            {
+              "name": "PERTALITE",
+              "ton_year": 1679596.0,
+              "pct": 4.68,
+              "calls_year": 520
+            },
+            {
+              "name": "FAME",
+              "ton_year": 1468352.1,
+              "pct": 4.09,
+              "calls_year": 137
+            },
+            {
+              "name": "BBM",
+              "ton_year": 1133963.4,
+              "pct": 3.16,
+              "calls_year": 159
+            },
+            {
+              "name": "CPO",
+              "ton_year": 1106588.3,
+              "pct": 3.08,
+              "calls_year": 246
+            },
+            {
+              "name": "CONDENSATE",
+              "ton_year": 1078988.1,
+              "pct": 3.0,
+              "calls_year": 33
+            },
+            {
+              "name": "AVTUR",
+              "ton_year": 1011419.0,
+              "pct": 2.82,
+              "calls_year": 192
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 928133.5,
+              "pct": 2.58,
+              "calls_year": 174
+            },
+            {
+              "name": "FATTY ACID METHYL ESTER",
+              "ton_year": 901895.5,
+              "pct": 2.51,
+              "calls_year": 109
+            },
+            {
+              "name": "METHANOL",
+              "ton_year": 850342.9,
+              "pct": 2.37,
+              "calls_year": 178
+            },
+            {
+              "name": "PARAXYLENE",
+              "ton_year": 781040.6,
+              "pct": 2.18,
+              "calls_year": 72
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 61622317.4,
+          "calls_total": 15405,
+          "commodity_count": 1257,
+          "top_commodities": [
+            {
+              "name": "RBD PALM OLEIN",
+              "ton_year": 5819462.2,
+              "pct": 9.44,
+              "calls_year": 668
+            },
+            {
+              "name": "FAME",
+              "ton_year": 3636165.3,
+              "pct": 5.9,
+              "calls_year": 340
+            },
+            {
+              "name": "RBD PALM OIL",
+              "ton_year": 3516001.8,
+              "pct": 5.71,
+              "calls_year": 330
+            },
+            {
+              "name": "PERTALITE",
+              "ton_year": 2117996.1,
+              "pct": 3.44,
+              "calls_year": 1027
+            },
+            {
+              "name": "CPO",
+              "ton_year": 2011739.5,
+              "pct": 3.26,
+              "calls_year": 362
+            },
+            {
+              "name": "METHANOL",
+              "ton_year": 1768635.2,
+              "pct": 2.87,
+              "calls_year": 385
+            },
+            {
+              "name": "AVTUR",
+              "ton_year": 1699562.0,
+              "pct": 2.76,
+              "calls_year": 379
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 1555444.4,
+              "pct": 2.52,
+              "calls_year": 314
+            },
+            {
+              "name": "FATTY ACID METHYL ESTER",
+              "ton_year": 1418896.8,
+              "pct": 2.3,
+              "calls_year": 192
+            },
+            {
+              "name": "LIQUID CAUSTIC SODA",
+              "ton_year": 1369977.0,
+              "pct": 2.22,
+              "calls_year": 151
+            },
+            {
+              "name": "RBD PALM STEARIN",
+              "ton_year": 1162647.6,
+              "pct": 1.89,
+              "calls_year": 314
+            },
+            {
+              "name": "SOLAR",
+              "ton_year": 1117003.1,
+              "pct": 1.81,
+              "calls_year": 137
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 20434980.1,
+          "calls_total": 5345,
+          "commodity_count": 688,
+          "top_commodities": [
+            {
+              "name": "RBD PALM OLEIN",
+              "ton_year": 1873359.2,
+              "pct": 9.17,
+              "calls_year": 215
+            },
+            {
+              "name": "FAME",
+              "ton_year": 949865.9,
+              "pct": 4.65,
+              "calls_year": 134
+            },
+            {
+              "name": "PERTALITE",
+              "ton_year": 909449.1,
+              "pct": 4.45,
+              "calls_year": 405
+            },
+            {
+              "name": "CPO",
+              "ton_year": 786287.6,
+              "pct": 3.85,
+              "calls_year": 137
+            },
+            {
+              "name": "AVTUR",
+              "ton_year": 674411.0,
+              "pct": 3.3,
+              "calls_year": 134
+            },
+            {
+              "name": "RBD PALM OIL",
+              "ton_year": 632276.8,
+              "pct": 3.09,
+              "calls_year": 106
+            },
+            {
+              "name": "PALM OIL PRODUCT",
+              "ton_year": 601286.6,
+              "pct": 2.94,
+              "calls_year": 35
+            },
+            {
+              "name": "LIQUID CAUSTIC SODA",
+              "ton_year": 591366.0,
+              "pct": 2.89,
+              "calls_year": 87
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 586722.4,
+              "pct": 2.87,
+              "calls_year": 93
+            },
+            {
+              "name": "BBM",
+              "ton_year": 571485.0,
+              "pct": 2.8,
+              "calls_year": 76
+            },
+            {
+              "name": "NAPHTHA",
+              "ton_year": 536024.1,
+              "pct": 2.62,
+              "calls_year": 21
+            },
+            {
+              "name": "METHANOL",
+              "ton_year": 505134.4,
+              "pct": 2.47,
+              "calls_year": 107
+            }
+          ]
+        }
+      }
     },
     "FAME / Vegetable Oil": {
-      "ton_total_24m": 8678107.4,
+      "ton_total_24m": 8678107.3,
       "calls_total_24m": 2110,
       "commodity_count": 139,
       "top_commodities": [
         {
           "name": "CPO",
-          "ton_24m": 3278481.2,
+          "ton_24m": 3278481.1,
           "pct": 37.78,
           "calls_24m": 879
         },
@@ -486,11 +1667,250 @@
           "pct": 0.76,
           "calls_24m": 24
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 3352671.0,
+          "calls_total": 770,
+          "commodity_count": 51,
+          "top_commodities": [
+            {
+              "name": "CPO",
+              "ton_year": 1179948.6,
+              "pct": 35.19,
+              "calls_year": 329
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 717326.2,
+              "pct": 21.4,
+              "calls_year": 206
+            },
+            {
+              "name": "PFAD",
+              "ton_year": 343190.8,
+              "pct": 10.24,
+              "calls_year": 5
+            },
+            {
+              "name": "CRUDE PALM OIL (CPO)",
+              "ton_year": 243017.2,
+              "pct": 7.25,
+              "calls_year": 14
+            },
+            {
+              "name": "RBD PALM OLEIN",
+              "ton_year": 180100.0,
+              "pct": 5.37,
+              "calls_year": 8
+            },
+            {
+              "name": "FAME",
+              "ton_year": 154600.0,
+              "pct": 4.61,
+              "calls_year": 33
+            },
+            {
+              "name": "BIODIESEL",
+              "ton_year": 75770.0,
+              "pct": 2.26,
+              "calls_year": 17
+            },
+            {
+              "name": "FATTY ACID METHYL ESTER",
+              "ton_year": 44748.9,
+              "pct": 1.33,
+              "calls_year": 10
+            },
+            {
+              "name": "CPKO",
+              "ton_year": 41410.1,
+              "pct": 1.24,
+              "calls_year": 26
+            },
+            {
+              "name": "Crude Palm Oil",
+              "ton_year": 33153.2,
+              "pct": 0.99,
+              "calls_year": 7
+            },
+            {
+              "name": "RBD OLEIN",
+              "ton_year": 28794.3,
+              "pct": 0.86,
+              "calls_year": 12
+            },
+            {
+              "name": "CPO (PIPA TERPADU)",
+              "ton_year": 25458.0,
+              "pct": 0.76,
+              "calls_year": 7
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 4179416.8,
+          "calls_total": 1020,
+          "commodity_count": 91,
+          "top_commodities": [
+            {
+              "name": "CPO",
+              "ton_year": 1620334.9,
+              "pct": 38.77,
+              "calls_year": 428
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 1387784.3,
+              "pct": 33.21,
+              "calls_year": 274
+            },
+            {
+              "name": "CRUDE PALM OIL (CPO)",
+              "ton_year": 238056.1,
+              "pct": 5.7,
+              "calls_year": 29
+            },
+            {
+              "name": "RBD PALM OLEIN",
+              "ton_year": 95891.0,
+              "pct": 2.29,
+              "calls_year": 7
+            },
+            {
+              "name": "FAME",
+              "ton_year": 69769.0,
+              "pct": 1.67,
+              "calls_year": 15
+            },
+            {
+              "name": "RBDPL",
+              "ton_year": 64399.0,
+              "pct": 1.54,
+              "calls_year": 14
+            },
+            {
+              "name": "CPKO",
+              "ton_year": 62778.9,
+              "pct": 1.5,
+              "calls_year": 33
+            },
+            {
+              "name": "CRUDE PALM KERNEL OIL",
+              "ton_year": 51667.6,
+              "pct": 1.24,
+              "calls_year": 16
+            },
+            {
+              "name": "RBD OLEIN",
+              "ton_year": 40794.8,
+              "pct": 0.98,
+              "calls_year": 17
+            },
+            {
+              "name": "CRUDE GLYCERINE",
+              "ton_year": 34978.0,
+              "pct": 0.84,
+              "calls_year": 16
+            },
+            {
+              "name": "CPO ( CRUDE PALM OIL )",
+              "ton_year": 27104.0,
+              "pct": 0.65,
+              "calls_year": 7
+            },
+            {
+              "name": "Crude Glycerine",
+              "ton_year": 25007.0,
+              "pct": 0.6,
+              "calls_year": 10
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 1146019.5,
+          "calls_total": 320,
+          "commodity_count": 62,
+          "top_commodities": [
+            {
+              "name": "CPO",
+              "ton_year": 478197.6,
+              "pct": 41.73,
+              "calls_year": 122
+            },
+            {
+              "name": "CRUDE PALM OIL",
+              "ton_year": 274582.2,
+              "pct": 23.96,
+              "calls_year": 73
+            },
+            {
+              "name": "CRUDE PALM OIL (CPO)",
+              "ton_year": 34548.0,
+              "pct": 3.01,
+              "calls_year": 9
+            },
+            {
+              "name": "CPO ( CRUDE PALM OIL )",
+              "ton_year": 32015.0,
+              "pct": 2.79,
+              "calls_year": 8
+            },
+            {
+              "name": "CPKO",
+              "ton_year": 27421.1,
+              "pct": 2.39,
+              "calls_year": 9
+            },
+            {
+              "name": "RBD OLEIN",
+              "ton_year": 26395.2,
+              "pct": 2.3,
+              "calls_year": 11
+            },
+            {
+              "name": "FAME",
+              "ton_year": 25338.0,
+              "pct": 2.21,
+              "calls_year": 6
+            },
+            {
+              "name": "HYDROGENATED PALM STEARIN",
+              "ton_year": 18161.0,
+              "pct": 1.58,
+              "calls_year": 4
+            },
+            {
+              "name": "DPOFA",
+              "ton_year": 15920.0,
+              "pct": 1.39,
+              "calls_year": 4
+            },
+            {
+              "name": "RBD OLIEN",
+              "ton_year": 15199.8,
+              "pct": 1.33,
+              "calls_year": 1
+            },
+            {
+              "name": "Crude Palm Oil",
+              "ton_year": 13800.3,
+              "pct": 1.2,
+              "calls_year": 3
+            },
+            {
+              "name": "REFINED BLEACHED DEODORISED PALM OLEIN",
+              "ton_year": 12000.0,
+              "pct": 1.05,
+              "calls_year": 1
+            }
+          ]
+        }
+      }
     },
     "Container": {
       "ton_total_24m": 491143822.4,
-      "calls_total_24m": 617147,
+      "calls_total_24m": 616697,
       "commodity_count": 29685,
       "top_commodities": [
         {
@@ -565,11 +1985,250 @@
           "pct": 1.16,
           "calls_24m": 1280
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 148764129.5,
+          "calls_total": 194205,
+          "commodity_count": 11608,
+          "top_commodities": [
+            {
+              "name": "PETIKEMAS 20 FULL",
+              "ton_year": 39893736.5,
+              "pct": 26.82,
+              "calls_year": 13739
+            },
+            {
+              "name": "PETIKEMAS 40 FULL",
+              "ton_year": 18641452.1,
+              "pct": 12.53,
+              "calls_year": 11273
+            },
+            {
+              "name": "CONTAINER FULL 20",
+              "ton_year": 11720852.3,
+              "pct": 7.88,
+              "calls_year": 2665
+            },
+            {
+              "name": "CONTAINER FULL 40",
+              "ton_year": 10958780.2,
+              "pct": 7.37,
+              "calls_year": 2239
+            },
+            {
+              "name": "PETIKEMAS 20 ISI",
+              "ton_year": 4930589.7,
+              "pct": 3.31,
+              "calls_year": 1601
+            },
+            {
+              "name": "BARANG CAMPURAN",
+              "ton_year": 4190497.2,
+              "pct": 2.82,
+              "calls_year": 1540
+            },
+            {
+              "name": "PETIKEMAS 40 ISI",
+              "ton_year": 3935893.0,
+              "pct": 2.65,
+              "calls_year": 1454
+            },
+            {
+              "name": "GENERAL CARGO",
+              "ton_year": 3048454.8,
+              "pct": 2.05,
+              "calls_year": 1856
+            },
+            {
+              "name": "BERAS",
+              "ton_year": 2392905.1,
+              "pct": 1.61,
+              "calls_year": 1243
+            },
+            {
+              "name": "PETIKEMAS 20 EMPTY",
+              "ton_year": 2154785.7,
+              "pct": 1.45,
+              "calls_year": 4332
+            },
+            {
+              "name": "PETIKEMAS 20 FL",
+              "ton_year": 2023333.7,
+              "pct": 1.36,
+              "calls_year": 372
+            },
+            {
+              "name": "BARANG RONGSOKAN",
+              "ton_year": 1698366.9,
+              "pct": 1.14,
+              "calls_year": 41
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 258606451.8,
+          "calls_total": 318948,
+          "commodity_count": 17350,
+          "top_commodities": [
+            {
+              "name": "PETIKEMAS 20 FULL",
+              "ton_year": 64914571.6,
+              "pct": 25.1,
+              "calls_year": 21876
+            },
+            {
+              "name": "PETIKEMAS 40 FULL",
+              "ton_year": 32709240.3,
+              "pct": 12.65,
+              "calls_year": 18720
+            },
+            {
+              "name": "CONTAINER FULL 20",
+              "ton_year": 15509128.3,
+              "pct": 6.0,
+              "calls_year": 3497
+            },
+            {
+              "name": "PETIKEMAS 20 ISI",
+              "ton_year": 13400526.4,
+              "pct": 5.18,
+              "calls_year": 4179
+            },
+            {
+              "name": "PETIKEMAS 40 ISI",
+              "ton_year": 12299380.7,
+              "pct": 4.76,
+              "calls_year": 3900
+            },
+            {
+              "name": "CONTAINER FULL 40",
+              "ton_year": 10878834.1,
+              "pct": 4.21,
+              "calls_year": 2659
+            },
+            {
+              "name": "BARANG CAMPURAN",
+              "ton_year": 7361610.9,
+              "pct": 2.85,
+              "calls_year": 2305
+            },
+            {
+              "name": "GENERAL CARGO",
+              "ton_year": 6610668.4,
+              "pct": 2.56,
+              "calls_year": 3479
+            },
+            {
+              "name": "PETIKEMAS 20 FL",
+              "ton_year": 4459568.6,
+              "pct": 1.72,
+              "calls_year": 645
+            },
+            {
+              "name": "CONTAINER KOSONG",
+              "ton_year": 4324021.9,
+              "pct": 1.67,
+              "calls_year": 208
+            },
+            {
+              "name": "PETIKEMAS 20 EMPTY",
+              "ton_year": 3018931.3,
+              "pct": 1.17,
+              "calls_year": 6944
+            },
+            {
+              "name": "KOPRA",
+              "ton_year": 2904527.4,
+              "pct": 1.12,
+              "calls_year": 620
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 83773241.2,
+          "calls_total": 103544,
+          "commodity_count": 7443,
+          "top_commodities": [
+            {
+              "name": "PETIKEMAS 20 FULL",
+              "ton_year": 19983717.1,
+              "pct": 23.85,
+              "calls_year": 6943
+            },
+            {
+              "name": "PETIKEMAS 40 FULL",
+              "ton_year": 10808003.5,
+              "pct": 12.9,
+              "calls_year": 5982
+            },
+            {
+              "name": "PETIKEMAS 40 ISI",
+              "ton_year": 4961377.2,
+              "pct": 5.92,
+              "calls_year": 1262
+            },
+            {
+              "name": "CONTAINER FULL 20",
+              "ton_year": 4862739.3,
+              "pct": 5.8,
+              "calls_year": 1194
+            },
+            {
+              "name": "PETIKEMAS 20 ISI",
+              "ton_year": 4386983.1,
+              "pct": 5.24,
+              "calls_year": 1343
+            },
+            {
+              "name": "CONTAINER FULL 40",
+              "ton_year": 3761673.3,
+              "pct": 4.49,
+              "calls_year": 927
+            },
+            {
+              "name": "GENERAL CARGO",
+              "ton_year": 2248347.2,
+              "pct": 2.68,
+              "calls_year": 1180
+            },
+            {
+              "name": "BARANG CAMPURAN",
+              "ton_year": 1941528.0,
+              "pct": 2.32,
+              "calls_year": 681
+            },
+            {
+              "name": "BERAS",
+              "ton_year": 1586714.5,
+              "pct": 1.89,
+              "calls_year": 568
+            },
+            {
+              "name": "PETIKEMAS 20 FL",
+              "ton_year": 1542517.4,
+              "pct": 1.84,
+              "calls_year": 244
+            },
+            {
+              "name": "CONTAINER KOSONG",
+              "ton_year": 1474180.4,
+              "pct": 1.76,
+              "calls_year": 70
+            },
+            {
+              "name": "KOPRA",
+              "ton_year": 1302169.2,
+              "pct": 1.55,
+              "calls_year": 266
+            }
+          ]
+        }
+      }
     },
     "General Cargo": {
       "ton_total_24m": 288070457.6,
-      "calls_total_24m": 650415,
+      "calls_total_24m": 648063,
       "commodity_count": 37317,
       "top_commodities": [
         {
@@ -644,11 +2303,250 @@
           "pct": 1.16,
           "calls_24m": 233
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 87424970.2,
+          "calls_total": 190842,
+          "commodity_count": 12913,
+          "top_commodities": [
+            {
+              "name": "BATU BARA",
+              "ton_year": 5459001.1,
+              "pct": 6.24,
+              "calls_year": 206
+            },
+            {
+              "name": "SEMEN",
+              "ton_year": 5288337.5,
+              "pct": 6.05,
+              "calls_year": 4529
+            },
+            {
+              "name": "GENERAL CARGO",
+              "ton_year": 5279105.3,
+              "pct": 6.04,
+              "calls_year": 3913
+            },
+            {
+              "name": "PUPUK",
+              "ton_year": 4200830.6,
+              "pct": 4.81,
+              "calls_year": 2322
+            },
+            {
+              "name": "PETIKEMAS 20 FULL",
+              "ton_year": 3109280.4,
+              "pct": 3.56,
+              "calls_year": 1885
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 1509628.2,
+              "pct": 1.73,
+              "calls_year": 80
+            },
+            {
+              "name": "PULP",
+              "ton_year": 1491425.3,
+              "pct": 1.71,
+              "calls_year": 211
+            },
+            {
+              "name": "GENCAR",
+              "ton_year": 1110506.3,
+              "pct": 1.27,
+              "calls_year": 1660
+            },
+            {
+              "name": "PALM KERNEL",
+              "ton_year": 1081254.0,
+              "pct": 1.24,
+              "calls_year": 668
+            },
+            {
+              "name": "WOODPULP",
+              "ton_year": 1044287.0,
+              "pct": 1.19,
+              "calls_year": 77
+            },
+            {
+              "name": "FERRO NICKEL",
+              "ton_year": 1038779.0,
+              "pct": 1.19,
+              "calls_year": 109
+            },
+            {
+              "name": "SEMEN JUMBO",
+              "ton_year": 1025622.0,
+              "pct": 1.17,
+              "calls_year": 336
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 145751046.6,
+          "calls_total": 339314,
+          "commodity_count": 22681,
+          "top_commodities": [
+            {
+              "name": "GENERAL CARGO",
+              "ton_year": 19826498.4,
+              "pct": 13.6,
+              "calls_year": 5058
+            },
+            {
+              "name": "PUPUK",
+              "ton_year": 6375046.4,
+              "pct": 4.37,
+              "calls_year": 4402
+            },
+            {
+              "name": "SEMEN",
+              "ton_year": 6307040.0,
+              "pct": 4.33,
+              "calls_year": 6412
+            },
+            {
+              "name": "BATU BARA",
+              "ton_year": 6269151.4,
+              "pct": 4.3,
+              "calls_year": 258
+            },
+            {
+              "name": "PETIKEMAS 20 FULL",
+              "ton_year": 4089554.0,
+              "pct": 2.81,
+              "calls_year": 2679
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 2609960.0,
+              "pct": 1.79,
+              "calls_year": 147
+            },
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 2518205.9,
+              "pct": 1.73,
+              "calls_year": 177
+            },
+            {
+              "name": "PULP",
+              "ton_year": 2403113.7,
+              "pct": 1.65,
+              "calls_year": 383
+            },
+            {
+              "name": "FERRO NICKEL",
+              "ton_year": 2322154.5,
+              "pct": 1.59,
+              "calls_year": 236
+            },
+            {
+              "name": "PALM KERNEL SHELL",
+              "ton_year": 2103764.2,
+              "pct": 1.44,
+              "calls_year": 193
+            },
+            {
+              "name": "PALM KERNEL",
+              "ton_year": 1891995.2,
+              "pct": 1.3,
+              "calls_year": 1276
+            },
+            {
+              "name": "GENCAR",
+              "ton_year": 1699130.7,
+              "pct": 1.17,
+              "calls_year": 2922
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 54894440.9,
+          "calls_total": 117907,
+          "commodity_count": 11187,
+          "top_commodities": [
+            {
+              "name": "GENERAL CARGO",
+              "ton_year": 11572453.9,
+              "pct": 21.08,
+              "calls_year": 1870
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 2527053.8,
+              "pct": 4.6,
+              "calls_year": 127
+            },
+            {
+              "name": "PUPUK",
+              "ton_year": 2007772.3,
+              "pct": 3.66,
+              "calls_year": 1336
+            },
+            {
+              "name": "SEMEN",
+              "ton_year": 1830975.6,
+              "pct": 3.34,
+              "calls_year": 2009
+            },
+            {
+              "name": "PETIKEMAS 20 FULL",
+              "ton_year": 1125473.2,
+              "pct": 2.05,
+              "calls_year": 862
+            },
+            {
+              "name": "BATU BARA",
+              "ton_year": 841170.2,
+              "pct": 1.53,
+              "calls_year": 34
+            },
+            {
+              "name": "PRODUK HASIL TEMBAKAU",
+              "ton_year": 818121.9,
+              "pct": 1.49,
+              "calls_year": 40
+            },
+            {
+              "name": "PULP",
+              "ton_year": 743451.2,
+              "pct": 1.35,
+              "calls_year": 112
+            },
+            {
+              "name": "PALM KERNEL SHELL",
+              "ton_year": 741039.3,
+              "pct": 1.35,
+              "calls_year": 73
+            },
+            {
+              "name": "WOODPULP",
+              "ton_year": 724504.0,
+              "pct": 1.32,
+              "calls_year": 54
+            },
+            {
+              "name": "FERRO NICKEL",
+              "ton_year": 648880.6,
+              "pct": 1.18,
+              "calls_year": 66
+            },
+            {
+              "name": "PALM KERNEL",
+              "ton_year": 633026.5,
+              "pct": 1.15,
+              "calls_year": 448
+            }
+          ]
+        }
+      }
     },
     "Other Cargo": {
       "ton_total_24m": 2303602585.5,
-      "calls_total_24m": 702556,
+      "calls_total_24m": 675401,
       "commodity_count": 24524,
       "top_commodities": [
         {
@@ -723,11 +2621,250 @@
           "pct": 0.65,
           "calls_24m": 4444
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 655097494.4,
+          "calls_total": 220509,
+          "commodity_count": 7746,
+          "top_commodities": [
+            {
+              "name": "BATU BARA",
+              "ton_year": 186860100.7,
+              "pct": 28.52,
+              "calls_year": 22113
+            },
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 150009494.5,
+              "pct": 22.9,
+              "calls_year": 14272
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 105250848.3,
+              "pct": 16.07,
+              "calls_year": 11970
+            },
+            {
+              "name": "BATU BARA CURAH KERING",
+              "ton_year": 8191901.6,
+              "pct": 1.25,
+              "calls_year": 538
+            },
+            {
+              "name": "Nickel Ore",
+              "ton_year": 8113285.5,
+              "pct": 1.24,
+              "calls_year": 810
+            },
+            {
+              "name": "PASIR",
+              "ton_year": 7641490.6,
+              "pct": 1.17,
+              "calls_year": 2453
+            },
+            {
+              "name": "LIMESTONE",
+              "ton_year": 5365720.6,
+              "pct": 0.82,
+              "calls_year": 651
+            },
+            {
+              "name": "NIKEL ORE",
+              "ton_year": 5149889.4,
+              "pct": 0.79,
+              "calls_year": 370
+            },
+            {
+              "name": "CPO",
+              "ton_year": 5076155.4,
+              "pct": 0.77,
+              "calls_year": 1557
+            },
+            {
+              "name": "NIKEL",
+              "ton_year": 4685636.9,
+              "pct": 0.72,
+              "calls_year": 192
+            },
+            {
+              "name": "BATU PECAH",
+              "ton_year": 4631705.1,
+              "pct": 0.71,
+              "calls_year": 1957
+            },
+            {
+              "name": "GRANITE",
+              "ton_year": 4509441.6,
+              "pct": 0.69,
+              "calls_year": 1188
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 1211028291.3,
+          "calls_total": 358700,
+          "commodity_count": 14265,
+          "top_commodities": [
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 323128757.7,
+              "pct": 26.68,
+              "calls_year": 28373
+            },
+            {
+              "name": "BATU BARA",
+              "ton_year": 313583008.2,
+              "pct": 25.89,
+              "calls_year": 35479
+            },
+            {
+              "name": "BATUBARA",
+              "ton_year": 193218062.8,
+              "pct": 15.95,
+              "calls_year": 21574
+            },
+            {
+              "name": "BATU BARA CURAH KERING",
+              "ton_year": 22953566.9,
+              "pct": 1.9,
+              "calls_year": 868
+            },
+            {
+              "name": "BAUXITE",
+              "ton_year": 17491527.3,
+              "pct": 1.44,
+              "calls_year": 2296
+            },
+            {
+              "name": "LIMESTONE",
+              "ton_year": 15927167.5,
+              "pct": 1.32,
+              "calls_year": 882
+            },
+            {
+              "name": "PASIR",
+              "ton_year": 11809748.7,
+              "pct": 0.98,
+              "calls_year": 3424
+            },
+            {
+              "name": "Nickel Ore",
+              "ton_year": 10169632.1,
+              "pct": 0.84,
+              "calls_year": 1048
+            },
+            {
+              "name": "INDONESIAN NICKEL ORE",
+              "ton_year": 10013820.8,
+              "pct": 0.83,
+              "calls_year": 998
+            },
+            {
+              "name": "BAUXIT",
+              "ton_year": 9148996.4,
+              "pct": 0.76,
+              "calls_year": 1234
+            },
+            {
+              "name": "BIJI NIKEL",
+              "ton_year": 8840058.0,
+              "pct": 0.73,
+              "calls_year": 813
+            },
+            {
+              "name": "CPO",
+              "ton_year": 7876024.4,
+              "pct": 0.65,
+              "calls_year": 2261
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 437476799.8,
+          "calls_total": 96192,
+          "commodity_count": 7388,
+          "top_commodities": [
+            {
+              "name": "BATUBARA",
+              "ton_year": 138920685.8,
+              "pct": 31.75,
+              "calls_year": 15697
+            },
+            {
+              "name": "NICKEL ORE",
+              "ton_year": 104260705.9,
+              "pct": 23.83,
+              "calls_year": 8338
+            },
+            {
+              "name": "BATU BARA",
+              "ton_year": 58340519.0,
+              "pct": 13.34,
+              "calls_year": 6084
+            },
+            {
+              "name": "INDONESIAN NICKEL ORE",
+              "ton_year": 8379328.7,
+              "pct": 1.92,
+              "calls_year": 815
+            },
+            {
+              "name": "BAUXITE",
+              "ton_year": 7943353.2,
+              "pct": 1.82,
+              "calls_year": 647
+            },
+            {
+              "name": "NIKEL ORE",
+              "ton_year": 4711676.1,
+              "pct": 1.08,
+              "calls_year": 120
+            },
+            {
+              "name": "CONTAINER EMPTY 40",
+              "ton_year": 4516442.4,
+              "pct": 1.03,
+              "calls_year": 161
+            },
+            {
+              "name": "PASIR",
+              "ton_year": 4211790.3,
+              "pct": 0.96,
+              "calls_year": 1082
+            },
+            {
+              "name": "Nickel Ore",
+              "ton_year": 4064184.5,
+              "pct": 0.93,
+              "calls_year": 366
+            },
+            {
+              "name": "NIKEL",
+              "ton_year": 3609636.4,
+              "pct": 0.83,
+              "calls_year": 38
+            },
+            {
+              "name": "COAL",
+              "ton_year": 3203964.6,
+              "pct": 0.73,
+              "calls_year": 388
+            },
+            {
+              "name": "LIMESTONE",
+              "ton_year": 3171348.6,
+              "pct": 0.72,
+              "calls_year": 342
+            }
+          ]
+        }
+      }
     },
     "UNKNOWN": {
       "ton_total_24m": 1412379.1,
-      "calls_total_24m": 388,
+      "calls_total_24m": 387,
       "commodity_count": 43,
       "top_commodities": [
         {
@@ -764,7 +2901,7 @@
           "name": "METHANOL IN BULK",
           "ton_24m": 22348.0,
           "pct": 1.58,
-          "calls_24m": 6
+          "calls_24m": 5
         },
         {
           "name": "RBD PALM OLEIN",
@@ -802,12 +2939,222 @@
           "pct": 0.8,
           "calls_24m": 1
         }
-      ]
+      ],
+      "by_year": {
+        "2024": {
+          "ton_total": 432637.2,
+          "calls_total": 130,
+          "commodity_count": 16,
+          "top_commodities": [
+            {
+              "name": "METHANOL",
+              "ton_year": 194965.2,
+              "pct": 45.06,
+              "calls_year": 31
+            },
+            {
+              "name": "SEMEN",
+              "ton_year": 106532.0,
+              "pct": 24.62,
+              "calls_year": 20
+            },
+            {
+              "name": "LPG",
+              "ton_year": 78201.0,
+              "pct": 18.08,
+              "calls_year": 46
+            },
+            {
+              "name": "RBD PALM OLEIN IN BULK",
+              "ton_year": 12706.0,
+              "pct": 2.94,
+              "calls_year": 3
+            },
+            {
+              "name": "RBD PALM OLEIN OF EDIBLE GRADE IN BULK",
+              "ton_year": 10000.0,
+              "pct": 2.31,
+              "calls_year": 1
+            },
+            {
+              "name": "METHANOL LIQUID",
+              "ton_year": 7250.0,
+              "pct": 1.68,
+              "calls_year": 4
+            },
+            {
+              "name": "SEMEN CURAH",
+              "ton_year": 5700.0,
+              "pct": 1.32,
+              "calls_year": 1
+            },
+            {
+              "name": "RBD PALM KERNEL OIL IN BULK",
+              "ton_year": 5300.0,
+              "pct": 1.23,
+              "calls_year": 2
+            },
+            {
+              "name": "RBD COCONUT OIL IN BULK",
+              "ton_year": 4000.0,
+              "pct": 0.92,
+              "calls_year": 1
+            },
+            {
+              "name": "BASE OIL",
+              "ton_year": 3924.0,
+              "pct": 0.91,
+              "calls_year": 2
+            },
+            {
+              "name": "DEG",
+              "ton_year": 1007.0,
+              "pct": 0.23,
+              "calls_year": 1
+            },
+            {
+              "name": "METHANIL",
+              "ton_year": 1001.0,
+              "pct": 0.23,
+              "calls_year": 1
+            }
+          ]
+        },
+        "2025": {
+          "ton_total": 838252.4,
+          "calls_total": 219,
+          "commodity_count": 31,
+          "top_commodities": [
+            {
+              "name": "CRUDE OIL",
+              "ton_year": 244760.0,
+              "pct": 29.2,
+              "calls_year": 1
+            },
+            {
+              "name": "LPG",
+              "ton_year": 168300.0,
+              "pct": 20.08,
+              "calls_year": 99
+            },
+            {
+              "name": "METHANOL",
+              "ton_year": 155597.0,
+              "pct": 18.56,
+              "calls_year": 47
+            },
+            {
+              "name": "SEMEN",
+              "ton_year": 80067.0,
+              "pct": 9.55,
+              "calls_year": 15
+            },
+            {
+              "name": "RBD PALM OLEIN IN BULK",
+              "ton_year": 28139.0,
+              "pct": 3.36,
+              "calls_year": 9
+            },
+            {
+              "name": "RBD PALM OLEIN",
+              "ton_year": 18740.0,
+              "pct": 2.24,
+              "calls_year": 2
+            },
+            {
+              "name": "CAUSTIC SODA",
+              "ton_year": 18002.0,
+              "pct": 2.15,
+              "calls_year": 7
+            },
+            {
+              "name": "CAUTIS SODA",
+              "ton_year": 15200.0,
+              "pct": 1.81,
+              "calls_year": 5
+            },
+            {
+              "name": "METHANOL IN BULK",
+              "ton_year": 11848.0,
+              "pct": 1.41,
+              "calls_year": 4
+            },
+            {
+              "name": "METANOL",
+              "ton_year": 11300.0,
+              "pct": 1.35,
+              "calls_year": 1
+            },
+            {
+              "name": "Liquid Caustic Soda",
+              "ton_year": 10418.0,
+              "pct": 1.24,
+              "calls_year": 4
+            },
+            {
+              "name": "PHOSPORIC ACID",
+              "ton_year": 8177.8,
+              "pct": 0.98,
+              "calls_year": 2
+            }
+          ]
+        },
+        "2026": {
+          "ton_total": 141489.6,
+          "calls_total": 38,
+          "commodity_count": 7,
+          "top_commodities": [
+            {
+              "name": "METHANOL",
+              "ton_year": 61921.6,
+              "pct": 43.76,
+              "calls_year": 10
+            },
+            {
+              "name": "LPG",
+              "ton_year": 27200.0,
+              "pct": 19.22,
+              "calls_year": 16
+            },
+            {
+              "name": "RBD PALM OLEIN IN BULK",
+              "ton_year": 25796.0,
+              "pct": 18.23,
+              "calls_year": 8
+            },
+            {
+              "name": "METHANOL IN BULK",
+              "ton_year": 10500.0,
+              "pct": 7.42,
+              "calls_year": 1
+            },
+            {
+              "name": "METHANOL PACKING: IN BULK",
+              "ton_year": 9669.0,
+              "pct": 6.83,
+              "calls_year": 1
+            },
+            {
+              "name": "MOLTEN SULPHUR",
+              "ton_year": 4200.0,
+              "pct": 2.97,
+              "calls_year": 1
+            },
+            {
+              "name": "Liquid Caustic Soda",
+              "ton_year": 2203.0,
+              "pct": 1.56,
+              "calls_year": 1
+            }
+          ]
+        }
+      }
     }
   },
   "top_n_per_cat": 12,
   "_notes": {
     "scope": "CARGO sector only; tanker rows split by subclass.",
-    "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot, 24M aggregate)"
+    "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot)",
+    "by_year": "Per-data_year aggregate. 24M legacy fields = sum across all years."
   }
 }

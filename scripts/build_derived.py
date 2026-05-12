@@ -1144,7 +1144,18 @@ def build_cargo_ports_periods() -> dict:
 #     }
 #   }
 def build_cargo_category_details(top_n: int = 12) -> dict:
-    """Per-category top-N KOMODITI breakdown (24M cumulative)."""
+    """Per-category top-N KOMODITI breakdown — 24M cumulative + per data_year.
+
+    Schema v2 adds ``years`` / ``months_per_year`` at the top level and
+    ``by_year`` under each category::
+
+        categories[cat] = {
+          ton_total_24m, calls_total_24m, commodity_count, top_commodities,
+          by_year: {
+            "<YYYY>": { ton_total, calls_total, commodity_count, top_commodities }
+          }
+        }
+    """
     from backend.taxonomy import (
         classify_tanker_subclass, classify_vessel_type,
         CLS_TANKER, SECTOR_CARGO,
@@ -1163,37 +1174,65 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
     P_TM = _p("('MUAT', 'TON')")
     ton_expr = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
 
-    # Aggregate (jenis_kapal, komoditi, side) → ton + calls.
-    # 각 row가 BONGKAR + MUAT 둘 다 가지므로 두 번 sweep.
-    agg: dict[tuple[str, str], dict] = defaultdict(
+    # Aggregate (jenis_kapal, komoditi, data_year, side) → ton + calls.
+    # 24M = sum across years. Per-year = filter by data_year.
+    # Key: (jk, kom, year_or_None) where None = all-years (24M) bucket.
+    agg_yr: dict[tuple[str, str, str | None], dict] = defaultdict(
         lambda: {"ton": 0.0, "calls": 0}
     )
+    months_per_year: dict[str, int] = {}
     with sqlite3.connect(DB) as con:
         cur = con.cursor()
+
+        # Discover available data years + months covered
+        cur.execute(
+            "SELECT data_year, COUNT(DISTINCT data_month) "
+            "FROM cargo_snapshot WHERE snapshot_month = ? "
+            "GROUP BY data_year ORDER BY 1",
+            (snap,),
+        )
+        for y, n in cur:
+            if y is None:
+                continue
+            months_per_year[str(int(y))] = int(n)
+        years_sorted = sorted(months_per_year.keys())
+
         for P_K, P_T in ((P_KB, P_TB), (P_KM, P_TM)):
             cur.execute(
                 f"SELECT "
                 f"  json_extract(raw_row, '{P_JK}')  AS jk, "
                 f"  json_extract(raw_row, '{P_K}')   AS kom, "
+                f"  CAST(data_year AS TEXT)          AS yr, "
                 f"  SUM({ton_expr(P_T)})              AS t, "
                 f"  COUNT(*)                          AS calls "
                 f"FROM cargo_snapshot WHERE snapshot_month = ? "
-                f"GROUP BY jk, kom HAVING t > 0",
+                f"GROUP BY jk, kom, yr HAVING t > 0",
                 (snap,),
             )
-            for jk, kom, t, calls in cur:
+            for jk, kom, yr, t, calls in cur:
                 if not jk or not kom:
                     continue
-                key = (jk.strip(), str(kom).strip())
-                a = agg[key]
-                a["ton"]   += float(t or 0)
-                a["calls"] += int(calls or 0)
+                jk_s = jk.strip()
+                kom_s = str(kom).strip()
+                t_f = float(t or 0)
+                calls_i = int(calls or 0)
+                # Per-year
+                agg_yr[(jk_s, kom_s, str(yr))]["ton"]   += t_f
+                agg_yr[(jk_s, kom_s, str(yr))]["calls"] += calls_i
+                # All-years (24M)
+                agg_yr[(jk_s, kom_s, None)]["ton"]      += t_f
+                agg_yr[(jk_s, kom_s, None)]["calls"]    += calls_i
 
-    # Bucket each (jenis_kapal, komoditi) into a category.
+    # Bucket each (jenis_kapal, komoditi, year) into a category.
+    # cat_total[cat][year_or_None] = { ton_total, calls_total, _kom: {kom: {ton, calls}} }
+    def _empty_window():
+        return {"ton_total": 0.0, "calls_total": 0,
+                "_kom": defaultdict(lambda: {"ton": 0.0, "calls": 0})}
+
     cat_total: dict[str, dict] = defaultdict(
-        lambda: {"ton_total_24m": 0.0, "calls_total_24m": 0, "_kom": defaultdict(lambda: {"ton": 0.0, "calls": 0})}
+        lambda: defaultdict(_empty_window)
     )
-    for (jk, kom), v in agg.items():
+    for (jk, kom, yr), v in agg_yr.items():
         sector, vc = classify_vessel_type(jk)
         if sector != SECTOR_CARGO:
             continue  # PASSENGER/FISHING/OFFSHORE/NON_COMMERCIAL 제외
@@ -1201,11 +1240,11 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
             cat = classify_tanker_subclass(jk) or "UNKNOWN"
         else:
             cat = vc
-        bucket = cat_total[cat]
-        bucket["ton_total_24m"]    += v["ton"]
-        bucket["calls_total_24m"]  += v["calls"]
-        bucket["_kom"][kom]["ton"]   += v["ton"]
-        bucket["_kom"][kom]["calls"] += v["calls"]
+        w = cat_total[cat][yr]
+        w["ton_total"]   += v["ton"]
+        w["calls_total"] += v["calls"]
+        w["_kom"][kom]["ton"]   += v["ton"]
+        w["_kom"][kom]["calls"] += v["calls"]
 
     # Stack order (시계열 차트와 일관). 비탱커 4개 + tanker subclass 7개.
     STACK_ORDER = (
@@ -1215,39 +1254,61 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
         "Container", "General Cargo", "Other Cargo", "UNKNOWN",
     )
 
+    def _build_window(w: dict, ton_key: str, calls_key: str) -> dict:
+        tot = w["ton_total"]
+        koms = sorted(w["_kom"].items(), key=lambda kv: -kv[1]["ton"])
+        top_list = []
+        for name, v in koms[:top_n]:
+            top_list.append({
+                "name": name,
+                ton_key: round(v["ton"], 1),
+                "pct": round((v["ton"] / tot * 100.0) if tot > 0 else 0.0, 2),
+                calls_key: int(v["calls"]),
+            })
+        return {
+            "ton_total":       round(tot, 1),
+            "calls_total":     int(w["calls_total"]),
+            "commodity_count": len(w["_kom"]),
+            "top_commodities": top_list,
+        }
+
     categories: dict[str, dict] = {}
     order: list[str] = []
     for cat in STACK_ORDER:
         if cat not in cat_total:
             continue
-        b = cat_total[cat]
-        tot = b["ton_total_24m"]
-        koms = sorted(b["_kom"].items(), key=lambda kv: -kv[1]["ton"])
-        top_list = []
-        for name, v in koms[:top_n]:
-            top_list.append({
-                "name": name,
-                "ton_24m": round(v["ton"], 1),
-                "pct": round((v["ton"] / tot * 100.0) if tot > 0 else 0.0, 2),
-                "calls_24m": int(v["calls"]),
-            })
+        windows = cat_total[cat]
+        # 24M = year=None
+        w24 = windows.get(None, _empty_window())
+        # legacy field names (ton_24m / calls_24m) preserved for back-compat
+        legacy = _build_window(w24, "ton_24m", "calls_24m")
+        by_year: dict[str, dict] = {}
+        for y in years_sorted:
+            wy = windows.get(y)
+            if wy is None:
+                continue
+            by_year[y] = _build_window(wy, "ton_year", "calls_year")
         categories[cat] = {
-            "ton_total_24m":   round(tot, 1),
-            "calls_total_24m": int(b["calls_total_24m"]),
-            "commodity_count": len(b["_kom"]),
-            "top_commodities": top_list,
+            "ton_total_24m":   legacy["ton_total"],
+            "calls_total_24m": legacy["calls_total"],
+            "commodity_count": legacy["commodity_count"],
+            "top_commodities": legacy["top_commodities"],
+            "by_year":         by_year,
         }
         order.append(cat)
 
     return {
-        "schema_version":  1,
-        "snapshot_month":  snap,
-        "order":           order,
-        "categories":      categories,
-        "top_n_per_cat":   top_n,
+        "schema_version":   2,
+        "snapshot_month":   snap,
+        "years":            years_sorted,
+        "months_per_year":  months_per_year,
+        "order":            order,
+        "categories":       categories,
+        "top_n_per_cat":    top_n,
         "_notes": {
             "scope": "CARGO sector only; tanker rows split by subclass.",
-            "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot, 24M aggregate)",
+            "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot)",
+            "by_year": "Per-data_year aggregate. 24M legacy fields = sum across all years.",
         },
     }
 

@@ -1207,33 +1207,82 @@ async function renderHome() {
   renderCategoryDetails();
 }
 
-// Cycle 6: docs/derived/cargo_category_details.json 을 로드해서
+// Cycle 6 / PR-now: docs/derived/cargo_category_details.json 을 로드해서
 // Demand 탭 시계열 차트 우측의 "카테고리 상세 화물" 박스를 채운다.
+// schema v2 부터 카테고리별 by_year 윈도우를 지원하므로, 상단 home-year-pills
+// 의 선택 연도에 맞춰 톤·코모디티 리스트가 동기화된다.
 const catDetailState = { payload: null, active: null };
 
-async function renderCategoryDetails() {
-  let payload = null;
-  try { payload = await loadDerived("cargo_category_details.json"); }
-  catch (e) {
-    const list = document.getElementById("cat-detail-list");
-    if (list) list.innerHTML = `<div class="text-slate-400">cargo_category_details.json 로드 실패: ${e.message}</div>`;
-    return;
+// 현재 활성 연도(home-kpi.dataset.activeYear) → 윈도우 헬퍼.
+// 반환: { ton_total, calls_total, commodity_count, top_commodities, scope, year }
+//   scope = "year" | "24m"   (year 가 없거나 매칭 안되면 24m fallback)
+function _catWindowFor(cat) {
+  if (!cat) return null;
+  const yearAttr = (document.getElementById("home-kpi")?.dataset?.activeYear) || null;
+  const byYr = cat.by_year || null;
+  if (yearAttr && byYr && byYr[yearAttr]) {
+    const w = byYr[yearAttr];
+    return {
+      ton_total:        w.ton_total,
+      calls_total:      w.calls_total,
+      commodity_count:  w.commodity_count,
+      top_commodities:  (w.top_commodities || []).map(it => ({
+        name: it.name,
+        ton:  it.ton_year,
+        pct:  it.pct,
+        calls: it.calls_year,
+      })),
+      scope: "year",
+      year:  yearAttr,
+    };
   }
-  catDetailState.payload = payload;
+  // 24M fallback (legacy fields)
+  return {
+    ton_total:        cat.ton_total_24m,
+    calls_total:      cat.calls_total_24m,
+    commodity_count:  cat.commodity_count,
+    top_commodities:  (cat.top_commodities || []).map(it => ({
+      name: it.name,
+      ton:  it.ton_24m,
+      pct:  it.pct,
+      calls: it.calls_24m,
+    })),
+    scope: "24m",
+    year:  null,
+  };
+}
+
+async function renderCategoryDetails() {
+  // Reuse cached payload (year-pill 클릭 시 재호출되는 케이스).
+  if (!catDetailState.payload) {
+    try { catDetailState.payload = await loadDerived("cargo_category_details.json"); }
+    catch (e) {
+      const list = document.getElementById("cat-detail-list");
+      if (list) list.innerHTML = `<div class="text-slate-400">cargo_category_details.json 로드 실패: ${e.message}</div>`;
+      return;
+    }
+  }
+  const payload = catDetailState.payload;
   const order = payload.order || [];
   if (!order.length) return;
-  // Default = 가장 큰 카테고리 (order[0]은 stack 기준이라 Bulk Carrier 이지만,
-  // 사용자가 가장 자주 보고 싶을 것은 톤 desc 1위). order는 stack 순서 그대로
-  // 두고 select 의 기본값만 ton_total_24m 1위로 설정.
-  const byTon = [...order].sort((a, b) =>
-    (payload.categories[b].ton_total_24m || 0) - (payload.categories[a].ton_total_24m || 0));
-  catDetailState.active = byTon[0];
 
-  // Populate select
+  // Default active cat = 현재 윈도우 기준 ton desc 1위.
+  // (윈도우 = 활성 연도면 그 해의 ton_total, 아니면 24M)
+  const tonOf = (catName) => {
+    const w = _catWindowFor(payload.categories[catName]);
+    return w ? (w.ton_total || 0) : 0;
+  };
+  const byTon = [...order].sort((a, b) => tonOf(b) - tonOf(a));
+  if (!catDetailState.active || !order.includes(catDetailState.active)) {
+    catDetailState.active = byTon[0];
+  }
+
+  // Populate select (라벨에는 활성 윈도우의 톤수를 표시)
   const sel = document.getElementById("cat-detail-select");
   if (sel) {
     sel.innerHTML = order.map(c => {
-      const tot = payload.categories[c].ton_total_24m;
+      const w = _catWindowFor(payload.categories[c]);
+      const tot = w ? w.ton_total : 0;
       return `<option value="${c}">${c} · ${fmtTon(tot)}</option>`;
     }).join("");
     sel.value = catDetailState.active;
@@ -1250,36 +1299,32 @@ async function renderCategoryDetails() {
 
 function _drawCategoryDetailList() {
   const host = document.getElementById("cat-detail-list");
-  const metaEl = document.getElementById("cat-detail-meta");
   if (!host || !catDetailState.payload || !catDetailState.active) return;
   const cat = catDetailState.payload.categories[catDetailState.active];
-  if (!cat) {
+  const w = _catWindowFor(cat);
+  if (!w) {
     host.innerHTML = `<div class="text-slate-400">데이터 없음</div>`;
     return;
   }
-  if (metaEl) {
-    metaEl.textContent =
-      `24M 누계 ${fmtTon(cat.ton_total_24m)} tons · ${cat.commodity_count.toLocaleString()}개 KOMODITI · ${cat.calls_total_24m.toLocaleString()} 항해`;
-  }
   const color = CARGO_CATEGORY_PALETTE[catDetailState.active] || "#94a3b8";
-  const items = cat.top_commodities || [];
+  const items = w.top_commodities || [];
   if (!items.length) {
     host.innerHTML = `<div class="text-slate-400">상세 코모디티 없음</div>`;
     return;
   }
-  const maxV = items[0].ton_24m || 1;
+  const maxV = items[0].ton || 1;
   host.innerHTML = items.map((it, i) => {
-    const w = Math.max(2, Math.round((it.ton_24m || 0) / maxV * 100));
+    const ww = Math.max(2, Math.round((it.ton || 0) / maxV * 100));
     return `<div class="flex items-center gap-2 py-1 border-b border-slate-100 last:border-b-0">
       <span class="text-[10px] text-slate-400 font-mono w-4 text-right">${i + 1}</span>
       <div class="flex-1 min-w-0">
         <div class="flex items-baseline justify-between gap-2">
           <span class="truncate" title="${_esc(it.name)}">${_esc(it.name)}</span>
-          <span class="font-mono text-slate-700 whitespace-nowrap">${fmtTon(it.ton_24m)}</span>
+          <span class="font-mono text-slate-700 whitespace-nowrap">${fmtTon(it.ton)}</span>
         </div>
-        <div class="cat-bar-wrap mt-0.5"><div class="cat-bar" style="width:${w}%;background:${color}"></div></div>
+        <div class="cat-bar-wrap mt-0.5"><div class="cat-bar" style="width:${ww}%;background:${color}"></div></div>
         <div class="flex items-baseline justify-between gap-2 text-[10px] text-slate-400">
-          <span>${it.pct.toFixed(1)}% · ${it.calls_24m.toLocaleString()} 항해</span>
+          <span>${(it.pct || 0).toFixed(1)}% · ${(it.calls || 0).toLocaleString()} 항해</span>
         </div>
       </div>
     </div>`;
@@ -1353,6 +1398,8 @@ function _buildHomeYearPills(payload, activeYear) {
       if (el) el.dataset.activeYear = y;
       renderHomeKpi(payload, homeState && homeState.mapData);
       _buildHomeYearPills(payload, y);
+      // 카테고리 상세 화물 박스도 선택 연도에 동기화
+      try { renderCategoryDetails(); } catch (_) {}
     });
   });
   if (banner) {
