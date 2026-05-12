@@ -3,6 +3,18 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 44 검증 — 2026-05-12 (Supply 탭 36차 — sister vessels "더 보기" 토글)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| Sister vessels "더 보기" 토글 | ✅ Cycle 44 | 5+ sibling owner에서 '더 보기 (+N)' 버튼. 토글 시 전체 표시. _fleetSistersExpanded Set 트래킹 |
+| 화면 결과 (smoke test) | ✅ DANNY (282 sib): 초기 5 + '더 보기 (+277)' → click → 282 + '상위 5만 보기' → click → 5 | playwright |
+
+### 횡단
+- 원칙 lint ✅. fleet 큰 owner에서 전체 fleet 빠르게 보기.
+
 ## Cycle 43 검증 — 2026-05-12 (Supply 탭 35차 — sister vessel 점프)
 
 ### Supply 탭 (🚢 — id: tab-fleet)

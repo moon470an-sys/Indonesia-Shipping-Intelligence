@@ -3142,6 +3142,7 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     const oTot = (ownerTotals && ownerOwn) ? ownerTotals.get(ownerOwn) : null;
     const ownerCtx = oTot ? `<span class="text-[10px] opacity-70 ml-1">총 ${oTot.vessels.toLocaleString()}척 · GT ${fmtTon(oTot.sumGt)}</span>` : "";
     // Cycle 41: sister vessels — same owner의 다른 선박 top 5 (GT 내림차순)
+    // Cycle 44: "더 보기" 토글로 전체 표시 가능
     let sisterListHtml = "";
     if (isOpen && r[I.owner] && tabEl._fleetVessels) {
       const ownerName = r[I.owner];
@@ -3154,12 +3155,17 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
         siblings.push(rr);
       }
       siblings.sort((a, b) => (b[I.gt] || 0) - (a[I.gt] || 0));
-      const topSiblings = siblings.slice(0, 5);
+      if (!tabEl._fleetSistersExpanded) tabEl._fleetSistersExpanded = new Set();
+      const showAll = tabEl._fleetSistersExpanded.has(k);
+      const topSiblings = showAll ? siblings : siblings.slice(0, 5);
       if (topSiblings.length > 0) {
+        const moreBtn = (siblings.length > 5) ? `
+          <button type="button" class="fl-sister-toggle ml-2 text-[10px] px-2 py-0.5 rounded border border-slate-300 text-slate-600 hover:bg-slate-50"
+                  data-sister-vk="${_esc(k)}">${showAll ? `상위 5만 보기` : `더 보기 (+${siblings.length - 5})`}</button>` : "";
         sisterListHtml = `
           <div class="mt-3 pt-3 border-t border-slate-200">
-            <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2">
-              이 운영사의 다른 선박 (top ${topSiblings.length} of ${siblings.length}) — 클릭 시 점프
+            <div class="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-2 flex items-center">
+              <span>이 운영사의 다른 선박 (${topSiblings.length} of ${siblings.length}) — 클릭 시 점프</span>${moreBtn}
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
               ${topSiblings.map(rr => {
@@ -3219,6 +3225,16 @@ function _renderFleetTable(rows, I, page = 1, pageSize = 100) {
     body.dataset.clickBound = "1";
     body.addEventListener("click", (e) => {
       const tabElX = document.getElementById("tab-fleet");
+      // Cycle 44: sister "더 보기" 토글
+      const sisToggle = e.target.closest(".fl-sister-toggle");
+      if (sisToggle) {
+        e.stopPropagation();
+        const vk = sisToggle.dataset.sisterVk;
+        const set = tabElX._fleetSistersExpanded || (tabElX._fleetSistersExpanded = new Set());
+        if (set.has(vk)) set.delete(vk); else set.add(vk);
+        _renderFleetView();
+        return;
+      }
       // Cycle 43: sister 점프 버튼 — 선박명으로 name filter 설정 + 자동 expand
       const sis = e.target.closest(".fl-sister-jump");
       if (sis) {
