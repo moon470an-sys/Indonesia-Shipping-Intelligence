@@ -3,6 +3,17 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 60 검증 — 2026-05-13 (Supply 탭 52차 — Esc shortcut 라이브 검증)
+
+### 라이브 사이트 (https://moon470an-sys.github.io/Indonesia-Shipping-Intelligence/#fleet)
+
+| 시나리오 | 결과 |
+|---------|------|
+| 2 detail 펼침 | 2 ✅ |
+| Esc 키 | 0 detail ✅ |
+
+코드 변경 없음 — Cycle 59 Esc shortcut 정상 라이브 반영 확인.
+
 ## Cycle 59 검증 — 2026-05-13 (Supply 탭 51차 — Esc 키로 detail 일괄 닫기)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
