@@ -1120,6 +1120,138 @@ def build_cargo_ports_periods() -> dict:
     }
 
 
+# ──────────────────────────────────────────────────────────────────────────
+# Cycle 6 — cargo_category_details.json
+# ──────────────────────────────────────────────────────────────────────────
+# 시계열 차트의 카테고리(vessel_class + tanker subclass) 별로 LK3 KOMODITI
+# 텍스트를 톤 desc 정렬해서 Top N (per category) 상세 화물 리스트로 노출.
+# Demand 탭 시계열 차트 우측 패널이 소비.
+#
+# Output schema::
+#   {
+#     schema_version, snapshot_month,
+#     order: [<category>, ...],   # 시계열 stacked bar의 카테고리 순서와 일관
+#     categories: {
+#       "<category>": {
+#         ton_total_24m: <float>,
+#         calls_total_24m: <int>,
+#         commodity_count: <int>,            # distinct KOMODITI 수
+#         top_commodities: [
+#            { name, ton_24m, pct, calls_24m },   # pct = ton / ton_total_24m
+#            ...
+#         ],
+#       }, ...
+#     }
+#   }
+def build_cargo_category_details(top_n: int = 12) -> dict:
+    """Per-category top-N KOMODITI breakdown (24M cumulative)."""
+    from backend.taxonomy import (
+        classify_tanker_subclass, classify_vessel_type,
+        CLS_TANKER, SECTOR_CARGO,
+    )
+
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    # JSON pointer helpers — raw_row keys are stringified Python tuples
+    def _p(k: str) -> str:
+        return ('$."' + k + '"').replace("'", "''")
+    P_JK = _p("('JENIS KAPAL', 'JENIS KAPAL')")
+    P_KB = _p("('BONGKAR', 'KOMODITI')")
+    P_TB = _p("('BONGKAR', 'TON')")
+    P_KM = _p("('MUAT', 'KOMODITI')")
+    P_TM = _p("('MUAT', 'TON')")
+    ton_expr = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    # Aggregate (jenis_kapal, komoditi, side) → ton + calls.
+    # 각 row가 BONGKAR + MUAT 둘 다 가지므로 두 번 sweep.
+    agg: dict[tuple[str, str], dict] = defaultdict(
+        lambda: {"ton": 0.0, "calls": 0}
+    )
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        for P_K, P_T in ((P_KB, P_TB), (P_KM, P_TM)):
+            cur.execute(
+                f"SELECT "
+                f"  json_extract(raw_row, '{P_JK}')  AS jk, "
+                f"  json_extract(raw_row, '{P_K}')   AS kom, "
+                f"  SUM({ton_expr(P_T)})              AS t, "
+                f"  COUNT(*)                          AS calls "
+                f"FROM cargo_snapshot WHERE snapshot_month = ? "
+                f"GROUP BY jk, kom HAVING t > 0",
+                (snap,),
+            )
+            for jk, kom, t, calls in cur:
+                if not jk or not kom:
+                    continue
+                key = (jk.strip(), str(kom).strip())
+                a = agg[key]
+                a["ton"]   += float(t or 0)
+                a["calls"] += int(calls or 0)
+
+    # Bucket each (jenis_kapal, komoditi) into a category.
+    cat_total: dict[str, dict] = defaultdict(
+        lambda: {"ton_total_24m": 0.0, "calls_total_24m": 0, "_kom": defaultdict(lambda: {"ton": 0.0, "calls": 0})}
+    )
+    for (jk, kom), v in agg.items():
+        sector, vc = classify_vessel_type(jk)
+        if sector != SECTOR_CARGO:
+            continue  # PASSENGER/FISHING/OFFSHORE/NON_COMMERCIAL 제외
+        if vc == CLS_TANKER:
+            cat = classify_tanker_subclass(jk) or "UNKNOWN"
+        else:
+            cat = vc
+        bucket = cat_total[cat]
+        bucket["ton_total_24m"]    += v["ton"]
+        bucket["calls_total_24m"]  += v["calls"]
+        bucket["_kom"][kom]["ton"]   += v["ton"]
+        bucket["_kom"][kom]["calls"] += v["calls"]
+
+    # Stack order (시계열 차트와 일관). 비탱커 4개 + tanker subclass 7개.
+    STACK_ORDER = (
+        "Bulk Carrier",
+        "Crude Oil", "Product", "LNG", "LPG", "Chemical",
+        "FAME / Vegetable Oil", "Water",
+        "Container", "General Cargo", "Other Cargo", "UNKNOWN",
+    )
+
+    categories: dict[str, dict] = {}
+    order: list[str] = []
+    for cat in STACK_ORDER:
+        if cat not in cat_total:
+            continue
+        b = cat_total[cat]
+        tot = b["ton_total_24m"]
+        koms = sorted(b["_kom"].items(), key=lambda kv: -kv[1]["ton"])
+        top_list = []
+        for name, v in koms[:top_n]:
+            top_list.append({
+                "name": name,
+                "ton_24m": round(v["ton"], 1),
+                "pct": round((v["ton"] / tot * 100.0) if tot > 0 else 0.0, 2),
+                "calls_24m": int(v["calls"]),
+            })
+        categories[cat] = {
+            "ton_total_24m":   round(tot, 1),
+            "calls_total_24m": int(b["calls_total_24m"]),
+            "commodity_count": len(b["_kom"]),
+            "top_commodities": top_list,
+        }
+        order.append(cat)
+
+    return {
+        "schema_version":  1,
+        "snapshot_month":  snap,
+        "order":           order,
+        "categories":      categories,
+        "top_n_per_cat":   top_n,
+        "_notes": {
+            "scope": "CARGO sector only; tanker rows split by subclass.",
+            "source": "monitoring-inaportnet.dephub.go.id (cargo_snapshot, 24M aggregate)",
+        },
+    }
+
+
 def build_cargo_routes() -> dict:
     """Origin→Destination cargo routes (lines) for the Cargo tab Leaflet map.
 
@@ -2673,6 +2805,16 @@ def main() -> None:
         for k, p in cpp["periods"].items()
     )
     print(f"  cargo_ports_periods.json — {_periods_summary}")
+
+    # Cycle 6: 카테고리(vessel_class + tanker subclass) × KOMODITI 24M Top N.
+    # Demand 탭 시계열 차트 우측 패널이 소비.
+    ccd = build_cargo_category_details()
+    bytes_total += _write_json(DERIVED / "cargo_category_details.json", ccd)
+    _cat_summary = ", ".join(
+        f"{c}: {len(ccd['categories'][c]['top_commodities'])} kom"
+        for c in ccd["order"][:5]
+    )
+    print(f"  cargo_category_details.json — {len(ccd['order'])} categories ({_cat_summary}…)")
 
     # build_cargo_routes is heavy (2.4M raw_row json_extracts × 6 paths);
     # commented out for now. Cargo OD lines on the map are sourced from

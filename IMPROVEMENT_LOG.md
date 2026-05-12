@@ -285,3 +285,37 @@ scope-strip 제거, 카테고리 드롭다운, 선택 화물 한정 tooltip, 곡
 - node --check docs/js/app.js 통과.
 - CV_CATEGORY_GROUPS 7개 + CV_COMM_TO_ROUTE_CAT 약 30개 매핑 정의.
 - 베지어 샘플 N=33, offset 0.18 — 적당히 휘면서 직관적 방향성 유지.
+
+## Cycle 6 — 2026-05-12
+
+**Scope**: 사용자 요청 4건 처리 (보조 문구 3건 정리 + 카테고리 상세 화물
+박스 추가).
+
+### 변경 사항
+
+1. **시계열 차트 보조 문구 3건 삭제 (요청 ①②③)**
+   - 제목 "— 카테고리별 stacked bar" 보조 텍스트 제거.
+   - y축 라벨 "ton (CARGO 카테고리 stacked)" → "ton".
+   - 차트 하단 카테고리 안내 단락(`<p>`) 통째 삭제.
+
+2. **신규 빌더 build_cargo_category_details (요청 ④ 데이터)**
+   - cargo_snapshot에서 (JENIS KAPAL, KOMODITI) 별 BONGKAR+MUAT 톤
+     집계 → taxonomy로 카테고리(vessel_class + tanker subclass) 분류
+     → 카테고리당 Top 12 KOMODITI 선정.
+   - 출력 `docs/derived/cargo_category_details.json`:
+     `{ order: [...], categories: { <cat>: { ton_total_24m, calls_total_24m,
+     commodity_count, top_commodities: [{ name, ton_24m, pct, calls_24m }] } } }`.
+   - CARGO sector 외 sector는 제외. order는 시계열 차트의 stack 순서와 일관.
+
+3. **시계열 차트 오른쪽 카테고리 상세 화물 박스 (요청 ④ UI)**
+   - 차트 컨테이너를 `grid lg:grid-cols-3`으로 분할: 좌 2/3 차트, 우 1/3
+     상세 박스.
+   - 우측 박스: 카테고리 드롭다운(`#cat-detail-select`) + 메타 라인
+     (24M 누계 톤 / KOMODITI 수 / 항해 수) + Top 12 코모디티 리스트
+     (순위, 이름, 톤, 미니 바, 비중·항해 수).
+   - 미니 바 색상은 `CARGO_CATEGORY_PALETTE` 사용해 시계열 차트와 일관.
+   - 기본 선택 = ton_total_24m 1위 카테고리.
+
+### 검증
+- node --check docs/js/app.js 통과.
+- build_derived 실행 후 cargo_category_details.json 검증.

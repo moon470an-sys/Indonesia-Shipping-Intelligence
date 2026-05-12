@@ -90,16 +90,29 @@
            topojson 의존성과 sector 사이드바도 함께 제거. 흐름 라인 + 입자
            애니메이션은 Cycle 4에서 cv-app에 직접 적용 예정. -->
 
-      <!-- Cycle 3·5: CARGO 한정 + 카테고리별 stacked. Cycle 5 부터 월별
-           stacked bar (절대값만, YoY 토글 제거). -->
+      <!-- Cycle 3·5·6: CARGO 한정 + 카테고리별 월별 stacked bar.
+           Cycle 6: 보조 문구 삭제 + 차트 오른쪽에 카테고리 상세 화물 박스. -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/data/cargo_sector_monthly.json">
-        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량 <span class="text-xs text-slate-500 font-normal">— 카테고리별 stacked bar</span></h3>
+        <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
+          <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량</h3>
         </div>
-        <div id="home-timeseries" style="height:360px"></div>
-        <p class="text-[10.5px] text-slate-400 mt-1">
-          카테고리: Bulk Carrier · Container · General Cargo · Other Cargo · Tanker subclass (Product / Chemical / LPG / LNG / FAME / Water). PASSENGER · FISHING · OFFSHORE · NON_COMMERCIAL은 제외. 절대값(ton).
-        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- 좌측 2/3: stacked bar 차트 -->
+          <div class="lg:col-span-2">
+            <div id="home-timeseries" style="height:360px"></div>
+          </div>
+          <!-- 우측 1/3: 카테고리 상세 화물 박스 (Cycle 6 신규) -->
+          <div class="bg-slate-50 rounded p-3 flex flex-col" data-source="docs/derived/cargo_category_details.json" style="min-height:360px">
+            <div class="flex items-baseline justify-between mb-2 gap-2 flex-wrap">
+              <h4 class="text-xs font-semibold text-slate-700">카테고리 상세 화물</h4>
+              <select id="cat-detail-select" class="text-[11px] border border-slate-200 rounded px-2 py-0.5 bg-white">
+                <option>loading…</option>
+              </select>
+            </div>
+            <div id="cat-detail-meta" class="text-[10.5px] text-slate-500 mb-2">선택한 카테고리의 상위 코모디티를 24개월 누계 톤 기준으로 표시합니다.</div>
+            <div id="cat-detail-list" class="flex-1 overflow-y-auto text-[11px]"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Cycle 4: 항만별 물동량 인포그래픽 + 흐름 라인 + 입자 애니메이션.

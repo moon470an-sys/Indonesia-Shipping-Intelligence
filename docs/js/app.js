@@ -1199,6 +1199,87 @@ async function renderHome() {
 
   renderHomeKpi(kpis, homeState.mapData);
   renderHomeTimeseries(ts);
+  // Cycle 6: 시계열 차트 우측 패널 — 카테고리 상세 화물(코모디티) Top N
+  renderCategoryDetails();
+}
+
+// Cycle 6: docs/derived/cargo_category_details.json 을 로드해서
+// Demand 탭 시계열 차트 우측의 "카테고리 상세 화물" 박스를 채운다.
+const catDetailState = { payload: null, active: null };
+
+async function renderCategoryDetails() {
+  let payload = null;
+  try { payload = await loadDerived("cargo_category_details.json"); }
+  catch (e) {
+    const list = document.getElementById("cat-detail-list");
+    if (list) list.innerHTML = `<div class="text-slate-400">cargo_category_details.json 로드 실패: ${e.message}</div>`;
+    return;
+  }
+  catDetailState.payload = payload;
+  const order = payload.order || [];
+  if (!order.length) return;
+  // Default = 가장 큰 카테고리 (order[0]은 stack 기준이라 Bulk Carrier 이지만,
+  // 사용자가 가장 자주 보고 싶을 것은 톤 desc 1위). order는 stack 순서 그대로
+  // 두고 select 의 기본값만 ton_total_24m 1위로 설정.
+  const byTon = [...order].sort((a, b) =>
+    (payload.categories[b].ton_total_24m || 0) - (payload.categories[a].ton_total_24m || 0));
+  catDetailState.active = byTon[0];
+
+  // Populate select
+  const sel = document.getElementById("cat-detail-select");
+  if (sel) {
+    sel.innerHTML = order.map(c => {
+      const tot = payload.categories[c].ton_total_24m;
+      return `<option value="${c}">${c} · ${fmtTon(tot)}</option>`;
+    }).join("");
+    sel.value = catDetailState.active;
+    if (!sel.dataset.wired) {
+      sel.dataset.wired = "1";
+      sel.addEventListener("change", () => {
+        catDetailState.active = sel.value;
+        _drawCategoryDetailList();
+      });
+    }
+  }
+  _drawCategoryDetailList();
+}
+
+function _drawCategoryDetailList() {
+  const host = document.getElementById("cat-detail-list");
+  const metaEl = document.getElementById("cat-detail-meta");
+  if (!host || !catDetailState.payload || !catDetailState.active) return;
+  const cat = catDetailState.payload.categories[catDetailState.active];
+  if (!cat) {
+    host.innerHTML = `<div class="text-slate-400">데이터 없음</div>`;
+    return;
+  }
+  if (metaEl) {
+    metaEl.textContent =
+      `24M 누계 ${fmtTon(cat.ton_total_24m)} tons · ${cat.commodity_count.toLocaleString()}개 KOMODITI · ${cat.calls_total_24m.toLocaleString()} 항해`;
+  }
+  const color = CARGO_CATEGORY_PALETTE[catDetailState.active] || "#94a3b8";
+  const items = cat.top_commodities || [];
+  if (!items.length) {
+    host.innerHTML = `<div class="text-slate-400">상세 코모디티 없음</div>`;
+    return;
+  }
+  const maxV = items[0].ton_24m || 1;
+  host.innerHTML = items.map((it, i) => {
+    const w = Math.max(2, Math.round((it.ton_24m || 0) / maxV * 100));
+    return `<div class="flex items-center gap-2 py-1 border-b border-slate-100 last:border-b-0">
+      <span class="text-[10px] text-slate-400 font-mono w-4 text-right">${i + 1}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-baseline justify-between gap-2">
+          <span class="truncate" title="${_esc(it.name)}">${_esc(it.name)}</span>
+          <span class="font-mono text-slate-700 whitespace-nowrap">${fmtTon(it.ton_24m)}</span>
+        </div>
+        <div class="cat-bar-wrap mt-0.5"><div class="cat-bar" style="width:${w}%;background:${color}"></div></div>
+        <div class="flex items-baseline justify-between gap-2 text-[10px] text-slate-400">
+          <span>${it.pct.toFixed(1)}% · ${it.calls_24m.toLocaleString()} 항해</span>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
 }
 
 // PR-16: 5-row sector breakdown bars in the map sidebar.
@@ -1491,7 +1572,7 @@ function drawHomeTimeseries() {
       tickfont: { size: 10 },
     },
     yaxis: {
-      title: "ton (CARGO 카테고리 stacked)",
+      title: "ton",
       tickformat: "~s",
     },
     legend: { orientation: "h", y: -0.32, font: { size: 10 } },
