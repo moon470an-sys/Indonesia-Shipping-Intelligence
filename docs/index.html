@@ -318,22 +318,32 @@
       </div>
 
       <!-- 4-card KPI strip with color-accent top stripes (jang1117 .sc.cb/.ct/.ca/.cg) -->
+      <!-- Cycle 14: KPI 정의에 help 툴팁 (term-info) 추가 — 신규 사용자 이해도 향상 -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">선박 수</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
+            <span>선박 수</span>
+            <span class="term-info" tabindex="0" data-info="현재 필터에 매치되는 선박 수 (cargo + auxiliary scope 기본). 출처: kapal.dephub.go.id vessels snapshot.">ⓘ</span>
+          </div>
           <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-count">—</div>
           <div class="text-[11px] text-slate-500" id="fl-kpi-pct">—</div>
         </div>
         <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-teal-500"></div>
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">Vessel Type</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
+            <span>Vessel Type</span>
+            <span class="term-info" tabindex="0" data-info="필터 결과에 나타나는 고유 JenisDetailKet (선종 상세) 종류 수. 전체 데이터에는 125개 type이 있음.">ⓘ</span>
+          </div>
           <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-jenis">—</div>
           <div class="text-[11px] text-slate-500">고유 종류 수</div>
         </div>
         <div class="relative bg-white rounded-xl shadow px-4 py-3 overflow-hidden">
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-amber-500"></div>
-          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">평균 GT</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
+            <span>평균 GT</span>
+            <span class="term-info" tabindex="0" data-info="Gross Tonnage = 선박 부피 단위(IMO 정의). GT 0 제외 평균. 화물선 평균 ~1700, 초대형 LNG는 100k 이상.">ⓘ</span>
+          </div>
           <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-avggt">—</div>
           <div class="text-[11px] text-slate-500">gross_tonnage avg</div>
         </div>
@@ -342,7 +352,10 @@
                 title="클릭 시 25년+ 노후선만 필터링">
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-rose-500"></div>
           <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
-            노후선 (25년+) <span class="text-rose-500 text-[9px]" aria-hidden="true">▶ 필터</span>
+            <span>노후선 (25년+)</span>
+            <span class="term-info" tabindex="0" onclick="event.stopPropagation()"
+                  data-info="선령 = 현재년도 - tahun(건조연도). 25년+ 선박은 매각/대체 사이클 진입점. 카드 클릭으로 즉시 필터링.">ⓘ</span>
+            <span class="text-rose-500 text-[9px] ml-auto" aria-hidden="true">▶ 필터</span>
           </div>
           <div class="text-2xl font-light text-slate-800 -tracking-tight" id="fl-kpi-aged25">—</div>
           <div class="text-[11px] text-slate-500" id="fl-kpi-aged25-pct">평균 선령 —</div>
@@ -460,10 +473,25 @@
 
       <!-- Table with pagination -->
       <div class="bg-white rounded-xl shadow overflow-hidden mb-6" data-source="docs/derived/fleet_vessels.json">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 flex-wrap gap-2">
           <span class="text-xs font-mono text-slate-700">선박 목록 (헤더 클릭 시 정렬)</span>
-          <div class="flex items-center gap-3 text-[11px]">
+          <div class="flex items-center gap-3 text-[11px] flex-wrap">
             <span class="font-mono text-slate-500" id="fl-list-info">—</span>
+            <!-- Cycle 14: 페이지 사이즈 선택 -->
+            <label class="inline-flex items-center gap-1 text-slate-600">
+              <span class="text-[10px] uppercase tracking-wider font-mono">표시</span>
+              <select id="fl-page-size" class="border border-slate-200 rounded px-1 py-0.5 text-[11px]">
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100" selected>100</option>
+                <option value="200">200</option>
+              </select>
+            </label>
+            <!-- Cycle 14: raw 컬럼 hide 토글 -->
+            <label class="inline-flex items-center gap-1 text-slate-600 cursor-pointer">
+              <input id="fl-hide-raw" type="checkbox" class="accent-slate-700">
+              <span>원천 컬럼 숨김</span>
+            </label>
             <button id="fl-csv" type="button" class="px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-50">📥 CSV</button>
           </div>
         </div>

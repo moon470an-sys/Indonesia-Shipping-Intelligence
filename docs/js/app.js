@@ -2345,6 +2345,52 @@ function _wireFleetFilters() {
     csv.dataset.bound = "1";
     csv.addEventListener("click", _fleetCsvDownload);
   }
+  // Cycle 14: page size 선택
+  const ps = document.getElementById("fl-page-size");
+  if (ps && !ps.dataset.bound) {
+    ps.dataset.bound = "1";
+    ps.addEventListener("change", () => {
+      const v = Number(ps.value);
+      if (Number.isFinite(v) && v >= 25) {
+        tabEl._fleetPageSize = v;
+        tabEl._fleetPage = 1;
+        _renderFleetView();
+      }
+    });
+  }
+  // Cycle 14: raw 컬럼 hide 토글
+  const hr = document.getElementById("fl-hide-raw");
+  if (hr && !hr.dataset.bound) {
+    hr.dataset.bound = "1";
+    hr.addEventListener("change", () => {
+      tabEl._fleetHideRaw = !!hr.checked;
+      _renderFleetView();
+    });
+  }
+}
+
+// Cycle 14: raw 컬럼 4개 (엔진/엔진타입/IMO/Call Sign) 표시/숨김 토글.
+//   index 10, 11, 12, 13 (재정렬된 header 순서)
+function _applyFleetRawColumnVisibility(hide) {
+  const tbl = document.getElementById("fl-table");
+  if (!tbl) return;
+  const rawIndices = [10, 11, 12, 13];
+  // thead
+  const thead = document.getElementById("fl-thead-row");
+  if (thead) {
+    Array.from(thead.children).forEach((th, idx) => {
+      th.style.display = (hide && rawIndices.includes(idx)) ? "none" : "";
+    });
+  }
+  // tbody rows (rendered after _renderFleetTable; for safety apply ahead so re-renders preserve hide)
+  const tbody = document.getElementById("fl-tbody");
+  if (tbody) {
+    Array.from(tbody.children).forEach(tr => {
+      Array.from(tr.children).forEach((td, idx) => {
+        td.style.display = (hide && rawIndices.includes(idx)) ? "none" : "";
+      });
+    });
+  }
 }
 
 // PR-X: render the searchable Vessel Type (jenis) list. Filters the
@@ -2577,12 +2623,16 @@ function _renderFleetView() {
   const activeFilters = document.getElementById("fl-active-filters");
   if (activeFilters) activeFilters.textContent = active > 0 ? `활성 필터 ${active}개` : "";
 
-  // ---- Sortable + paginated table (jang1117 mirror: 100 per page) ----
-  // PR — pagination state lives on _fleetPage; clamp when filter changes.
+  // ---- Sortable + paginated table ----
+  // Cycle 14: page size 사용자 선택 (25/50/100/200). raw 컬럼 hide 토글.
   if (typeof tabEl._fleetPage !== "number") tabEl._fleetPage = 1;
-  const pageSize = 100;
+  if (typeof tabEl._fleetPageSize !== "number") tabEl._fleetPageSize = 100;
+  if (typeof tabEl._fleetHideRaw !== "boolean") tabEl._fleetHideRaw = false;
+  const pageSize = tabEl._fleetPageSize;
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   if (tabEl._fleetPage > totalPages) tabEl._fleetPage = 1;
+  // Apply raw column hide visually before render
+  _applyFleetRawColumnVisibility(tabEl._fleetHideRaw);
   _renderFleetTable(rows, I, tabEl._fleetPage, pageSize);
   _renderFleetPagination(rows.length, tabEl._fleetPage, pageSize, totalPages);
 
@@ -2594,6 +2644,11 @@ function _renderFleetView() {
       ? `${start.toLocaleString()}–${end.toLocaleString()} / ${rows.length.toLocaleString()}`
       : "0 / 0";
   }
+  // Sync page size / hide-raw checkbox to current state
+  const ps = document.getElementById("fl-page-size");
+  if (ps && Number(ps.value) !== pageSize) ps.value = String(pageSize);
+  const hr = document.getElementById("fl-hide-raw");
+  if (hr && hr.checked !== tabEl._fleetHideRaw) hr.checked = tabEl._fleetHideRaw;
   document.querySelectorAll("#fl-thead-row th[data-col]").forEach(h => {
     const m = h.querySelector("[data-sort-marker]");
     if (!m) return;
@@ -2718,7 +2773,25 @@ function _fleetCsvDownload() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `fleet_filtered_${new Date().toISOString().slice(0,10)}.csv`;
+  // Cycle 14: 파일명에 필터 컨텍스트 포함 — 다운로드 결과 출처 명확화.
+  //   e.g. fleet_tanker_25plus_owner-PERTAMINA_2026-05-12.csv
+  const st = tabEl._fleetState;
+  const tokens = [];
+  if (st.jenis.size) {
+    const sample = Array.from(st.jenis)[0].replace(/[^A-Za-z0-9]/g, "");
+    tokens.push((st.jenisExclude ? "not-" : "") + sample.toLowerCase() +
+                (st.jenis.size > 1 ? `+${st.jenis.size - 1}` : ""));
+  }
+  if (st.yrMax != null) tokens.push(`built<=${st.yrMax}`);
+  if (st.yrMin != null) tokens.push(`built>=${st.yrMin}`);
+  if (st.gtMin != null) tokens.push(`gt>=${st.gtMin}`);
+  if (st.gtMax != null) tokens.push(`gt<=${st.gtMax}`);
+  if (st.ownerExact) tokens.push("owner-" + st.ownerExact.replace(/PT[.\s]*/i, "").replace(/[^A-Za-z0-9]/g, "").substring(0, 20));
+  if (st.name) tokens.push("name-" + st.name.replace(/[^A-Za-z0-9]/g, "").substring(0, 20));
+  if (!scopeState.hideExcluded) tokens.push("all-scope");
+  const stub = tokens.length ? "_" + tokens.join("_") : "";
+  const date = new Date().toISOString().slice(0, 10);
+  a.download = `fleet${stub}_${date}.csv`.replace(/_{2,}/g, "_").substring(0, 180);
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);

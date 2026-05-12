@@ -3,6 +3,21 @@
 매 사이클 시작 시 4탭(Demand/Supply/Balance/Explorer)을 점검하고
 원칙 위반·중복·미흡을 기록한다.
 
+## Cycle 14 검증 — 2026-05-12 (Supply 탭 디자인·데이터 6차)
+
+### Supply 탭 (🚢 — id: tab-fleet)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 선박 목록 페이지 사이즈 선택 | ✅ Cycle 14 | 25/50/100/200 — select dropdown |
+| 원천 컬럼 hide 토글 | ✅ Cycle 14 | 엔진/엔진 타입/IMO/Call Sign 동시 숨김. CSV 다운로드는 전체 컬럼 보존 |
+| CSV 파일명 필터 컨텍스트 | ✅ Cycle 14 | jenis/yr/gt/owner/name tokens 포함. e.g. `fleet_oiltanker_2026-05-12.csv` |
+| KPI 정의 help 툴팁 | ✅ Cycle 14 | 4 KPI 모두 ⓘ tooltip. 노후선 카드는 stopPropagation으로 클릭 분리 |
+| 화면 결과 (smoke test) | ✅ pageSize 25/200 동적, raw 4 컬럼 숨김 정상, 4 ⓘ 존재, ⓘ 클릭 시 ring/필터 미적용 (event 분리), CSV `fleet_oiltanker_2026-05-12.csv` 생성 | playwright |
+
+### 횡단
+- 원칙 lint ✅. CSV에는 raw 컬럼 모두 포함 (원천 보존), UI에서만 시각 우선순위 조정.
+
 ## Cycle 13 검증 — 2026-05-12 (Supply 탭 디자인·데이터 5차)
 
 ### Supply 탭 (🚢 — id: tab-fleet)
