@@ -5758,10 +5758,49 @@ function drawFleetOwnerClassmix(owners) {
 //   검증 정책: ±15% 교차, ±30% 점프, TC↔SHB 논리.
 //   빈 셀은 "No data acquired" — 0 채우기 금지.
 // ────────────────────────────────────────────────────────────
+// Scroll-spy for the Market tab TOC (Cycle 2). Idempotent — guarded by a flag.
+function _mkSetupTocSpy() {
+  if (window.__mkTocSpyReady) return;
+  const toc = document.getElementById("mk-toc");
+  if (!toc) return;
+  const links = Array.from(toc.querySelectorAll(".mk-toc-link"));
+  const targets = links
+    .map(a => ({ a, el: document.getElementById(a.dataset.section) }))
+    .filter(o => o.el);
+  if (!targets.length) return;
+  const activeCls = ["bg-blue-700", "text-white", "border-blue-700"];
+  const idleCls = ["border-slate-200"];
+  const setActive = (id) => {
+    targets.forEach(({ a, el }) => {
+      const on = el.id === id;
+      a.classList.toggle("border-blue-700", on);
+      a.classList.toggle("bg-blue-700", on);
+      a.classList.toggle("text-white", on);
+      a.classList.toggle("border-slate-200", !on);
+    });
+  };
+  const io = new IntersectionObserver((entries) => {
+    // Pick the topmost visible section
+    const visible = entries
+      .filter(e => e.isIntersecting)
+      .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (visible[0]) setActive(visible[0].target.id);
+  }, { rootMargin: "-80px 0px -60% 0px", threshold: [0, 0.1, 0.5] });
+  targets.forEach(({ el }) => io.observe(el));
+  // Smooth scroll on click (browsers handle it via CSS, but ensure JS-friendly)
+  links.forEach(a => a.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const t = document.getElementById(a.dataset.section);
+    if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+  window.__mkTocSpyReady = true;
+}
+
 async function renderMarket() {
   const tabEl = document.getElementById("tab-market");
   if (!tabEl) return;
   setupSourceLabels(tabEl);
+  _mkSetupTocSpy();
   let m;
   try {
     const r = await fetch("./data/market.json");
