@@ -5970,17 +5970,26 @@ async function renderMarket() {
     evUpcoming.innerHTML = arr.length ? arr.map(_mkEventCard).join("") : emptyMsg();
   }
 
-  // Build meta
+  // Build meta — Cycle 17: spec grid layout
   const bmHost = document.getElementById("mk-build-meta");
   if (bmHost && m.build_meta) {
     const bm = m.build_meta;
+    const _cell = (k, v) => `
+      <div class="px-2 py-1 rounded border border-slate-200 bg-white">
+        <div class="text-[9px] uppercase tracking-wider text-slate-400">${_esc(k)}</div>
+        <div class="text-[10px] text-slate-700 font-mono truncate" title="${_esc(String(v))}">${_esc(String(v))}</div>
+      </div>`;
     bmHost.innerHTML = `
-      build_run_id: ${_esc(m.build_run_id || "—")} ·
-      report_week: ${_esc(m.report_week || "—")} ·
-      rows_published: ${bm.rows_published ?? "—"} ·
-      rows_no_data: ${bm.rows_no_data ?? "—"} ·
-      rows_withheld_jump: ${bm.rows_withheld_jump ?? "—"} ·
-      collectors_run: ${(bm.collectors_run || []).join(", ") || "(none)"}
+      <div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">build meta</div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+        ${_cell("run_id", m.build_run_id || "—")}
+        ${_cell("report_week", m.report_week || "—")}
+        ${_cell("rows_pub", bm.rows_published ?? bm.rows_collected ?? "—")}
+        ${_cell("rows_no_data", bm.rows_no_data ?? "—")}
+        ${_cell("withheld_jump", bm.rows_withheld_jump ?? 0)}
+        ${_cell("collectors", (bm.collectors_run || []).join(", ") || "(none)")}
+      </div>
+      ${bm.extraction_method ? `<div class="mt-1 text-[10px] text-slate-400 font-mono">method: ${_esc(bm.extraction_method)}</div>` : ""}
     `;
   }
 }
