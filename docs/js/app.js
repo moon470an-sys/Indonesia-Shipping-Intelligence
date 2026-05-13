@@ -5865,7 +5865,7 @@ async function renderMarket() {
     if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
       vpHost.innerHTML = emptyMsg();
     } else {
-      vpHost.innerHTML = vp.markets.map(mk => _mkMarketBlock(mk)).join("");
+      vpHost.innerHTML = _mkInsightStrip(vp.markets) + vp.markets.map(mk => _mkMarketBlock(mk)).join("");
       _renderMarketCharts();
     }
   }
@@ -6003,6 +6003,73 @@ function _mkOverviewCard(o) {
       <div class="text-[13px] font-semibold text-slate-800 leading-snug mb-1.5">${_esc(o.headline || "—")}</div>
       <div class="text-[11px] text-slate-600 leading-relaxed">${_esc(o.detail_ko || "")}</div>
       <div class="text-[10px] text-slate-500 mt-2 pt-1.5 border-t border-slate-100">${srcLink}</div>
+    </div>`;
+}
+
+// Cycle 11: Auto-insight strip derived from the vessel-pricing markets.
+// Surfaces: Top TC (highest charter rate), Top SHB (highest secondhand quote),
+// Cheapest NB (entry-cost benchmark), and a data-completeness alert if any
+// market has 0 filled rows. All metrics ride on the same currency unit
+// (millions IDR) since every market in this section uses it.
+function _mkInsightStrip(markets) {
+  if (!markets || !markets.length) return "";
+  const bestByKind = { TC: null, SHB: null, NB: null };
+  const cheapByKind = { NB: null };
+  const incomplete = []; // markets with 0 filled rows
+  for (const mk of markets) {
+    let filled = 0, total = 0;
+    for (const c of mk.categories || []) {
+      for (const r of c.rows || []) {
+        total++;
+        const v = r.value_high != null ? Number(r.value_high)
+                : r.value_low  != null ? Number(r.value_low)
+                : null;
+        if (v == null) continue;
+        filled++;
+        const rec = { v, market: mk.market, label: c.label, kind: c.kind, size: r.size, yr: r.year_built };
+        if (bestByKind[c.kind] == null || v > bestByKind[c.kind].v) bestByKind[c.kind] = rec;
+        if (c.kind === "NB") {
+          const lo = r.value_low != null ? Number(r.value_low) : v;
+          if (cheapByKind.NB == null || lo < cheapByKind.NB.v) cheapByKind.NB = { ...rec, v: lo };
+        }
+      }
+    }
+    if (total > 0 && filled === 0) incomplete.push(mk.market);
+  }
+  const _short = (s, n = 22) => {
+    const t = String(s || "");
+    return t.length > n ? t.slice(0, n - 1) + "…" : t;
+  };
+  const card = (icon, label, rec, accent) => {
+    if (!rec) return "";
+    return `
+      <div class="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 ${accent}">
+        <span class="text-[14px] leading-none mt-0.5">${icon}</span>
+        <div class="leading-tight">
+          <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
+          <div class="text-[12px] font-semibold text-slate-800">${Number(rec.v).toLocaleString()} <span class="text-[10px] font-normal text-slate-400">M IDR</span></div>
+          <div class="text-[10px] text-slate-500">${_esc(_short(rec.market, 18))} · ${_esc(_short(rec.size, 14))} · ${_esc(_short(rec.yr, 12))}</div>
+        </div>
+      </div>`;
+  };
+  const cards = [
+    card("🏷", "Top TC (charter)",      bestByKind.TC,  "border-l-4 border-l-blue-500"),
+    card("💎", "Top SHB (secondhand)",  bestByKind.SHB, "border-l-4 border-l-emerald-500"),
+    card("🚧", "Cheapest NB entry",      cheapByKind.NB, "border-l-4 border-l-amber-500"),
+  ].filter(Boolean).join("");
+  const alert = incomplete.length
+    ? `<div class="mt-1 px-2 py-1 rounded bg-rose-50 border border-rose-200 text-[10px] text-rose-700 font-mono">
+         ⚠ 결측 마켓: ${incomplete.map(_esc).join(" · ")} — 다음 PDF 갱신에 보강 필요
+       </div>` : "";
+  return `
+    <div class="mb-3">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1 flex items-center gap-1">
+        <span>Auto Insights</span>
+        <span class="text-slate-300">·</span>
+        <span class="text-slate-400">자동 도출 — 외부 해석 없음</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">${cards}</div>
+      ${alert}
     </div>`;
 }
 
