@@ -5999,11 +5999,39 @@ function _mkMarketBlock(mk) {
   const blocks = cats.map(c => _mkCategoryTable(c, mk.currency_unit)).join("");
   // unique chart id
   const chartId = `mk-chart-${_slug(mk.market || "mkt")}-${Math.random().toString(36).slice(2,6)}`;
-  // count available data
-  let dataCount = 0;
-  cats.forEach(c => (c.rows || []).forEach(r => {
-    if (r.value_low != null || r.value_high != null) dataCount++;
-  }));
+  // Aggregate stats for the KPI chip strip (Cycle 3)
+  let total = 0, filled = 0, lo = Infinity, hi = -Infinity;
+  const kindCount = {}; // { TC: n, SHB: n, NB: n }
+  cats.forEach(c => {
+    const kind = c.kind || "?";
+    (c.rows || []).forEach(r => {
+      total++;
+      const v1 = r.value_low != null ? Number(r.value_low) : null;
+      const v2 = r.value_high != null ? Number(r.value_high) : null;
+      if (v1 != null || v2 != null) {
+        filled++;
+        kindCount[kind] = (kindCount[kind] || 0) + 1;
+        if (v1 != null) { lo = Math.min(lo, v1); hi = Math.max(hi, v1); }
+        if (v2 != null) { lo = Math.min(lo, v2); hi = Math.max(hi, v2); }
+      }
+    });
+  });
+  const dataCount = filled;
+  const _fmtCompact = (n) => {
+    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k";
+    return String(n);
+  };
+  const kindKey = { TC: "bg-blue-100 text-blue-800", SHB: "bg-emerald-100 text-emerald-800", NB: "bg-amber-100 text-amber-800" };
+  const kindChips = ["TC", "SHB", "NB"]
+    .filter(k => kindCount[k])
+    .map(k => `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded ${kindKey[k] || "bg-slate-100 text-slate-700"}">${k} ${kindCount[k]}</span>`)
+    .join("");
+  const rangeChip = filled > 0
+    ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700">range ${_fmtCompact(lo)}–${_fmtCompact(hi)}</span>`
+    : "";
+  const fillChip = total > 0
+    ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded ${filled === total ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : filled === 0 ? "bg-slate-100 text-slate-500" : "bg-amber-50 text-amber-700 border border-amber-200"}">rows ${filled}/${total}</span>`
+    : "";
   const chartPanel = (dataCount > 0)
     ? `<div id="${chartId}" class="bg-white rounded border border-slate-200 mb-3" style="min-height:240px;" data-market='${_esc(JSON.stringify(mk))}'></div>`
     : `<div class="bg-slate-50 border border-dashed border-slate-300 rounded p-3 mb-3 text-center text-[11px] text-slate-500">
@@ -6012,11 +6040,12 @@ function _mkMarketBlock(mk) {
        </div>`;
   return `
     <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/40">
-      <div class="flex items-center gap-2 mb-2 flex-wrap">
+      <div class="flex items-center gap-2 mb-1 flex-wrap">
         <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
         <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-700">${_esc(mk.currency_unit || "—")}</span>
         <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-auto">Indicative — not transactable</span>
       </div>
+      <div class="flex items-center gap-1 mb-2 flex-wrap text-slate-600">${fillChip}${kindChips}${rangeChip}</div>
       ${chartPanel}
       <div class="space-y-3">${blocks}</div>
     </div>`;
