@@ -6497,9 +6497,46 @@ function _mkPriceCard(o) {
 }
 
 function _mkEventCard(o) {
+  // Cycle 8: parse date range and compute state (LIVE / upcoming / ended) + D-day
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const ds = String(o.date || "");
+  let start = null, end = null;
+  const isoMatch = ds.match(/(\d{4})-(\d{2})-(\d{2})/g);
+  if (isoMatch && isoMatch.length >= 1) {
+    start = new Date(isoMatch[0]);
+    end = isoMatch.length >= 2 ? new Date(isoMatch[1]) : new Date(isoMatch[0]);
+  }
+  const days = (d) => Math.round((d - today) / (1000 * 60 * 60 * 24));
+  let state = "—", stripe = "border-l-slate-300", chipCls = "bg-slate-100 text-slate-600 border-slate-200", chipText = "";
+  if (start && end) {
+    const dStart = days(start), dEnd = days(end);
+    if (dStart <= 0 && dEnd >= 0) {
+      state = "LIVE"; stripe = "border-l-emerald-500";
+      chipCls = "bg-emerald-50 text-emerald-700 border-emerald-300";
+      chipText = dEnd === 0 ? "LIVE · 오늘 마지막" : `LIVE · D+${Math.abs(dStart) || 0} of ${dEnd - dStart + 1}일`;
+    } else if (dStart > 0) {
+      state = "upcoming"; stripe = "border-l-blue-500";
+      chipCls = "bg-blue-50 text-blue-700 border-blue-300";
+      chipText = `D-${dStart}`;
+    } else {
+      state = "ended"; stripe = "border-l-slate-400";
+      chipCls = "bg-slate-100 text-slate-500 border-slate-300";
+      chipText = `ended ${Math.abs(dEnd)}d ago`;
+    }
+  }
+  const dayChip = chipText
+    ? `<span class="inline-flex px-1.5 py-0.5 text-[9px] font-mono font-semibold rounded border ${chipCls}">${chipText}</span>`
+    : "";
+  const dimCls = state === "ended" ? "opacity-70" : "";
+  const srcLink = o.source_url
+    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">공식 ↗</a>`
+    : `<span class="text-slate-400">source —</span>`;
   return `
-    <div class="text-[12px] grid grid-cols-1 md:grid-cols-12 gap-2 items-start border-l-2 border-rose-300 pl-3 py-1">
-      <div class="md:col-span-3 font-mono text-slate-600 text-[11px]">${_esc(o.date)}</div>
+    <div class="text-[12px] grid grid-cols-1 md:grid-cols-12 gap-2 items-start border border-slate-200 border-l-4 ${stripe} rounded-md p-2 pl-3 bg-white ${dimCls} hover:bg-slate-50 transition-colors">
+      <div class="md:col-span-3">
+        <div class="font-mono text-slate-700 text-[11px]">${_esc(o.date)}</div>
+        ${dayChip ? `<div class="mt-1">${dayChip}</div>` : ""}
+      </div>
       <div class="md:col-span-7">
         <div class="font-semibold text-slate-800">${_esc(o.name)}
           ${o.category ? `<span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-rose-50 text-rose-700">${_esc(o.category)}</span>` : ""}
@@ -6508,7 +6545,7 @@ function _mkEventCard(o) {
         ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
       </div>
       <div class="md:col-span-2 text-[10px] text-slate-500 md:text-right">
-        <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">공식 ↗</a>
+        ${srcLink}
         ${o.checked_date ? `<div class="text-slate-400">checked ${_esc(o.checked_date)}</div>` : ""}
       </div>
     </div>`;
