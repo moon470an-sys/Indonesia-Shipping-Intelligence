@@ -5880,6 +5880,39 @@ async function renderMarket() {
     frHost.innerHTML = items.join("");
   }
 
+  // Cycle 38: top headline banner — uses overview[0] as the lede
+  const topHost = document.getElementById("mk-top-headline");
+  if (topHost) {
+    const top = (m.overview || [])[0];
+    if (top) {
+      const cat = top.category || "—";
+      const meta = ({
+        "Freight":   { icon: "⚓", bg: "from-emerald-50 to-white",  border: "border-emerald-300" },
+        "Policy":    { icon: "🏛", bg: "from-rose-50 to-white",     border: "border-rose-300" },
+        "Commodity": { icon: "🛢", bg: "from-amber-50 to-white",    border: "border-amber-300" },
+        "Shipping":  { icon: "🚢", bg: "from-blue-50 to-white",     border: "border-blue-300" },
+      })[cat] || { icon: "•", bg: "from-slate-50 to-white", border: "border-slate-300" };
+      const src = top.source_url
+        ? `<a href="${_esc(top.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(top.source_name || "src")}</a>`
+        : `<span class="text-slate-600">${_esc(top.source_name || "—")}</span>`;
+      topHost.innerHTML = `
+        <div class="rounded-lg border ${meta.border} bg-gradient-to-r ${meta.bg} p-3 flex items-start gap-3">
+          <div class="text-2xl leading-none">${meta.icon}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-white/70 text-slate-600 uppercase tracking-wider">today's top · ${_esc(cat)}</span>
+              <span class="text-[10px] text-slate-400 font-mono">${_esc(top.as_of || "—")}</span>
+            </div>
+            <div class="text-[14px] font-semibold text-slate-800 leading-snug">${_esc(top.headline || "—")}</div>
+            ${top.detail_ko ? `<div class="text-[11px] text-slate-600 leading-relaxed mt-1">${_esc(top.detail_ko)}</div>` : ""}
+            <div class="text-[10px] text-slate-500 mt-1.5">출처: ${src}${top.source_tier ? " " + _mkTierChip(top.source_tier) : ""}</div>
+          </div>
+        </div>`;
+    } else {
+      topHost.innerHTML = "";
+    }
+  }
+
   // Overview cards (이번 주 핵심 요약)
   const ovHost = document.getElementById("mk-overview");
   if (ovHost) {
