@@ -6483,12 +6483,14 @@ function _mkAssetMatrix(cls) {
 }
 
 function _mkIndexCardV2(o) {
+  // Cycle 16: shell upgrade — white bg, 4-px blue stripe, hover lift, hairline source divider
   const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
   const wow = (o.wow_pct != null) ? `<span class="ml-2 text-[10px] font-mono ${o.wow_pct > 0 ? 'text-rose-600' : o.wow_pct < 0 ? 'text-emerald-700' : 'text-slate-500'}">${o.wow_pct > 0 ? '+' : ''}${Number(o.wow_pct).toFixed(1)}% WoW</span>` : "";
   const noData = (o.status === "No data acquired") || (o.value == null);
   const statusBadge = noData
     ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`
     : (o.status === "verified" ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>` : "");
+  const stripeCls = noData ? "border-l-slate-300" : "border-l-blue-500";
   const valueHtml = (o.value != null)
     ? `${Number(o.value).toLocaleString()}<span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>${wow}`
     : `<span class="text-slate-300">—</span><span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>`;
@@ -6518,30 +6520,41 @@ function _mkIndexCardV2(o) {
     _trend("5Y", o.y5_pct),
   ].filter(Boolean).join("");
   return `
-    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+    <div class="bg-white rounded-lg p-3 border border-slate-200 border-l-4 ${stripeCls} hover:shadow-sm transition-shadow">
       <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between gap-1">
-        <span>${_esc(o.name)}</span>${statusBadge}
+        <span class="truncate">${_esc(o.name)}</span>${statusBadge}
       </div>
-      <div class="text-xl font-light text-slate-800 mt-0.5">${valueHtml}</div>
+      <div class="text-xl font-light text-slate-800 mt-0.5 tabular-nums">${valueHtml}</div>
       ${trendStrip ? `<div class="flex flex-wrap gap-1 mt-1.5">${trendStrip}</div>` : ""}
       ${o.note ? `<div class="text-[10px] text-slate-500 mt-1">${_esc(o.note)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
+      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
         as of ${_esc(o.as_of || "—")} · ${srcHtml}${tier}
       </div>
     </div>`;
 }
 
+// Cycle 16: scrap card matches the new shell with region-based stripe color
 function _mkScrapCard(o) {
   const label = o._label || o.region || o.size || "—";
   const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
+  const regionMeta = ({
+    "Bangladesh": { flag: "🇧🇩", stripe: "border-l-emerald-500" },
+    "India":      { flag: "🇮🇳", stripe: "border-l-orange-500" },
+    "Pakistan":   { flag: "🇵🇰", stripe: "border-l-green-700" },
+  })[o.region] || { flag: "♻", stripe: "border-l-slate-400" };
+  const noData = (o.ldt_usd == null);
+  const stripeCls = noData ? "border-l-slate-300" : regionMeta.stripe;
   return `
-    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
-      <div class="text-base font-light text-slate-800 mt-0.5">
-        ${o.ldt_usd != null ? Number(o.ldt_usd).toLocaleString() : "<span class='text-slate-300'>—</span>"}
-        <span class="text-[11px] text-slate-500 ml-1">USD/LDT</span>
+    <div class="bg-white rounded-lg p-3 border border-slate-200 border-l-4 ${stripeCls} hover:shadow-sm transition-shadow">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
+        <span class="text-[13px] leading-none">${regionMeta.flag}</span>
+        <span>${_esc(label)}</span>
       </div>
-      <div class="text-[10px] text-slate-500 mt-1">
+      <div class="text-lg font-light text-slate-800 mt-0.5 tabular-nums">
+        ${o.ldt_usd != null ? Number(o.ldt_usd).toLocaleString() : "<span class='text-slate-300'>—</span>"}
+        <span class="text-[11px] text-slate-500 ml-1 font-normal">USD/LDT</span>
+      </div>
+      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
         as of ${_esc(o.as_of || "—")}
         ${o.source_url
           ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>`
@@ -6550,12 +6563,27 @@ function _mkScrapCard(o) {
     </div>`;
 }
 
+// Cycle 16: S&P card with full card frame + emerald stripe + price emphasis
 function _mkSpCard(o) {
+  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
+  const priceHtml = o.price_musd != null
+    ? `<span class="text-lg font-semibold text-emerald-700 tabular-nums">$${Number(o.price_musd).toFixed(1)}M</span>`
+    : `<span class="text-slate-300 text-lg">—</span>`;
   return `
-    <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
-      <div class="font-semibold text-slate-800">${_esc(o.vessel_name)} <span class="text-slate-500 font-mono text-[10px] ml-1">${_esc(o.type)} · ${o.dwt ? Number(o.dwt).toLocaleString() + " DWT" : "—"} · built ${o.year || "—"}</span></div>
-      <div class="text-slate-700 text-[11px] mt-0.5">price: <strong>${o.price_musd != null ? `$${Number(o.price_musd).toFixed(1)}M` : "—"}</strong> · buyer ${_esc(o.buyer || "—")} · seller ${_esc(o.seller || "—")}</div>
-      <div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.as_of || "—")} · ${o.source_url ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : "(source pending)"}</div>
+    <div class="text-[12px] bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-md p-3 hover:shadow-sm transition-shadow">
+      <div class="flex items-baseline justify-between gap-2 flex-wrap">
+        <div class="font-semibold text-slate-800">
+          ${_esc(o.vessel_name || "—")}
+          <span class="text-slate-500 font-mono text-[10px] ml-1">${_esc(o.type || "—")} · ${o.dwt ? Number(o.dwt).toLocaleString() + " DWT" : "—"} · built ${o.year || "—"}</span>
+        </div>
+        ${priceHtml}
+      </div>
+      <div class="text-slate-700 text-[11px] mt-1">buyer <strong>${_esc(o.buyer || "—")}</strong> · seller <strong>${_esc(o.seller || "—")}</strong></div>
+      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
+        ${_esc(o.as_of || "—")}
+        · ${o.source_url ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? _esc(o.source_name) : "(source pending)")}
+        ${tier}
+      </div>
     </div>`;
 }
 
