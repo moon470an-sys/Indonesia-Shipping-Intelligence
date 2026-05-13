@@ -5811,6 +5811,9 @@ async function renderMarket() {
   if (!tabEl) return;
   setupSourceLabels(tabEl);
   _mkSetupTocSpy();
+  // Cycle 29: inject loading skeletons before the fetch so the empty placeholders
+  // never flash blank. Real data overwrites these innerHTML containers below.
+  _mkPaintSkeletons();
   let m;
   try {
     const r = await fetch("./data/market.json");
@@ -6149,6 +6152,54 @@ function _mkInsightStrip(markets) {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">${cards}</div>
       ${alert}
     </div>`;
+}
+
+// Cycle 29: loading skeletons — injected before fetch resolves, replaced once data arrives.
+// Uses Tailwind animate-pulse on slate-200 bars to convey "in flight".
+function _mkPaintSkeletons() {
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  const bar = (w, h = "h-3") => `<div class="${h} ${w} bg-slate-200 rounded animate-pulse"></div>`;
+  const card = (extra = "") => `
+    <div class="border border-slate-200 rounded-lg p-3 bg-white space-y-2">
+      <div class="flex items-center gap-1.5">${bar("w-12", "h-2.5")} ${bar("w-16", "h-2.5")}</div>
+      ${bar("w-4/5", "h-3.5")}
+      ${bar("w-3/4", "h-3")}
+      <div class="border-t border-slate-100 pt-1.5">${bar("w-1/3", "h-2.5")}</div>
+      ${extra}
+    </div>`;
+  // Overview: 3 cards
+  set("mk-overview", Array.from({ length: 3 }).map(() => card()).join(""));
+  // Vessel pricing: 1 chunky market card with mini chart skeleton + 2 row strips
+  set("mk-vessel-pricing", `
+    <div class="border border-slate-200 rounded-lg bg-slate-50/40 p-3 space-y-3">
+      <div class="flex items-center gap-2">${bar("w-40", "h-3.5")} ${bar("w-20", "h-2.5")} <div class="ml-auto">${bar("w-24", "h-2.5")}</div></div>
+      <div class="h-40 bg-slate-100 rounded border border-slate-200 animate-pulse"></div>
+      ${["w-full", "w-11/12", "w-10/12"].map(w => bar(w, "h-2.5")).join('<div class="my-1"></div>')}
+    </div>`);
+  // Fuel/scrap: 4 cards
+  set("mk-fuel-scrap", Array.from({ length: 4 }).map(() => card()).join(""));
+  // Int'l indices: 3 cards
+  set("mk-int-indices", Array.from({ length: 3 }).map(() => card()).join(""));
+  // Int'l scrap: 3 cards
+  set("mk-int-scrap", Array.from({ length: 3 }).map(() => card()).join(""));
+  // S&P: 1 placeholder row
+  set("mk-int-sp", `<div class="border border-slate-200 rounded-md p-3 space-y-2">${bar("w-1/2", "h-3")} ${bar("w-1/3", "h-2.5")}</div>`);
+  // News v2: 5 topic stubs
+  set("mk-commodity-news-v2", Array.from({ length: 3 }).map(() => `
+    <div class="space-y-1.5">
+      <div class="flex items-center gap-1.5">${bar("w-16", "h-2.5")} ${bar("w-6", "h-2.5")}</div>
+      <div class="border border-slate-200 rounded-md p-3 space-y-2">
+        ${bar("w-3/4", "h-3")} ${bar("w-2/3", "h-2.5")} ${bar("w-1/4", "h-2.5")}
+      </div>
+    </div>`).join(""));
+  // Events monthly/upcoming
+  const evRow = `<div class="border border-slate-200 rounded-md p-2 grid grid-cols-12 gap-2">
+    <div class="col-span-3">${bar("w-full", "h-2.5")}</div>
+    <div class="col-span-7 space-y-1.5">${bar("w-3/4", "h-3")} ${bar("w-1/2", "h-2.5")}</div>
+    <div class="col-span-2">${bar("w-full", "h-2.5")}</div>
+  </div>`;
+  set("mk-events-monthly", evRow);
+  set("mk-events-upcoming", evRow + '<div class="my-1.5"></div>' + evRow);
 }
 
 // Cycle 27: bulk expand/collapse + bulk view-mode controls above the markets list
