@@ -6164,6 +6164,27 @@ function _renderMarketCharts() {
     Plotly.newPlot(host, traces, layout, { displayModeBar: false, responsive: true });
     host.dataset.rendered = "1";
   });
+  _mkBindDetailsResize();
+}
+
+// Cycle 10: re-size Plotly charts when their <details> wrapper toggles open.
+// Without this, a chart drawn while details was already open will appear stretched
+// or zero-sized if the user collapses and re-opens, especially on viewport changes
+// in between. Idempotent — guarded by data-resize-bound.
+function _mkBindDetailsResize() {
+  if (typeof Plotly === "undefined") return;
+  document.querySelectorAll("details.mk-market").forEach(det => {
+    if (det.dataset.resizeBound === "1") return;
+    det.addEventListener("toggle", () => {
+      if (!det.open) return;
+      det.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
+        if (host.dataset.rendered === "1") {
+          try { Plotly.Plots.resize(host); } catch (_) { /* ignore */ }
+        }
+      });
+    });
+    det.dataset.resizeBound = "1";
+  });
 }
 
 function _mkCategoryTable(c, unitDefault) {
