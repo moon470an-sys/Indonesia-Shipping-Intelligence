@@ -5873,11 +5873,18 @@ async function renderMarket() {
     const arr = m.overview || [];
     ovHost.innerHTML = arr.length
       ? arr.map(_mkOverviewCard).join("")
-      : `<div class="text-[12px] text-slate-400 italic px-2 py-3 col-span-full">No recent verified data found.</div>`;
+      : `<div class="col-span-full text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[14px]">◌</span><span>No recent verified data found.</span></div>`;
   }
 
-  const emptyMsg = (label = "No recent verified data found.") =>
-    `<div class="text-[12px] text-slate-400 italic px-2 py-3">${_esc(label)}</div>`;
+  // Cycle 19: unified empty-state — dashed slate border, ◌ icon, optional hint sublabel
+  const emptyMsg = (label = "No recent verified data found.", hint = null) => `
+    <div class="text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-start gap-2">
+      <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
+      <div>
+        <div class="text-slate-700">${_esc(label)}</div>
+        ${hint ? `<div class="text-[10px] text-slate-400 mt-0.5">${_esc(hint)}</div>` : ""}
+      </div>
+    </div>`;
 
   // ★ Domestic Vessel Pricing — markets > categories > rows  (PDF p.2 구조)
   const vpHost = document.getElementById("mk-vessel-pricing");
@@ -5915,7 +5922,7 @@ async function renderMarket() {
     const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry — " + (o.region || o.size || "—") }));
     const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker — " + (o.region || o.size || "—") }));
     const arr = [...dry, ...tnk];
-    scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired (PDF p.1)");
+    scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired", "PDF p.1 placeholder (Allied weekly)");
   }
   const spHost = document.getElementById("mk-int-sp");
   if (spHost) {
@@ -5923,7 +5930,7 @@ async function renderMarket() {
     const visible = arr.filter(o => o.vessel_name || o.price_musd != null);
     spHost.innerHTML = visible.length
       ? visible.map(o => _mkSpCard(o)).join("")
-      : emptyMsg("S&P 활동 — No data acquired (PDF p.1)");
+      : emptyMsg("S&P 활동 — No data acquired", "PDF p.1 placeholder (Allied weekly)");
   }
 
   // Commodity News (Coal / Nickel / CPO / Power / Shipping) — Cycle 7 styling
@@ -5944,7 +5951,7 @@ async function renderMarket() {
       const countChip = `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-600">${items.length}</span>`;
       const inner = items.length
         ? items.map(o => _mkNewsCard(o, { stripe: m_.stripe, hover: m_.hover })).join("")
-        : `<div class="text-[11px] text-slate-400 italic px-3 py-2 border border-dashed border-slate-200 rounded">No recent verified data found.</div>`;
+        : `<div class="text-[11px] text-slate-500 px-3 py-2 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[12px]">◌</span><span>No recent verified data found.</span></div>`;
       return `<div>
         <div class="flex items-center gap-1.5 mb-1.5">
           <span class="px-2 py-0.5 text-[10px] font-mono rounded border ${m_.header} inline-flex items-center gap-1">
@@ -6145,9 +6152,12 @@ function _mkMarketBlock(mk) {
     : "";
   const chartPanel = (dataCount > 0)
     ? `<div id="${chartId}" class="bg-white rounded border border-slate-200 mb-3" style="min-height:240px;" data-market='${_esc(JSON.stringify(mk))}'></div>`
-    : `<div class="bg-slate-50 border border-dashed border-slate-300 rounded p-3 mb-3 text-center text-[11px] text-slate-500">
-         <div class="font-semibold text-slate-600">차트 데이터 미수집</div>
-         <div class="mt-1">No quotes available — 모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
+    : `<div class="bg-slate-50/60 border border-dashed border-slate-300 rounded-md p-3 mb-3 text-[11px] text-slate-500 flex items-start gap-2">
+         <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
+         <div>
+           <div class="text-slate-700">차트 데이터 미수집 — No quotes available</div>
+           <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
+         </div>
        </div>`;
   // Cycle 9: wrap in <details open> so users can collapse individual markets
   return `
