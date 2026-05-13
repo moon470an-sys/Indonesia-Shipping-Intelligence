@@ -940,6 +940,10 @@ async function ensureLoaded(tab) {
       renderExplorer();
       state.loaded.add("explorer");
     }
+    if (tab === "market" && !state.loaded.has("market")) {
+      await renderMarket();
+      state.loaded.add("market");
+    }
     // Home (overview) renders eagerly in boot(), no lazy load.
   } catch (e) {
     console.error(e);
@@ -1133,7 +1137,7 @@ async function boot() {
     const h = window.location.hash || "";
     const qIdx = h.indexOf("?");
     const tab = (qIdx >= 0 ? h.substring(1, qIdx) : h.substring(1)) || "";
-    return ["overview", "fleet", "tanker-sector", "explorer", "financials"].includes(tab) ? tab : "overview";
+    return ["overview", "fleet", "tanker-sector", "market", "explorer", "financials"].includes(tab) ? tab : "overview";
   })();
   showTab(initialTab);
   loadGlobalFooter();
@@ -5746,6 +5750,182 @@ function drawFleetOwnerClassmix(owners) {
     yaxis: { title: "척수" },
     legend: { orientation: "h", y: -0.35, font: { size: 10 } },
   }, { displayModeBar: false, responsive: true });
+}
+
+// ────────────────────────────────────────────────────────────
+// Market 탭 — 주간 시장 인텔리전스 (외부 정보 큐레이션).
+//   docs/data/market.json 으로 콘텐츠 분리. 모든 항목 출처 표기.
+//   README §Market data update 참조.
+// ────────────────────────────────────────────────────────────
+async function renderMarket() {
+  const tabEl = document.getElementById("tab-market");
+  if (!tabEl) return;
+  setupSourceLabels(tabEl);
+  let m;
+  try {
+    const r = await fetch("./data/market.json");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    m = await r.json();
+  } catch (e) {
+    const host = document.getElementById("mk-overview");
+    if (host) host.innerHTML = errorState(`market.json 로드 실패: ${e.message}`);
+    return;
+  }
+
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? "—"; };
+  setText("mk-checked-date", m.checked_date);
+  setText("mk-cadence", m.review_cadence || "—");
+
+  // Empty-section guard: "No recent verified data found"
+  const emptyMsg = `<div class="text-[12px] text-slate-400 italic px-2 py-3">No recent verified data found.</div>`;
+
+  // 1) Overview
+  const ovHost = document.getElementById("mk-overview");
+  if (ovHost) {
+    const items = m.overview || [];
+    if (!items.length) ovHost.innerHTML = emptyMsg;
+    else ovHost.innerHTML = items.map(o => _mkNewsCard(o)).join("");
+  }
+
+  // 2) Freight indices
+  const fiHost = document.getElementById("mk-freight-indices");
+  if (fiHost) {
+    const items = m.freight_indices || [];
+    if (!items.length) fiHost.innerHTML = emptyMsg;
+    else fiHost.innerHTML = items.map(o => _mkIndexCard(o)).join("");
+  }
+
+  // 2b) Commodity prices
+  const cpHost = document.getElementById("mk-commodity-prices");
+  if (cpHost) {
+    const items = m.commodity_prices || [];
+    if (!items.length) cpHost.innerHTML = emptyMsg;
+    else cpHost.innerHTML = items.map(o => _mkPriceCard(o)).join("");
+  }
+
+  // 2c) Freight rates indicative
+  const frHost = document.getElementById("mk-freight-rates");
+  if (frHost) {
+    const items = m.freight_rates_indicative || [];
+    if (!items.length) frHost.innerHTML = emptyMsg;
+    else frHost.innerHTML = items.map(o => `
+      <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
+        <div class="font-semibold text-slate-800">${_esc(o.category)}
+          <span class="ml-1 inline-block px-1 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">indicative</span>
+        </div>
+        <div class="text-slate-700 mt-0.5">${_esc(o.note)}</div>
+        <div class="text-[10px] text-slate-500 mt-1">
+          출처: <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
+          ${o.checked_date ? ` · checked ${_esc(o.checked_date)}` : ""}
+        </div>
+      </div>
+    `).join("");
+  }
+
+  // 3) Commodity news
+  const cnHost = document.getElementById("mk-commodity-news");
+  if (cnHost) {
+    const items = m.commodity_news || [];
+    if (!items.length) cnHost.innerHTML = emptyMsg;
+    else cnHost.innerHTML = items.map(o => _mkNewsCard(o, { showTag: "commodity" })).join("");
+  }
+
+  // 4) Shipping news
+  const snHost = document.getElementById("mk-shipping-news");
+  if (snHost) {
+    const items = m.shipping_news || [];
+    if (!items.length) snHost.innerHTML = emptyMsg;
+    else snHost.innerHTML = items.map(o => _mkNewsCard(o, { showTag: "category" })).join("");
+  }
+
+  // 5) Events
+  const evHost = document.getElementById("mk-events");
+  if (evHost) {
+    const items = m.events || [];
+    if (!items.length) evHost.innerHTML = emptyMsg;
+    else evHost.innerHTML = items.map(o => _mkEventCard(o)).join("");
+  }
+}
+
+function _mkNewsCard(o, opts = {}) {
+  const tagChip = (opts.showTag && o[opts.showTag]) ?
+    `<span class="inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 mr-1">${_esc(o[opts.showTag])}</span>` : "";
+  const tagsHtml = (o.tags && o.tags.length) ?
+    o.tags.map(t => `<span class="inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-50 text-blue-700 mr-1">${_esc(t)}</span>`).join("") : "";
+  return `
+    <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
+      <div class="font-semibold text-slate-800 leading-snug">${tagChip}${tagsHtml}${_esc(o.title)}</div>
+      ${o.summary ? `<div class="text-slate-700 mt-1 leading-relaxed">${_esc(o.summary)}</div>` : ""}
+      <div class="text-[10px] text-slate-500 mt-1">
+        ${o.published_date ? `<span class="font-mono">${_esc(o.published_date)}</span> · ` : ""}
+        출처: <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
+      </div>
+    </div>`;
+}
+
+function _mkIndexCard(o) {
+  const deltaHtml = (o.delta_pct != null) ? (() => {
+    const d = Number(o.delta_pct);
+    const cls = d > 0 ? "text-rose-600" : d < 0 ? "text-emerald-700" : "text-slate-500";
+    const sign = d > 0 ? "+" : "";
+    return `<span class="${cls} text-[10px] font-mono ml-1">${sign}${d.toFixed(1)}%</span>`;
+  })() : "";
+  return `
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(o.name)}</div>
+      <div class="text-xl font-light text-slate-800 mt-0.5">
+        ${Number(o.value).toLocaleString()}
+        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
+        ${deltaHtml}
+      </div>
+      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
+      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
+        as of ${_esc(o.as_of || "—")} · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
+      </div>
+    </div>`;
+}
+
+function _mkPriceCard(o) {
+  const deltaHtml = (o.delta_pct != null) ? (() => {
+    const d = Number(o.delta_pct);
+    const cls = d > 0 ? "text-rose-600" : d < 0 ? "text-emerald-700" : "text-slate-500";
+    const sign = d > 0 ? "+" : "";
+    return `<span class="${cls} text-[10px] font-mono ml-1">${sign}${d.toFixed(1)}% ${_esc(o.delta_basis || "")}</span>`;
+  })() : "";
+  const indChip = o.indicative
+    ? '<span class="inline-block px-1 py-px text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-1">indicative</span>'
+    : "";
+  return `
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono leading-snug">${_esc(o.name)}${indChip}</div>
+      <div class="text-xl font-light text-slate-800 mt-0.5">
+        ${Number(o.value).toLocaleString()}
+        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
+        ${deltaHtml}
+      </div>
+      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
+      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
+        as of ${_esc(o.as_of || "—")} · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
+      </div>
+    </div>`;
+}
+
+function _mkEventCard(o) {
+  return `
+    <div class="text-[12px] grid grid-cols-1 md:grid-cols-12 gap-2 items-start border-l-2 border-rose-300 pl-3 py-1">
+      <div class="md:col-span-3 font-mono text-slate-600 text-[11px]">${_esc(o.date)}</div>
+      <div class="md:col-span-7">
+        <div class="font-semibold text-slate-800">${_esc(o.name)}
+          ${o.category ? `<span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-rose-50 text-rose-700">${_esc(o.category)}</span>` : ""}
+        </div>
+        <div class="text-slate-600 text-[11px]">${_esc(o.location)}</div>
+        ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
+      </div>
+      <div class="md:col-span-2 text-[10px] text-slate-500 md:text-right">
+        <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">공식 ↗</a>
+        ${o.checked_date ? `<div class="text-slate-400">checked ${_esc(o.checked_date)}</div>` : ""}
+      </div>
+    </div>`;
 }
 
 boot().catch(e => {
