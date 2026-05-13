@@ -6641,85 +6641,7 @@ function _mkFuelCard(label, o) {
     </div>`;
 }
 
-// (legacy) Asset pricing matrix — kept for any callers still using v1 asset_classes shape.
-function _mkAssetMatrix(cls) {
-  const rows = cls.rows || [];
-  if (!rows.length) {
-    return `<div><div class="font-semibold text-slate-800 mb-1">${_esc(cls.class)}</div>
-      <div class="text-[12px] text-slate-400 italic">No data acquired</div></div>`;
-  }
-  // Group rows by size to render in tidy blocks
-  const sizes = [];
-  const bySize = new Map();
-  for (const r of rows) {
-    if (!bySize.has(r.size)) { bySize.set(r.size, []); sizes.push(r.size); }
-    bySize.get(r.size).push(r);
-  }
-  const cellRange = (v, unit) => {
-    if (!v) return `<span class="text-slate-300">—</span>`;
-    if (v.mid != null) {
-      const lo = v.low != null ? `<span class="text-slate-400 text-[10px]">${Number(v.low).toLocaleString()}</span> ` : "";
-      const hi = v.high != null ? ` <span class="text-slate-400 text-[10px]">${Number(v.high).toLocaleString()}</span>` : "";
-      return `${lo}<span class="font-semibold text-slate-800">${Number(v.mid).toLocaleString()}</span>${hi}<span class="text-[9px] text-slate-400 ml-0.5">${_esc(v.unit || unit || "")}</span>`;
-    }
-    return `<span class="text-slate-300">—</span>`;
-  };
-  const statusChip = (s) => {
-    if (!s || s === "No data acquired") return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`;
-    if (s === "verified")               return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>`;
-    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-orange-100 text-orange-800">indicative</span>`;
-    if (s === "withheld_jump")          return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-rose-100 text-rose-800">withheld</span>`;
-    return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">${_esc(s)}</span>`;
-  };
-  const sourcesCell = (srcs) => {
-    if (!srcs || !srcs.length) return `<span class="text-slate-300 text-[10px]">—</span>`;
-    return srcs.map(s => {
-      const a = s.url
-        ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(s.name)}</a>`
-        : `<span>${_esc(s.name)}</span>`;
-      const tierChip = s.tier ? ` <span class="text-[9px] text-slate-400">(${_esc(s.tier)})</span>` : "";
-      return a + tierChip;
-    }).join(", ");
-  };
-  const blocks = sizes.map(size => {
-    const list = bySize.get(size);
-    const trs = list.map(r => `
-      <tr class="border-b border-slate-50 hover:bg-slate-50">
-        <td class="px-2 py-1 text-[11px] font-mono text-slate-600">${_esc(r.year_built)}</td>
-        <td class="px-2 py-1 text-[11px] text-right">${cellRange(r.tc, "USD/day")}</td>
-        <td class="px-2 py-1 text-[11px] text-right">${cellRange(r.shb, "USD")}</td>
-        <td class="px-2 py-1 text-[11px] text-right">${cellRange(r.nb, "USD")}</td>
-        <td class="px-2 py-1 text-[10px] text-slate-600">${sourcesCell(r.sources)}</td>
-        <td class="px-2 py-1 text-[10px]">${statusChip(r.status)}</td>
-      </tr>`).join("");
-    return `<div class="mb-3">
-      <div class="text-[11px] font-mono text-slate-500 mb-1">size: <span class="text-slate-800 font-semibold">${_esc(size)}</span></div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-[11px]">
-          <thead class="bg-slate-50">
-            <tr class="text-left text-slate-600">
-              <th class="px-2 py-1 font-semibold">Year built</th>
-              <th class="px-2 py-1 font-semibold text-right">TC (USD/day)</th>
-              <th class="px-2 py-1 font-semibold text-right">SHB (USD)</th>
-              <th class="px-2 py-1 font-semibold text-right">NB (USD)</th>
-              <th class="px-2 py-1 font-semibold">Sources</th>
-              <th class="px-2 py-1 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody>${trs}</tbody>
-        </table>
-      </div>
-    </div>`;
-  }).join("");
-
-  return `<div>
-    <div class="flex items-center gap-2 mb-2">
-      <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(cls.class)}</h4>
-      <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-50 text-blue-700">size in ${_esc(cls.size_metric)}</span>
-    </div>
-    ${blocks}
-  </div>`;
-}
+// Cycle 30: removed legacy _mkAssetMatrix (v1 asset_classes shape, no longer called).
 
 function _mkIndexCardV2(o) {
   // Cycle 16: shell upgrade — white bg, 4-px blue stripe, hover lift, hairline source divider
@@ -6852,52 +6774,7 @@ function _mkNewsCard(o, opts = {}) {
     </div>`;
 }
 
-function _mkIndexCard(o) {
-  const deltaHtml = (o.delta_pct != null) ? (() => {
-    const d = Number(o.delta_pct);
-    const cls = d > 0 ? "text-rose-600" : d < 0 ? "text-emerald-700" : "text-slate-500";
-    const sign = d > 0 ? "+" : "";
-    return `<span class="${cls} text-[10px] font-mono ml-1">${sign}${d.toFixed(1)}%</span>`;
-  })() : "";
-  return `
-    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(o.name)}</div>
-      <div class="text-xl font-light text-slate-800 mt-0.5">
-        ${Number(o.value).toLocaleString()}
-        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
-        ${deltaHtml}
-      </div>
-      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
-        as of ${_esc(o.as_of || "—")} · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
-      </div>
-    </div>`;
-}
-
-function _mkPriceCard(o) {
-  const deltaHtml = (o.delta_pct != null) ? (() => {
-    const d = Number(o.delta_pct);
-    const cls = d > 0 ? "text-rose-600" : d < 0 ? "text-emerald-700" : "text-slate-500";
-    const sign = d > 0 ? "+" : "";
-    return `<span class="${cls} text-[10px] font-mono ml-1">${sign}${d.toFixed(1)}% ${_esc(o.delta_basis || "")}</span>`;
-  })() : "";
-  const indChip = o.indicative
-    ? '<span class="inline-block px-1 py-px text-[9px] font-mono rounded bg-orange-100 text-orange-800 ml-1">indicative</span>'
-    : "";
-  return `
-    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono leading-snug">${_esc(o.name)}${indChip}</div>
-      <div class="text-xl font-light text-slate-800 mt-0.5">
-        ${Number(o.value).toLocaleString()}
-        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
-        ${deltaHtml}
-      </div>
-      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
-        as of ${_esc(o.as_of || "—")} · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
-      </div>
-    </div>`;
-}
+// Cycle 30: removed legacy _mkIndexCard / _mkPriceCard (v1 schema, superseded by _mkIndexCardV2).
 
 function _mkEventCard(o) {
   // Cycle 8: parse date range and compute state (LIVE / upcoming / ended) + D-day
