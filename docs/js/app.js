@@ -5905,20 +5905,33 @@ async function renderMarket() {
       : emptyMsg("S&P 활동 — No data acquired (PDF p.1)");
   }
 
-  // Commodity News (Coal / Nickel / CPO / Power / Shipping)
+  // Commodity News (Coal / Nickel / CPO / Power / Shipping) — Cycle 7 styling
   const cnHost = document.getElementById("mk-commodity-news-v2");
   if (cnHost) {
     const blocks = m.commodity_news || {};
     const order = ["coal", "nickel", "cpo", "power", "shipping"];
-    const labels = { coal: "Coal", nickel: "Nickel", cpo: "CPO", power: "Power Plant", shipping: "Indonesia Shipping" };
+    const meta = {
+      coal:     { label: "Coal",              icon: "⚫", header: "bg-slate-100 text-slate-700 border-slate-300",   stripe: "border-l-slate-700",   hover: "hover:bg-slate-50" },
+      nickel:   { label: "Nickel",            icon: "🔋", header: "bg-indigo-50 text-indigo-700 border-indigo-200", stripe: "border-l-indigo-500",  hover: "hover:bg-indigo-50/60" },
+      cpo:      { label: "CPO",               icon: "🌴", header: "bg-amber-50 text-amber-700 border-amber-200",    stripe: "border-l-amber-500",   hover: "hover:bg-amber-50/60" },
+      power:    { label: "Power Plant",       icon: "⚡", header: "bg-teal-50 text-teal-700 border-teal-200",       stripe: "border-l-teal-500",    hover: "hover:bg-teal-50/60" },
+      shipping: { label: "Indonesia Shipping", icon: "🚢", header: "bg-blue-50 text-blue-700 border-blue-200",       stripe: "border-l-blue-500",    hover: "hover:bg-blue-50/60" },
+    };
     const html = order.map(k => {
+      const m_ = meta[k];
       const items = blocks[k] || [];
+      const countChip = `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-600">${items.length}</span>`;
       const inner = items.length
-        ? items.map(o => _mkNewsCard(o)).join("")
-        : emptyMsg("No recent verified data found.");
+        ? items.map(o => _mkNewsCard(o, { stripe: m_.stripe, hover: m_.hover })).join("")
+        : `<div class="text-[11px] text-slate-400 italic px-3 py-2 border border-dashed border-slate-200 rounded">No recent verified data found.</div>`;
       return `<div>
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">${_esc(labels[k])}</div>
-        ${inner}
+        <div class="flex items-center gap-1.5 mb-1.5">
+          <span class="px-2 py-0.5 text-[10px] font-mono rounded border ${m_.header} inline-flex items-center gap-1">
+            <span>${m_.icon}</span><span>${_esc(m_.label)}</span>
+          </span>
+          ${countChip}
+        </div>
+        <div class="space-y-1.5">${inner}</div>
       </div>`;
     }).join("");
     cnHost.innerHTML = html;
@@ -6422,11 +6435,14 @@ function _mkNewsCard(o, opts = {}) {
   const srcLink = o.source_url
     ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(srcName)}</a>`
     : `<span class="text-slate-700">${_esc(srcName)}</span>`;
+  // Cycle 7: topic-color stripe + bg-tinted hover via opts.stripe / opts.hover
+  const stripe = opts.stripe || "border-l-slate-300";
+  const hover = opts.hover || "hover:bg-slate-50";
   return `
-    <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
+    <div class="text-[12px] border border-slate-200 border-l-4 ${stripe} rounded-md pl-3 pr-3 py-2 bg-white ${hover} transition-colors">
       <div class="font-semibold text-slate-800 leading-snug">${tagChip}${tagsHtml}${_esc(o.title)}</div>
       ${summary ? `<div class="text-slate-700 mt-1 leading-relaxed">${_esc(summary)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1">
+      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100">
         ${o.published_date ? `<span class="font-mono">${_esc(o.published_date)}</span> · ` : ""}
         출처: ${srcLink}${srcTier}
       </div>
