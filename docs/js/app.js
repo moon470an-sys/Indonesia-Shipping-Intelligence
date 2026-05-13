@@ -5768,30 +5768,40 @@ function _mkSetupTocSpy() {
     .map(a => ({ a, el: document.getElementById(a.dataset.section) }))
     .filter(o => o.el);
   if (!targets.length) return;
-  const activeCls = ["bg-blue-700", "text-white", "border-blue-700"];
-  const idleCls = ["border-slate-200"];
+  // Cycle 20: subtler active state — slate fill + bold + dark text + URL hash sync
+  let currentId = null;
   const setActive = (id) => {
+    if (id === currentId) return;
+    currentId = id;
     targets.forEach(({ a, el }) => {
       const on = el.id === id;
-      a.classList.toggle("border-blue-700", on);
-      a.classList.toggle("bg-blue-700", on);
-      a.classList.toggle("text-white", on);
+      a.classList.toggle("bg-slate-100", on);
+      a.classList.toggle("border-slate-400", on);
+      a.classList.toggle("text-slate-900", on);
+      a.classList.toggle("font-semibold", on);
       a.classList.toggle("border-slate-200", !on);
+      a.setAttribute("aria-current", on ? "true" : "false");
     });
+    // Reflect in URL hash without scrolling or polluting history
+    if (id) {
+      try { history.replaceState(null, "", "#" + id); } catch (_) { /* ignore */ }
+    }
   };
   const io = new IntersectionObserver((entries) => {
-    // Pick the topmost visible section
     const visible = entries
       .filter(e => e.isIntersecting)
       .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
     if (visible[0]) setActive(visible[0].target.id);
   }, { rootMargin: "-80px 0px -60% 0px", threshold: [0, 0.1, 0.5] });
   targets.forEach(({ el }) => io.observe(el));
-  // Smooth scroll on click (browsers handle it via CSS, but ensure JS-friendly)
   links.forEach(a => a.addEventListener("click", (ev) => {
     ev.preventDefault();
     const t = document.getElementById(a.dataset.section);
-    if (t) t.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (t) {
+      t.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Click immediately reflects URL (scroll-spy will confirm on settle)
+      try { history.replaceState(null, "", "#" + a.dataset.section); } catch (_) {}
+    }
   }));
   window.__mkTocSpyReady = true;
 }
