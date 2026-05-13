@@ -5941,7 +5941,7 @@ async function renderMarket() {
     if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
       vpHost.innerHTML = emptyMsg();
     } else {
-      vpHost.innerHTML = _mkInsightStrip(vp.markets) + _mkBulkControls() + vp.markets.map(mk => _mkMarketBlock(mk)).join("");
+      vpHost.innerHTML = _mkInsightStrip(vp.markets, m.checked_date) + _mkBulkControls() + vp.markets.map(mk => _mkMarketBlock(mk)).join("");
       _renderMarketCharts();
     }
   }
@@ -6096,7 +6096,7 @@ function _mkOverviewCard(o) {
 // Cheapest NB (entry-cost benchmark), and a data-completeness alert if any
 // market has 0 filled rows. All metrics ride on the same currency unit
 // (millions IDR) since every market in this section uses it.
-function _mkInsightStrip(markets) {
+function _mkInsightStrip(markets, asOf) {
   if (!markets || !markets.length) return "";
   const bestByKind = { TC: null, SHB: null, NB: null };
   const cheapByKind = { NB: null };
@@ -6177,12 +6177,22 @@ function _mkInsightStrip(markets) {
     ? `<div class="mt-1 px-2 py-1 rounded bg-rose-50 border border-rose-200 text-[10px] text-rose-700 font-mono">
          ⚠ 결측 마켓: ${incomplete.map(_esc).join(" · ")} — 다음 PDF 갱신에 보강 필요
        </div>` : "";
+  // Cycle 40: count seeded rows to show how many data points drive the insights
+  let seededRows = 0;
+  for (const mk of markets) {
+    for (const c of mk.categories || []) {
+      for (const r of c.rows || []) {
+        if (r.value_low != null || r.value_high != null) seededRows++;
+      }
+    }
+  }
   return `
     <div class="mb-3">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1 flex items-center gap-1">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1 flex items-center gap-1 flex-wrap">
         <span>Auto Insights</span>
         <span class="text-slate-300">·</span>
         <span class="text-slate-400">자동 도출 — 외부 해석 없음</span>
+        <span class="ml-auto text-slate-400 normal-case tracking-normal">${seededRows} rows seeded${asOf ? ` · as of ${_esc(asOf)}` : ""}</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">${cards}</div>
       ${alert}
