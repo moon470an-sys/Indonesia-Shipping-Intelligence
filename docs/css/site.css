@@ -466,3 +466,18 @@ button.scope-chip[style*="outline"] { font-weight: 600; box-shadow: 0 0 0 2px rg
   .app-header { background: white !important; color: #0f172a !important; border-bottom: 2px solid #1A3A6B; }
   .app-header h1 { color: #0f172a !important; }
 }
+
+/* Cycle 13 — Market TOC: hide scrollbar but keep wheel/touch scroll, edge fade */
+.mk-no-scrollbar {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;        /* IE10+ */
+}
+.mk-no-scrollbar::-webkit-scrollbar { display: none; } /* Chromium/Safari */
+.mk-no-scrollbar::after {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 28px; height: 100%;
+  background: linear-gradient(to left, rgba(255,255,255,0.95), rgba(255,255,255,0));
+  pointer-events: none;
+}

@@ -6199,12 +6199,15 @@ function _renderMarketCharts() {
       }
     });
     if (!traces.length) { host.style.display = "none"; return; }
+    // Cycle 13: taller chart on narrow viewports so rotated x-labels remain readable
+    const _w = host.clientWidth || window.innerWidth || 600;
+    const chartHeight = _w < 480 ? 300 : _w < 768 ? 270 : 250;
     const layout = {
       font: { family: "Pretendard, system-ui, sans-serif", size: 11, color: "#334155" },
       barmode: "group",
       bargap: 0.22, bargroupgap: 0.08,
       margin: { l: 50, r: 16, t: 24, b: 60 },
-      height: 250,
+      height: chartHeight,
       xaxis: {
         tickangle: -25, automargin: true, tickfont: { size: 10, color: "#64748B" },
         showgrid: false, showline: true, linecolor: "#E2E8F0",
