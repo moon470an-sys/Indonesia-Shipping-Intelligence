@@ -6213,6 +6213,9 @@ function _mkBulkControls() {
       <button type="button" data-mk-bulk="view-both"  class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 차트+테이블">🔀 Both</button>
       <button type="button" data-mk-bulk="view-chart" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 차트만">📊 차트</button>
       <button type="button" data-mk-bulk="view-table" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 테이블만">📋 테이블</button>
+      <span class="text-slate-300 mx-1">·</span>
+      <input type="search" id="mk-row-search" placeholder="size · year 검색 (예: 5000KL · 2025)" aria-label="Vessel pricing row search" class="px-2 py-0.5 rounded border border-slate-200 text-[10px] font-mono w-44 sm:w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+      <span id="mk-row-search-hits" class="text-[10px] text-slate-400 font-mono"></span>
     </div>`;
 }
 
@@ -6436,7 +6439,41 @@ function _mkBindDetailsResize() {
     });
     btn.dataset.viewBound = "1";
   });
-  // Cycle 27: bulk controls (expand/collapse all, all-to-view-mode)
+  // Cycle 36: row search — filters every tbody tr in every market by size + year_built text
+  const searchEl = document.getElementById("mk-row-search");
+  const hitsEl = document.getElementById("mk-row-search-hits");
+  if (searchEl && !searchEl.dataset.searchBound) {
+    const applySearch = () => {
+      const q = searchEl.value.trim().toLowerCase();
+      let totalMatches = 0;
+      let totalRows = 0;
+      document.querySelectorAll("details.mk-market").forEach(det => {
+        let marketMatches = 0;
+        det.querySelectorAll(".mk-cat").forEach(cat => {
+          cat.querySelectorAll("tbody tr").forEach(tr => {
+            totalRows++;
+            if (!q) { tr.style.display = ""; marketMatches++; return; }
+            const cells = tr.querySelectorAll("td");
+            const hay = ((cells[0]?.textContent || "") + " " + (cells[1]?.textContent || "")).toLowerCase();
+            const ok = hay.includes(q);
+            tr.style.display = ok ? "" : "none";
+            if (ok) marketMatches++;
+          });
+        });
+        if (q) {
+          if (marketMatches === 0) det.style.opacity = "0.45";
+          else det.style.opacity = "";
+        } else {
+          det.style.opacity = "";
+        }
+        totalMatches += marketMatches;
+      });
+      if (hitsEl) hitsEl.textContent = q ? `${totalMatches}/${totalRows} hits` : "";
+    };
+    searchEl.addEventListener("input", applySearch);
+    searchEl.dataset.searchBound = "1";
+  }
+
   document.querySelectorAll("button.mk-bulk-btn").forEach(btn => {
     if (btn.dataset.bulkBound === "1") return;
     btn.addEventListener("click", (ev) => {
