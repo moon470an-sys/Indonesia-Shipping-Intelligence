@@ -6240,13 +6240,36 @@ function _mkIndexCardV2(o) {
   const srcHtml = o.source_url
     ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "—")}</a>`
     : `<span>${_esc(o.source_name || "—")}</span>`;
+  // Trend chip strip (1m / 3m / 6m / 1y / 5y) — neutral grey when null, color when present
+  const _trend = (label, v) => {
+    if (v == null) return "";
+    const n = Number(v);
+    const cls = n > 0 ? "bg-rose-50 text-rose-700 border-rose-200"
+              : n < 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-slate-50 text-slate-600 border-slate-200";
+    const arrow = n > 0 ? "▲" : n < 0 ? "▼" : "▬";
+    const sign = n > 0 ? "+" : "";
+    return `<span class="inline-flex items-center gap-0.5 px-1 py-0.5 text-[9px] font-mono rounded border ${cls}" title="${label}: ${sign}${n.toFixed(2)}%">
+              <span class="text-slate-400">${label}</span>
+              <span>${arrow}</span>
+              <span class="font-semibold">${sign}${n.toFixed(1)}%</span>
+            </span>`;
+  };
+  const trendStrip = [
+    _trend("1M", o.m1_pct),
+    _trend("3M", o.m3_pct),
+    _trend("6M", o.m6_pct),
+    _trend("1Y", o.y1_pct),
+    _trend("5Y", o.y5_pct),
+  ].filter(Boolean).join("");
   return `
     <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
       <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between gap-1">
         <span>${_esc(o.name)}</span>${statusBadge}
       </div>
       <div class="text-xl font-light text-slate-800 mt-0.5">${valueHtml}</div>
-      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
+      ${trendStrip ? `<div class="flex flex-wrap gap-1 mt-1.5">${trendStrip}</div>` : ""}
+      ${o.note ? `<div class="text-[10px] text-slate-500 mt-1">${_esc(o.note)}</div>` : ""}
       <div class="text-[10px] text-slate-500 mt-1 leading-snug">
         as of ${_esc(o.as_of || "—")} · ${srcHtml}${tier}
       </div>
