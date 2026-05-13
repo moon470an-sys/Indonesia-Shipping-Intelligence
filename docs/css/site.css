@@ -465,6 +465,28 @@ button.scope-chip[style*="outline"] { font-weight: 600; box-shadow: 0 0 0 2px rg
   /* 8) 헤더는 핵심 정보만 */
   .app-header { background: white !important; color: #0f172a !important; border-bottom: 2px solid #1A3A6B; }
   .app-header h1 { color: #0f172a !important; }
+
+  /* Cycle 25 — Market tab print rules */
+  /* a) Hide sticky TOC, view toggles, watermark expander chevron — useless on paper */
+  #mk-toc, button.mk-view-btn, #tab-market details > summary > span[class*="rotate"] { display: none !important; }
+  /* b) Force all collapsibles open (markets + disclaimer details) */
+  #tab-market details { display: block !important; }
+  #tab-market details > summary { list-style: none; pointer-events: none; }
+  #tab-market details > *:not(summary) { display: block !important; }
+  /* c) Always show both chart and tables regardless of view-mode */
+  details.mk-market[data-view="chart"] .mk-tables-wrap,
+  details.mk-market[data-view="table"] .mk-chart-wrap { display: block !important; }
+  /* d) Card frames keep their borders, no shadows or hover effects */
+  #tab-market .shadow, #tab-market .shadow-sm { box-shadow: none !important; }
+  #tab-market .bg-white { border: 1px solid #cbd5e1; }
+  /* e) Avoid page-break inside a market card / news card / event card */
+  details.mk-market, #tab-market section, #tab-market .rounded-xl,
+  #tab-market .rounded-lg, #tab-market .rounded-md { page-break-inside: avoid; }
+  /* f) Disclaimer / amber strip prints in clear bg + dark text */
+  #tab-market .bg-amber-50 { background: white !important; border: 1px solid #FBBF24 !important; color: #92400E !important; }
+  /* g) Use portrait A4 for Market (it's a vertical report) — overrides landscape default */
+  @page :first { size: A4 portrait; margin: 10mm; }
+  body.printing-market #tab-market { font-size: 10.5px; }
 }
 
 /* Cycle 22 — Market chart/table view toggle */
