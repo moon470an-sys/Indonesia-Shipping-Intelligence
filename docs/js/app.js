@@ -5886,11 +5886,11 @@ async function renderMarket() {
     const arr = m.overview || [];
     ovHost.innerHTML = arr.length
       ? arr.map(_mkOverviewCard).join("")
-      : `<div class="col-span-full text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[14px]">◌</span><span>No recent verified data found.</span></div>`;
+      : `<div class="col-span-full text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[14px]">◌</span><span>최근 검증된 데이터가 없습니다.</span></div>`;
   }
 
   // Cycle 19: unified empty-state — dashed slate border, ◌ icon, optional hint sublabel
-  const emptyMsg = (label = "No recent verified data found.", hint = null) => `
+  const emptyMsg = (label = "최근 검증된 데이터가 없습니다.", hint = null) => `
     <div class="text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-start gap-2">
       <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
       <div>
@@ -5964,7 +5964,7 @@ async function renderMarket() {
       const countChip = `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-600">${items.length}</span>`;
       const inner = items.length
         ? items.map(o => _mkNewsCard(o, { stripe: m_.stripe, hover: m_.hover })).join("")
-        : `<div class="text-[11px] text-slate-500 px-3 py-2 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[12px]">◌</span><span>No recent verified data found.</span></div>`;
+        : `<div class="text-[11px] text-slate-500 px-3 py-2 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[12px]">◌</span><span>최근 검증된 데이터가 없습니다.</span></div>`;
       return `<div>
         <div class="flex items-center gap-1.5 mb-1.5">
           <span class="px-2 py-0.5 text-[10px] font-mono rounded border ${m_.header} inline-flex items-center gap-1">
@@ -6206,13 +6206,13 @@ function _mkPaintSkeletons() {
 function _mkBulkControls() {
   return `
     <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[10px]" role="toolbar" aria-label="Bulk market controls">
-      <span class="text-slate-400 font-mono mr-1 uppercase tracking-wider">all markets:</span>
-      <button type="button" data-mk-bulk="expand"   class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="Expand every market">⤵ Expand all</button>
-      <button type="button" data-mk-bulk="collapse" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="Collapse every market">⤴ Collapse all</button>
+      <span class="text-slate-400 font-mono mr-1 uppercase tracking-wider">모든 마켓:</span>
+      <button type="button" data-mk-bulk="expand"   class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 펼치기">⤵ 모두 펼치기</button>
+      <button type="button" data-mk-bulk="collapse" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 접기">⤴ 모두 접기</button>
       <span class="text-slate-300 mx-1">·</span>
-      <button type="button" data-mk-bulk="view-both"  class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="All markets show chart and tables">🔀 Both</button>
-      <button type="button" data-mk-bulk="view-chart" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="All markets show chart only">📊 Charts</button>
-      <button type="button" data-mk-bulk="view-table" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="All markets show tables only">📋 Tables</button>
+      <button type="button" data-mk-bulk="view-both"  class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 차트+테이블">🔀 Both</button>
+      <button type="button" data-mk-bulk="view-chart" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 차트만">📊 차트</button>
+      <button type="button" data-mk-bulk="view-table" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 테이블만">📋 테이블</button>
     </div>`;
 }
 
@@ -6270,7 +6270,7 @@ function _mkMarketBlock(mk) {
     <div class="flex items-center justify-end gap-1 mb-2 text-[10px] flex-wrap">
       <button type="button" class="mk-export-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-600" aria-label="Download ${_esc(mk.market)} as CSV">⬇ CSV</button>
       <span class="text-slate-300 mx-0.5">·</span>
-      <span class="text-slate-400 font-mono mr-1" role="group" aria-label="${_esc(mk.market)} view mode">view:</span>
+      <span class="text-slate-400 font-mono mr-1" role="group" aria-label="${_esc(mk.market)} 표시 모드">표시:</span>
       <button type="button" data-mk-view="both"  class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="true"  aria-label="Show chart and tables">🔀 Both</button>
       <button type="button" data-mk-view="chart" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show chart only">📊 Chart</button>
       <button type="button" data-mk-view="table" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show tables only">📋 Tables</button>
@@ -6790,10 +6790,11 @@ function _mkEventCard(o) {
   let state = "—", stripe = "border-l-slate-300", chipCls = "bg-slate-100 text-slate-600 border-slate-200", chipText = "";
   if (start && end) {
     const dStart = days(start), dEnd = days(end);
+    const span = dEnd - dStart + 1;
     if (dStart <= 0 && dEnd >= 0) {
       state = "LIVE"; stripe = "border-l-emerald-500";
       chipCls = "bg-emerald-50 text-emerald-700 border-emerald-300";
-      chipText = dEnd === 0 ? "LIVE · 오늘 마지막" : `LIVE · D+${Math.abs(dStart) || 0} of ${dEnd - dStart + 1}일`;
+      chipText = dEnd === 0 ? "LIVE · 오늘 종료" : `LIVE · day ${Math.abs(dStart) + 1}/${span}`;
     } else if (dStart > 0) {
       state = "upcoming"; stripe = "border-l-blue-500";
       chipCls = "bg-blue-50 text-blue-700 border-blue-300";
@@ -6801,7 +6802,7 @@ function _mkEventCard(o) {
     } else {
       state = "ended"; stripe = "border-l-slate-400";
       chipCls = "bg-slate-100 text-slate-500 border-slate-300";
-      chipText = `ended ${Math.abs(dEnd)}d ago`;
+      chipText = `종료 · ${Math.abs(dEnd)}d 전`;
     }
   }
   const dayChip = chipText
