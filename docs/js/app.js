@@ -6052,17 +6052,23 @@ function _mkMarketBlock(mk) {
          <div class="font-semibold text-slate-600">차트 데이터 미수집</div>
          <div class="mt-1">No quotes available — 모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
        </div>`;
+  // Cycle 9: wrap in <details open> so users can collapse individual markets
   return `
-    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/40">
-      <div class="flex items-center gap-2 mb-1 flex-wrap">
-        <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
-        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-700">${_esc(mk.currency_unit || "—")}</span>
-        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-auto">Indicative — not transactable</span>
+    <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden" open>
+      <summary class="cursor-pointer list-none p-3 select-none">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-slate-500 text-[11px] font-mono transition-transform group-open:rotate-90 inline-block w-3">▶</span>
+          <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
+          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-700">${_esc(mk.currency_unit || "—")}</span>
+          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-auto">Indicative — not transactable</span>
+        </div>
+        <div class="flex items-center gap-1 mt-1 flex-wrap text-slate-600 pl-5">${fillChip}${kindChips}${rangeChip}</div>
+      </summary>
+      <div class="px-3 pb-3 pt-1 border-t border-slate-200">
+        ${chartPanel}
+        <div class="space-y-3">${blocks}</div>
       </div>
-      <div class="flex items-center gap-1 mb-2 flex-wrap text-slate-600">${fillChip}${kindChips}${rangeChip}</div>
-      ${chartPanel}
-      <div class="space-y-3">${blocks}</div>
-    </div>`;
+    </details>`;
 }
 
 function _slug(s) {
