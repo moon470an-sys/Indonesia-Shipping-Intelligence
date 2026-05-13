@@ -6339,21 +6339,39 @@ function _mkCategoryTable(c, unitDefault) {
 }
 
 function _mkFuelCard(label, o) {
+  // Cycle 12: category-driven icon + colored stripe; split unit "IDR/liter (Kelas A)" into unit + chip
+  const lLower = String(label || "").toLowerCase();
+  const meta = lLower.includes("cpo")    ? { icon: "🌴", stripe: "border-l-amber-500",   chipCls: "bg-amber-50 text-amber-700 border-amber-200" }
+            :  lLower.includes("solar")  ? { icon: "⛽", stripe: "border-l-orange-500",  chipCls: "bg-orange-50 text-orange-700 border-orange-200" }
+            :  lLower.includes("hfo")    ? { icon: "🛢", stripe: "border-l-violet-500",  chipCls: "bg-violet-50 text-violet-700 border-violet-200" }
+            :  lLower.includes("scrap")  ? { icon: "♻", stripe: "border-l-slate-500",   chipCls: "bg-slate-100 text-slate-700 border-slate-300" }
+            :                              { icon: "•", stripe: "border-l-slate-300",   chipCls: "bg-slate-50 text-slate-700 border-slate-200" };
+  // Parse trailing parenthetical from the unit string into its own qualifier chip
+  let unitMain = String(o.unit || "");
+  let qualifier = "";
+  const m = unitMain.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (m) { unitMain = m[1].trim(); qualifier = m[2].trim(); }
+  const qualifierChip = qualifier
+    ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded border ${meta.chipCls}">${_esc(qualifier)}</span>`
+    : "";
   const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
   const statusBadge = (o.status && o.status !== "verified")
     ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded ${o.status === "No data acquired" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}">${o.status === "No data acquired" ? "no data" : _esc(o.status)}</span>`
-    : "";
+    : (o.status === "verified" ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>` : "");
   return `
-    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between gap-1">
-        <span>${_esc(label)}</span>${statusBadge}
+    <div class="bg-white rounded-lg p-3 border border-slate-200 border-l-4 ${meta.stripe} hover:shadow-sm transition-shadow">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
+        <span class="text-[13px] leading-none">${meta.icon}</span>
+        <span class="truncate">${_esc(label)}</span>
+        <span class="ml-auto">${statusBadge}</span>
       </div>
-      <div class="text-base font-light text-slate-800 mt-0.5">
+      <div class="text-lg font-light text-slate-800 mt-1 tabular-nums">
         ${o.value != null ? Number(o.value).toLocaleString() : "<span class='text-slate-300'>—</span>"}
-        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
+        <span class="text-[11px] text-slate-500 ml-1 font-normal">${_esc(unitMain)}</span>
       </div>
-      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
+      ${qualifierChip ? `<div class="mt-1">${qualifierChip}</div>` : ""}
+      ${o.note ? `<div class="text-[10px] text-slate-500 mt-1 leading-snug">${_esc(o.note)}</div>` : ""}
+      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
         ${o.as_of ? "as of " + _esc(o.as_of) : "as of —"}
         ${o.source_url ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? " · " + _esc(o.source_name) : "")}${tier}
       </div>
