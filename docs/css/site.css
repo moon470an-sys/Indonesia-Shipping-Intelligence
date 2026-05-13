@@ -467,6 +467,10 @@ button.scope-chip[style*="outline"] { font-weight: 600; box-shadow: 0 0 0 2px rg
   .app-header h1 { color: #0f172a !important; }
 }
 
+/* Cycle 22 — Market chart/table view toggle */
+details.mk-market[data-view="chart"] .mk-tables-wrap { display: none; }
+details.mk-market[data-view="table"] .mk-chart-wrap { display: none; }
+
 /* Cycle 13 — Market TOC: hide scrollbar but keep wheel/touch scroll, edge fade */
 .mk-no-scrollbar {
   scrollbar-width: none;          /* Firefox */

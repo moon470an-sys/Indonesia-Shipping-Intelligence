@@ -6200,9 +6200,17 @@ function _mkMarketBlock(mk) {
            <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
          </div>
        </div>`;
+  // Cycle 22: chart/table view toggle (per-market)
+  const viewToggle = (dataCount > 0) ? `
+    <div class="flex items-center justify-end gap-1 mb-2 text-[10px]">
+      <span class="text-slate-400 font-mono mr-1">view:</span>
+      <button type="button" data-mk-view="both"  class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors aria-pressed:bg-slate-700 aria-pressed:text-white aria-pressed:border-slate-700" aria-pressed="true">🔀 Both</button>
+      <button type="button" data-mk-view="chart" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors aria-pressed:bg-slate-700 aria-pressed:text-white aria-pressed:border-slate-700" aria-pressed="false">📊 Chart</button>
+      <button type="button" data-mk-view="table" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors aria-pressed:bg-slate-700 aria-pressed:text-white aria-pressed:border-slate-700" aria-pressed="false">📋 Tables</button>
+    </div>` : "";
   // Cycle 9: wrap in <details open> so users can collapse individual markets
   return `
-    <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden" open>
+    <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden" open data-view="both">
       <summary class="cursor-pointer list-none p-3 select-none">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-slate-500 text-[11px] font-mono transition-transform group-open:rotate-90 inline-block w-3">▶</span>
@@ -6213,8 +6221,9 @@ function _mkMarketBlock(mk) {
         <div class="flex items-center gap-1 mt-1 flex-wrap text-slate-600 pl-5">${fillChip}${kindChips}${rangeChip}</div>
       </summary>
       <div class="px-3 pb-3 pt-1 border-t border-slate-200">
-        ${chartPanel}
-        <div class="space-y-3">${blocks}</div>
+        ${viewToggle}
+        <div class="mk-chart-wrap">${chartPanel}</div>
+        <div class="mk-tables-wrap space-y-3">${blocks}</div>
       </div>
     </details>`;
 }
@@ -6335,6 +6344,29 @@ function _mkBindDetailsResize() {
       });
     });
     det.dataset.resizeBound = "1";
+  });
+  // Cycle 22: chart/table view-mode toggle. Buttons live inside the details body
+  // so the click does not bubble to the summary's default-toggle behavior.
+  document.querySelectorAll("button.mk-view-btn").forEach(btn => {
+    if (btn.dataset.viewBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const det = btn.closest("details.mk-market");
+      if (!det) return;
+      const mode = btn.dataset.mkView || "both";
+      det.dataset.view = mode;
+      det.querySelectorAll(".mk-view-btn").forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset.mkView === mode ? "true" : "false");
+      });
+      if ((mode === "chart" || mode === "both") && typeof Plotly !== "undefined") {
+        det.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
+          if (host.dataset.rendered === "1") {
+            try { Plotly.Plots.resize(host); } catch (_) {}
+          }
+        });
+      }
+    });
+    btn.dataset.viewBound = "1";
   });
 }
 
