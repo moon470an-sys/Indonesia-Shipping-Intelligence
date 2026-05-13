@@ -5819,6 +5819,27 @@ async function renderMarket() {
   setText("mk-next-scheduled", m.next_scheduled || "—");
   setText("mk-vp-asof", `as of ${m?.domestic_vessel_pricing?.as_of || "—"}`);
 
+  // Cycle 15: section count chips
+  const _cnt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  _cnt("mk-cnt-overview", `${(m.overview || []).length} cards`);
+  const _vp = m.domestic_vessel_pricing || {};
+  let _vTot = 0, _vFil = 0;
+  (_vp.markets || []).forEach(mk => (mk.categories || []).forEach(c => (c.rows || []).forEach(r => {
+    _vTot++;
+    if (r.value_low != null || r.value_high != null) _vFil++;
+  })));
+  _cnt("mk-cnt-vessel", `${(_vp.markets || []).length} markets · ${_vFil}/${_vTot} rows`);
+  const _fs = m.domestic_fuel_scrap || {};
+  const _fsN = (_fs.cpo_price_index_gapki || []).length + (_fs.solar_b40_hsd || []).length + (_fs.hfo_180_mfo || []).length + (_fs.scrap_domestic || []).length;
+  _cnt("mk-cnt-fuel", `${_fsN} cards`);
+  const _if = m.international_freight || {};
+  _cnt("mk-cnt-intfreight", `${(_if.indices || []).length} idx · ${((_if.scrap_dry_bulk || []).length + (_if.scrap_tanker || []).length)} scrap · ${((_if.sale_purchase_bulk || _if.sale_purchase || []).filter(o => o.vessel_name || o.price_musd != null)).length} S&P`);
+  const _cn = m.commodity_news || {};
+  const _cnTotal = Object.values(_cn).reduce((s, arr) => s + (arr || []).length, 0);
+  _cnt("mk-cnt-news", `${_cnTotal} items · ${Object.keys(_cn).length} topics`);
+  const _ev = m.events || {};
+  _cnt("mk-cnt-events", `${(_ev.monthly || []).length} live · ${(_ev.upcoming || []).length} upcoming`);
+
   // Freshness chip strip — last vs next + days-since/until
   const frHost = document.getElementById("mk-freshness");
   if (frHost) {
