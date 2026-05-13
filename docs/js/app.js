@@ -6063,6 +6063,8 @@ function _mkInsightStrip(markets) {
   const bestByKind = { TC: null, SHB: null, NB: null };
   const cheapByKind = { NB: null };
   const incomplete = []; // markets with 0 filled rows
+  // Cycle 21: spread alert — group by (market, kind, size), find max/min across year buckets
+  const groupMap = new Map(); // key -> { vals: [{v, yr}], market, kind, size }
   for (const mk of markets) {
     let filled = 0, total = 0;
     for (const c of mk.categories || []) {
@@ -6079,9 +6081,28 @@ function _mkInsightStrip(markets) {
           const lo = r.value_low != null ? Number(r.value_low) : v;
           if (cheapByKind.NB == null || lo < cheapByKind.NB.v) cheapByKind.NB = { ...rec, v: lo };
         }
+        // Spread grouping uses value_low (mid of bar) for cleaner year-on-year compare
+        const baseV = r.value_low != null ? Number(r.value_low) : v;
+        const key = `${mk.market}|${c.kind}|${r.size}`;
+        if (!groupMap.has(key)) groupMap.set(key, { vals: [], market: mk.market, kind: c.kind, size: r.size });
+        groupMap.get(key).vals.push({ v: baseV, yr: r.year_built });
       }
     }
     if (total > 0 && filled === 0) incomplete.push(mk.market);
+  }
+  // Pick the group with the widest spread (≥2 buckets)
+  let spread = null;
+  for (const g of groupMap.values()) {
+    if (g.vals.length < 2) continue;
+    const lo = Math.min(...g.vals.map(o => o.v));
+    const hi = Math.max(...g.vals.map(o => o.v));
+    if (lo <= 0) continue;
+    const ratio = hi / lo;
+    if (!spread || ratio > spread.ratio) {
+      const loRec = g.vals.find(o => o.v === lo);
+      const hiRec = g.vals.find(o => o.v === hi);
+      spread = { ratio, lo, hi, loYr: loRec.yr, hiYr: hiRec.yr, market: g.market, kind: g.kind, size: g.size };
+    }
   }
   const _short = (s, n = 22) => {
     const t = String(s || "");
@@ -6099,10 +6120,20 @@ function _mkInsightStrip(markets) {
         </div>
       </div>`;
   };
+  const spreadCard = spread ? `
+    <div class="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-rose-500">
+      <span class="text-[14px] leading-none mt-0.5">📐</span>
+      <div class="leading-tight">
+        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">Widest year-bucket spread</div>
+        <div class="text-[12px] font-semibold text-slate-800">${spread.ratio.toFixed(2)}× <span class="text-[10px] font-normal text-slate-500">(${spread.lo.toLocaleString()} → ${spread.hi.toLocaleString()})</span></div>
+        <div class="text-[10px] text-slate-500">${_esc(_short(spread.market, 16))} · ${_esc(spread.kind || "")} ${_esc(_short(spread.size, 12))} · ${_esc(_short(spread.loYr, 8))} → ${_esc(_short(spread.hiYr, 8))}</div>
+      </div>
+    </div>` : "";
   const cards = [
     card("🏷", "Top TC (charter)",      bestByKind.TC,  "border-l-4 border-l-blue-500"),
     card("💎", "Top SHB (secondhand)",  bestByKind.SHB, "border-l-4 border-l-emerald-500"),
     card("🚧", "Cheapest NB entry",      cheapByKind.NB, "border-l-4 border-l-amber-500"),
+    spreadCard,
   ].filter(Boolean).join("");
   const alert = incomplete.length
     ? `<div class="mt-1 px-2 py-1 rounded bg-rose-50 border border-rose-200 text-[10px] text-rose-700 font-mono">
@@ -6115,7 +6146,7 @@ function _mkInsightStrip(markets) {
         <span class="text-slate-300">·</span>
         <span class="text-slate-400">자동 도출 — 외부 해석 없음</span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">${cards}</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">${cards}</div>
       ${alert}
     </div>`;
 }
