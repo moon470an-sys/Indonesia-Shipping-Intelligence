@@ -6200,13 +6200,13 @@ function _mkMarketBlock(mk) {
            <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
          </div>
        </div>`;
-  // Cycle 22: chart/table view toggle (per-market)
+  // Cycle 22: chart/table view toggle (per-market) — Cycle 24: a11y role+labels
   const viewToggle = (dataCount > 0) ? `
-    <div class="flex items-center justify-end gap-1 mb-2 text-[10px]">
+    <div class="flex items-center justify-end gap-1 mb-2 text-[10px]" role="group" aria-label="${_esc(mk.market)} view mode">
       <span class="text-slate-400 font-mono mr-1">view:</span>
-      <button type="button" data-mk-view="both"  class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors aria-pressed:bg-slate-700 aria-pressed:text-white aria-pressed:border-slate-700" aria-pressed="true">🔀 Both</button>
-      <button type="button" data-mk-view="chart" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors aria-pressed:bg-slate-700 aria-pressed:text-white aria-pressed:border-slate-700" aria-pressed="false">📊 Chart</button>
-      <button type="button" data-mk-view="table" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors aria-pressed:bg-slate-700 aria-pressed:text-white aria-pressed:border-slate-700" aria-pressed="false">📋 Tables</button>
+      <button type="button" data-mk-view="both"  class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="true"  aria-label="Show chart and tables">🔀 Both</button>
+      <button type="button" data-mk-view="chart" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show chart only">📊 Chart</button>
+      <button type="button" data-mk-view="table" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show tables only">📋 Tables</button>
     </div>` : "";
   // Cycle 9: wrap in <details open> so users can collapse individual markets
   return `

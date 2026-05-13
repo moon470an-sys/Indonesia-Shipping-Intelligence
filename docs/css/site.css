@@ -479,6 +479,21 @@ button.mk-view-btn[aria-pressed="true"] {
 }
 button.mk-view-btn[aria-pressed="false"] { color: #475569; } /* slate-600 */
 
+/* Cycle 24 — keyboard focus visibility on Market interactive elements */
+#mk-toc a.mk-toc-link:focus-visible,
+button.mk-view-btn:focus-visible,
+details.mk-market > summary:focus-visible {
+  outline: 2px solid #2563EB;        /* blue-600 */
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Hide outline on mouse-driven focus; show only for keyboard */
+#mk-toc a.mk-toc-link:focus:not(:focus-visible),
+button.mk-view-btn:focus:not(:focus-visible),
+details.mk-market > summary:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Cycle 13 — Market TOC: hide scrollbar but keep wheel/touch scroll, edge fade */
 .mk-no-scrollbar {
   scrollbar-width: none;          /* Firefox */
