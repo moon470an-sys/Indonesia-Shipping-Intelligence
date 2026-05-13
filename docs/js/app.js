@@ -5967,28 +5967,29 @@ function _mkTierChip(tier) {
   return `<span class="px-1 py-0.5 text-[9px] font-mono rounded ${v.cls}">${_esc(v.label)}</span>`;
 }
 
-// Overview card — 이번 주 핵심 요약
+// Overview card — 이번 주 핵심 요약 (Cycle 4: icon + colored left border + bigger headline)
 function _mkOverviewCard(o) {
   const cat = o.category || "—";
-  const catCls = ({
-    "Freight":   "bg-emerald-50 text-emerald-700 border-emerald-200",
-    "Policy":    "bg-rose-50 text-rose-700 border-rose-200",
-    "Commodity": "bg-amber-50 text-amber-700 border-amber-200",
-    "Shipping":  "bg-blue-50 text-blue-700 border-blue-200",
-  })[cat] || "bg-slate-50 text-slate-700 border-slate-200";
+  const catMeta = ({
+    "Freight":   { icon: "⚓", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", border: "border-l-emerald-500" },
+    "Policy":    { icon: "🏛", chip: "bg-rose-50 text-rose-700 border-rose-200",         border: "border-l-rose-500" },
+    "Commodity": { icon: "🛢", chip: "bg-amber-50 text-amber-700 border-amber-200",       border: "border-l-amber-500" },
+    "Shipping":  { icon: "🚢", chip: "bg-blue-50 text-blue-700 border-blue-200",          border: "border-l-blue-500" },
+  })[cat] || { icon: "•", chip: "bg-slate-50 text-slate-700 border-slate-200", border: "border-l-slate-400" };
   const srcLink = o.source_url
     ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "src")}</a>`
     : _esc(o.source_name || "—");
   return `
-    <div class="border border-slate-200 rounded-lg p-3 bg-white hover:shadow-sm transition">
-      <div class="flex items-center gap-1.5 mb-1">
-        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded border ${catCls}">${_esc(cat)}</span>
+    <div class="border border-slate-200 ${catMeta.border} border-l-4 rounded-lg p-3 pl-3 bg-white hover:shadow-sm hover:-translate-y-px transition-all">
+      <div class="flex items-center gap-1.5 mb-1.5">
+        <span class="text-[14px] leading-none">${catMeta.icon}</span>
+        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded border ${catMeta.chip}">${_esc(cat)}</span>
         ${_mkTierChip(o.source_tier)}
-        <span class="text-[10px] text-slate-400 ml-auto">${_esc(o.as_of || "—")}</span>
+        <span class="text-[10px] text-slate-400 font-mono ml-auto">${_esc(o.as_of || "—")}</span>
       </div>
-      <div class="text-[12px] font-semibold text-slate-800 leading-snug mb-1">${_esc(o.headline || "—")}</div>
-      <div class="text-[11px] text-slate-600 leading-snug">${_esc(o.detail_ko || "")}</div>
-      <div class="text-[10px] text-slate-500 mt-1.5">${srcLink}</div>
+      <div class="text-[13px] font-semibold text-slate-800 leading-snug mb-1.5">${_esc(o.headline || "—")}</div>
+      <div class="text-[11px] text-slate-600 leading-relaxed">${_esc(o.detail_ko || "")}</div>
+      <div class="text-[10px] text-slate-500 mt-2 pt-1.5 border-t border-slate-100">${srcLink}</div>
     </div>`;
 }
 
