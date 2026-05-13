@@ -5753,9 +5753,10 @@ function drawFleetOwnerClassmix(owners) {
 }
 
 // ────────────────────────────────────────────────────────────
-// Market 탭 — 주간 시장 인텔리전스 (외부 정보 큐레이션).
-//   docs/data/market.json 으로 콘텐츠 분리. 모든 항목 출처 표기.
-//   README §Market data update 참조.
+// Market 탭 — 주간 시장 인텔리전스 (schema v2, PDF 5페이지 1:1 매핑).
+//   docs/data/market.json. 모든 row 출처·tier·as_of 표기.
+//   검증 정책: ±15% 교차, ±30% 점프, TC↔SHB 논리.
+//   빈 셀은 "No data acquired" — 0 채우기 금지.
 // ────────────────────────────────────────────────────────────
 async function renderMarket() {
   const tabEl = document.getElementById("tab-market");
@@ -5767,7 +5768,7 @@ async function renderMarket() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     m = await r.json();
   } catch (e) {
-    const host = document.getElementById("mk-overview");
+    const host = document.getElementById("mk-vessel-pricing");
     if (host) host.innerHTML = errorState(`market.json 로드 실패: ${e.message}`);
     return;
   }
@@ -5775,76 +5776,333 @@ async function renderMarket() {
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? "—"; };
   setText("mk-checked-date", m.checked_date);
   setText("mk-cadence", m.review_cadence || "—");
+  setText("mk-vp-asof", `as of ${m?.domestic_vessel_pricing?.as_of || "—"}`);
 
-  // Empty-section guard: "No recent verified data found"
-  const emptyMsg = `<div class="text-[12px] text-slate-400 italic px-2 py-3">No recent verified data found.</div>`;
+  const emptyMsg = (label = "No recent verified data found.") =>
+    `<div class="text-[12px] text-slate-400 italic px-2 py-3">${_esc(label)}</div>`;
 
-  // 1) Overview
-  const ovHost = document.getElementById("mk-overview");
-  if (ovHost) {
-    const items = m.overview || [];
-    if (!items.length) ovHost.innerHTML = emptyMsg;
-    else ovHost.innerHTML = items.map(o => _mkNewsCard(o)).join("");
+  // ★ Domestic Vessel Pricing — markets > categories > rows  (PDF p.2 구조)
+  const vpHost = document.getElementById("mk-vessel-pricing");
+  if (vpHost) {
+    const vp = m.domestic_vessel_pricing;
+    if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
+      vpHost.innerHTML = emptyMsg();
+    } else {
+      vpHost.innerHTML = vp.markets.map(mk => _mkMarketBlock(mk)).join("");
+    }
   }
 
-  // 2) Freight indices
-  const fiHost = document.getElementById("mk-freight-indices");
-  if (fiHost) {
-    const items = m.freight_indices || [];
-    if (!items.length) fiHost.innerHTML = emptyMsg;
-    else fiHost.innerHTML = items.map(o => _mkIndexCard(o)).join("");
+  // Domestic Fuel · Scrap · CPO Price Index — small cards
+  const fsHost = document.getElementById("mk-fuel-scrap");
+  if (fsHost) {
+    const fs = m.domestic_fuel_scrap || {};
+    const cards = [];
+    (fs.cpo_price_index_gapki || []).forEach(o => cards.push(_mkFuelCard("CPO Price Index (GAPKI)", o)));
+    (fs.solar_b40_hsd        || []).forEach(o => cards.push(_mkFuelCard("Solar B40 / HSD", o)));
+    (fs.hfo_180_mfo          || []).forEach(o => cards.push(_mkFuelCard("HFO 180 / MFO", o)));
+    (fs.scrap_domestic       || []).forEach(o => cards.push(_mkFuelCard("Scrap — Domestic", o)));
+    fsHost.innerHTML = cards.length ? cards.join("") : emptyMsg();
   }
 
-  // 2b) Commodity prices
-  const cpHost = document.getElementById("mk-commodity-prices");
-  if (cpHost) {
-    const items = m.commodity_prices || [];
-    if (!items.length) cpHost.innerHTML = emptyMsg;
-    else cpHost.innerHTML = items.map(o => _mkPriceCard(o)).join("");
+  // International Freight — indices / scrap (dry+tanker) / S&P
+  const intF = m.international_freight || {};
+  const idxHost = document.getElementById("mk-int-indices");
+  if (idxHost) {
+    const arr = intF.indices || [];
+    const visible = arr.filter(o => o.status !== "No data acquired");
+    idxHost.innerHTML = visible.length
+      ? visible.map(o => _mkIndexCardV2(o)).join("")
+      : emptyMsg();
+  }
+  const scrapHost = document.getElementById("mk-int-scrap");
+  if (scrapHost) {
+    const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry " + (o.size || "") }));
+    const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker " + (o.size || "") }));
+    const arr = [...dry, ...tnk];
+    const visible = arr.filter(o => o.status !== "No data acquired");
+    scrapHost.innerHTML = visible.length
+      ? visible.map(o => _mkScrapCard(o)).join("")
+      : emptyMsg("스크랩 가격 — No data acquired (PDF p.1)");
+  }
+  const spHost = document.getElementById("mk-int-sp");
+  if (spHost) {
+    const arr = intF.sale_purchase_bulk || intF.sale_purchase || [];
+    const visible = arr.filter(o => o.status !== "No data acquired");
+    spHost.innerHTML = visible.length
+      ? visible.map(o => _mkSpCard(o)).join("")
+      : emptyMsg("S&P 활동 — No data acquired (PDF p.1)");
   }
 
-  // 2c) Freight rates indicative
-  const frHost = document.getElementById("mk-freight-rates");
-  if (frHost) {
-    const items = m.freight_rates_indicative || [];
-    if (!items.length) frHost.innerHTML = emptyMsg;
-    else frHost.innerHTML = items.map(o => `
-      <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
-        <div class="font-semibold text-slate-800">${_esc(o.category)}
-          <span class="ml-1 inline-block px-1 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">indicative</span>
-        </div>
-        <div class="text-slate-700 mt-0.5">${_esc(o.note)}</div>
-        <div class="text-[10px] text-slate-500 mt-1">
-          출처: <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
-          ${o.checked_date ? ` · checked ${_esc(o.checked_date)}` : ""}
-        </div>
-      </div>
-    `).join("");
-  }
-
-  // 3) Commodity news
-  const cnHost = document.getElementById("mk-commodity-news");
+  // Commodity News (Coal / Nickel / CPO / Power / Shipping)
+  const cnHost = document.getElementById("mk-commodity-news-v2");
   if (cnHost) {
-    const items = m.commodity_news || [];
-    if (!items.length) cnHost.innerHTML = emptyMsg;
-    else cnHost.innerHTML = items.map(o => _mkNewsCard(o, { showTag: "commodity" })).join("");
+    const blocks = m.commodity_news || {};
+    const order = ["coal", "nickel", "cpo", "power", "shipping"];
+    const labels = { coal: "Coal", nickel: "Nickel", cpo: "CPO", power: "Power Plant", shipping: "Indonesia Shipping" };
+    const html = order.map(k => {
+      const items = blocks[k] || [];
+      const inner = items.length
+        ? items.map(o => _mkNewsCard(o)).join("")
+        : emptyMsg("No recent verified data found.");
+      return `<div>
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">${_esc(labels[k])}</div>
+        ${inner}
+      </div>`;
+    }).join("");
+    cnHost.innerHTML = html;
   }
 
-  // 4) Shipping news
-  const snHost = document.getElementById("mk-shipping-news");
-  if (snHost) {
-    const items = m.shipping_news || [];
-    if (!items.length) snHost.innerHTML = emptyMsg;
-    else snHost.innerHTML = items.map(o => _mkNewsCard(o, { showTag: "category" })).join("");
+  // Events — monthly / upcoming
+  const evMonthly = document.getElementById("mk-events-monthly");
+  if (evMonthly) {
+    const arr = (m.events && m.events.monthly) || [];
+    evMonthly.innerHTML = arr.length ? arr.map(_mkEventCard).join("") : emptyMsg();
+  }
+  const evUpcoming = document.getElementById("mk-events-upcoming");
+  if (evUpcoming) {
+    const arr = (m.events && m.events.upcoming) || [];
+    evUpcoming.innerHTML = arr.length ? arr.map(_mkEventCard).join("") : emptyMsg();
   }
 
-  // 5) Events
-  const evHost = document.getElementById("mk-events");
-  if (evHost) {
-    const items = m.events || [];
-    if (!items.length) evHost.innerHTML = emptyMsg;
-    else evHost.innerHTML = items.map(o => _mkEventCard(o)).join("");
+  // Build meta
+  const bmHost = document.getElementById("mk-build-meta");
+  if (bmHost && m.build_meta) {
+    const bm = m.build_meta;
+    bmHost.innerHTML = `
+      build_run_id: ${_esc(m.build_run_id || "—")} ·
+      report_week: ${_esc(m.report_week || "—")} ·
+      rows_published: ${bm.rows_published ?? "—"} ·
+      rows_no_data: ${bm.rows_no_data ?? "—"} ·
+      rows_withheld_jump: ${bm.rows_withheld_jump ?? "—"} ·
+      collectors_run: ${(bm.collectors_run || []).join(", ") || "(none)"}
+    `;
   }
+}
+
+// Market block — PDF p.2 구조: market > categories(TC/SHB/NB) > rows(size × year).
+function _mkMarketBlock(mk) {
+  const cats = mk.categories || [];
+  const blocks = cats.map(c => _mkCategoryTable(c, mk.currency_unit)).join("");
+  return `
+    <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/40">
+      <div class="flex items-center gap-2 mb-2 flex-wrap">
+        <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
+        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-700">${_esc(mk.currency_unit || "—")}</span>
+      </div>
+      <div class="space-y-3">${blocks}</div>
+    </div>`;
+}
+
+function _mkCategoryTable(c, unitDefault) {
+  const rows = c.rows || [];
+  const kindChip = (() => {
+    const k = c.kind || "—";
+    const map = {
+      "TC":  "bg-blue-100 text-blue-800",
+      "SHB": "bg-emerald-100 text-emerald-800",
+      "NB":  "bg-amber-100 text-amber-800",
+    };
+    const cls = map[k] || "bg-slate-100 text-slate-700";
+    return `<span class="px-1 py-0.5 text-[9px] font-mono rounded ${cls}">${_esc(k)}</span>`;
+  })();
+  const valueCell = (low, high) => {
+    if (low == null && high == null) return `<span class="text-slate-300">—</span>`;
+    if (low != null && high != null) {
+      return `<span class="font-semibold text-slate-800">${Number(low).toLocaleString()}</span>
+              <span class="text-slate-400"> – </span>
+              <span class="font-semibold text-slate-800">${Number(high).toLocaleString()}</span>`;
+    }
+    if (low != null) return `<span class="font-semibold text-slate-800">${Number(low).toLocaleString()}</span>`;
+    return `<span class="font-semibold text-slate-800">${Number(high).toLocaleString()}</span>`;
+  };
+  const statusChip = (s) => {
+    if (!s || s === "No data acquired") return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`;
+    if (s === "verified")               return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>`;
+    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">indicative</span>`;
+    if (s === "withheld_jump")          return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-rose-100 text-rose-800">withheld</span>`;
+    return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">${_esc(s)}</span>`;
+  };
+  const srcCell = (srcs) => {
+    if (!srcs || !srcs.length) return `<span class="text-slate-300 text-[10px]">—</span>`;
+    return srcs.map(s => {
+      const a = s.url
+        ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(s.name)}</a>`
+        : `<span>${_esc(s.name)}</span>`;
+      const tierChip = s.tier ? ` <span class="text-[9px] text-slate-400">(${_esc(s.tier)})</span>` : "";
+      return a + tierChip;
+    }).join(", ");
+  };
+  const trs = rows.map(r => `
+    <tr class="border-b border-slate-100 hover:bg-white">
+      <td class="px-2 py-1 text-[11px] font-mono text-slate-700">${_esc(r.size || "—")}</td>
+      <td class="px-2 py-1 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
+      <td class="px-2 py-1 text-[11px] text-right">${valueCell(r.value_low, r.value_high)}</td>
+      <td class="px-2 py-1 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
+      <td class="px-2 py-1 text-[10px]">${statusChip(r.status)}</td>
+    </tr>`).join("");
+  return `
+    <div>
+      <div class="text-[11px] mb-1 flex items-center gap-1">
+        ${kindChip}
+        <span class="font-mono text-slate-700">${_esc(c.label || "—")}</span>
+        <span class="text-[10px] text-slate-400 ml-1">${_esc(unitDefault || "")}</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-[11px] bg-white rounded">
+          <thead class="bg-slate-50">
+            <tr class="text-left text-slate-600">
+              <th class="px-2 py-1 font-semibold">Size</th>
+              <th class="px-2 py-1 font-semibold">Year built</th>
+              <th class="px-2 py-1 font-semibold text-right">Range</th>
+              <th class="px-2 py-1 font-semibold">Sources</th>
+              <th class="px-2 py-1 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function _mkFuelCard(label, o) {
+  return `
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
+      <div class="text-base font-light text-slate-800 mt-0.5">
+        ${o.value != null ? Number(o.value).toLocaleString() : "<span class='text-slate-300'>—</span>"}
+        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
+      </div>
+      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
+      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
+        ${o.as_of ? "as of " + _esc(o.as_of) : "as of —"}
+        ${o.source_url ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? " · " + _esc(o.source_name) : "")}
+      </div>
+    </div>`;
+}
+
+// (legacy) Asset pricing matrix — kept for any callers still using v1 asset_classes shape.
+function _mkAssetMatrix(cls) {
+  const rows = cls.rows || [];
+  if (!rows.length) {
+    return `<div><div class="font-semibold text-slate-800 mb-1">${_esc(cls.class)}</div>
+      <div class="text-[12px] text-slate-400 italic">No data acquired</div></div>`;
+  }
+  // Group rows by size to render in tidy blocks
+  const sizes = [];
+  const bySize = new Map();
+  for (const r of rows) {
+    if (!bySize.has(r.size)) { bySize.set(r.size, []); sizes.push(r.size); }
+    bySize.get(r.size).push(r);
+  }
+  const cellRange = (v, unit) => {
+    if (!v) return `<span class="text-slate-300">—</span>`;
+    if (v.mid != null) {
+      const lo = v.low != null ? `<span class="text-slate-400 text-[10px]">${Number(v.low).toLocaleString()}</span> ` : "";
+      const hi = v.high != null ? ` <span class="text-slate-400 text-[10px]">${Number(v.high).toLocaleString()}</span>` : "";
+      return `${lo}<span class="font-semibold text-slate-800">${Number(v.mid).toLocaleString()}</span>${hi}<span class="text-[9px] text-slate-400 ml-0.5">${_esc(v.unit || unit || "")}</span>`;
+    }
+    return `<span class="text-slate-300">—</span>`;
+  };
+  const statusChip = (s) => {
+    if (!s || s === "No data acquired") return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`;
+    if (s === "verified")               return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>`;
+    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">indicative</span>`;
+    if (s === "withheld_jump")          return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-rose-100 text-rose-800">withheld</span>`;
+    return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">${_esc(s)}</span>`;
+  };
+  const sourcesCell = (srcs) => {
+    if (!srcs || !srcs.length) return `<span class="text-slate-300 text-[10px]">—</span>`;
+    return srcs.map(s => {
+      const a = s.url
+        ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(s.name)}</a>`
+        : `<span>${_esc(s.name)}</span>`;
+      const tierChip = s.tier ? ` <span class="text-[9px] text-slate-400">(${_esc(s.tier)})</span>` : "";
+      return a + tierChip;
+    }).join(", ");
+  };
+  const blocks = sizes.map(size => {
+    const list = bySize.get(size);
+    const trs = list.map(r => `
+      <tr class="border-b border-slate-50 hover:bg-slate-50">
+        <td class="px-2 py-1 text-[11px] font-mono text-slate-600">${_esc(r.year_built)}</td>
+        <td class="px-2 py-1 text-[11px] text-right">${cellRange(r.tc, "USD/day")}</td>
+        <td class="px-2 py-1 text-[11px] text-right">${cellRange(r.shb, "USD")}</td>
+        <td class="px-2 py-1 text-[11px] text-right">${cellRange(r.nb, "USD")}</td>
+        <td class="px-2 py-1 text-[10px] text-slate-600">${sourcesCell(r.sources)}</td>
+        <td class="px-2 py-1 text-[10px]">${statusChip(r.status)}</td>
+      </tr>`).join("");
+    return `<div class="mb-3">
+      <div class="text-[11px] font-mono text-slate-500 mb-1">size: <span class="text-slate-800 font-semibold">${_esc(size)}</span></div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-[11px]">
+          <thead class="bg-slate-50">
+            <tr class="text-left text-slate-600">
+              <th class="px-2 py-1 font-semibold">Year built</th>
+              <th class="px-2 py-1 font-semibold text-right">TC (USD/day)</th>
+              <th class="px-2 py-1 font-semibold text-right">SHB (USD)</th>
+              <th class="px-2 py-1 font-semibold text-right">NB (USD)</th>
+              <th class="px-2 py-1 font-semibold">Sources</th>
+              <th class="px-2 py-1 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join("");
+
+  return `<div>
+    <div class="flex items-center gap-2 mb-2">
+      <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(cls.class)}</h4>
+      <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-50 text-blue-700">size in ${_esc(cls.size_metric)}</span>
+    </div>
+    ${blocks}
+  </div>`;
+}
+
+function _mkIndexCardV2(o) {
+  const tier = o.source_tier ? `<span class="text-[9px] text-slate-400 ml-1">(${_esc(o.source_tier)})</span>` : "";
+  const wow = (o.wow_pct != null) ? `<span class="ml-2 text-[10px] font-mono ${o.wow_pct > 0 ? 'text-rose-600' : o.wow_pct < 0 ? 'text-emerald-700' : 'text-slate-500'}">${o.wow_pct > 0 ? '+' : ''}${Number(o.wow_pct).toFixed(1)}% WoW</span>` : "";
+  return `
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(o.name)}</div>
+      <div class="text-xl font-light text-slate-800 mt-0.5">
+        ${Number(o.value).toLocaleString()}
+        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
+        ${wow}
+      </div>
+      <div class="text-[10px] text-slate-500 mt-1 leading-snug">
+        as of ${_esc(o.as_of || "—")} ·
+        <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>${tier}
+      </div>
+    </div>`;
+}
+
+function _mkScrapCard(o) {
+  const label = o._label || o.region || o.size || "—";
+  return `
+    <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
+      <div class="text-base font-light text-slate-800 mt-0.5">
+        ${o.ldt_usd != null ? Number(o.ldt_usd).toLocaleString() : "<span class='text-slate-300'>—</span>"}
+        <span class="text-[11px] text-slate-500 ml-1">USD/LDT</span>
+      </div>
+      <div class="text-[10px] text-slate-500 mt-1">
+        as of ${_esc(o.as_of || "—")}
+        ${o.source_url
+          ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>`
+          : (o.source_name ? ` · ${_esc(o.source_name)}` : "")}
+      </div>
+    </div>`;
+}
+
+function _mkSpCard(o) {
+  return `
+    <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
+      <div class="font-semibold text-slate-800">${_esc(o.vessel_name)} <span class="text-slate-500 font-mono text-[10px] ml-1">${_esc(o.type)} · ${o.dwt ? Number(o.dwt).toLocaleString() + " DWT" : "—"} · built ${o.year || "—"}</span></div>
+      <div class="text-slate-700 text-[11px] mt-0.5">price: <strong>${o.price_musd != null ? `$${Number(o.price_musd).toFixed(1)}M` : "—"}</strong> · buyer ${_esc(o.buyer || "—")} · seller ${_esc(o.seller || "—")}</div>
+      <div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.as_of || "—")} · ${o.source_url ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : "(source pending)"}</div>
+    </div>`;
 }
 
 function _mkNewsCard(o, opts = {}) {
@@ -5852,13 +6110,20 @@ function _mkNewsCard(o, opts = {}) {
     `<span class="inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 mr-1">${_esc(o[opts.showTag])}</span>` : "";
   const tagsHtml = (o.tags && o.tags.length) ?
     o.tags.map(t => `<span class="inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-50 text-blue-700 mr-1">${_esc(t)}</span>`).join("") : "";
+  // v2 schema는 summary_ko + source_name. v1는 summary + source. 둘 다 지원.
+  const summary = o.summary_ko || o.summary || "";
+  const srcName = o.source_name || o.source || "";
+  const srcTier = o.source_tier ? ` <span class="text-[9px] text-slate-400">(${_esc(o.source_tier)})</span>` : "";
+  const srcLink = o.source_url
+    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(srcName)}</a>`
+    : `<span class="text-slate-700">${_esc(srcName)}</span>`;
   return `
     <div class="text-[12px] border-l-2 border-slate-300 pl-3 py-1">
       <div class="font-semibold text-slate-800 leading-snug">${tagChip}${tagsHtml}${_esc(o.title)}</div>
-      ${o.summary ? `<div class="text-slate-700 mt-1 leading-relaxed">${_esc(o.summary)}</div>` : ""}
+      ${summary ? `<div class="text-slate-700 mt-1 leading-relaxed">${_esc(summary)}</div>` : ""}
       <div class="text-[10px] text-slate-500 mt-1">
         ${o.published_date ? `<span class="font-mono">${_esc(o.published_date)}</span> · ` : ""}
-        출처: <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source)}</a>
+        출처: ${srcLink}${srcTier}
       </div>
     </div>`;
 }

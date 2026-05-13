@@ -829,57 +829,74 @@
         </div>
       </div>
 
-      <!-- 1. Market Overview — 핵심 요약 3~5개 -->
-      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/data/market.json">
-        <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-          <span class="inline-block w-1.5 h-4 bg-blue-600 rounded-sm"></span>
-          이번 주 핵심 요약
-        </h3>
-        <div id="mk-overview" class="space-y-3"></div>
+      <!-- Watermark + Schema v2 -->
+      <div id="mk-watermark" class="mb-4 px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-[11px]">
+        <span class="font-semibold mr-1">⚠ Indicative prices only</span>
+        — 외부 공개 정보 큐레이션. 투자 자문 아님. 데이터 row 별 출처·tier·as_of 표기. 검증 정책 (±15% 교차 · ±30% 점프 차단 · TC↔SHB 논리) 적용.
       </div>
 
-      <!-- 2. Freight & Vessel Market — Indices + Commodity Prices + Indicative rates -->
+      <!-- ★ Page 2 — Domestic Vessel Pricing (KEY ASSET PRICING MATRIX) ★ -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/data/market.json">
+        <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center justify-between gap-2 flex-wrap">
+          <span class="flex items-center gap-2">
+            <span class="inline-block w-1.5 h-4 bg-blue-700 rounded-sm"></span>
+            ★ Domestic Vessel Pricing — TC · SHB · NB
+          </span>
+          <span class="text-[10px] font-normal text-slate-500" id="mk-vp-asof">as of —</span>
+        </h3>
+        <div class="text-[11px] text-slate-600 mb-2">PDF p.2 — Tug & Barge / CPO Tug & Oil Barge / SPOB / LCT / Oil Tanker 의 TC (Time Charter) · 2nd (SHB, Secondhand Build) · NB (Newbuild) 매트릭스. 통화 = <strong>millions IDR</strong>. 빈 셀은 <em>No data acquired</em>.</div>
+        <div id="mk-vessel-pricing" class="space-y-5"></div>
+      </div>
+
+      <!-- Domestic Fuel & Scrap (CPO Price Index · Solar B40 · HFO · Scrap) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/data/market.json">
+        <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+          <span class="inline-block w-1.5 h-4 bg-teal-600 rounded-sm"></span>
+          Domestic Fuel · Scrap · CPO Price Index
+        </h3>
+        <div id="mk-fuel-scrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2"></div>
+        <div class="text-[10px] text-slate-400 mt-2">* excl. PPn, PPH, PBBKB (per PDF p.1)</div>
+      </div>
+
+      <!-- Page 1 — International Freight (운임 지수 + 스크랩 + 2차매매) -->
       <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/data/market.json">
         <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
           <span class="inline-block w-1.5 h-4 bg-emerald-600 rounded-sm"></span>
-          Freight & Vessel Market
+          International Freight
         </h3>
         <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">운임 지수</div>
-        <div id="mk-freight-indices" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4"></div>
+        <div id="mk-int-indices" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4"></div>
 
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">상품 가격</div>
-        <div id="mk-commodity-prices" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4"></div>
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">스크랩 가격</div>
+        <div id="mk-int-scrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4"></div>
 
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">참고용 운임 / 산업 채널 인용 (indicative)</div>
-        <div id="mk-freight-rates" class="space-y-2"></div>
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">2차 매매 (Sale & Purchase)</div>
+        <div id="mk-int-sp" class="space-y-2"></div>
       </div>
 
-      <!-- 3. Commodity & Energy News -->
+      <!-- Page 3 — Commodity News (Coal / Nickel / CPO / Power / Shipping) -->
       <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/data/market.json">
         <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
           <span class="inline-block w-1.5 h-4 bg-amber-600 rounded-sm"></span>
-          Commodity & Energy News
+          Commodity News
         </h3>
-        <div id="mk-commodity-news" class="space-y-3"></div>
+        <div id="mk-commodity-news-v2" class="space-y-4"></div>
       </div>
 
-      <!-- 4. Indonesia Shipping News -->
-      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="docs/data/market.json">
-        <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-          <span class="inline-block w-1.5 h-4 bg-violet-600 rounded-sm"></span>
-          Indonesia Shipping News
-        </h3>
-        <div id="mk-shipping-news" class="space-y-3"></div>
-      </div>
-
-      <!-- 5. Events -->
+      <!-- Page 4-5 — Events -->
       <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/data/market.json">
         <h3 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
           <span class="inline-block w-1.5 h-4 bg-rose-600 rounded-sm"></span>
           Events
         </h3>
-        <div id="mk-events" class="space-y-2"></div>
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">이번 달 진행 중</div>
+        <div id="mk-events-monthly" class="space-y-2 mb-4"></div>
+        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1">예정</div>
+        <div id="mk-events-upcoming" class="space-y-2"></div>
       </div>
+
+      <!-- Build meta footer -->
+      <div id="mk-build-meta" class="mb-6 text-[10px] text-slate-400 font-mono"></div>
     </section>
 
     <!-- Cycle 1: 🔎 Explorer — 원천 데이터 탐색 (Demand 지도 / Supply 필터의 raw 버전).

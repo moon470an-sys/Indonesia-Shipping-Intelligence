@@ -1,327 +1,365 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "report_week": "1st Week of May 2026 (Apr 1 ~ May 6)",
   "checked_date": "2026-05-13",
+  "build_run_id": "preview-no-commit",
+  "watermark": "Indicative prices only · 외부 공개 정보 큐레이션 · 투자 자문 아님",
   "review_cadence": "weekly",
-  "build_note": "Manual curation. See README §Market data update.",
+  "reference_pdf": "[SBS] Weekly Marketing Report 2026.05.07.pdf",
 
-  "overview": [
-    {
-      "title": "BDI 5월 8일 종가 2,978 — 주간 변동성 확대",
-      "summary": "Baltic Dry Index 가 5월 8일 2,978 종가, 주중 3,027 까지 상승. 5월 1일 2,730 대비 의미 있는 회복. Capesize 강세 주도.",
-      "tags": ["bulker", "BDI"],
-      "source": "The DCN — Baltic Exchange Weekly Report",
-      "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
-      "published_date": "2026-05-08"
-    },
-    {
-      "title": "인도네시아 HBA 5월 상반기 +3% — 칼로리 6322 기준 $106.57/t",
-      "summary": "5월 1~15일 HBA 1 (6322 GAR) 가 $106.57/t로 4월 하반기 대비 +3%. 지정학적 긴장 및 공급 측면 불확실성이 가격 지지.",
-      "tags": ["coal", "HBA"],
-      "source": "Mysteel — Indonesia lifts all thermal coal HBA prices for H1 May",
-      "source_url": "https://www.mysteel.net/news/5122360-indonesia-lifts-all-thermal-coal-hba-prices-for-h1-may",
-      "published_date": "2026-05-01"
-    },
-    {
-      "title": "Indonesia 2026 니켈 광석 쿼터 260~270M톤 — 2025년 대비 34% 축소",
-      "summary": "Indonesia 정부가 2026년 니켈 광석 생산 쿼터를 260–270M톤으로 설정 (2025 목표 379M톤 대비 34% 축소). LME 니켈 ~$19,000~19,500/t.",
-      "tags": ["nickel", "policy"],
-      "source": "Mining.com — Nickel price hits nine-month high",
-      "source_url": "https://www.mining.com/web/nickel-price-hits-nine-month-high-as-indonesia-plans-to-cut-output/",
-      "published_date": "2026-04-30"
-    },
-    {
-      "title": "Pertamina 탱커 2척, 호르무즈 해협 통과 지연",
-      "summary": "이란이 2026년 2월 28일 호르무즈 해협을 차단한 이후 Pertamina International Shipping 소유 탱커 2척이 페르시아만에 발이 묶여 있음. 정부 외교 채널로 출항 협상 중.",
-      "tags": ["tanker", "geopolitics"],
-      "source": "Türkiye Today — Indonesia-owned tankers escape Strait of Hormuz",
-      "source_url": "https://www.turkiyetoday.com/region/indonesia-owned-tankers-escape-strait-of-hormuz-as-jakarta-vows-fuel-prices-to-hold-3216068",
-      "published_date": "2026-03-03"
-    },
-    {
-      "title": "CPO 5월 변동성 — Bursa 7월물 RM4,541, 5월물 RM4,452 종가",
-      "summary": "Bursa Malaysia CPO 7월 인도분 5월 8일 RM4,541/t, 5월물 5월 12일 RM4,452/t. 대두유·원유 강세 후 단기 약세 반전, MPOB 수급 발표 대기.",
-      "tags": ["CPO", "palm_oil"],
-      "source": "Palm Oil Magazine — Malaysia CPO Futures Hold Steady",
-      "source_url": "https://www.palmoilmagazine.com/cpo-price/2026/05/09/malaysia-cpo-futures-hold-steady-as-market-awaits-mpob-supply-and-demand-data/",
-      "published_date": "2026-05-09"
-    }
-  ],
+  "international_freight": {
+    "indices": [
+      { "name": "BDI", "value": 2978, "unit": "points", "as_of": "2026-05-08",
+        "wow_pct": null,
+        "source_name": "Baltic Exchange (via DCN Weekly)", "source_tier": "official",
+        "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
+        "status": "verified" },
+      { "name": "BDI (subsequent)", "value": 3034, "unit": "points", "as_of": "2026-05-11",
+        "source_name": "HandyBulk", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "status": "verified" },
+      { "name": "BCI (Baltic Capesize Index)", "value": null, "unit": "points", "as_of": "2026-05-01",
+        "source_name": "BCI (PDF: Sea Bridge Shipping)", "source_tier": "broker",
+        "source_url": null,
+        "note": "PDF p.1 reference. Public value not yet collected.",
+        "status": "No data acquired" },
+      { "name": "Baltic Average TCE — Tanker", "value": null, "unit": "USD/day (thousand)", "as_of": null,
+        "source_name": "PDF p.1 (Sea Bridge Shipping)", "source_tier": "broker",
+        "source_url": null,
+        "status": "No data acquired" },
+      { "name": "Baltic Average TCE — Dry Bulk", "value": null, "unit": "USD/day (thousand)", "as_of": null,
+        "source_name": "PDF p.1 (Sea Bridge Shipping)", "source_tier": "broker",
+        "source_url": null,
+        "status": "No data acquired" }
+    ],
+    "scrap_dry_bulk": [
+      { "size": "330 ft", "ldt_usd": null, "as_of": "2026-04-28",
+        "source_name": "Allied (via PDF p.1)", "source_tier": "broker",
+        "source_url": null,
+        "status": "No data acquired" },
+      { "size": "300 ft (a)", "ldt_usd": null, "as_of": "2026-04-28",
+        "source_name": "Allied (via PDF p.1)", "source_tier": "broker",
+        "source_url": null,
+        "status": "No data acquired" },
+      { "size": "300 ft (b)", "ldt_usd": null, "as_of": "2026-04-28",
+        "source_name": "Allied (via PDF p.1)", "source_tier": "broker",
+        "source_url": null,
+        "status": "No data acquired" }
+    ],
+    "scrap_tanker": [
+      { "size": "PDF p.1 placeholder", "ldt_usd": null, "as_of": "2026-04-28",
+        "source_name": "Allied (via PDF p.1)", "source_tier": "broker", "source_url": null,
+        "status": "No data acquired" }
+    ],
+    "sale_purchase_bulk": [
+      { "vessel_name": null, "type": "Bulk Carrier", "dwt": null, "year": null,
+        "price_musd": null, "buyer": null, "seller": null,
+        "source_name": "Allied (via PDF p.1)", "source_tier": "broker", "source_url": null,
+        "as_of": "2026-04-28",
+        "status": "No data acquired" }
+    ]
+  },
 
-  "freight_indices": [
-    {
-      "name": "BDI (Baltic Dry Index)",
-      "value": 2978,
-      "unit": "points",
-      "as_of": "2026-05-08",
-      "note": "주중 peak 3,027",
-      "source": "The DCN — Baltic Exchange Weekly Report",
-      "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
-      "indicative": false
+  "domestic_vessel_pricing": {
+    "as_of": "2026-W19 (1st Week of May 2026)",
+    "currency": "IDR (millions)",
+    "validation_policy": {
+      "min_sources_per_row": 2,
+      "cross_source_band_pct": 15,
+      "jump_block_pct": 30,
+      "logical_check": "tc_annualized <= shb_value (after IDR→USD conversion if needed)"
     },
-    {
-      "name": "BDI (subsequent update)",
-      "value": 3034,
-      "unit": "points",
-      "as_of": "2026-05-11",
-      "note": "HandyBulk weekly snapshot, +43 points",
-      "source": "HandyBulk — Baltic Dry Index",
-      "source_url": "https://www.handybulk.com/baltic-dry-index/",
-      "indicative": false
-    }
-  ],
+    "markets": [
+      {
+        "market": "Tug & Barge (Domestic Coal/General)",
+        "currency_unit": "millions IDR",
+        "categories": [
+          {
+            "label": "Tug & Barge — Time Charter",
+            "kind": "TC",
+            "rows": [
+              { "size": "330 ft", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
+              { "size": "300 ft (A)", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
+              { "size": "300 ft (B)", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "NB Tug & Barge — China",
+            "kind": "NB",
+            "rows": [
+              { "size": "330 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
+              { "size": "300 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "NB Tug & Barge — Domestic",
+            "kind": "NB",
+            "rows": [
+              { "size": "330 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
+              { "size": "300 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "2nd Tug & Barge",
+            "kind": "SHB",
+            "rows": [
+              { "size": "330 ft", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
+              { "size": "300 ft", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          }
+        ]
+      },
+      {
+        "market": "CPO Market — Tug & Oil Barge / SPOB",
+        "currency_unit": "millions IDR",
+        "categories": [
+          {
+            "label": "CPO Tug & Oil Barge — Time Charter",
+            "kind": "TC",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "2nd Tug & Oil Barge",
+            "kind": "SHB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "SPOB — Time Charter",
+            "kind": "TC",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "2nd SPOB",
+            "kind": "SHB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "NB SPOB 2025",
+            "kind": "NB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "2025 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          }
+        ]
+      },
+      {
+        "market": "LCT (Landing Craft Tank)",
+        "currency_unit": "millions IDR",
+        "categories": [
+          {
+            "label": "LCT — Time Charter (2025 range)",
+            "kind": "TC",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "2025", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "2nd LCT",
+            "kind": "SHB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "NB LCT 2025",
+            "kind": "NB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "2025 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          }
+        ]
+      },
+      {
+        "market": "Oil Tanker (Domestic)",
+        "currency_unit": "millions IDR",
+        "categories": [
+          {
+            "label": "Oil Tanker — Time Charter",
+            "kind": "TC",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "2nd Oil Tanker",
+            "kind": "SHB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          },
+          {
+            "label": "NB Oil Tanker",
+            "kind": "NB",
+            "rows": [
+              { "size": "PDF p.2 placeholder", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+            ]
+          }
+        ]
+      }
+    ],
+    "_note": "Size/year buckets는 PDF p.2 실제 컬럼이 image-based 인 셀까지 OCR 필요. 현재는 placeholder. PDF에서 'No data has been acquired yet.' 메시지 다수 — 그대로 반영."
+  },
 
-  "commodity_prices": [
-    {
-      "name": "HBA 1 (GAR 6322) — 인도네시아 thermal coal benchmark",
-      "value": 106.57,
-      "unit": "USD/t",
-      "as_of": "2026-05-01 ~ 2026-05-15",
-      "delta_pct": 3.0,
-      "delta_basis": "vs 2026-04 H2 ($103.43)",
-      "source": "Mysteel",
-      "source_url": "https://www.mysteel.net/news/5122360-indonesia-lifts-all-thermal-coal-hba-prices-for-h1-may",
-      "indicative": false
-    },
-    {
-      "name": "Newcastle thermal coal futures",
-      "value": 130,
-      "unit": "USD/t",
-      "as_of": "2026-05-11",
-      "note": "5월 4일 peak $135.6 대비 하락",
-      "source": "Trading Economics — Coal",
-      "source_url": "https://tradingeconomics.com/commodity/coal",
-      "indicative": false
-    },
-    {
-      "name": "Indonesia GAR 6200 / NAR 5800 spot (FOB South Kalimantan)",
-      "value": 107.00,
-      "unit": "USD/t",
-      "as_of": "2026-05",
-      "source": "CoalTradeIndo — ICI Coal Price",
-      "source_url": "https://coaltradeindo.com/ici-coal-price/",
-      "indicative": true
-    },
-    {
-      "name": "Indonesia GAR 5800 / NAR 5500 spot",
-      "value": 91.00,
-      "unit": "USD/t",
-      "as_of": "2026-05",
-      "source": "CoalTradeIndo — ICI Coal Price",
-      "source_url": "https://coaltradeindo.com/ici-coal-price/",
-      "indicative": true
-    },
-    {
-      "name": "Indonesia GAR 5500 / NAR 5100 spot",
-      "value": 86.00,
-      "unit": "USD/t",
-      "as_of": "2026-05",
-      "source": "CoalTradeIndo — ICI Coal Price",
-      "source_url": "https://coaltradeindo.com/ici-coal-price/",
-      "indicative": true
-    },
-    {
-      "name": "Bursa Malaysia CPO 7월물",
-      "value": 4541,
-      "unit": "MYR/t",
-      "as_of": "2026-05-08",
-      "note": "주간 -1.03%",
-      "source": "Palm Oil Magazine",
-      "source_url": "https://www.palmoilmagazine.com/cpo-price/2026/05/09/malaysia-cpo-futures-hold-steady-as-market-awaits-mpob-supply-and-demand-data/",
-      "indicative": false
-    },
-    {
-      "name": "Bursa Malaysia CPO 5월물 종가",
-      "value": 4452,
-      "unit": "MYR/t",
-      "as_of": "2026-05-12",
-      "note": "당일 -43",
-      "source": "Agropost — 12 May 2026 Palm Oil Prices",
-      "source_url": "https://agropost.wordpress.com/2026/05/12/12-may-2026-palm-oil-prices-at-closing/",
-      "indicative": false
-    },
-    {
-      "name": "LME Nickel futures",
-      "value": 19000,
-      "unit": "USD/t",
-      "as_of": "2026-05",
-      "note": "2년 고점 ~$19,600 부근에서 조정",
-      "source": "Trading Economics — Nickel",
-      "source_url": "https://tradingeconomics.com/commodity/nickel",
-      "indicative": false
-    }
-  ],
+  "domestic_fuel_scrap": {
+    "cpo_price_index_gapki": [
+      { "value": null, "unit": "IDR/kg", "as_of": null,
+        "source_name": "GAPKI (via PDF p.2)", "source_tier": "official",
+        "source_url": "https://gapki.id/",
+        "status": "No data acquired" }
+    ],
+    "solar_b40_hsd": [
+      { "value": null, "unit": "IDR/liter", "as_of": null,
+        "source_name": "PDF p.1 — Solar B40/HSD Index", "source_tier": "broker",
+        "source_url": null, "status": "No data acquired",
+        "note": "excl. PPn, PPH, PBBKB" }
+    ],
+    "hfo_180_mfo": [
+      { "value": null, "unit": "IDR/liter", "as_of": null,
+        "source_name": "PDF p.1 — HFO 180/MFO Index", "source_tier": "broker",
+        "source_url": null, "status": "No data acquired",
+        "note": "excl. PPn, PPH, PBBKB" }
+    ],
+    "scrap_domestic": [
+      { "value": null, "unit": "IDR/kg", "as_of": null,
+        "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
+        "source_url": null, "status": "No data acquired" }
+    ]
+  },
 
-  "freight_rates_indicative": [
-    {
-      "category": "Tongkang (Coal Barge) — Kalimantan",
-      "note": "1 unit tongkang 신조 ~Rp 30B, tugboat 패키지 ~Rp 20B. Tongkang 1척 적재 ~5,000톤/항차.",
-      "source": "Kapal.co.id — Harga Sewa Kapal Tongkang 2025~2026",
-      "source_url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/",
-      "indicative": true,
-      "checked_date": "2026-05-13"
-    },
-    {
-      "category": "Geared Bulk — Kalimantan mine-to-port",
-      "note": "공급 측 타이트 — Kalimantan FOB basis 가 regional benchmark 상회. 산업 채널 인용.",
-      "source": "Mining.com — Indonesia quota talk triggers nickel reality check",
-      "source_url": "https://www.mining.com/indonesia-quota-talk-triggers-nickel-reality-check/",
-      "indicative": true,
-      "checked_date": "2026-05-13"
-    }
-  ],
+  "commodity_news": {
+    "coal": [
+      {
+        "title": "Indonesia 석탄 메탄 배출량, 공식 보고치보다 크게 과소 추정 가능성",
+        "summary_ko": "IEA 및 EMBER 보고서 — 인도네시아 석탄 광산의 메탄 배출이 공식치보다 수 배 높을 수 있으며, 추정 방식 노후화 및 누락 출처로 인한 격차. 인도네시아가 글로벌 최대 메탄 배출국 중 하나로 분류될 가능성. 직접 측정 및 데이터 정확도 개선 필요 의견.",
+        "source_name": "E-paper Bisnis p.15",
+        "source_tier": "media",
+        "source_url": null,
+        "published_date": "2026-05-05",
+        "status": "verified"
+      }
+    ],
+    "nickel": [
+      {
+        "title": "정부, 글로벌 가격 상승기에 니켈·석탄 수출세 + windfall tax 검토",
+        "summary_ko": "재무부 Purbaya Yudhi Sadewa — Bahlil Lahadalia(ESDM)와 정책 협의 중. 국가 수입 확대와 에너지 보조금 상쇄 목적. 전기차 배터리 산업 등 핵심 분야는 인센티브로 지원. 경제학자들은 글로벌 commodity 가격 급등기 extractive 산업 초과 이익의 공정 재분배 관점에서 정책을 평가.",
+        "source_name": "E-paper Bisnis p.14",
+        "source_tier": "media",
+        "source_url": null,
+        "published_date": "2026-05-05",
+        "status": "verified"
+      }
+    ],
+    "cpo": [
+      {
+        "title": "“Godzilla El Niño” — 2026년 인도네시아 CPO 생산 1~2M톤 감소 전망",
+        "summary_ko": "S&P Global — 극단적 El Niño 가 인도네시아·말레이시아 주요 산지에서 장기 가뭄 유발, CPO 생산 1~2M MT 감소 가능. 비료 가격 상승이 소농 사용 제한 가중. 기후 리스크와 글로벌 경제 요인이 2026년 commodity 시장 변동성 확대 시그널.",
+        "source_name": "Insight Kontan",
+        "source_tier": "media",
+        "source_url": null,
+        "published_date": "2026-05-05",
+        "status": "verified"
+      }
+    ],
+    "power": [
+      {
+        "title": "산업 경쟁력 ↔ 재생에너지 연계 — EU CBAM 압박, 100 GW 재생 목표",
+        "summary_ko": "Kementerian Koordinator Bidang Perekonomian — EU CBAM 등 정책으로 인해 수출 시장 접근에 청정에너지 사용이 필수화. 현재 인도네시아 전력 60% 가 석탄 의존, 재생 capacity 확대는 중국 등 대비 지연. Green Industrial Zone 지원 위해 최대 100 GW 재생에너지 개발에 산업 참여 독려.",
+        "source_name": "CNBC Indonesia",
+        "source_tier": "media",
+        "source_url": null,
+        "published_date": "2026-04-28",
+        "status": "verified"
+      }
+    ],
+    "shipping": [
+      {
+        "title": "PT Chandra Daya Investasi Tbk — 2026 초 해운·재생에너지 확장",
+        "summary_ko": "9,000 DWT 화학 탱커 fleet 추가. 태양광 설비 11 MWp 까지 확대 (추가 진행 중). 수처리 및 항만 인프라 개발 병행. 지역 물류 통합과 장기 안정 성장 지원이 목표.",
+        "source_name": "RRI Batam",
+        "source_tier": "media",
+        "source_url": null,
+        "published_date": "2026-04-30",
+        "status": "verified"
+      }
+    ]
+  },
 
-  "commodity_news": [
-    {
-      "title": "Indonesia 2026 니켈 광석 쿼터 260–270M톤 (2025 379M톤 대비 -34%)",
-      "summary": "Bloomberg 인용 — 인도네시아 ESDM이 2026년 니켈 광석 RKAB 쿼터를 260–270M톤으로 설정. 글로벌 공급의 ~70%를 차지하는 인도네시아의 축소는 LME 니켈 가격을 9개월 고점까지 끌어올림.",
-      "commodity": "Nickel",
-      "source": "Mining.com",
-      "source_url": "https://www.mining.com/web/nickel-price-hits-nine-month-high-as-indonesia-plans-to-cut-output/",
-      "published_date": "2026-04-30"
-    },
-    {
-      "title": "HBA 5월 1~15일 인상 — 6322 GAR $106.57/t (+3%)",
-      "summary": "정부 공식 HBA 1 인상. 지정학적 긴장 및 공급 측면 제한이 가격 지지. HBA 2/3/4 도 동반 상승.",
-      "commodity": "Coal",
-      "source": "Mysteel",
-      "source_url": "https://www.mysteel.net/news/5122360-indonesia-lifts-all-thermal-coal-hba-prices-for-h1-may",
-      "published_date": "2026-05-01"
-    },
-    {
-      "title": "Newcastle thermal coal $130/t 부근 — 5월 초 peak 후 조정",
-      "summary": "Newcastle thermal coal futures 5월 4일 $135.6 peak 이후 $130/t 부근으로 완만한 조정.",
-      "commodity": "Coal",
-      "source": "Trading Economics",
-      "source_url": "https://tradingeconomics.com/commodity/coal",
-      "published_date": "2026-05-11"
-    },
-    {
-      "title": "CPO Bursa Malaysia 5월 약세 — RM4,452 ~ RM4,600 박스권",
-      "summary": "Bursa CPO futures 가 5월 12일 MYR 4,600 이하로 하락. 강한 링깃, Dalian·Chicago 식용유 약세, MPOB 수급 발표 대기.",
-      "commodity": "CPO",
-      "source": "Palm Oil Magazine — CPO Slides on Global Pressure",
-      "source_url": "https://www.palmoilmagazine.com/cpo-price/2026/05/07/cpo-slides-on-global-pressure-malaysian-prices-drop-nearly-3/",
-      "published_date": "2026-05-07"
-    },
-    {
-      "title": "2026 글로벌 석탄 수요 안정 전망 — 중국·인도 +0.2~1%",
-      "summary": "Indonesia Miner Conference 2026 — 글로벌 석탄 수요가 2026년 안정적으로 유지되며 중국·인도 모두 완만한 성장(0.2~1%) 전망.",
-      "commodity": "Coal",
-      "source": "Indonesia Miner",
-      "source_url": "https://www.indonesiaminer.com/news/detail/global-coal-demand-in-2026-predicted-to-remain-stable",
-      "published_date": "2026-05"
-    }
-  ],
+  "events": {
+    "monthly": [
+      {
+        "name": "16th PALMEX Indonesia 2026 (Jakarta)",
+        "date": "2026-05-06 ~ 2026-05-07",
+        "location": "Jakarta International Expo (JIExpo)",
+        "category": "Palm Oil / CPO",
+        "note": "Theme: Indonesia: Driving Global Palm Oil Through Innovation & Digital Transformation. +30% exhibitors vs prior edition.",
+        "source_name": "PALMEX Indonesia 2026 (PDF p.4)",
+        "source_url": null,
+        "checked_date": "2026-05-13",
+        "status": "verified"
+      }
+    ],
+    "upcoming": [
+      {
+        "name": "Indonesia Miner Conference & Exhibitions",
+        "date": "2026-05-05 ~ 2026-05-07",
+        "location": "Jakarta",
+        "category": "Mining / Coal",
+        "note": "08:00 AM",
+        "source_name": "PDF p.5 (Sea Bridge Shipping)",
+        "source_url": "https://www.indonesiaminer.com/",
+        "checked_date": "2026-05-13",
+        "status": "verified"
+      },
+      {
+        "name": "Indonesia Coal & Energy Expo (ICEE 2026)",
+        "date": "2026-05-11 ~ 2026-05-13",
+        "location": "JIEXPO Jakarta",
+        "category": "Coal / Energy / Mining",
+        "note": "Open-pit & underground mining technology, coal processing. 08:00 ~ 17:00",
+        "source_name": "PDF p.5",
+        "source_url": "https://www.iceeind.com/",
+        "checked_date": "2026-05-13",
+        "status": "verified"
+      },
+      {
+        "name": "Indonesia Maritime Trade Expo",
+        "date": "2026-07-28 ~ 2026-07-30",
+        "location": "JIEXPO Jakarta",
+        "category": "Marine / Maritime",
+        "note": "Indonesia's largest trade show for Maritime & Offshore Industries. 08:00 ~ 17:00",
+        "source_name": "PDF p.5",
+        "source_url": "https://inamarine-exhibition.net/",
+        "checked_date": "2026-05-13",
+        "status": "verified"
+      },
+      {
+        "name": "PALMEX Indonesia 2026 (Medan)",
+        "date": "2026-10-06 ~ 2026-10-08",
+        "location": "Santika Premiere Dyandra Hotel & Convention, Medan",
+        "category": "Palm Oil / CPO",
+        "note": "Palm oil processing technology, plantation equipment, sustainability solutions. 10:00 ~ 17:00",
+        "source_name": "PDF p.5",
+        "source_url": null,
+        "checked_date": "2026-05-13",
+        "status": "verified"
+      }
+    ]
+  },
 
-  "shipping_news": [
-    {
-      "title": "Pertamina International Shipping — 2034 까지 fleet 500척 목표",
-      "summary": "PIS는 2024년 기준 102 tankers 보유, 161B 리터 fuel/LPG 운송. 2026년에 VLGC Pertamina Gas Tulip / Bergenia (세계 최대급 친환경 가스 탱커) 인도. HD Hyundai와 23k m³ LPG 2척 + MR tanker 15척 ($700M+) 계약, 대부분 2026년 말 인도 예정.",
-      "category": "Operator",
-      "source": "Safety4Sea — PT Pertamina boosts fleet with world's largest eco-friendly gas tankers",
-      "source_url": "https://safety4sea.com/pt-pertamina-boosts-fleet-with-worlds-largest-eco-friendly-gas-tankers/",
-      "published_date": "2026"
-    },
-    {
-      "title": "Pertamina 탱커 2척 호르무즈 해협 통과 지연",
-      "summary": "이란의 2026년 2월 28일 호르무즈 해협 차단 이후 PIS 소유 탱커 2척 페르시아만 발이 묶임. 정부 외교 채널로 안전 출항 협상 중. 인도네시아 정부는 fuel 가격 안정 유지 약속.",
-      "category": "Operator",
-      "source": "Jakarta Globe — Pertamina Shipping Upholds Global Safety Standards",
-      "source_url": "https://jakartaglobe.id/special-updates/pertamina-shipping-upholds-global-safety-standards-in-international-waters",
-      "published_date": "2026-03"
-    },
-    {
-      "title": "Pelindo 2026 — 표준화 및 디지털화 가속",
-      "summary": "Pelindo 가 post-merger 변환 강화 — 서비스 표준화 + 디지털 시스템 통합. Makassar New Port에 Remote Planning and Control 시스템 도입. Bojonegara Terminal 개발 계획 (Pelindo Regional 2 Banten).",
-      "category": "Port",
-      "source": "Potret Maluku — Pelindo Perkuat Standardisasi 2026",
-      "source_url": "https://potretmaluku.id/pelindo-perkuat-standardisasi-layanan-dan-digitalisasi-pelabuhan-pada-2026/",
-      "published_date": "2026"
-    },
-    {
-      "title": "Celukan Bawang Port — 2026년 cruise ship 22척 일정",
-      "summary": "Pelindo Bali — Celukan Bawang Port 에 2026년 22척 cruise ship 일정 (직접 docking 10척 + offshore anchor 12척).",
-      "category": "Port",
-      "source": "Dewata News — Pelindo Targets Cruise Ship Increase",
-      "source_url": "https://dewata.news/pelindo-targets-cruise-ship-increase-celukan-bawang-2026/",
-      "published_date": "2026"
-    },
-    {
-      "title": "Pelindo Regional 2 Panjang — Q1 2026 positive trend",
-      "summary": "Pelindo Regional 2 Panjang Q1 2026 컨테이너 처리량 / 선박 활동 / 국내 여객 모두 성장 기록. ISL News TV 보도.",
-      "category": "Port",
-      "source": "ISL News TV — Pelindo Regional 2 Panjang Q1 2026",
-      "source_url": "https://www.islnewstv.com/2026/04/pelindo-regional-2-panjang-recorded.html",
-      "published_date": "2026-04"
-    },
-    {
-      "title": "Pelayaran Jaya Hidup Baru (PJHB) — IDX 상장, LCT 5척",
-      "summary": "Samarinda 동부 칼리만탄 기반 PJHB가 1,300~2,500 mt LCT 5척 fleet으로 2025년 말 IDX 상장 완료. LCT 추가 발주 계획.",
-      "category": "Operator",
-      "source": "Indonesia Shipping Gazette",
-      "source_url": "https://indoshippinggazette.com/2025/tambah-armada-lct-pelayaran-jaya-hidup-baru-resmi-melantai-di-bursa-efek-indonesia/",
-      "published_date": "2025-11"
-    },
-    {
-      "title": "Batam 조선소 — 2026 방위산업 newbuild 점검",
-      "summary": "2026년 3월 18일 국방장관 Sjafrie Sjamsoeddin가 PT Palindo Marine Shipyard + PT Batamec Shipyard 방문. KCR 60 미사일 보트, light assault vessel, OPV-3 (radar/sensor/CMS 탑재) 건조 진행 점검.",
-      "category": "Shipyard",
-      "source": "Kementerian Pertahanan",
-      "source_url": "https://www.kemhan.go.id/2026/03/18/menhan-tinjau-galangan-kapal-di-batam-dorong-kemandirian-industri-pertahanan-maritim-indonesia.html",
-      "published_date": "2026-03-18"
-    },
-    {
-      "title": "DP World — 인도네시아 컨테이너 터미널 확장 시작",
-      "summary": "DP World가 인도네시아 컨테이너 터미널 확장 단계 진입. Splash247 보도.",
-      "category": "Port",
-      "source": "Splash247 — DP World to start expansion of Indonesian container terminal",
-      "source_url": "https://splash247.com/dp-world-to-start-expansion-of-indonesian-container-terminal/",
-      "published_date": "2026"
-    }
-  ],
-
-  "events": [
-    {
-      "name": "Indonesia Coal and Energy Expo (ICEE 2026)",
-      "date": "2026-05-11 ~ 2026-05-13",
-      "location": "JIExpo Jakarta",
-      "category": "Mining / Energy",
-      "source_url": "https://www.iceeind.com/",
-      "checked_date": "2026-05-13"
-    },
-    {
-      "name": "INAMARINE 2026 Jakarta",
-      "date": "2026-07-28 ~ 2026-07-30",
-      "location": "JIExpo Kemayoran, Jakarta",
-      "category": "Maritime / Offshore",
-      "note": "co-located: Indonesia Boat Show, INAWELDING, INACOATING, HSE Indonesia 2026",
-      "source_url": "https://inamarine-exhibition.net/",
-      "checked_date": "2026-05-13"
-    },
-    {
-      "name": "Coaltrans Asia 2026",
-      "date": "2026-09-27 ~ 2026-09-30",
-      "location": "Intercontinental Bali Resort, Jimbaran",
-      "category": "Mining / Energy",
-      "note": "co-located: International Critical Minerals and Metals Summit Indonesia 2026. 800+ attendees, 75+ countries",
-      "source_url": "https://www.fastmarkets.com/events/ct-asia/",
-      "checked_date": "2026-05-13"
-    },
-    {
-      "name": "INAMARINE 2026 Surabaya",
-      "date": "2026-11-11 ~ 2026-11-13",
-      "location": "Grand City Convex, Surabaya",
-      "category": "Maritime / Offshore",
-      "source_url": "https://inamarine-exhibition.net/",
-      "checked_date": "2026-05-13"
-    },
-    {
-      "name": "22nd IPOC — Indonesian Palm Oil Conference & 2027 Price Outlook",
-      "date": "2026-11-11 ~ 2026-11-13",
-      "location": "BICC, The Westin Resort Nusa Dua, Bali",
-      "category": "Palm Oil / CPO",
-      "source_url": "https://www.gapkiconference.org/",
-      "checked_date": "2026-05-13"
-    }
-  ]
+  "build_meta": {
+    "collectors_run": ["pdf_seabridge_2026_w19"],
+    "rows_collected": 11,
+    "rows_published_news": 5,
+    "rows_published_events": 5,
+    "rows_published_indices": 2,
+    "rows_no_data_matrix": "all (per PDF p.2 'No data has been acquired yet.')"
+  }
 }
