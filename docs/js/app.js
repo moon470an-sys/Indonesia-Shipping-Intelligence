@@ -6064,7 +6064,9 @@ function _renderMarketCharts() {
     let mk;
     try { mk = JSON.parse(host.dataset.market || "{}"); } catch (e) { return; }
     const cats = mk.categories || [];
-    const kindColor = { TC: FL_PRIMARY, SHB: "#0E9F6E", NB: "#D97706" };
+    // Cycle 6: match Tailwind table stripe colors exactly
+    //   TC = blue-500, SHB = emerald-500, NB = amber-500
+    const kindColor = { TC: "#3B82F6", SHB: "#10B981", NB: "#F59E0B" };
     const traces = [];
     const xLabels = new Set();
     cats.forEach(c => {
@@ -6078,22 +6080,32 @@ function _renderMarketCharts() {
         const mid = (lo != null && hi != null) ? (lo + hi) / 2 : (lo ?? hi);
         xs.push(lbl);
         lows.push(lo); highs.push(hi); mids.push(mid);
-        hovers.push(`${_esc(c.label || c.kind)}<br>${_esc(lbl)}<br>` +
-          (lo != null && hi != null && lo !== hi ? `${lo.toLocaleString()} – ${hi.toLocaleString()}` : `${(mid ?? "—").toLocaleString?.() ?? "—"}`) +
-          ` ${_esc(mk.currency_unit || "")}`);
+        // Bold kind + size, range or single value, currency unit
+        const valTxt = (lo != null && hi != null && lo !== hi)
+          ? `${lo.toLocaleString()} – ${hi.toLocaleString()}`
+          : `${(mid ?? "—").toLocaleString?.() ?? "—"}`;
+        hovers.push(
+          `<b>${_esc(c.kind || c.label)}</b> · ${_esc(c.label || "")}<br>` +
+          `${_esc(lbl)}<br>` +
+          `<b>${valTxt}</b> ${_esc(mk.currency_unit || "")}`
+        );
       });
       if (xs.length) {
         traces.push({
           x: xs, y: mids,
           type: "bar",
           name: c.kind || c.label,
-          marker: { color: kindColor[c.kind] || "#64748B", opacity: 0.85 },
+          marker: {
+            color: kindColor[c.kind] || "#94A3B8",
+            opacity: 0.9,
+            line: { color: "rgba(15,23,42,0.08)", width: 1 },
+          },
           error_y: {
             type: "data",
             symmetric: false,
             array: highs.map((h, i) => (h != null && mids[i] != null) ? Math.max(0, h - mids[i]) : 0),
             arrayminus: lows.map((l, i) => (l != null && mids[i] != null) ? Math.max(0, mids[i] - l) : 0),
-            color: "#64748B", thickness: 1, width: 4,
+            color: "#475569", thickness: 1, width: 3,
           },
           hovertemplate: "%{customdata}<extra></extra>",
           customdata: hovers,
@@ -6104,16 +6116,28 @@ function _renderMarketCharts() {
     const layout = {
       font: { family: "Pretendard, system-ui, sans-serif", size: 11, color: "#334155" },
       barmode: "group",
-      margin: { l: 50, r: 16, t: 18, b: 50 },
-      height: 240,
-      xaxis: { tickangle: -20, automargin: true, tickfont: { size: 10 } },
-      yaxis: { title: { text: mk.currency_unit || "", font: { size: 10 } }, tickfont: { size: 10 } },
-      legend: { orientation: "h", x: 0, y: 1.12, font: { size: 10 } },
+      bargap: 0.22, bargroupgap: 0.08,
+      margin: { l: 50, r: 16, t: 24, b: 60 },
+      height: 250,
+      xaxis: {
+        tickangle: -25, automargin: true, tickfont: { size: 10, color: "#64748B" },
+        showgrid: false, showline: true, linecolor: "#E2E8F0",
+      },
+      yaxis: {
+        title: { text: mk.currency_unit || "", font: { size: 10, color: "#64748B" } },
+        tickfont: { size: 10, color: "#64748B" },
+        gridcolor: "#F1F5F9", zerolinecolor: "#E2E8F0", zerolinewidth: 1,
+      },
+      legend: {
+        orientation: "h", x: 0, y: 1.14, font: { size: 10 },
+        bgcolor: "rgba(255,255,255,0.6)", bordercolor: "#E2E8F0", borderwidth: 0,
+      },
+      hoverlabel: { bgcolor: "#0F172A", font: { color: "white", size: 11 } },
       annotations: [{
         xref: "paper", yref: "paper", x: 0.5, y: 0.5, xanchor: "center", yanchor: "middle",
         text: "INDICATIVE", showarrow: false,
-        font: { size: 40, color: "rgba(148,163,184,0.25)" },
-        textangle: -18,
+        font: { size: 28, family: "Pretendard, system-ui, sans-serif", color: "rgba(148,163,184,0.14)" },
+        textangle: -16,
       }],
       paper_bgcolor: "white",
       plot_bgcolor: "white",
