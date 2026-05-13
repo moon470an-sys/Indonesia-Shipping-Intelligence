@@ -471,6 +471,14 @@ button.scope-chip[style*="outline"] { font-weight: 600; box-shadow: 0 0 0 2px rg
 details.mk-market[data-view="chart"] .mk-tables-wrap { display: none; }
 details.mk-market[data-view="table"] .mk-chart-wrap { display: none; }
 
+/* Cycle 23 — explicit active state for view toggle (Tailwind JIT can miss dynamic aria variants) */
+button.mk-view-btn[aria-pressed="true"] {
+  background-color: #334155;          /* slate-700 */
+  color: white;
+  border-color: #334155;
+}
+button.mk-view-btn[aria-pressed="false"] { color: #475569; } /* slate-600 */
+
 /* Cycle 13 — Market TOC: hide scrollbar but keep wheel/touch scroll, edge fade */
 .mk-no-scrollbar {
   scrollbar-width: none;          /* Firefox */
