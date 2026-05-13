@@ -831,13 +831,21 @@
         </div>
       </div>
 
-      <!-- Freshness chip strip -->
-      <div id="mk-freshness" class="mb-3 flex flex-wrap items-center gap-1.5 text-[10px] font-mono"></div>
-
-      <!-- Watermark + Schema v2 -->
-      <div id="mk-watermark" class="mb-4 px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 text-[11px]">
-        <span class="font-semibold mr-1">⚠ Indicative prices only</span>
-        — 외부 공개 정보 큐레이션. 투자 자문 아님. 데이터 row 별 출처·tier·as_of 표기. 검증 정책 (±15% 교차 · ±30% 점프 차단 · TC↔SHB 논리) 적용.
+      <!-- Cycle 14: unified info bar — freshness chips + indicative warning + collapsible disclaimer -->
+      <div class="mb-4 rounded-lg border border-slate-200 bg-white">
+        <div id="mk-freshness" class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono px-3 py-2"></div>
+        <details class="border-t border-slate-100 group">
+          <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 text-[11px] text-amber-900 bg-amber-50/60 hover:bg-amber-50 transition-colors [&::-webkit-details-marker]:hidden rounded-b-lg">
+            <span class="font-semibold">⚠ Indicative prices only</span>
+            <span class="text-amber-700 text-[10px]">— 투자 자문 아님 · 출처·tier·as_of 표기 · 검증 정책 적용</span>
+            <span class="ml-auto text-[10px] text-amber-700 font-mono group-open:rotate-180 transition-transform">▾</span>
+          </summary>
+          <div class="px-3 py-2 text-[11px] text-amber-900 bg-amber-50 leading-relaxed border-t border-amber-200 rounded-b-lg">
+            본 섹션의 모든 가격은 외부 공개 정보 큐레이션이며 <strong>indicative</strong> 으로 표기됩니다. 거래 가능한 quote 가 아닙니다.
+            데이터 row 별 출처·tier(공식/매체/브로커)·as_of 명시. 검증 정책: ±15% 교차 소스 밴드 · ±30% 주간 점프 차단 · TC↔SHB 논리 체크.
+            결측 셀은 <em>No data acquired</em> 그대로 노출 — 0 으로 채우지 않습니다.
+          </div>
+        </details>
       </div>
 
       <!-- Sticky section TOC — Cycle 2 + Cycle 13 (mobile fade) -->
