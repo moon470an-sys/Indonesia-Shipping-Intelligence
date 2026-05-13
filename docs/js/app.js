@@ -6481,6 +6481,14 @@ function _mkBindDetailsResize() {
       const show = !next || c.dataset.kind === next;
       c.style.display = show ? "" : "none";
     });
+    // Cycle 35: also dim non-matching Plotly traces
+    if (typeof Plotly !== "undefined") {
+      det.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
+        if (host.dataset.rendered !== "1" || !Array.isArray(host.data)) return;
+        const vis = host.data.map(t => (!next || t.name === next) ? true : "legendonly");
+        try { Plotly.restyle(host, { visible: vis }); } catch (_) {}
+      });
+    }
     const status = det.querySelector(".mk-filter-status");
     if (status) {
       if (next) {
