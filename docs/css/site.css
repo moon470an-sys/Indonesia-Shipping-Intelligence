@@ -501,6 +501,11 @@ button.mk-view-btn[aria-pressed="true"] {
 }
 button.mk-view-btn[aria-pressed="false"] { color: #475569; } /* slate-600 */
 
+/* Cycle 33 — active state for KPI kind-filter chip */
+button.mk-kind-filter[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px #334155;   /* slate-700 ring */
+}
+
 /* Cycle 24 — keyboard focus visibility on Market interactive elements */
 #mk-toc a.mk-toc-link:focus-visible,
 button.mk-view-btn:focus-visible,

@@ -6248,7 +6248,7 @@ function _mkMarketBlock(mk) {
   const kindKey = { TC: "bg-blue-100 text-blue-800", SHB: "bg-emerald-100 text-emerald-800", NB: "bg-amber-100 text-amber-800" };
   const kindChips = ["TC", "SHB", "NB"]
     .filter(k => kindCount[k])
-    .map(k => `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded ${kindKey[k] || "bg-slate-100 text-slate-700"}">${k} ${kindCount[k]}</span>`)
+    .map(k => `<button type="button" data-kind-filter="${k}" class="mk-kind-filter px-1.5 py-0.5 text-[9px] font-mono rounded ${kindKey[k] || "bg-slate-100 text-slate-700"} hover:ring-1 hover:ring-slate-400 cursor-pointer transition-shadow" aria-pressed="false" title="${k} 만 표시 (다시 누르면 해제)">${k} ${kindCount[k]}</button>`)
     .join("");
   const rangeChip = filled > 0
     ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700">range ${_fmtCompact(lo)}–${_fmtCompact(hi)}</span>`
@@ -6468,6 +6468,33 @@ function _mkBindDetailsResize() {
     });
     btn.dataset.bulkBound = "1";
   });
+  // Cycle 33: kind-filter chips (TC/SHB/NB in market header KPI row) — click to
+  // limit visible subtables to that kind, click again or click a different one
+  // to clear/switch. The summary chip click would normally toggle the parent
+  // <details>, so we stopPropagation.
+  document.querySelectorAll("button.mk-kind-filter").forEach(btn => {
+    if (btn.dataset.kindBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      const det = btn.closest("details.mk-market");
+      if (!det) return;
+      const kind = btn.dataset.kindFilter;
+      const current = det.dataset.kindFilter || "";
+      const next = current === kind ? "" : kind;
+      det.dataset.kindFilter = next;
+      // Update aria-pressed on all kind buttons within this market
+      det.querySelectorAll("button.mk-kind-filter").forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset.kindFilter === next && next ? "true" : "false");
+      });
+      // Toggle visibility on subtables
+      det.querySelectorAll(".mk-cat").forEach(c => {
+        const show = !next || c.dataset.kind === next;
+        c.style.display = show ? "" : "none";
+      });
+    });
+    btn.dataset.kindBound = "1";
+  });
   // Cycle 26: CSV export per market — reads the market payload from the chart panel
   document.querySelectorAll("button.mk-export-btn").forEach(btn => {
     if (btn.dataset.exportBound === "1") return;
@@ -6577,7 +6604,7 @@ function _mkCategoryTable(c, unitDefault) {
     </tr>`;
   }).join("");
   return `
-    <div>
+    <div class="mk-cat" data-kind="${_esc(c.kind || "")}">
       <div class="text-[11px] mb-1 flex items-center gap-1">
         ${kindChip}
         <span class="font-mono text-slate-700">${_esc(c.label || "—")}</span>
