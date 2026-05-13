@@ -506,6 +506,11 @@ button.mk-kind-filter[aria-pressed="true"] {
   box-shadow: inset 0 0 0 2px #334155;   /* slate-700 ring */
 }
 
+/* Cycle 37 — active state for tier-legend filter buttons */
+button.mk-tier-filter[aria-pressed="true"] > span:first-child {
+  box-shadow: inset 0 0 0 2px #334155;
+}
+
 /* Cycle 24 — keyboard focus visibility on Market interactive elements */
 #mk-toc a.mk-toc-link:focus-visible,
 button.mk-view-btn:focus-visible,

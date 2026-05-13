@@ -6439,6 +6439,24 @@ function _mkBindDetailsResize() {
     });
     btn.dataset.viewBound = "1";
   });
+  // Cycle 37: tier filter — dim rows whose data-tiers doesn't include the selected tier
+  document.querySelectorAll("button.mk-tier-filter").forEach(btn => {
+    if (btn.dataset.tierBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const next = btn.dataset.tierFilter || "";
+      document.body.dataset.mkTierFilter = next;
+      document.querySelectorAll("button.mk-tier-filter").forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset.tierFilter && b.dataset.tierFilter === next ? "true" : "false");
+      });
+      document.querySelectorAll("details.mk-market tbody tr").forEach(tr => {
+        if (!next) { tr.style.opacity = ""; return; }
+        const tiers = tr.dataset.tiers || "";
+        tr.style.opacity = tiers.includes(next) ? "" : "0.35";
+      });
+    });
+    btn.dataset.tierBound = "1";
+  });
   // Cycle 36: row search — filters every tbody tr in every market by size + year_built text
   const searchEl = document.getElementById("mk-row-search");
   const hitsEl = document.getElementById("mk-row-search-hits");
@@ -6659,12 +6677,20 @@ function _mkCategoryTable(c, unitDefault) {
     "NB":  "border-l-amber-500",
   };
   const stripeCls = stripeMap[c.kind] || "border-l-slate-300";
+  const _normTier = (t) => {
+    const s = String(t || "").toLowerCase();
+    if (s === "tier1" || s === "official") return "tier1";
+    if (s === "tier2" || s === "media") return "tier2";
+    if (s === "tier3" || s === "broker" || s === "sns") return "tier3";
+    return "";
+  };
   const trs = rows.map((r, i) => {
     const isNoData = (r.value_low == null && r.value_high == null);
     const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50/60";
     const dim = isNoData ? "opacity-60" : "";
+    const tierList = Array.from(new Set((r.sources || []).map(s => _normTier(s.tier)).filter(Boolean))).join(",");
     return `
-    <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}">
+    <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}" data-tiers="${tierList}">
       <td class="px-2 py-1.5 text-[11px] font-mono text-slate-800 border-l-4 ${stripeCls}">${_esc(r.size || "—")}</td>
       <td class="px-2 py-1.5 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
       <td class="px-2 py-1.5 text-[11px] text-right tabular-nums">${valueCell(r.value_low, r.value_high)}</td>

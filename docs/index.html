@@ -845,18 +845,20 @@
             <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
           </summary>
           <div class="px-3 py-2 text-[10px] text-slate-500 flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60">
-            <span class="inline-flex items-center gap-1">
+            <span class="text-slate-400 text-[10px] font-mono mr-1">click to filter rows:</span>
+            <button type="button" data-tier-filter="tier1" class="mk-tier-filter inline-flex items-center gap-1 hover:opacity-80 transition-opacity" aria-pressed="false">
               <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">tier1·공식</span>
               <span class="text-slate-500">정부·거래소 (Baltic, GAPKI, IDX)</span>
-            </span>
-            <span class="inline-flex items-center gap-1">
+            </button>
+            <button type="button" data-tier-filter="tier2" class="mk-tier-filter inline-flex items-center gap-1 hover:opacity-80 transition-opacity" aria-pressed="false">
               <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-sky-100 text-sky-800">tier2·매체</span>
               <span class="text-slate-500">Bisnis, Kontan, CNBC</span>
-            </span>
-            <span class="inline-flex items-center gap-1">
+            </button>
+            <button type="button" data-tier-filter="tier3" class="mk-tier-filter inline-flex items-center gap-1 hover:opacity-80 transition-opacity" aria-pressed="false">
               <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">tier3·브로커</span>
               <span class="text-slate-500">Allied, Sea Bridge, broker email</span>
-            </span>
+            </button>
+            <button type="button" data-tier-filter="" class="mk-tier-filter ml-auto text-slate-500 underline-offset-2 hover:underline" aria-label="모든 tier 표시">전체 해제</button>
           </div>
         </details>
         <details class="border-t border-slate-100 group">
