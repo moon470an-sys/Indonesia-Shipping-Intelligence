@@ -6146,27 +6146,38 @@ function _mkInsightStrip(markets, asOf) {
     const t = String(s || "");
     return t.length > n ? t.slice(0, n - 1) + "…" : t;
   };
+  // Cycle 41: cards are now <button> with data-deep-* attrs so clicking jumps to source row
   const card = (icon, label, rec, accent) => {
     if (!rec) return "";
     return `
-      <div class="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 ${accent}">
+      <button type="button" class="mk-insight-card text-left w-full flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 ${accent} hover:shadow-md hover:-translate-y-px transition-all cursor-pointer"
+              data-deep-market="${_esc(rec.market || "")}"
+              data-deep-kind="${_esc(rec.kind || "")}"
+              data-deep-size="${_esc(rec.size || "")}"
+              data-deep-year="${_esc(rec.yr || "")}"
+              aria-label="${_esc(label)}: ${_esc(rec.market || "")} ${_esc(rec.size || "")} ${_esc(rec.yr || "")} — source row 로 이동">
         <span class="text-[14px] leading-none mt-0.5">${icon}</span>
-        <div class="leading-tight">
-          <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
+        <div class="leading-tight min-w-0">
+          <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)} <span class="text-slate-300">↗</span></div>
           <div class="text-[12px] font-semibold text-slate-800">${Number(rec.v).toLocaleString()} <span class="text-[10px] font-normal text-slate-400">M IDR</span></div>
-          <div class="text-[10px] text-slate-500">${_esc(_short(rec.market, 18))} · ${_esc(_short(rec.size, 14))} · ${_esc(_short(rec.yr, 12))}</div>
+          <div class="text-[10px] text-slate-500 truncate">${_esc(_short(rec.market, 18))} · ${_esc(_short(rec.size, 14))} · ${_esc(_short(rec.yr, 12))}</div>
         </div>
-      </div>`;
+      </button>`;
   };
   const spreadCard = spread ? `
-    <div class="flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-rose-500">
+    <button type="button" class="mk-insight-card text-left w-full flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-rose-500 hover:shadow-md hover:-translate-y-px transition-all cursor-pointer"
+            data-deep-market="${_esc(spread.market)}"
+            data-deep-kind="${_esc(spread.kind || "")}"
+            data-deep-size="${_esc(spread.size || "")}"
+            data-deep-year="${_esc(spread.hiYr || "")}"
+            aria-label="Widest year-bucket spread: ${_esc(spread.market)} ${_esc(spread.size)} ${_esc(spread.hiYr)} — source row 로 이동">
       <span class="text-[14px] leading-none mt-0.5">📐</span>
-      <div class="leading-tight">
-        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">Widest year-bucket spread</div>
+      <div class="leading-tight min-w-0">
+        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">Widest year-bucket spread <span class="text-slate-300">↗</span></div>
         <div class="text-[12px] font-semibold text-slate-800">${spread.ratio.toFixed(2)}× <span class="text-[10px] font-normal text-slate-500">(${spread.lo.toLocaleString()} → ${spread.hi.toLocaleString()})</span></div>
-        <div class="text-[10px] text-slate-500">${_esc(_short(spread.market, 16))} · ${_esc(spread.kind || "")} ${_esc(_short(spread.size, 12))} · ${_esc(_short(spread.loYr, 8))} → ${_esc(_short(spread.hiYr, 8))}</div>
+        <div class="text-[10px] text-slate-500 truncate">${_esc(_short(spread.market, 16))} · ${_esc(spread.kind || "")} ${_esc(_short(spread.size, 12))} · ${_esc(_short(spread.loYr, 8))} → ${_esc(_short(spread.hiYr, 8))}</div>
       </div>
-    </div>` : "";
+    </button>` : "";
   const cards = [
     card("🏷", "Top TC (charter)",      bestByKind.TC,  "border-l-4 border-l-blue-500"),
     card("💎", "Top SHB (secondhand)",  bestByKind.SHB, "border-l-4 border-l-emerald-500"),
@@ -6483,6 +6494,44 @@ function _mkBindDetailsResize() {
       }
     });
     btn.dataset.viewBound = "1";
+  });
+  // Cycle 41: insight card deep-link — expand matching market, scroll to row, highlight 2s
+  document.querySelectorAll("button.mk-insight-card").forEach(btn => {
+    if (btn.dataset.deepBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const market = btn.dataset.deepMarket || "";
+      const size = btn.dataset.deepSize || "";
+      const year = btn.dataset.deepYear || "";
+      if (!market) return;
+      // Find the matching market <details> by looking up its <summary> h4 text
+      let targetDet = null;
+      document.querySelectorAll("details.mk-market").forEach(det => {
+        if (targetDet) return;
+        const h = det.querySelector("summary h4");
+        if (h && h.textContent.trim() === market) targetDet = det;
+      });
+      if (!targetDet) return;
+      targetDet.open = true;
+      // Locate the row matching size + year inside this market
+      let targetRow = null;
+      targetDet.querySelectorAll("tbody tr").forEach(tr => {
+        if (targetRow) return;
+        const cells = tr.querySelectorAll("td");
+        const s = (cells[0]?.textContent || "").trim();
+        const y = (cells[1]?.textContent || "").trim();
+        if (s === size && (!year || y === year)) targetRow = tr;
+      });
+      if (targetRow) {
+        targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetRow.classList.add("mk-row-highlight");
+        setTimeout(() => targetRow.classList.remove("mk-row-highlight"), 2200);
+      } else {
+        // Fall back: scroll to the market header
+        targetDet.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+    btn.dataset.deepBound = "1";
   });
   // Cycle 37: tier filter — dim rows whose data-tiers doesn't include the selected tier
   document.querySelectorAll("button.mk-tier-filter").forEach(btn => {
