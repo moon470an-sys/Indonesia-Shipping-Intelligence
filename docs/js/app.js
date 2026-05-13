@@ -6289,6 +6289,7 @@ function _mkMarketBlock(mk) {
       </summary>
       <div class="px-3 pb-3 pt-1 border-t border-slate-200">
         ${viewToggle}
+        <div class="mk-filter-status hidden mb-2 px-2 py-1 rounded bg-slate-700 text-white text-[10px] font-mono flex items-center gap-2"></div>
         <div class="mk-chart-wrap">${chartPanel}</div>
         <div class="mk-tables-wrap space-y-3">${blocks}</div>
       </div>
@@ -6468,10 +6469,30 @@ function _mkBindDetailsResize() {
     });
     btn.dataset.bulkBound = "1";
   });
-  // Cycle 33: kind-filter chips (TC/SHB/NB in market header KPI row) — click to
-  // limit visible subtables to that kind, click again or click a different one
-  // to clear/switch. The summary chip click would normally toggle the parent
-  // <details>, so we stopPropagation.
+  // Cycle 33: kind-filter chips (TC/SHB/NB in market header KPI row)
+  // Cycle 34: also drive the in-body status banner so the active filter is
+  // visible when the user scrolls past the summary.
+  const _applyKindFilter = (det, next) => {
+    det.dataset.kindFilter = next || "";
+    det.querySelectorAll("button.mk-kind-filter").forEach(b => {
+      b.setAttribute("aria-pressed", b.dataset.kindFilter === next && next ? "true" : "false");
+    });
+    det.querySelectorAll(".mk-cat").forEach(c => {
+      const show = !next || c.dataset.kind === next;
+      c.style.display = show ? "" : "none";
+    });
+    const status = det.querySelector(".mk-filter-status");
+    if (status) {
+      if (next) {
+        status.classList.remove("hidden");
+        status.innerHTML = `<span>🔎 <strong>${next}</strong> 만 표시 중</span>
+          <button type="button" class="mk-filter-clear ml-auto text-white/80 hover:text-white" aria-label="필터 해제">× 해제</button>`;
+      } else {
+        status.classList.add("hidden");
+        status.innerHTML = "";
+      }
+    }
+  };
   document.querySelectorAll("button.mk-kind-filter").forEach(btn => {
     if (btn.dataset.kindBound === "1") return;
     btn.addEventListener("click", (ev) => {
@@ -6482,18 +6503,21 @@ function _mkBindDetailsResize() {
       const kind = btn.dataset.kindFilter;
       const current = det.dataset.kindFilter || "";
       const next = current === kind ? "" : kind;
-      det.dataset.kindFilter = next;
-      // Update aria-pressed on all kind buttons within this market
-      det.querySelectorAll("button.mk-kind-filter").forEach(b => {
-        b.setAttribute("aria-pressed", b.dataset.kindFilter === next && next ? "true" : "false");
-      });
-      // Toggle visibility on subtables
-      det.querySelectorAll(".mk-cat").forEach(c => {
-        const show = !next || c.dataset.kind === next;
-        c.style.display = show ? "" : "none";
-      });
+      _applyKindFilter(det, next);
     });
     btn.dataset.kindBound = "1";
+  });
+  // Delegated handler for the × clear button inside the status banner
+  document.querySelectorAll(".mk-filter-status").forEach(node => {
+    if (node.dataset.clearBound === "1") return;
+    node.addEventListener("click", (ev) => {
+      const t = ev.target.closest(".mk-filter-clear");
+      if (!t) return;
+      ev.preventDefault();
+      const det = t.closest("details.mk-market");
+      if (det) _applyKindFilter(det, "");
+    });
+    node.dataset.clearBound = "1";
   });
   // Cycle 26: CSV export per market — reads the market payload from the chart panel
   document.querySelectorAll("button.mk-export-btn").forEach(btn => {
