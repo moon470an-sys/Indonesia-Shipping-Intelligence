@@ -5852,8 +5852,8 @@ async function renderMarket() {
   }
   const scrapHost = document.getElementById("mk-int-scrap");
   if (scrapHost) {
-    const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry " + (o.size || "") }));
-    const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker " + (o.size || "") }));
+    const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry — " + (o.region || o.size || "—") }));
+    const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker — " + (o.region || o.size || "—") }));
     const arr = [...dry, ...tnk];
     scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired (PDF p.1)");
   }

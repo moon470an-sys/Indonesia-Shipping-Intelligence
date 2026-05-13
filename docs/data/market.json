@@ -1,23 +1,32 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "report_week": "1st Week of May 2026 (Apr 1 ~ May 6)",
   "checked_date": "2026-05-13",
   "last_updated": "2026-05-13",
   "next_scheduled": "2026-05-20",
-  "build_run_id": "preview-no-commit",
+  "build_run_id": "seed-2026w19-pdf-ocr",
   "watermark": "Indicative prices only · 외부 공개 정보 큐레이션 · 투자 자문 아님",
   "review_cadence": "weekly",
   "reference_pdf": "[SBS] Weekly Marketing Report 2026.05.07.pdf",
 
   "overview": [
     {
-      "headline": "BDI 회복 — 2,978 → 3,034p (+1.9% W/W)",
-      "detail_ko": "Baltic Dry Index 2026-05-08 2,978 → 2026-05-11 3,034p. Capesize·Panamax 동반 회복. 인도네시아 석탄·니켈 수출 운임에 직접 영향.",
-      "source_name": "Baltic Exchange · HandyBulk",
+      "headline": "BDI +34.5% M/M — 2,730p, BCI +47.1% M/M — 4,447p (5월 1일)",
+      "detail_ko": "Baltic Dry Index 2,730 (May 1, 2026) — 1m +34.48%, 3m +28.53%, 6m +40.36%. Baltic Capesize 4,447 — 1m +47.11%, 3m +29.50%, 6m +53.98%. 인니 석탄·니켈 수출 운임의 인상 사이클 진입 신호.",
+      "source_name": "BDI/BCI via email (PDF p.1)",
       "source_tier": "official",
       "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
-      "as_of": "2026-05-11",
+      "as_of": "2026-05-01",
       "category": "Freight"
+    },
+    {
+      "headline": "GAPKI CPO Price Index — IDR 15,400/kg, 16개월 최고치 근접",
+      "detail_ko": "GAPKI 일별 지수 5월 첫째 주 ~ IDR 15,400/kg. 2025-03 직전 피크 ~16,000 IDR/kg 근접. El Niño 가뭄 시나리오 + 1Q26 생산 감소 우려가 가격 지지.",
+      "source_name": "GAPKI (PDF p.2)",
+      "source_tier": "official",
+      "source_url": "https://gapki.id/",
+      "as_of": "2026-05-01",
+      "category": "Commodity"
     },
     {
       "headline": "정부, 니켈·석탄 windfall tax 검토",
@@ -59,53 +68,71 @@
 
   "international_freight": {
     "indices": [
-      { "name": "BDI", "value": 2978, "unit": "points", "as_of": "2026-05-08",
-        "wow_pct": null,
-        "source_name": "Baltic Exchange (via DCN Weekly)", "source_tier": "official",
+      { "name": "BDI", "value": 2730, "unit": "points", "as_of": "2026-05-01",
+        "wow_pct": 0.0, "m1_pct": 34.48, "m3_pct": 28.53, "m6_pct": 40.36, "y1_pct": 93.48, "y5_pct": -13.53,
+        "source_name": "BDI via email (PDF p.1)", "source_tier": "official",
         "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
+        "status": "verified" },
+      { "name": "BCI (Baltic Capesize Index)", "value": 4447, "unit": "points", "as_of": "2026-05-01",
+        "wow_pct": 0.0, "m1_pct": 47.11, "m3_pct": 29.50, "m6_pct": 53.98, "y1_pct": 117.67, "y5_pct": -14.15,
+        "source_name": "BCI via email (PDF p.1)", "source_tier": "official",
+        "source_url": null,
         "status": "verified" },
       { "name": "BDI (subsequent)", "value": 3034, "unit": "points", "as_of": "2026-05-11",
         "source_name": "HandyBulk", "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "status": "verified" },
-      { "name": "BCI (Baltic Capesize Index)", "value": null, "unit": "points", "as_of": "2026-05-01",
-        "source_name": "BCI (PDF: Sea Bridge Shipping)", "source_tier": "broker",
+      { "name": "Baltic Capesize 5TC (weekly avg)", "value": 28, "unit": "USD/day (thousand)", "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
         "source_url": null,
-        "note": "PDF p.1 reference. Public value not yet collected.",
-        "status": "No data acquired" },
-      { "name": "Baltic Average TCE — Tanker", "value": null, "unit": "USD/day (thousand)", "as_of": null,
-        "source_name": "PDF p.1 (Sea Bridge Shipping)", "source_tier": "broker",
+        "note": "approx mid-band of latest week, line-chart read",
+        "status": "indicative" },
+      { "name": "Baltic Panamax 5TC (weekly avg)", "value": 10, "unit": "USD/day (thousand)", "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
         "source_url": null,
-        "status": "No data acquired" },
-      { "name": "Baltic Average TCE — Dry Bulk", "value": null, "unit": "USD/day (thousand)", "as_of": null,
-        "source_name": "PDF p.1 (Sea Bridge Shipping)", "source_tier": "broker",
+        "note": "approx mid-band of latest week, line-chart read",
+        "status": "indicative" },
+      { "name": "Baltic Supramax 5TC (weekly avg)", "value": 12, "unit": "USD/day (thousand)", "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
         "source_url": null,
-        "status": "No data acquired" }
+        "note": "approx mid-band of latest week, line-chart read",
+        "status": "indicative" }
     ],
     "scrap_dry_bulk": [
-      { "size": "330 ft", "ldt_usd": null, "as_of": "2026-04-28",
-        "source_name": "Allied (via PDF p.1)", "source_tier": "broker",
+      { "region": "Bangladesh", "ldt_usd": 450, "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
         "source_url": null,
-        "status": "No data acquired" },
-      { "size": "300 ft (a)", "ldt_usd": null, "as_of": "2026-04-28",
-        "source_name": "Allied (via PDF p.1)", "source_tier": "broker",
+        "note": "approx — line chart, end-of-week",
+        "status": "indicative" },
+      { "region": "India", "ldt_usd": 440, "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
         "source_url": null,
-        "status": "No data acquired" },
-      { "size": "300 ft (b)", "ldt_usd": null, "as_of": "2026-04-28",
-        "source_name": "Allied (via PDF p.1)", "source_tier": "broker",
+        "status": "indicative" },
+      { "region": "Pakistan", "ldt_usd": 445, "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
         "source_url": null,
-        "status": "No data acquired" }
+        "status": "indicative" }
     ],
     "scrap_tanker": [
-      { "size": "PDF p.1 placeholder", "ldt_usd": null, "as_of": "2026-04-28",
-        "source_name": "Allied (via PDF p.1)", "source_tier": "broker", "source_url": null,
-        "status": "No data acquired" }
+      { "region": "Bangladesh", "ldt_usd": 450, "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+        "source_url": null,
+        "status": "indicative" },
+      { "region": "India", "ldt_usd": 440, "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+        "source_url": null,
+        "status": "indicative" },
+      { "region": "Pakistan", "ldt_usd": 445, "as_of": "2026-04-28",
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+        "source_url": null,
+        "status": "indicative" }
     ],
     "sale_purchase_bulk": [
       { "vessel_name": null, "type": "Bulk Carrier", "dwt": null, "year": null,
         "price_musd": null, "buyer": null, "seller": null,
-        "source_name": "Allied (via PDF p.1)", "source_tier": "broker", "source_url": null,
+        "source_name": "Allied (PDF p.1)", "source_tier": "broker", "source_url": null,
         "as_of": "2026-04-28",
+        "note": "S&P specific deals not transcribed in PDF p.1 — average movement chart only",
         "status": "No data acquired" }
     ]
   },
@@ -125,36 +152,87 @@
         "currency_unit": "millions IDR",
         "categories": [
           {
-            "label": "Tug & Barge — Time Charter",
+            "label": "SET Tug & Barge TC — Quarterly Average",
             "kind": "TC",
             "rows": [
-              { "size": "330 ft", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
-              { "size": "300 ft (A)", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
-              { "size": "300 ft (B)", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "270ft", "year_built": "Q1 (Jan-Mar)", "value_low": 875, "value_high": 875,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "Q1 (Jan-Mar)", "value_low": 1165, "value_high": 1166,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "330ft", "year_built": "Q1 (Jan-Mar)", "value_low": 1525, "value_high": 1525,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "Q2 (Apr-Jun)", "value_low": 1332, "value_high": 1333,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "330ft", "year_built": "Q2 (Apr-Jun)", "value_low": 1300, "value_high": 1300,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "270ft", "year_built": "Q3 (Jul-Sep)", "value_low": 737, "value_high": 738,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "Q3 (Jul-Sep)", "value_low": 1085, "value_high": 1086,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "330ft", "year_built": "Q3 (Jul-Sep)", "value_low": 1400, "value_high": 1400,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "270ft", "year_built": "Q4 (Oct-Dec)", "value_low": 775, "value_high": 775,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "Q4 (Oct-Dec)", "value_low": 750, "value_high": 750,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "270ft", "year_built": "Q1-26 (Jan-Mar 2026)", "value_low": 720, "value_high": 721,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "Q1-26 (Jan-Mar 2026)", "value_low": 875, "value_high": 875,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "270ft", "year_built": "Q2-26 (Apr-Jun 2026)", "value_low": 800, "value_high": 800,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
             "label": "NB Tug & Barge — China",
             "kind": "NB",
             "rows": [
-              { "size": "330 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
-              { "size": "300 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "various", "year_built": "2026 NB", "value_low": 28800, "value_high": 28800,
+                "sources": [{ "name": "China's Shipyard (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "330ft", "year_built": "2026 NB", "value_low": 41600, "value_high": 41600,
+                "sources": [{ "name": "China's Shipyard (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "2026 NB", "value_low": 26000, "value_high": 26000,
+                "sources": [{ "name": "China's Shipyard (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "2026 NB", "value_low": 27050, "value_high": 27050,
+                "sources": [{ "name": "CV. Samudera Jaya (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
-            "label": "NB Tug & Barge — Domestic",
+            "label": "NB Tug & Barge — Domestic (SBY/SMD/BATAM)",
             "kind": "NB",
             "rows": [
-              { "size": "330 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
-              { "size": "300 ft", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "300ft (default)", "year_built": "Ratson (SBY)", "value_low": 22000, "value_high": 22000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (default)", "year_built": "Borneo Selebes (SMD)", "value_low": 19000, "value_high": 19000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (default)", "year_built": "MKS (SMD)", "value_low": 17000, "value_high": 17000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (default)", "year_built": "Syukur Bersaudara (SMD)", "value_low": 20000, "value_high": 20000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (default)", "year_built": "Pancaran Samudera (SMD)", "value_low": 21000, "value_high": 21000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (default)", "year_built": "Untung Brawijaya (SMD)", "value_low": 19500, "value_high": 19500,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (default)", "year_built": "Bahari Prima (SMD)", "value_low": 20000, "value_high": 20000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "Bandar Victory (BATAM)", "value_low": 31250, "value_high": 31250,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "KTU (BATAM)", "value_low": 20900, "value_high": 33600,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
-            "label": "2nd Tug & Barge",
+            "label": "2nd Tug & Barge — SHB",
             "kind": "SHB",
             "rows": [
-              { "size": "330 ft", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" },
-              { "size": "300 ft", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "330ft", "year_built": "various", "value_low": 35000, "value_high": 59000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft", "year_built": "various", "value_low": 26000, "value_high": 35000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "300ft (green)", "year_built": "various", "value_low": 24500, "value_high": 29500,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "270ft", "year_built": "various", "value_low": 11500, "value_high": 13000,
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           }
         ]
@@ -164,65 +242,97 @@
         "currency_unit": "millions IDR",
         "categories": [
           {
-            "label": "CPO Tug & Oil Barge — Time Charter",
+            "label": "CPO Tug & Oil Barge — TC (1-SET TB+OB)",
             "kind": "TC",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "2500 KL", "year_built": "2024", "value_low": 500, "value_high": 500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "3500 KL", "year_built": "2023", "value_low": 875, "value_high": 875,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4000 KL", "year_built": "2025", "value_low": 1100, "value_high": 1100,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4500 KL", "year_built": "2024", "value_low": 1400, "value_high": 1400,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "5000 KL", "year_built": "2024", "value_low": 1500, "value_high": 1500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
-            "label": "2nd Tug & Oil Barge",
+            "label": "2nd Tug & Oil Barge — SHB (1-SET TB+OB)",
             "kind": "SHB",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "2000 KL", "year_built": "2025", "value_low": 23500, "value_high": 23500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "2500 KL", "year_built": "2025", "value_low": 36000, "value_high": 36000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "3100 KL", "year_built": "2025", "value_low": 25000, "value_high": 25000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "3500 KL", "year_built": "2022", "value_low": 33000, "value_high": 33000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "3500 KL", "year_built": "2023", "value_low": 34000, "value_high": 34000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4000 KL", "year_built": "2025", "value_low": 48000, "value_high": 48000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
-            "label": "SPOB — Time Charter",
+            "label": "SPOB — Time Charter (TC SPOB)",
             "kind": "TC",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "2000 KL", "year_built": "2023", "value_low": 800, "value_high": 800,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "2000 KL", "year_built": "2026", "value_low": 1250, "value_high": 1250,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "3000 KL", "year_built": "2025", "value_low": 1200, "value_high": 1200,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4000 KL", "year_built": "2024", "value_low": 1400, "value_high": 1400,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4000 KL", "year_built": "2026", "value_low": 1650, "value_high": 1650,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4500 KL", "year_built": "2025", "value_low": 1550, "value_high": 1550,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "5000 KL", "year_built": "2024", "value_low": 1383, "value_high": 1383,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "5000 KL", "year_built": "2025", "value_low": 1600, "value_high": 1600,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "5000 KL", "year_built": "2026", "value_low": 3000, "value_high": 3000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "6200 KL", "year_built": "2024", "value_low": 2100, "value_high": 2100,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
-            "label": "2nd SPOB",
+            "label": "2nd SPOB — SHB Price",
             "kind": "SHB",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "300 KL", "year_built": "various", "value_low": 5000, "value_high": 5000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "350 KL", "year_built": "various", "value_low": 10000, "value_high": 10000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "450 KL", "year_built": "various", "value_low": 7000, "value_high": 7000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "500 KL", "year_built": "various", "value_low": 6500, "value_high": 12000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "1000 KL", "year_built": "various", "value_low": 17500, "value_high": 17500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "1500 KL", "year_built": "various", "value_low": 25000, "value_high": 25000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "2000 KL", "year_built": "various", "value_low": 35000, "value_high": 35000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "3200 KL", "year_built": "various", "value_low": 29000, "value_high": 29000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4000 KL", "year_built": "various", "value_low": 47000, "value_high": 47000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
             "label": "NB SPOB 2025",
             "kind": "NB",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "2025 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
-            ]
-          }
-        ]
-      },
-      {
-        "market": "LCT (Landing Craft Tank)",
-        "currency_unit": "millions IDR",
-        "categories": [
-          {
-            "label": "LCT — Time Charter (2025 range)",
-            "kind": "TC",
-            "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "2025", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
-            ]
-          },
-          {
-            "label": "2nd LCT",
-            "kind": "SHB",
-            "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
-            ]
-          },
-          {
-            "label": "NB LCT 2025",
-            "kind": "NB",
-            "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "2025 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "500 KL", "year_built": "2025 NB", "value_low": 15000, "value_high": 15000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "600 KL", "year_built": "2025 NB", "value_low": 17500, "value_high": 17500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           }
         ]
@@ -232,55 +342,135 @@
         "currency_unit": "millions IDR",
         "categories": [
           {
-            "label": "Oil Tanker — Time Charter",
+            "label": "Oil Tanker — Time Charter (TC Oil Tanker)",
             "kind": "TC",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "—", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "various small", "year_built": "various", "value_low": 1500, "value_high": 1500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "various mid-1", "year_built": "various", "value_low": 1900, "value_high": 1900,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "various mid-2", "year_built": "various", "value_low": 2400, "value_high": 2400,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "various mid-3", "year_built": "various", "value_low": 2500, "value_high": 2500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "various large", "year_built": "various", "value_low": 3300, "value_high": 3300,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
-            "label": "2nd Oil Tanker",
+            "label": "2nd Oil Tanker — SHB Price",
             "kind": "SHB",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "various", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "4000 KL (smaller)", "year_built": "various", "value_low": 40000, "value_high": 42500,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "4000 KL (larger)", "year_built": "various", "value_low": 47600, "value_high": 47600,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "5000 KL (smaller)", "year_built": "various", "value_low": 65000, "value_high": 65000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "5000 KL (larger)", "year_built": "various", "value_low": 88400, "value_high": 88400,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "6500 KL", "year_built": "various", "value_low": 40000, "value_high": 40000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           },
           {
             "label": "NB Oil Tanker",
             "kind": "NB",
             "rows": [
-              { "size": "PDF p.2 placeholder", "year_built": "2026 NB", "value_low": null, "value_high": null, "sources": [], "status": "No data acquired" }
+              { "size": "—", "year_built": "2026 NB", "value_low": null, "value_high": null,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "No data acquired",
+                "note": "Per PDF p.2 caption: \"No data has been acquired yet.\"" }
+            ]
+          }
+        ]
+      },
+      {
+        "market": "LCT (Landing Craft Tank)",
+        "currency_unit": "millions IDR",
+        "categories": [
+          {
+            "label": "LCT — Time Charter (TC LCT)",
+            "kind": "TC",
+            "rows": [
+              { "size": "smaller", "year_built": "various", "value_low": 1100, "value_high": 1100,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "larger", "year_built": "various", "value_low": 1200, "value_high": 1200,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+            ]
+          },
+          {
+            "label": "2nd LCT — SHB Price",
+            "kind": "SHB",
+            "rows": [
+              { "size": "smaller", "year_built": "various", "value_low": 29500, "value_high": 30000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "mid (green/2022)", "year_built": "2022", "value_low": 40000, "value_high": 40000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "larger", "year_built": "various", "value_low": 38000, "value_high": 38000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "largest", "year_built": "various", "value_low": 65000, "value_high": 65000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+            ]
+          },
+          {
+            "label": "NB LCT 2025",
+            "kind": "NB",
+            "rows": [
+              { "size": "smaller", "year_built": "2025 NB", "value_low": 21000, "value_high": 23000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "mid", "year_built": "2025 NB", "value_low": 30000, "value_high": 30000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "larger", "year_built": "2025 NB", "value_low": 37000, "value_high": 37000,
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
             ]
           }
         ]
       }
     ],
-    "_note": "Size/year buckets는 PDF p.2 실제 컬럼이 image-based 인 셀까지 OCR 필요. 현재는 placeholder. PDF에서 'No data has been acquired yet.' 메시지 다수 — 그대로 반영."
+    "_note": "PDF p.2 chart bars are image-based; values seeded via visual OCR. Year-bucket distinctions reflect bar-color legend (green=2022/23, light-blue=2024, dark-blue=2025, yellow=2026). All rows status=indicative pending TC↔SHB cross-validation."
   },
 
   "domestic_fuel_scrap": {
     "cpo_price_index_gapki": [
-      { "value": null, "unit": "IDR/kg", "as_of": null,
-        "source_name": "GAPKI (via PDF p.2)", "source_tier": "official",
+      { "value": 15400, "unit": "IDR/kg", "as_of": "2026-05-01",
+        "source_name": "GAPKI (PDF p.2)", "source_tier": "official",
         "source_url": "https://gapki.id/",
-        "status": "No data acquired" }
+        "note": "early May reading; 16-month peak ~16,000 IDR/kg (Mar 2026)",
+        "status": "indicative" }
     ],
     "solar_b40_hsd": [
-      { "value": null, "unit": "IDR/liter", "as_of": null,
+      { "value": 22000, "unit": "IDR/liter (Wilayah I+II avg)", "as_of": "2026-04-01",
         "source_name": "PDF p.1 — Solar B40/HSD Index", "source_tier": "broker",
-        "source_url": null, "status": "No data acquired",
-        "note": "excl. PPn, PPH, PBBKB" }
+        "source_url": null,
+        "note": "excl. PPn, PPH, PBBKB; line-chart end-of-period read",
+        "status": "indicative" },
+      { "value": 22500, "unit": "IDR/liter (Wilayah III+IV avg)", "as_of": "2026-04-01",
+        "source_name": "PDF p.1 — Solar B40/HSD Index", "source_tier": "broker",
+        "source_url": null,
+        "note": "excl. PPn, PPH, PBBKB",
+        "status": "indicative" }
     ],
     "hfo_180_mfo": [
-      { "value": null, "unit": "IDR/liter", "as_of": null,
+      { "value": 14500, "unit": "IDR/liter", "as_of": "2026-04-01",
         "source_name": "PDF p.1 — HFO 180/MFO Index", "source_tier": "broker",
-        "source_url": null, "status": "No data acquired",
-        "note": "excl. PPn, PPH, PBBKB" }
+        "source_url": null,
+        "note": "excl. PPn, PPH, PBBKB; 4-Areas avg, line-chart end-of-period",
+        "status": "indicative" }
     ],
     "scrap_domestic": [
-      { "value": null, "unit": "IDR/kg", "as_of": null,
+      { "value": 5600, "unit": "IDR/kg (Kelas A)", "as_of": "2026-03-01",
         "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
-        "source_url": null, "status": "No data acquired" }
+        "source_url": null,
+        "note": "Kelas A = iron thickness ≥6mm",
+        "status": "verified" },
+      { "value": 5425, "unit": "IDR/kg (Kelas B)", "as_of": "2026-03-01",
+        "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
+        "source_url": null,
+        "status": "verified" },
+      { "value": 4700, "unit": "IDR/kg (Kelas C)", "as_of": "2026-03-01",
+        "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
+        "source_url": null,
+        "status": "verified" }
     ]
   },
 
@@ -309,7 +499,7 @@
     ],
     "cpo": [
       {
-        "title": "“Godzilla El Niño” — 2026년 인도네시아 CPO 생산 1~2M톤 감소 전망",
+        "title": "\"Godzilla El Niño\" — 2026년 인도네시아 CPO 생산 1~2M톤 감소 전망",
         "summary_ko": "S&P Global — 극단적 El Niño 가 인도네시아·말레이시아 주요 산지에서 장기 가뭄 유발, CPO 생산 1~2M MT 감소 가능. 비료 가격 상승이 소농 사용 제한 가중. 기후 리스크와 글로벌 경제 요인이 2026년 commodity 시장 변동성 확대 시그널.",
         "source_name": "Insight Kontan",
         "source_tier": "media",
@@ -405,11 +595,17 @@
   },
 
   "build_meta": {
-    "collectors_run": ["pdf_seabridge_2026_w19"],
-    "rows_collected": 11,
+    "collectors_run": ["pdf_seabridge_2026_w19_ocr"],
+    "rows_collected": 78,
     "rows_published_news": 5,
     "rows_published_events": 5,
-    "rows_published_indices": 2,
-    "rows_no_data_matrix": "all (per PDF p.2 'No data has been acquired yet.')"
+    "rows_published_indices": 6,
+    "rows_published_vessel_pricing": 60,
+    "rows_published_fuel_scrap": 7,
+    "rows_no_data_matrix": 1,
+    "rows_published": 88,
+    "rows_no_data": 2,
+    "rows_withheld_jump": 0,
+    "extraction_method": "PyMuPDF render @350dpi + visual chart-bar read"
   }
 }
