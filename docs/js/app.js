@@ -5834,7 +5834,9 @@ async function renderMarket() {
 
   // Cycle 15: section count chips
   const _cnt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-  _cnt("mk-cnt-overview", `${(m.overview || []).length} cards`);
+  // Cycle 39: overview[0] is rendered in the top headline banner, so the grid
+  // count below should exclude it.
+  _cnt("mk-cnt-overview", `${Math.max(0, (m.overview || []).length - 1)} more`);
   const _vp = m.domestic_vessel_pricing || {};
   let _vTot = 0, _vFil = 0;
   (_vp.markets || []).forEach(mk => (mk.categories || []).forEach(c => (c.rows || []).forEach(r => {
@@ -5913,13 +5915,13 @@ async function renderMarket() {
     }
   }
 
-  // Overview cards (이번 주 핵심 요약)
+  // Overview cards (이번 주 핵심 요약) — Cycle 39: skip overview[0] (top headline)
   const ovHost = document.getElementById("mk-overview");
   if (ovHost) {
-    const arr = m.overview || [];
+    const arr = (m.overview || []).slice(1);
     ovHost.innerHTML = arr.length
       ? arr.map(_mkOverviewCard).join("")
-      : `<div class="col-span-full text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[14px]">◌</span><span>최근 검증된 데이터가 없습니다.</span></div>`;
+      : `<div class="col-span-full text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[14px]">◌</span><span>추가 요약 없음.</span></div>`;
   }
 
   // Cycle 19: unified empty-state — dashed slate border, ◌ icon, optional hint sublabel
