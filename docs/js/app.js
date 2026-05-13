@@ -6162,24 +6162,37 @@ function _mkCategoryTable(c, unitDefault) {
       return a + tierChip;
     }).join(" · ");
   };
-  const trs = rows.map(r => `
-    <tr class="border-b border-slate-100 hover:bg-white">
-      <td class="px-2 py-1 text-[11px] font-mono text-slate-700">${_esc(r.size || "—")}</td>
-      <td class="px-2 py-1 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
-      <td class="px-2 py-1 text-[11px] text-right">${valueCell(r.value_low, r.value_high)}</td>
-      <td class="px-2 py-1 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
-      <td class="px-2 py-1 text-[10px]">${statusChip(r.status)}</td>
-    </tr>`).join("");
+  // Cycle 5: kind-color left stripe + zebra rows + stronger hover
+  const stripeMap = {
+    "TC":  "border-l-blue-500",
+    "SHB": "border-l-emerald-500",
+    "NB":  "border-l-amber-500",
+  };
+  const stripeCls = stripeMap[c.kind] || "border-l-slate-300";
+  const trs = rows.map((r, i) => {
+    const isNoData = (r.value_low == null && r.value_high == null);
+    const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50/60";
+    const dim = isNoData ? "opacity-60" : "";
+    return `
+    <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}">
+      <td class="px-2 py-1.5 text-[11px] font-mono text-slate-800 border-l-4 ${stripeCls}">${_esc(r.size || "—")}</td>
+      <td class="px-2 py-1.5 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
+      <td class="px-2 py-1.5 text-[11px] text-right tabular-nums">${valueCell(r.value_low, r.value_high)}</td>
+      <td class="px-2 py-1.5 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
+      <td class="px-2 py-1.5 text-[10px]">${statusChip(r.status)}</td>
+    </tr>`;
+  }).join("");
   return `
     <div>
       <div class="text-[11px] mb-1 flex items-center gap-1">
         ${kindChip}
         <span class="font-mono text-slate-700">${_esc(c.label || "—")}</span>
         <span class="text-[10px] text-slate-400 ml-1">${_esc(unitDefault || "")}</span>
+        <span class="text-[10px] text-slate-400 ml-auto font-mono">${rows.length} rows</span>
       </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-[11px] bg-white rounded">
-          <thead class="bg-slate-50">
+      <div class="overflow-x-auto rounded border border-slate-200">
+        <table class="min-w-full text-[11px] bg-white">
+          <thead class="bg-slate-100 sticky top-0">
             <tr class="text-left text-slate-600">
               <th class="px-2 py-1 font-semibold">Size</th>
               <th class="px-2 py-1 font-semibold">Year built</th>
