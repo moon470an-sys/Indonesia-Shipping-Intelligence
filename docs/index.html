@@ -834,21 +834,31 @@
       <!-- Cycle 14 + 18: unified info bar — freshness + tier legend + collapsible disclaimer -->
       <div class="mb-4 rounded-lg border border-slate-200 bg-white">
         <div id="mk-freshness" class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono px-3 py-2"></div>
-        <div class="px-3 py-1.5 text-[10px] text-slate-500 border-t border-slate-100 flex flex-wrap items-center gap-2">
-          <span class="uppercase tracking-wider font-semibold text-slate-400">source tier 범례</span>
-          <span class="inline-flex items-center gap-1">
-            <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">tier1·공식</span>
-            <span class="text-slate-500">정부·거래소 (Baltic, GAPKI, IDX)</span>
-          </span>
-          <span class="inline-flex items-center gap-1">
-            <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-sky-100 text-sky-800">tier2·매체</span>
-            <span class="text-slate-500">Bisnis, Kontan, CNBC</span>
-          </span>
-          <span class="inline-flex items-center gap-1">
-            <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">tier3·브로커</span>
-            <span class="text-slate-500">Allied, Sea Bridge, broker email</span>
-          </span>
-        </div>
+        <details class="border-t border-slate-100 group">
+          <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 text-[10px] text-slate-500 hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden">
+            <span class="uppercase tracking-wider font-semibold text-slate-400">source tier 범례</span>
+            <span class="inline-flex items-center gap-1">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">tier1</span>
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-sky-100 text-sky-800">tier2</span>
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">tier3</span>
+            </span>
+            <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
+          </summary>
+          <div class="px-3 py-2 text-[10px] text-slate-500 flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60">
+            <span class="inline-flex items-center gap-1">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">tier1·공식</span>
+              <span class="text-slate-500">정부·거래소 (Baltic, GAPKI, IDX)</span>
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-sky-100 text-sky-800">tier2·매체</span>
+              <span class="text-slate-500">Bisnis, Kontan, CNBC</span>
+            </span>
+            <span class="inline-flex items-center gap-1">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">tier3·브로커</span>
+              <span class="text-slate-500">Allied, Sea Bridge, broker email</span>
+            </span>
+          </div>
+        </details>
         <details class="border-t border-slate-100 group">
           <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 text-[11px] text-amber-900 bg-amber-50/60 hover:bg-amber-50 transition-colors [&::-webkit-details-marker]:hidden rounded-b-lg">
             <span class="font-semibold">⚠ Indicative prices only</span>
