@@ -6200,10 +6200,12 @@ function _mkMarketBlock(mk) {
            <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
          </div>
        </div>`;
-  // Cycle 22: chart/table view toggle (per-market) — Cycle 24: a11y role+labels
+  // Cycle 22: chart/table view toggle — Cycle 24: a11y — Cycle 26: CSV export button
   const viewToggle = (dataCount > 0) ? `
-    <div class="flex items-center justify-end gap-1 mb-2 text-[10px]" role="group" aria-label="${_esc(mk.market)} view mode">
-      <span class="text-slate-400 font-mono mr-1">view:</span>
+    <div class="flex items-center justify-end gap-1 mb-2 text-[10px] flex-wrap">
+      <button type="button" class="mk-export-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-600" aria-label="Download ${_esc(mk.market)} as CSV">⬇ CSV</button>
+      <span class="text-slate-300 mx-0.5">·</span>
+      <span class="text-slate-400 font-mono mr-1" role="group" aria-label="${_esc(mk.market)} view mode">view:</span>
       <button type="button" data-mk-view="both"  class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="true"  aria-label="Show chart and tables">🔀 Both</button>
       <button type="button" data-mk-view="chart" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show chart only">📊 Chart</button>
       <button type="button" data-mk-view="table" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show tables only">📋 Tables</button>
@@ -6368,6 +6370,53 @@ function _mkBindDetailsResize() {
     });
     btn.dataset.viewBound = "1";
   });
+  // Cycle 26: CSV export per market — reads the market payload from the chart panel
+  document.querySelectorAll("button.mk-export-btn").forEach(btn => {
+    if (btn.dataset.exportBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const det = btn.closest("details.mk-market");
+      if (!det) return;
+      const host = det.querySelector('[id^="mk-chart-"][data-market]');
+      if (!host) return;
+      let mk;
+      try { mk = JSON.parse(host.dataset.market || "{}"); } catch (_) { return; }
+      _mkDownloadCsv(mk);
+    });
+    btn.dataset.exportBound = "1";
+  });
+}
+
+// Cycle 26: build a CSV from a single market and trigger browser download.
+function _mkDownloadCsv(mk) {
+  const cell = (v) => {
+    if (v == null) return "";
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const header = ["market","kind","category_label","size","year_built","value_low","value_high","unit","status","sources"];
+  const lines = [header.join(",")];
+  (mk.categories || []).forEach(c => {
+    (c.rows || []).forEach(r => {
+      const srcs = (r.sources || []).map(s => `${s.name || ""} (${s.tier || ""})`).join("; ");
+      lines.push([
+        mk.market, c.kind, c.label,
+        r.size, r.year_built,
+        r.value_low ?? "", r.value_high ?? "",
+        mk.currency_unit, r.status,
+        srcs,
+      ].map(cell).join(","));
+    });
+  });
+  const csv = "﻿" + lines.join("\n"); // BOM so Excel reads UTF-8 correctly
+  const slug = String(mk.market || "market").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sbs-w19-${slug}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
 function _mkCategoryTable(c, unitDefault) {
