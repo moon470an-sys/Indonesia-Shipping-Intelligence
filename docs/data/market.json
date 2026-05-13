@@ -2,10 +2,60 @@
   "schema_version": 2,
   "report_week": "1st Week of May 2026 (Apr 1 ~ May 6)",
   "checked_date": "2026-05-13",
+  "last_updated": "2026-05-13",
+  "next_scheduled": "2026-05-20",
   "build_run_id": "preview-no-commit",
   "watermark": "Indicative prices only · 외부 공개 정보 큐레이션 · 투자 자문 아님",
   "review_cadence": "weekly",
   "reference_pdf": "[SBS] Weekly Marketing Report 2026.05.07.pdf",
+
+  "overview": [
+    {
+      "headline": "BDI 회복 — 2,978 → 3,034p (+1.9% W/W)",
+      "detail_ko": "Baltic Dry Index 2026-05-08 2,978 → 2026-05-11 3,034p. Capesize·Panamax 동반 회복. 인도네시아 석탄·니켈 수출 운임에 직접 영향.",
+      "source_name": "Baltic Exchange · HandyBulk",
+      "source_tier": "official",
+      "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
+      "as_of": "2026-05-11",
+      "category": "Freight"
+    },
+    {
+      "headline": "정부, 니켈·석탄 windfall tax 검토",
+      "detail_ko": "재무장관 Purbaya Yudhi Sadewa — ESDM 장관과 협의 중. 글로벌 commodity 가격 급등기 extractive 산업 초과 이익 재분배 목적. EV 배터리 산업은 인센티브로 별도 지원.",
+      "source_name": "E-paper Bisnis p.14",
+      "source_tier": "media",
+      "source_url": null,
+      "as_of": "2026-05-05",
+      "category": "Policy"
+    },
+    {
+      "headline": "El Niño 리스크 — CPO 생산 1~2M MT 감소 전망",
+      "detail_ko": "S&P Global — 인도네시아·말레이시아 극단적 El Niño 장기 가뭄. 비료가 상승이 소농 사용 제한 가중. CPO·CPO Barge 운임에 2H26 영향 가능성.",
+      "source_name": "Insight Kontan",
+      "source_tier": "media",
+      "source_url": null,
+      "as_of": "2026-05-05",
+      "category": "Commodity"
+    },
+    {
+      "headline": "EU CBAM 압박 — 100 GW 재생에너지 산업 참여 독려",
+      "detail_ko": "Kementerian Koordinator Bidang Perekonomian — 수출 시장 접근에 청정에너지 사용 필수화. 현 인도네시아 전력 60%가 석탄. Green Industrial Zone 지원 위해 100 GW 재생 capacity 확대 추진.",
+      "source_name": "CNBC Indonesia",
+      "source_tier": "media",
+      "source_url": null,
+      "as_of": "2026-04-28",
+      "category": "Policy"
+    },
+    {
+      "headline": "PT Chandra Daya Investasi Tbk — 9,000 DWT 화학 탱커 fleet 추가",
+      "detail_ko": "해운·재생에너지 동시 확장. 태양광 설비 11 MWp까지 확대. 수처리·항만 인프라 병행. 지역 물류 통합 및 장기 안정 성장 전략.",
+      "source_name": "RRI Batam",
+      "source_tier": "media",
+      "source_url": null,
+      "as_of": "2026-04-30",
+      "category": "Shipping"
+    }
+  ],
 
   "international_freight": {
     "indices": [

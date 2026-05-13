@@ -5776,7 +5776,45 @@ async function renderMarket() {
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? "—"; };
   setText("mk-checked-date", m.checked_date);
   setText("mk-cadence", m.review_cadence || "—");
+  setText("mk-last-updated", m.last_updated || "—");
+  setText("mk-next-scheduled", m.next_scheduled || "—");
   setText("mk-vp-asof", `as of ${m?.domestic_vessel_pricing?.as_of || "—"}`);
+
+  // Freshness chip strip — last vs next + days-since/until
+  const frHost = document.getElementById("mk-freshness");
+  if (frHost) {
+    const today = m.checked_date ? new Date(m.checked_date) : new Date();
+    const daysBetween = (a, b) => {
+      if (!a || !b) return null;
+      const da = new Date(a), db = new Date(b);
+      return Math.round((db - da) / (1000 * 60 * 60 * 24));
+    };
+    const dLast = m.last_updated ? daysBetween(m.last_updated, today.toISOString().slice(0,10)) : null;
+    const dNext = m.next_scheduled ? daysBetween(today.toISOString().slice(0,10), m.next_scheduled) : null;
+    const chip = (cls, text) => `<span class="px-2 py-0.5 rounded ${cls}">${_esc(text)}</span>`;
+    const items = [];
+    items.push(chip("bg-blue-100 text-blue-800", `cadence: ${m.review_cadence || "weekly"}`));
+    if (dLast != null) {
+      const cls = dLast <= 7 ? "bg-emerald-100 text-emerald-800" : (dLast <= 14 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800");
+      items.push(chip(cls, `last ${dLast}d ago`));
+    }
+    if (dNext != null) {
+      const cls = dNext >= 0 ? "bg-slate-100 text-slate-700" : "bg-rose-100 text-rose-800";
+      items.push(chip(cls, dNext >= 0 ? `next in ${dNext}d` : `overdue ${Math.abs(dNext)}d`));
+    }
+    if (m.report_week) items.push(chip("bg-slate-100 text-slate-600", m.report_week));
+    if (m.reference_pdf) items.push(chip("bg-slate-50 text-slate-500 border border-slate-200", `ref: ${m.reference_pdf}`));
+    frHost.innerHTML = items.join("");
+  }
+
+  // Overview cards (이번 주 핵심 요약)
+  const ovHost = document.getElementById("mk-overview");
+  if (ovHost) {
+    const arr = m.overview || [];
+    ovHost.innerHTML = arr.length
+      ? arr.map(_mkOverviewCard).join("")
+      : `<div class="text-[12px] text-slate-400 italic px-2 py-3 col-span-full">No recent verified data found.</div>`;
+  }
 
   const emptyMsg = (label = "No recent verified data found.") =>
     `<div class="text-[12px] text-slate-400 italic px-2 py-3">${_esc(label)}</div>`;
@@ -5789,6 +5827,7 @@ async function renderMarket() {
       vpHost.innerHTML = emptyMsg();
     } else {
       vpHost.innerHTML = vp.markets.map(mk => _mkMarketBlock(mk)).join("");
+      _renderMarketCharts();
     }
   }
 
@@ -5809,25 +5848,19 @@ async function renderMarket() {
   const idxHost = document.getElementById("mk-int-indices");
   if (idxHost) {
     const arr = intF.indices || [];
-    const visible = arr.filter(o => o.status !== "No data acquired");
-    idxHost.innerHTML = visible.length
-      ? visible.map(o => _mkIndexCardV2(o)).join("")
-      : emptyMsg();
+    idxHost.innerHTML = arr.length ? arr.map(o => _mkIndexCardV2(o)).join("") : emptyMsg();
   }
   const scrapHost = document.getElementById("mk-int-scrap");
   if (scrapHost) {
     const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry " + (o.size || "") }));
     const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker " + (o.size || "") }));
     const arr = [...dry, ...tnk];
-    const visible = arr.filter(o => o.status !== "No data acquired");
-    scrapHost.innerHTML = visible.length
-      ? visible.map(o => _mkScrapCard(o)).join("")
-      : emptyMsg("스크랩 가격 — No data acquired (PDF p.1)");
+    scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired (PDF p.1)");
   }
   const spHost = document.getElementById("mk-int-sp");
   if (spHost) {
     const arr = intF.sale_purchase_bulk || intF.sale_purchase || [];
-    const visible = arr.filter(o => o.status !== "No data acquired");
+    const visible = arr.filter(o => o.vessel_name || o.price_musd != null);
     spHost.innerHTML = visible.length
       ? visible.map(o => _mkSpCard(o)).join("")
       : emptyMsg("S&P 활동 — No data acquired (PDF p.1)");
@@ -5879,18 +5912,146 @@ async function renderMarket() {
   }
 }
 
+// tier chip — tier1 (공식) / tier2 (media) / tier3 (broker·SNS)
+function _mkTierChip(tier) {
+  const t = String(tier || "").toLowerCase();
+  const map = {
+    "tier1":    { cls: "bg-emerald-100 text-emerald-800", label: "tier1·공식" },
+    "official": { cls: "bg-emerald-100 text-emerald-800", label: "tier1·공식" },
+    "tier2":    { cls: "bg-sky-100 text-sky-800",         label: "tier2·매체" },
+    "media":    { cls: "bg-sky-100 text-sky-800",         label: "tier2·매체" },
+    "tier3":    { cls: "bg-amber-100 text-amber-800",     label: "tier3·브로커" },
+    "broker":   { cls: "bg-amber-100 text-amber-800",     label: "tier3·브로커" },
+    "sns":      { cls: "bg-amber-100 text-amber-800",     label: "tier3·SNS" },
+  };
+  const v = map[t] || { cls: "bg-slate-100 text-slate-600", label: tier || "—" };
+  return `<span class="px-1 py-0.5 text-[9px] font-mono rounded ${v.cls}">${_esc(v.label)}</span>`;
+}
+
+// Overview card — 이번 주 핵심 요약
+function _mkOverviewCard(o) {
+  const cat = o.category || "—";
+  const catCls = ({
+    "Freight":   "bg-emerald-50 text-emerald-700 border-emerald-200",
+    "Policy":    "bg-rose-50 text-rose-700 border-rose-200",
+    "Commodity": "bg-amber-50 text-amber-700 border-amber-200",
+    "Shipping":  "bg-blue-50 text-blue-700 border-blue-200",
+  })[cat] || "bg-slate-50 text-slate-700 border-slate-200";
+  const srcLink = o.source_url
+    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "src")}</a>`
+    : _esc(o.source_name || "—");
+  return `
+    <div class="border border-slate-200 rounded-lg p-3 bg-white hover:shadow-sm transition">
+      <div class="flex items-center gap-1.5 mb-1">
+        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded border ${catCls}">${_esc(cat)}</span>
+        ${_mkTierChip(o.source_tier)}
+        <span class="text-[10px] text-slate-400 ml-auto">${_esc(o.as_of || "—")}</span>
+      </div>
+      <div class="text-[12px] font-semibold text-slate-800 leading-snug mb-1">${_esc(o.headline || "—")}</div>
+      <div class="text-[11px] text-slate-600 leading-snug">${_esc(o.detail_ko || "")}</div>
+      <div class="text-[10px] text-slate-500 mt-1.5">${srcLink}</div>
+    </div>`;
+}
+
 // Market block — PDF p.2 구조: market > categories(TC/SHB/NB) > rows(size × year).
+// Plotly 차트(데이터 존재 시) + 카테고리별 테이블.
 function _mkMarketBlock(mk) {
   const cats = mk.categories || [];
   const blocks = cats.map(c => _mkCategoryTable(c, mk.currency_unit)).join("");
+  // unique chart id
+  const chartId = `mk-chart-${_slug(mk.market || "mkt")}-${Math.random().toString(36).slice(2,6)}`;
+  // count available data
+  let dataCount = 0;
+  cats.forEach(c => (c.rows || []).forEach(r => {
+    if (r.value_low != null || r.value_high != null) dataCount++;
+  }));
+  const chartPanel = (dataCount > 0)
+    ? `<div id="${chartId}" class="bg-white rounded border border-slate-200 mb-3" style="min-height:240px;" data-market='${_esc(JSON.stringify(mk))}'></div>`
+    : `<div class="bg-slate-50 border border-dashed border-slate-300 rounded p-3 mb-3 text-center text-[11px] text-slate-500">
+         <div class="font-semibold text-slate-600">차트 데이터 미수집</div>
+         <div class="mt-1">No quotes available — 모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
+       </div>`;
   return `
     <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/40">
       <div class="flex items-center gap-2 mb-2 flex-wrap">
         <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
         <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-700">${_esc(mk.currency_unit || "—")}</span>
+        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-auto">Indicative — not transactable</span>
       </div>
+      ${chartPanel}
       <div class="space-y-3">${blocks}</div>
     </div>`;
+}
+
+function _slug(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+}
+
+// After render, scan placeholders and instantiate Plotly charts.
+function _renderMarketCharts() {
+  if (typeof Plotly === "undefined") return;
+  document.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
+    if (host.dataset.rendered === "1") return;
+    let mk;
+    try { mk = JSON.parse(host.dataset.market || "{}"); } catch (e) { return; }
+    const cats = mk.categories || [];
+    const kindColor = { TC: FL_PRIMARY, SHB: "#0E9F6E", NB: "#D97706" };
+    const traces = [];
+    const xLabels = new Set();
+    cats.forEach(c => {
+      const xs = [], lows = [], highs = [], mids = [], hovers = [];
+      (c.rows || []).forEach(r => {
+        if (r.value_low == null && r.value_high == null) return;
+        const lbl = `${r.size || "—"} · ${r.year_built || "—"}`;
+        xLabels.add(lbl);
+        const lo = r.value_low != null ? Number(r.value_low) : null;
+        const hi = r.value_high != null ? Number(r.value_high) : lo;
+        const mid = (lo != null && hi != null) ? (lo + hi) / 2 : (lo ?? hi);
+        xs.push(lbl);
+        lows.push(lo); highs.push(hi); mids.push(mid);
+        hovers.push(`${_esc(c.label || c.kind)}<br>${_esc(lbl)}<br>` +
+          (lo != null && hi != null && lo !== hi ? `${lo.toLocaleString()} – ${hi.toLocaleString()}` : `${(mid ?? "—").toLocaleString?.() ?? "—"}`) +
+          ` ${_esc(mk.currency_unit || "")}`);
+      });
+      if (xs.length) {
+        traces.push({
+          x: xs, y: mids,
+          type: "bar",
+          name: c.kind || c.label,
+          marker: { color: kindColor[c.kind] || "#64748B", opacity: 0.85 },
+          error_y: {
+            type: "data",
+            symmetric: false,
+            array: highs.map((h, i) => (h != null && mids[i] != null) ? Math.max(0, h - mids[i]) : 0),
+            arrayminus: lows.map((l, i) => (l != null && mids[i] != null) ? Math.max(0, mids[i] - l) : 0),
+            color: "#64748B", thickness: 1, width: 4,
+          },
+          hovertemplate: "%{customdata}<extra></extra>",
+          customdata: hovers,
+        });
+      }
+    });
+    if (!traces.length) { host.style.display = "none"; return; }
+    const layout = {
+      font: { family: "Pretendard, system-ui, sans-serif", size: 11, color: "#334155" },
+      barmode: "group",
+      margin: { l: 50, r: 16, t: 18, b: 50 },
+      height: 240,
+      xaxis: { tickangle: -20, automargin: true, tickfont: { size: 10 } },
+      yaxis: { title: { text: mk.currency_unit || "", font: { size: 10 } }, tickfont: { size: 10 } },
+      legend: { orientation: "h", x: 0, y: 1.12, font: { size: 10 } },
+      annotations: [{
+        xref: "paper", yref: "paper", x: 0.5, y: 0.5, xanchor: "center", yanchor: "middle",
+        text: "INDICATIVE", showarrow: false,
+        font: { size: 40, color: "rgba(148,163,184,0.25)" },
+        textangle: -18,
+      }],
+      paper_bgcolor: "white",
+      plot_bgcolor: "white",
+    };
+    Plotly.newPlot(host, traces, layout, { displayModeBar: false, responsive: true });
+    host.dataset.rendered = "1";
+  });
 }
 
 function _mkCategoryTable(c, unitDefault) {
@@ -5928,9 +6089,9 @@ function _mkCategoryTable(c, unitDefault) {
       const a = s.url
         ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(s.name)}</a>`
         : `<span>${_esc(s.name)}</span>`;
-      const tierChip = s.tier ? ` <span class="text-[9px] text-slate-400">(${_esc(s.tier)})</span>` : "";
+      const tierChip = s.tier ? ` ${_mkTierChip(s.tier)}` : "";
       return a + tierChip;
-    }).join(", ");
+    }).join(" · ");
   };
   const trs = rows.map(r => `
     <tr class="border-b border-slate-100 hover:bg-white">
@@ -5965,9 +6126,15 @@ function _mkCategoryTable(c, unitDefault) {
 }
 
 function _mkFuelCard(label, o) {
+  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
+  const statusBadge = (o.status && o.status !== "verified")
+    ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded ${o.status === "No data acquired" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}">${o.status === "No data acquired" ? "no data" : _esc(o.status)}</span>`
+    : "";
   return `
     <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between gap-1">
+        <span>${_esc(label)}</span>${statusBadge}
+      </div>
       <div class="text-base font-light text-slate-800 mt-0.5">
         ${o.value != null ? Number(o.value).toLocaleString() : "<span class='text-slate-300'>—</span>"}
         <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
@@ -5975,7 +6142,7 @@ function _mkFuelCard(label, o) {
       ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
       <div class="text-[10px] text-slate-500 mt-1 leading-snug">
         ${o.as_of ? "as of " + _esc(o.as_of) : "as of —"}
-        ${o.source_url ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? " · " + _esc(o.source_name) : "")}
+        ${o.source_url ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? " · " + _esc(o.source_name) : "")}${tier}
       </div>
     </div>`;
 }
@@ -6061,25 +6228,34 @@ function _mkAssetMatrix(cls) {
 }
 
 function _mkIndexCardV2(o) {
-  const tier = o.source_tier ? `<span class="text-[9px] text-slate-400 ml-1">(${_esc(o.source_tier)})</span>` : "";
+  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
   const wow = (o.wow_pct != null) ? `<span class="ml-2 text-[10px] font-mono ${o.wow_pct > 0 ? 'text-rose-600' : o.wow_pct < 0 ? 'text-emerald-700' : 'text-slate-500'}">${o.wow_pct > 0 ? '+' : ''}${Number(o.wow_pct).toFixed(1)}% WoW</span>` : "";
+  const noData = (o.status === "No data acquired") || (o.value == null);
+  const statusBadge = noData
+    ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`
+    : (o.status === "verified" ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>` : "");
+  const valueHtml = (o.value != null)
+    ? `${Number(o.value).toLocaleString()}<span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>${wow}`
+    : `<span class="text-slate-300">—</span><span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>`;
+  const srcHtml = o.source_url
+    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "—")}</a>`
+    : `<span>${_esc(o.source_name || "—")}</span>`;
   return `
     <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(o.name)}</div>
-      <div class="text-xl font-light text-slate-800 mt-0.5">
-        ${Number(o.value).toLocaleString()}
-        <span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>
-        ${wow}
+      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between gap-1">
+        <span>${_esc(o.name)}</span>${statusBadge}
       </div>
+      <div class="text-xl font-light text-slate-800 mt-0.5">${valueHtml}</div>
+      ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
       <div class="text-[10px] text-slate-500 mt-1 leading-snug">
-        as of ${_esc(o.as_of || "—")} ·
-        <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>${tier}
+        as of ${_esc(o.as_of || "—")} · ${srcHtml}${tier}
       </div>
     </div>`;
 }
 
 function _mkScrapCard(o) {
   const label = o._label || o.region || o.size || "—";
+  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
   return `
     <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
       <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)}</div>
@@ -6091,7 +6267,7 @@ function _mkScrapCard(o) {
         as of ${_esc(o.as_of || "—")}
         ${o.source_url
           ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>`
-          : (o.source_name ? ` · ${_esc(o.source_name)}` : "")}
+          : (o.source_name ? ` · ${_esc(o.source_name)}` : "")}${tier}
       </div>
     </div>`;
 }
@@ -6113,7 +6289,7 @@ function _mkNewsCard(o, opts = {}) {
   // v2 schema는 summary_ko + source_name. v1는 summary + source. 둘 다 지원.
   const summary = o.summary_ko || o.summary || "";
   const srcName = o.source_name || o.source || "";
-  const srcTier = o.source_tier ? ` <span class="text-[9px] text-slate-400">(${_esc(o.source_tier)})</span>` : "";
+  const srcTier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
   const srcLink = o.source_url
     ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(srcName)}</a>`
     : `<span class="text-slate-700">${_esc(srcName)}</span>`;
