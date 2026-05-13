@@ -5903,7 +5903,7 @@ async function renderMarket() {
     if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
       vpHost.innerHTML = emptyMsg();
     } else {
-      vpHost.innerHTML = _mkInsightStrip(vp.markets) + vp.markets.map(mk => _mkMarketBlock(mk)).join("");
+      vpHost.innerHTML = _mkInsightStrip(vp.markets) + _mkBulkControls() + vp.markets.map(mk => _mkMarketBlock(mk)).join("");
       _renderMarketCharts();
     }
   }
@@ -6151,6 +6151,20 @@ function _mkInsightStrip(markets) {
     </div>`;
 }
 
+// Cycle 27: bulk expand/collapse + bulk view-mode controls above the markets list
+function _mkBulkControls() {
+  return `
+    <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[10px]" role="toolbar" aria-label="Bulk market controls">
+      <span class="text-slate-400 font-mono mr-1 uppercase tracking-wider">all markets:</span>
+      <button type="button" data-mk-bulk="expand"   class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="Expand every market">⤵ Expand all</button>
+      <button type="button" data-mk-bulk="collapse" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="Collapse every market">⤴ Collapse all</button>
+      <span class="text-slate-300 mx-1">·</span>
+      <button type="button" data-mk-bulk="view-both"  class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="All markets show chart and tables">🔀 Both</button>
+      <button type="button" data-mk-bulk="view-chart" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="All markets show chart only">📊 Charts</button>
+      <button type="button" data-mk-bulk="view-table" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="All markets show tables only">📋 Tables</button>
+    </div>`;
+}
+
 // Market block — PDF p.2 구조: market > categories(TC/SHB/NB) > rows(size × year).
 // Plotly 차트(데이터 존재 시) + 카테고리별 테이블.
 function _mkMarketBlock(mk) {
@@ -6369,6 +6383,39 @@ function _mkBindDetailsResize() {
       }
     });
     btn.dataset.viewBound = "1";
+  });
+  // Cycle 27: bulk controls (expand/collapse all, all-to-view-mode)
+  document.querySelectorAll("button.mk-bulk-btn").forEach(btn => {
+    if (btn.dataset.bulkBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const op = btn.dataset.mkBulk;
+      const markets = document.querySelectorAll("details.mk-market");
+      if (op === "expand") {
+        markets.forEach(d => { d.open = true; });
+        if (typeof Plotly !== "undefined") {
+          markets.forEach(d => d.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
+            if (host.dataset.rendered === "1") { try { Plotly.Plots.resize(host); } catch (_) {} }
+          }));
+        }
+      } else if (op === "collapse") {
+        markets.forEach(d => { d.open = false; });
+      } else if (op && op.startsWith("view-")) {
+        const mode = op.slice(5);
+        markets.forEach(d => {
+          d.dataset.view = mode;
+          d.querySelectorAll(".mk-view-btn").forEach(b => {
+            b.setAttribute("aria-pressed", b.dataset.mkView === mode ? "true" : "false");
+          });
+        });
+        if ((mode === "chart" || mode === "both") && typeof Plotly !== "undefined") {
+          markets.forEach(d => d.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
+            if (host.dataset.rendered === "1") { try { Plotly.Plots.resize(host); } catch (_) {} }
+          }));
+        }
+      }
+    });
+    btn.dataset.bulkBound = "1";
   });
   // Cycle 26: CSV export per market — reads the market payload from the chart panel
   document.querySelectorAll("button.mk-export-btn").forEach(btn => {
