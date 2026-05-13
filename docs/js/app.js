@@ -6231,8 +6231,8 @@ function _mkMarketBlock(mk) {
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-slate-500 text-[11px] font-mono transition-transform group-open:rotate-90 inline-block w-3">▶</span>
           <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
-          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-700">${_esc(mk.currency_unit || "—")}</span>
-          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-auto">Indicative — not transactable</span>
+          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-800">${_esc(mk.currency_unit || "—")}</span>
+          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 ml-auto inline-flex items-center gap-1"><span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>Indicative — not transactable</span>
         </div>
         <div class="flex items-center gap-1 mt-1 flex-wrap text-slate-600 pl-5">${fillChip}${kindChips}${rangeChip}</div>
       </summary>
@@ -6491,7 +6491,7 @@ function _mkCategoryTable(c, unitDefault) {
   const statusChip = (s) => {
     if (!s || s === "No data acquired") return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`;
     if (s === "verified")               return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>`;
-    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">indicative</span>`;
+    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-orange-100 text-orange-800">indicative</span>`;
     if (s === "withheld_jump")          return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-rose-100 text-rose-800">withheld</span>`;
     return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">${_esc(s)}</span>`;
   };
@@ -6616,7 +6616,7 @@ function _mkAssetMatrix(cls) {
   const statusChip = (s) => {
     if (!s || s === "No data acquired") return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`;
     if (s === "verified")               return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>`;
-    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">indicative</span>`;
+    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-orange-100 text-orange-800">indicative</span>`;
     if (s === "withheld_jump")          return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-rose-100 text-rose-800">withheld</span>`;
     return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">${_esc(s)}</span>`;
   };
@@ -6831,7 +6831,7 @@ function _mkPriceCard(o) {
     return `<span class="${cls} text-[10px] font-mono ml-1">${sign}${d.toFixed(1)}% ${_esc(o.delta_basis || "")}</span>`;
   })() : "";
   const indChip = o.indicative
-    ? '<span class="inline-block px-1 py-px text-[9px] font-mono rounded bg-amber-100 text-amber-800 ml-1">indicative</span>'
+    ? '<span class="inline-block px-1 py-px text-[9px] font-mono rounded bg-orange-100 text-orange-800 ml-1">indicative</span>'
     : "";
   return `
     <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
