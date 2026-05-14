@@ -44,7 +44,7 @@
 | 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ✅ done | 2026-05-14 | CPO 뉴스 2건 추가(수출 기준가·KPBN), overview[0] BDI 3,189 동기화 |
 | 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ✅ done | 2026-05-14 | ICEE 종료 제거, Mining Indonesia 신규, INAMARINE PDF→웹 출처 |
 | 11 | 구조 — "출처 구성 / PDF 의존도" 커버리지 지표 추가 | Phase 3 | ✅ done | 2026-05-14 | _mkSourceCoverage 미터 + build_meta 스냅샷. 현재 웹 18 / PDF 단독 81 (18%) |
-| 12 | 구조 — Market 탭에 "웹/SNS 출처 vs PDF" 범례·필터 노출 | Phase 3 | ⬜ todo | — | 기존 tier 필터 확장 |
+| 12 | 구조 — Market 탭에 "웹/SNS 출처 vs PDF" 범례·필터 노출 | Phase 3 | ✅ done | 2026-05-14 | origin 필터(웹·SNS / PDF 단독) + tier·origin AND 결합 + 통합 reset |
 
 ### Phase 4 — 유지 모드 (12번 완료 후 무한 순환)
 
@@ -174,3 +174,29 @@
   웹 백업. 나머지 81행은 아직 SBS Weekly PDF 단독 → Phase 4 유지모드의 주 타깃.
 - **검증**: `node --check` JS OK · JSON 유효 · `lint_language.py` 0건. 자산 캐시 v=20260514d.
 - **다음**: iter 12 — Market 탭 tier 필터에 web/PDF 출처 구분 노출.
+
+### iter 12 — 2026-05-14 — 구조: 웹/PDF 출처 필터 (Phase 3 완료)
+- **app.js**: `_mkCategoryTable` 의 각 `<tr>` 에 `data-origin`("web"/"pdf") 부여.
+  tier 필터를 `_mkApplyRowFilters()` 로 리팩터 — tier AND origin 결합 필터.
+  `mk-origin-filter`(웹·SNS / PDF 단독) 핸들러 + `mk-filter-reset` 통합 해제 핸들러 신규.
+- **index.html**: 면책 details 안에 source-origin 필터 줄 추가, 기존 빈 tier 버튼을
+  통합 "전체 해제"(`mk-filter-reset`)로 교체. 자산 캐시 v=20260514e.
+- **스모크 테스트**(playwright): 출처 미터·origin 버튼 2·reset 1 존재, 99행 data-origin
+  (web 18 / pdf 81), PDF 필터 클릭 시 web 18행 dim 확인, pageerror 0.
+- **검증**: `node --check` OK · `lint_language.py` 0건.
+
+---
+
+## ✅ Phase 1–3 완료 (iter 1–12) — 2026-05-14
+
+12개 iteration 을 한 세션에서 연속 완료. 요약:
+- **Phase 1 (선박가격)**: 4개 도메스틱 마켓 전부에 kapal.co.id·BSI Vessel 웹 출처 추가,
+  Web Cross-Check 마켓에 LCT 카테고리 신설.
+- **Phase 2 (지수·연료·뉴스·행사)**: domestic_fuel_scrap 전체 웹 출처화(PDF 의존 0),
+  국제 운임지수 2026-05-14 최신화, S&P "No data acquired" 해소, CPO 뉴스 심화,
+  events 갱신(ICEE 제거·Mining Indonesia 추가·INAMARINE 웹 출처화).
+- **Phase 3 (구조)**: 출처 구성 커버리지 미터 + 웹/PDF origin 필터.
+- **현재 웹 전환율**: vessel-pricing 99행 중 웹 백업 18행(18%). 나머지 81행 SBS Weekly
+  PDF 단독 — Phase 4 유지모드의 주 타깃.
+
+이후는 아래 Phase 4 유지모드로 무한 순환.

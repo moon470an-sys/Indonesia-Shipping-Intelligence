@@ -6567,7 +6567,18 @@ function _mkBindDetailsResize() {
     });
     btn.dataset.deepBound = "1";
   });
-  // Cycle 37: tier filter — dim rows whose data-tiers doesn't include the selected tier
+  // Cycle 37 + roadmap iter 12: combined row filter — source tier (tier1/2/3) AND
+  // source origin (web/pdf). A row stays bright only if it matches BOTH active
+  // filters; an empty filter matches everything.
+  const _mkApplyRowFilters = () => {
+    const tier = document.body.dataset.mkTierFilter || "";
+    const origin = document.body.dataset.mkOriginFilter || "";
+    document.querySelectorAll("details.mk-market tbody tr").forEach(tr => {
+      const tierOk = !tier || (tr.dataset.tiers || "").includes(tier);
+      const originOk = !origin || (tr.dataset.origin || "") === origin;
+      tr.style.opacity = (tierOk && originOk) ? "" : "0.35";
+    });
+  };
   document.querySelectorAll("button.mk-tier-filter").forEach(btn => {
     if (btn.dataset.tierBound === "1") return;
     btn.addEventListener("click", (ev) => {
@@ -6577,13 +6588,39 @@ function _mkBindDetailsResize() {
       document.querySelectorAll("button.mk-tier-filter").forEach(b => {
         b.setAttribute("aria-pressed", b.dataset.tierFilter && b.dataset.tierFilter === next ? "true" : "false");
       });
-      document.querySelectorAll("details.mk-market tbody tr").forEach(tr => {
-        if (!next) { tr.style.opacity = ""; return; }
-        const tiers = tr.dataset.tiers || "";
-        tr.style.opacity = tiers.includes(next) ? "" : "0.35";
-      });
+      _mkApplyRowFilters();
     });
     btn.dataset.tierBound = "1";
+  });
+  // roadmap iter 12: source-origin filter (web·SNS vs PDF-only)
+  document.querySelectorAll("button.mk-origin-filter").forEach(btn => {
+    if (btn.dataset.originBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const cur = document.body.dataset.mkOriginFilter || "";
+      const want = btn.dataset.originFilter || "";
+      const next = cur === want ? "" : want; // click active button again to clear
+      document.body.dataset.mkOriginFilter = next;
+      document.querySelectorAll("button.mk-origin-filter").forEach(b => {
+        b.setAttribute("aria-pressed", b.dataset.originFilter === next && next ? "true" : "false");
+      });
+      _mkApplyRowFilters();
+    });
+    btn.dataset.originBound = "1";
+  });
+  // roadmap iter 12: single reset clears both tier and origin filters
+  document.querySelectorAll("button.mk-filter-reset").forEach(btn => {
+    if (btn.dataset.resetBound === "1") return;
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      document.body.dataset.mkTierFilter = "";
+      document.body.dataset.mkOriginFilter = "";
+      document.querySelectorAll("button.mk-tier-filter, button.mk-origin-filter").forEach(b => {
+        b.setAttribute("aria-pressed", "false");
+      });
+      _mkApplyRowFilters();
+    });
+    btn.dataset.resetBound = "1";
   });
   // Cycle 36: row search — filters every tbody tr in every market by size + year_built text
   const searchEl = document.getElementById("mk-row-search");
@@ -6821,16 +6858,20 @@ function _mkCategoryTable(c, unitDefault) {
   const statusSigs = new Set(rows.map(r => r.status || ""));
   const uniform = rows.length > 1 && srcSigs.size === 1 && statusSigs.size === 1
                   && (rows[0].sources || []).length > 0;
+  // roadmap iter 12: classify each row's source origin — "web" if it carries any
+  // non-PDF source, else "pdf" (SBS Weekly PDF-only). Drives the origin filter.
+  const _isPdfSrc = (n) => /PDF|SBS Weekly/i.test(String(n || ""));
   const trs = rows.map((r, i) => {
     const isNoData = (r.value_low == null && r.value_high == null);
     const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50/60";
     const dim = isNoData ? "opacity-60" : "";
     const tierList = Array.from(new Set((r.sources || []).map(s => _normTier(s.tier)).filter(Boolean))).join(",");
+    const origin = (r.sources || []).some(s => !_isPdfSrc(s.name)) ? "web" : "pdf";
     const tail = uniform ? "" : `
       <td class="px-2 py-1.5 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
       <td class="px-2 py-1.5 text-[10px]">${statusChip(r.status)}</td>`;
     return `
-    <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}" data-tiers="${tierList}">
+    <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}" data-tiers="${tierList}" data-origin="${origin}">
       <td class="px-2 py-1.5 text-[11px] font-mono text-slate-800 border-l-4 ${stripeCls}">${_esc(r.size || "—")}</td>
       <td class="px-2 py-1.5 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
       <td class="px-2 py-1.5 text-[11px] text-right tabular-nums">${valueCell(r.value_low, r.value_high)}</td>

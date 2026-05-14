@@ -27,7 +27,7 @@
   <!-- Leaflet for the port-volume infographic (Demand 탭 메인 지도) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" charset="utf-8"></script>
-  <link rel="stylesheet" href="./css/site.css?v=20260514d" />
+  <link rel="stylesheet" href="./css/site.css?v=20260514e" />
 </head>
 <body class="bg-slate-50 text-slate-800">
   <a href="#tab-overview" class="skip-link">본문으로 건너뛰기</a>
@@ -857,7 +857,18 @@
               <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">tier3·브로커</span>
               <span class="text-slate-500">Allied, Sea Bridge, broker email</span>
             </button>
-            <button type="button" data-tier-filter="" class="mk-tier-filter ml-auto text-slate-500 underline-offset-2 hover:underline" aria-label="모든 tier 표시">전체 해제</button>
+          </div>
+          <div class="text-[10px] text-slate-500 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            <span class="text-slate-400 font-mono mr-1">source origin — Vessel Pricing 행을 출처 유형으로 필터:</span>
+            <button type="button" data-origin-filter="web" class="mk-origin-filter inline-flex items-center gap-1 hover:opacity-80 transition-opacity" aria-pressed="false">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">웹·SNS</span>
+              <span class="text-slate-500">kapal.co.id · BSI Vessel 등 웹 출처 보유</span>
+            </button>
+            <button type="button" data-origin-filter="pdf" class="mk-origin-filter inline-flex items-center gap-1 hover:opacity-80 transition-opacity" aria-pressed="false">
+              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-200 text-slate-700">PDF 단독</span>
+              <span class="text-slate-500">SBS Weekly PDF 출처만 — 웹 전환 대상</span>
+            </button>
+            <button type="button" data-filter-reset class="mk-filter-reset ml-auto text-slate-500 underline-offset-2 hover:underline" aria-label="모든 필터 해제">전체 해제</button>
           </div>
         </div>
       </details>
@@ -1072,6 +1083,6 @@
     </div>
   </footer>
 
-  <script src="./js/app.js?v=20260514d" type="module"></script>
+  <script src="./js/app.js?v=20260514e" type="module"></script>
 </body>
 </html>
