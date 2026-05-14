@@ -229,3 +229,12 @@
 - **Supramax 5TC** as_of 05-08 → 05-11, 일당 기준 $19,468 로 note 갱신 (value 19 유지).
 - 검증: JSON 유효 · `lint_language.py` 0건. 유지모드 첫 productive 사이클.
 - **다음**: maint 5 — 다른 stale 섹션(scrap LDT·fuel as_of) 재검증 또는 PDF 행 재시도.
+
+### maint 5 — 2026-05-14 — solar_b40_hsd stale 행 재검증 (갱신함)
+- 가장 stale 한 섹션 = solar_b40_hsd (as_of 2026-03-31). bbmindustri.com 1–14 Mei 2026 판 확인.
+- **solar_b40_hsd**: 3월 지역별 값(23,050/23,150/23,300) → 5월 최신 단일 국가값 **26,350**
+  (excl. 면세 동일 기준). solarindustri.com 5월판은 404 라 동일 basis 의 bbmindustri 채택.
+  3→1행 (bbmindustri 본 판은 지역 미분해). 4월 30,550 → 5월 26,350 변동성 기록.
+- **hfo_180_mfo**: bbmindustri 5월판에 MFO 미표기 → §3-A 에 따라 미갱신 (3월값 동결 유지).
+- 검증: JSON 유효 · `lint_language.py` 0건. build_meta fuel_scrap 9→7.
+- **다음**: maint 6 — scrap_domestic(as_of 2026-03-01) 또는 hfo_180_mfo 재검증.
