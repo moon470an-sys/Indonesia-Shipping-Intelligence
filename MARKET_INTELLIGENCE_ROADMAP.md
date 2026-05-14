@@ -42,7 +42,7 @@
 | 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ✅ done | 2026-05-14 | BDI/BCI/BPI 2026-05-14 최신값 + wow_pct 보강. BSI·5TC 는 신규 데이터 없어 동결 |
 | 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ✅ done | 2026-05-14 | S&P "No data acquired" → Capesize Bulk Joyance $33M 실거래. 스크랩 LDT는 GMS W14가 기존값 확인 |
 | 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ✅ done | 2026-05-14 | CPO 뉴스 2건 추가(수출 기준가·KPBN), overview[0] BDI 3,189 동기화 |
-| 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ⬜ todo | — | INAMARINE/ICEE/PALMEX 등 |
+| 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ✅ done | 2026-05-14 | ICEE 종료 제거, Mining Indonesia 신규, INAMARINE PDF→웹 출처 |
 | 11 | 구조 — "출처 구성 / PDF 의존도" 커버리지 지표 추가 | Phase 3 | ⬜ todo | — | meta 필드 + Vessel Pricing 섹션 소형 UI |
 | 12 | 구조 — Market 탭에 "웹/SNS 출처 vs PDF" 범례·필터 노출 | Phase 3 | ⬜ todo | — | 기존 tier 필터 확장 |
 
@@ -153,3 +153,13 @@
 - **coal/nickel**: 금주 검색분이 기존 5/4·5/5 보도와 동일 — 신규 항목 없음.
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta news 7행 동기화.
 - **다음**: iter 10 — events 일정 검증·확장.
+
+### iter 10 — 2026-05-14 — events
+- **출처**: metal.com / inamarine-exhibition.net / mining-indonesia.com, tier=verified(공식).
+- **monthly**: ICEE 2026(05-11~13) 종료 → §3-F 에 따라 제거. 현재 진행 중 행사 없음 → `[]`.
+- **upcoming**: ① Critical Minerals 웹 재확인(스트림·규모 보강) ② Indonesia Maritime
+  Trade Expo → `INAMARINE 2026` 정식 명칭, 장소 JIExpo Kemayoran, **source PDF p.5 →
+  공식 웹 교체** ③ `Mining Indonesia 2026`(09-09~12) 신규 행. 총 4행 유지(monthly -1, upcoming +1).
+- **잔여 PDF 의존**: events 에서 PALMEX 2026 만 PDF p.5 — 유지모드 재검증 대상.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과.
+- **다음**: iter 11 — 구조: PDF 의존도 커버리지 지표.

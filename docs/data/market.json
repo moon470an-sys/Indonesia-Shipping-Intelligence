@@ -645,39 +645,38 @@
   },
 
   "events": {
-    "monthly": [
-      {
-        "name": "Indonesia Coal & Energy Expo (ICEE 2026)",
-        "date": "2026-05-11 ~ 2026-05-13",
-        "location": "JIEXPO Jakarta",
-        "category": "Coal / Energy / Mining",
-        "note": "지난주(W20) 종료. Open-pit & underground mining technology, coal processing, green mine development, new energy.",
-        "source_name": "ICEE 2026 (iceeind.com)",
-        "source_url": "https://www.iceeind.com/",
-        "checked_date": "2026-05-14",
-        "status": "verified"
-      }
-    ],
+    "monthly": [],
     "upcoming": [
       {
         "name": "Indonesia Critical Minerals Conference & Expo 2026",
         "date": "2026-06-03 ~ 2026-06-05",
         "location": "Pullman Jakarta Central Park",
         "category": "Mining / Nickel / Energy",
-        "note": "석탄·에너지 전환 세션 6월 4~5일, 니켈·코발트·알루미늄 포럼 병행.",
+        "note": "Main Forum + 니켈·코발트 / 알루미늄·보크사이트 / 주석 / 석탄·에너지 전환 스트림. 3,500+ 참가·60+ 전시. 2026-W20 roadmap iter 10 웹 재확인.",
         "source_name": "Indonesia Critical Minerals Conference & Expo 2026 (metal.com)",
         "source_url": "https://indonesia-critical-minerals.metal.com/",
         "checked_date": "2026-05-14",
         "status": "verified"
       },
       {
-        "name": "Indonesia Maritime Trade Expo",
+        "name": "INAMARINE 2026 (Indonesia Maritime Trade Expo)",
         "date": "2026-07-28 ~ 2026-07-30",
-        "location": "JIEXPO Jakarta",
+        "location": "JIExpo Kemayoran, Jakarta",
         "category": "Marine / Maritime",
-        "note": "Indonesia's largest trade show for Maritime & Offshore Industries. 08:00 ~ 17:00",
-        "source_name": "PDF p.5",
+        "note": "인도네시아 최대 해양·해운·조선·항만·offshore 전시. Indonesia Boat Show·INAWELDING·INACOATING·HSE Indonesia 공동 개최. 2026-W20 roadmap iter 10 — PDF p.5 출처를 공식 웹으로 교체.",
+        "source_name": "INAMARINE 2026 (inamarine-exhibition.net)",
         "source_url": "https://inamarine-exhibition.net/",
+        "checked_date": "2026-05-14",
+        "status": "verified"
+      },
+      {
+        "name": "Mining Indonesia 2026",
+        "date": "2026-09-09 ~ 2026-09-12",
+        "location": "JIExpo Kemayoran, Jakarta",
+        "category": "Mining / Coal / Energy",
+        "note": "24회째 인도네시아 최대 광업 전시회. 2026-W20 roadmap iter 10 신규 행 (웹 검색).",
+        "source_name": "Mining Indonesia 2026 (mining-indonesia.com)",
+        "source_url": "https://www.mining-indonesia.com/",
         "checked_date": "2026-05-14",
         "status": "verified"
       },
@@ -686,7 +685,7 @@
         "date": "2026-10-06 ~ 2026-10-08",
         "location": "Santika Premiere Dyandra Hotel & Convention, Medan",
         "category": "Palm Oil / CPO",
-        "note": "Palm oil processing technology, plantation equipment, sustainability solutions. 10:00 ~ 17:00",
+        "note": "Palm oil processing technology, plantation equipment, sustainability solutions. 10:00 ~ 17:00. 출처 PDF p.5 — 유지모드에서 웹 재검증 예정.",
         "source_name": "PDF p.5",
         "source_url": null,
         "checked_date": "2026-05-14",
