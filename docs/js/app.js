@@ -5940,7 +5940,7 @@ async function renderMarket() {
     if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
       vpHost.innerHTML = emptyMsg();
     } else {
-      vpHost.innerHTML = _mkInsightStrip(vp.markets, m.checked_date) + _mkBulkControls() + vp.markets.map(mk => _mkMarketBlock(mk)).join("");
+      vpHost.innerHTML = _mkInsightStrip(vp.markets, m.checked_date) + _mkBulkControls() + vp.markets.map((mk, i) => _mkMarketBlock(mk, i === 0)).join("");
       _renderMarketCharts();
     }
   }
@@ -6276,7 +6276,7 @@ function _mkBulkControls() {
 
 // Market block — PDF p.2 구조: market > categories(TC/SHB/NB) > rows(size × year).
 // Plotly 차트(데이터 존재 시) + 카테고리별 테이블.
-function _mkMarketBlock(mk) {
+function _mkMarketBlock(mk, isOpen = true) {
   const cats = mk.categories || [];
   const blocks = cats.map(c => _mkCategoryTable(c, mk.currency_unit)).join("");
   // unique chart id
@@ -6335,7 +6335,7 @@ function _mkMarketBlock(mk) {
     </div>` : "";
   // Cycle 9: wrap in <details open> so users can collapse individual markets
   return `
-    <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden" open data-view="both">
+    <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden"${isOpen ? " open" : ""} data-view="both">
       <summary class="cursor-pointer list-none p-3.5 select-none">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-slate-500 text-[11px] font-mono transition-transform group-open:rotate-90 inline-block w-3">▶</span>
@@ -6772,20 +6772,42 @@ function _mkCategoryTable(c, unitDefault) {
     if (s === "tier3" || s === "broker" || s === "sns") return "tier3";
     return "";
   };
+  // Cycle 42: collapse uniform Sources/Status. Almost every category repeats the
+  // exact same single source + status on every row ("SBS Weekly W19 p.1 · tier3 ·
+  // indicative" × 30 rows). When uniform, lift them into a single header line and
+  // drop the two columns so the table is just numbers — the main de-clutter win.
+  const _srcSig = (srcs) => (srcs || []).map(s => `${s.name || ""}|${s.tier || ""}|${s.url || ""}`).join("∥");
+  const srcSigs = new Set(rows.map(r => _srcSig(r.sources)));
+  const statusSigs = new Set(rows.map(r => r.status || ""));
+  const uniform = rows.length > 1 && srcSigs.size === 1 && statusSigs.size === 1
+                  && (rows[0].sources || []).length > 0;
   const trs = rows.map((r, i) => {
     const isNoData = (r.value_low == null && r.value_high == null);
     const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50/60";
     const dim = isNoData ? "opacity-60" : "";
     const tierList = Array.from(new Set((r.sources || []).map(s => _normTier(s.tier)).filter(Boolean))).join(",");
+    const tail = uniform ? "" : `
+      <td class="px-2 py-1.5 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
+      <td class="px-2 py-1.5 text-[10px]">${statusChip(r.status)}</td>`;
     return `
     <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}" data-tiers="${tierList}">
       <td class="px-2 py-1.5 text-[11px] font-mono text-slate-800 border-l-4 ${stripeCls}">${_esc(r.size || "—")}</td>
       <td class="px-2 py-1.5 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
       <td class="px-2 py-1.5 text-[11px] text-right tabular-nums">${valueCell(r.value_low, r.value_high)}</td>
-      <td class="px-2 py-1.5 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
-      <td class="px-2 py-1.5 text-[10px]">${statusChip(r.status)}</td>
+      ${tail}
     </tr>`;
   }).join("");
+  const headTail = uniform ? "" : `
+              <th class="px-2 py-1 font-semibold">Sources</th>
+              <th class="px-2 py-1 font-semibold">Status</th>`;
+  // Shared source/status meta line — only rendered in uniform mode
+  const metaLine = uniform ? `
+      <div class="text-[10px] text-slate-400 mb-1.5 pl-0.5 flex items-center gap-1.5 flex-wrap">
+        <span class="uppercase tracking-wider">출처</span>
+        <span class="text-slate-500">${srcCell(rows[0].sources)}</span>
+        <span class="text-slate-300">·</span>
+        ${statusChip(rows[0].status)}
+      </div>` : "";
   return `
     <div class="mk-cat" data-kind="${_esc(c.kind || "")}">
       <div class="text-[11px] mb-1 flex items-center gap-1">
@@ -6794,15 +6816,14 @@ function _mkCategoryTable(c, unitDefault) {
         <span class="text-[10px] text-slate-400 ml-1">${_esc(unitDefault || "")}</span>
         <span class="text-[10px] text-slate-400 ml-auto font-mono">${rows.length} rows</span>
       </div>
+      ${metaLine}
       <div class="overflow-x-auto rounded border border-slate-200">
         <table class="min-w-full text-[11px] bg-white">
           <thead class="bg-slate-100 sticky top-0">
             <tr class="text-left text-slate-600">
               <th class="px-2 py-1 font-semibold">Size</th>
               <th class="px-2 py-1 font-semibold">Year built</th>
-              <th class="px-2 py-1 font-semibold text-right">Range</th>
-              <th class="px-2 py-1 font-semibold">Sources</th>
-              <th class="px-2 py-1 font-semibold">Status</th>
+              <th class="px-2 py-1 font-semibold text-right">Range</th>${headTail}
             </tr>
           </thead>
           <tbody>${trs}</tbody>
