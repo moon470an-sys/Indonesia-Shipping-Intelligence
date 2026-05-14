@@ -235,11 +235,18 @@
               { "size": "330ft", "year_built": "various", "value_low": 35000, "value_high": 59000,
                 "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
               { "size": "300ft", "year_built": "various", "value_low": 26000, "value_high": 35000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+                "sources": [
+                  { "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null },
+                  { "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }
+                ], "status": "indicative",
+                "note": "kapal.co.id 매물 호가 2-source 보강: 2006/2000 set 26,000 ~ 2016·2017 set 45,000 (millions IDR). SBS 상단(35,000)과 웹 상단(45,000) 15% 초과 차이로 status indicative 유지." },
               { "size": "300ft (green)", "year_built": "various", "value_low": 24500, "value_high": 29500,
                 "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
               { "size": "270ft", "year_built": "various", "value_low": 11500, "value_high": 13000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" }
+                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "230ft (set)", "year_built": "various", "value_low": 14000, "value_high": 20000,
+                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
+                "status": "indicative", "note": "웹 매물 호가: 2009/2001 set 14,000 · 2010/2011 set 20,000 (millions IDR). 웹 단독 출처 — 2026-W20 roadmap iter 1 신규 행." }
             ]
           }
         ]
@@ -442,15 +449,21 @@
             "label": "Tug & Barge TC — Web Listing (kapal.co.id)",
             "kind": "TC",
             "rows": [
-              { "size": "270ft", "year_built": "various", "value_low": 655, "value_high": 655,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가" },
-              { "size": "300ft", "year_built": "various", "value_low": 825, "value_high": 825,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~8,000톤" },
-              { "size": "330ft", "year_built": "various", "value_low": 925, "value_high": 925,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가 (TB+barge)" }
+              { "size": "180ft", "year_built": "various", "value_low": 215, "value_high": 235,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~5,000톤. 2026-W20 roadmap iter 1 신규 행." },
+              { "size": "230ft", "year_built": "various", "value_low": 420, "value_high": 420,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가. 2026-W20 roadmap iter 1 신규 행." },
+              { "size": "270ft", "year_built": "various", "value_low": 655, "value_high": 670,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~8,000톤. iter 1 에서 출처 페이지 재판독으로 655–670 range 반영." },
+              { "size": "300ft", "year_built": "various", "value_low": 770, "value_high": 900,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 10,000~12,000톤. iter 1 재판독으로 770–900 range 반영." },
+              { "size": "330ft", "year_built": "various", "value_low": 965, "value_high": 965,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가 — ocean-going barge. iter 1 재판독으로 925→965 갱신." }
             ]
           }
         ]
@@ -618,17 +631,18 @@
   },
 
   "build_meta": {
-    "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20"],
-    "rows_collected": 92,
+    "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
+    "rows_collected": 112,
     "rows_published_news": 5,
     "rows_published_events": 4,
     "rows_published_indices": 7,
-    "rows_published_vessel_pricing": 63,
+    "rows_published_vessel_pricing": 88,
     "rows_published_fuel_scrap": 8,
     "rows_no_data_matrix": 1,
-    "rows_published": 94,
+    "rows_published": 112,
     "rows_no_data": 2,
     "rows_withheld_jump": 0,
-    "extraction_method": "PyMuPDF render @350dpi (vessel-pricing base) + web search & Indonesian local source curation (indices, fuel/CPO, scrap, news, events, web cross-check)"
+    "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
+    "extraction_method": "PyMuPDF render @350dpi (vessel-pricing base) + web search & Indonesian local source curation (indices, fuel/CPO, scrap, news, events, web cross-check) + roadmap iter web/SNS source enrichment"
   }
 }
