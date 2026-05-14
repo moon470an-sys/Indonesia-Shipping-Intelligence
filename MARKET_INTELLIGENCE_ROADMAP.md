@@ -41,7 +41,7 @@
 | 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ✅ done | 2026-05-14 | digitaleksplorasi.com 이 PDF Kelas A/B/C 값 정확히 확인 → 웹 출처로 교체 |
 | 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ✅ done | 2026-05-14 | BDI/BCI/BPI 2026-05-14 최신값 + wow_pct 보강. BSI·5TC 는 신규 데이터 없어 동결 |
 | 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ✅ done | 2026-05-14 | S&P "No data acquired" → Capesize Bulk Joyance $33M 실거래. 스크랩 LDT는 GMS W14가 기존값 확인 |
-| 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ⬜ todo | — | coal/nickel/cpo/power/shipping |
+| 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ✅ done | 2026-05-14 | CPO 뉴스 2건 추가(수출 기준가·KPBN), overview[0] BDI 3,189 동기화 |
 | 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ⬜ todo | — | INAMARINE/ICEE/PALMEX 등 |
 | 11 | 구조 — "출처 구성 / PDF 의존도" 커버리지 지표 추가 | Phase 3 | ⬜ todo | — | meta 필드 + Vessel Pricing 섹션 소형 UI |
 | 12 | 구조 — Market 탭에 "웹/SNS 출처 vs PDF" 범례·필터 노출 | Phase 3 | ⬜ todo | — | 기존 tier 필터 확장 |
@@ -142,3 +142,14 @@
   480/455/470 은 스키마에 카테고리 없어 미반영.) source_url 보강은 유지모드 과제로 이월.
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과.
 - **다음**: iter 9 — commodity_news + overview 심화.
+
+### iter 9 — 2026-05-14 — commodity_news + overview
+- **출처**: Palm Oil Magazine (palmoilmagazine.com), tier=media.
+- **commodity_news.cpo**: 2건 추가 — ① 5월 CPO 수출 기준가 USD 1,049.58/MT·수출세 USD 178
+  (2026-05-01) ② KPBN Franco Dumai 15,325 IDR/kg, 3거래일 약세 후 반등 + 바이오디젤 HIP
+  14,917 IDR/L (2026-05-12). news 5→7행.
+- **overview[0]**: 헤드라인 배너 BDI 값을 iter 7 과 동기화 — 2,978(5/8) → 3,189(5/14),
+  Capesize 5,340·Panamax 2,454, 출처 Trading Economics 로 정합.
+- **coal/nickel**: 금주 검색분이 기존 5/4·5/5 보도와 동일 — 신규 항목 없음.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta news 7행 동기화.
+- **다음**: iter 10 — events 일정 검증·확장.

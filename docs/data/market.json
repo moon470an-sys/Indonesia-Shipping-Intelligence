@@ -11,12 +11,12 @@
 
   "overview": [
     {
-      "headline": "BDI 2,978p (5월 8일) — Capesize 4,955p, Panamax 다년 최고치 부근",
-      "detail_ko": "Baltic Dry Index 2,978 (2026-05-08). Capesize 4,955p·평균 일당 $41,438, Panamax 2,233p·$20,099, Supramax 1,522p·$19,240. 5월 7일 BDI 3,001p로 2024년 3월 이후 최고치 기록 후 소폭 조정. 인니 석탄·니켈 수출 운임 강세 흐름 지속.",
-      "source_name": "HandyBulk — Baltic Dry Index",
+      "headline": "BDI 3,189p (5월 14일) — 2023년 11월 이후 최고, Capesize 5,340p",
+      "detail_ko": "Baltic Dry Index 5월 14일 3,189p 로 2023년 11월 이후 최고치. Capesize Index 5,340p(일간 +5.1%), Panamax Index 2,454p(일간 +4.0%). 5월 9일 3,034p 에서 상승 지속 — 전 선형에 걸친 수요 강세. 인니 석탄·니켈 수출 운임 강세 흐름과 맞물림. 2026-W20 roadmap iter 9 갱신.",
+      "source_name": "Trading Economics / Baltic Exchange — Dry Index",
       "source_tier": "media",
-      "source_url": "https://www.handybulk.com/baltic-dry-index/",
-      "as_of": "2026-05-08",
+      "source_url": "https://tradingeconomics.com/commodity/baltic",
+      "as_of": "2026-05-14",
       "category": "Freight"
     },
     {
@@ -600,6 +600,24 @@
         "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
         "published_date": "2026-05-12",
         "status": "verified"
+      },
+      {
+        "title": "5월 CPO 수출 기준가 USD 1,049.58/MT — 수출세 USD 178 설정",
+        "summary_ko": "인도네시아 정부가 2026년 5월 1~31일 적용 CPO 수출 기준가(Harga Referensi)를 USD 1,049.58/MT 로 설정, 수출세(Bea Keluar)는 USD 178 로 책정. 기준가 인상에 따라 수출 부담금·세금이 함께 조정 — CPO 수출 물류·운임 비용 구조에 직접 영향.",
+        "source_name": "Palm Oil Magazine",
+        "source_tier": "media",
+        "source_url": "https://www.palmoilmagazine.com/cpo-price/2026/05/01/indonesia-raises-may-2026-cpo-reference-price-to-usd-1049-58-mt-export-duty-set-at-usd-178/",
+        "published_date": "2026-05-01",
+        "status": "verified"
+      },
+      {
+        "title": "KPBN Franco Dumai CPO 15,325 IDR/kg (5월 11일) — 3거래일 약세 후 반등",
+        "summary_ko": "KPBN(Kharisma Pemasaran Bersama Nusantara) Franco Dumai CPO 가격이 5월 11일 15,325 IDR/kg 으로, 5월 8일 최고 입찰가 15,222 IDR/kg 대비 +103 IDR/kg(약 +0.68%) 상승. Bursa Malaysia 선물도 3거래일 연속 약세를 끊고 반등 — 대두유·국제 유가 강세가 식물성 유지 전반의 심리를 개선. 별도로 ESDM 은 5월 바이오디젤 시장지수가격(HIP)을 14,917 IDR/liter 로 설정.",
+        "source_name": "Palm Oil Magazine",
+        "source_tier": "media",
+        "source_url": "https://www.palmoilmagazine.com/cpo-price/2026/05/12/kpbn-cpo-prices-climb-to-idr-15325-kg-malaysian-palm-oil-market-rebounds/",
+        "published_date": "2026-05-12",
+        "status": "verified"
       }
     ],
     "power": [
@@ -679,14 +697,14 @@
 
   "build_meta": {
     "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
-    "rows_collected": 124,
-    "rows_published_news": 5,
+    "rows_collected": 126,
+    "rows_published_news": 7,
     "rows_published_events": 4,
     "rows_published_indices": 7,
     "rows_published_vessel_pricing": 99,
     "rows_published_fuel_scrap": 9,
     "rows_no_data_matrix": 1,
-    "rows_published": 124,
+    "rows_published": 126,
     "rows_no_data": 1,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
