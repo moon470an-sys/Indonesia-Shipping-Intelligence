@@ -480,6 +480,30 @@
                 "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
                 "status": "indicative", "note": "월 time charter 호가 — ocean-going barge. iter 1 재판독으로 925→965 갱신." }
             ]
+          },
+          {
+            "label": "LCT TC — Web Listing (kapal.co.id)",
+            "kind": "TC",
+            "rows": [
+              { "size": "LCT 500 DWT", "year_built": "various", "value_low": 80, "value_high": 100,
+                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~350톤. 2026-W20 roadmap iter 4 신규. PDF LCT TC 행과 단위·선급 기준이 달라 직접 비교 불가." },
+              { "size": "LCT 1000 DWT", "year_built": "various", "value_low": 120, "value_high": 150,
+                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~500톤." },
+              { "size": "LCT 1200 DWT", "year_built": "various", "value_low": 160, "value_high": 180,
+                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~700톤." },
+              { "size": "LCT 1500 DWT", "year_built": "various", "value_low": 200, "value_high": 230,
+                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~800톤." },
+              { "size": "LCT 1700 DWT", "year_built": "various", "value_low": 250, "value_high": 280,
+                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~1,100톤." },
+              { "size": "LCT 2000 DWT", "year_built": "various", "value_low": 300, "value_high": 350,
+                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~1,300톤." }
+            ]
           }
         ]
       }
@@ -647,14 +671,14 @@
 
   "build_meta": {
     "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
-    "rows_collected": 117,
+    "rows_collected": 123,
     "rows_published_news": 5,
     "rows_published_events": 4,
     "rows_published_indices": 7,
-    "rows_published_vessel_pricing": 93,
+    "rows_published_vessel_pricing": 99,
     "rows_published_fuel_scrap": 8,
     "rows_no_data_matrix": 1,
-    "rows_published": 117,
+    "rows_published": 123,
     "rows_no_data": 2,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",

@@ -36,7 +36,7 @@
 | 1 | `domestic_vessel_pricing` — Tug & Barge (Domestic Coal/General) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물·용선 페이지로 SHB 300ft 2-source 보강 + 230ft·180ft 행 추가, 웹 cross-check 5행 재판독 |
 | 2 | `domestic_vessel_pricing` — CPO Market (Tug & Oil Barge / SPOB) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | BSI Vessel SPOB 매물 2행 추가. SPOB/oil barge 매물 多이나 가격 미표기 — 추가 검색 필요 |
 | 3 | `domestic_vessel_pricing` — Oil Tanker (Domestic) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물 3행 추가 (376KL·500KL·3200DWT). TC 호가는 너무 broad — 미반영 |
-| 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ⬜ todo | — | "jual/charter LCT" |
+| 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id LCT 용선료 6행 → Web Cross-Check 마켓에 신규 카테고리. PDF LCT TC 와 큰 격차 발견 |
 | 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ⬜ todo | — | Pertamina Patra Niaga 산업용 고시가 |
 | 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ⬜ todo | — | 인니 고철 시세 보도 |
 | 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ⬜ todo | — | 이미 웹 기반, 깊이 보강 |
@@ -88,3 +88,14 @@
   뿐 — size 별 분해 불가, §2 추정 금지로 미입력. NB Oil Tanker 는 여전히 No data acquired.
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 93 행 동기화.
 - **다음**: iter 4 — LCT (Landing Craft Tank).
+
+### iter 4 — 2026-05-14 — LCT (Landing Craft Tank)
+- **출처**: kapal.co.id "Sewa Kapal LCT Indonesia" (2025-03-10), tier=media.
+- **Domestic Charter Rates — Web Cross-Check** 마켓에 신규 카테고리
+  `LCT TC — Web Listing (kapal.co.id)` 추가 — LCT 500~2000 DWT 6행 (월 80~350 millions IDR).
+- **⚠ 발견**: PDF `LCT — Time Charter` 행(smaller 1,100 / larger 1,200)과 웹 호가
+  (80~350)가 10배 이상 격차. 단위·선급 기준 차이 의심 — **iter 11/유지모드에서 PDF
+  LCT TC 행의 단위 정합성 재검증 필요**. §3-C 에 따라 PDF 행은 미변경.
+- **미확보**: LCT 매물(SHB) 가격 — indonetwork/OLX 매물 多이나 가격 미표기.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 99 행 동기화.
+- **다음**: iter 5 — domestic_fuel_scrap (solar B40 / HFO 180).
