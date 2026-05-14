@@ -69,20 +69,32 @@ python -m backend.scheduler   # 매월 1일 03:00 KST
 
 ## Market 탭 — 주간 시장 인텔리전스 갱신
 
-📊 Market 탭은 backend 파이프라인과 별도로 운영되는 **수동 큐레이션 데이터** 입니다.
+📊 Market 탭은 backend 파이프라인과 별도로 운영되는 **큐레이션 데이터** 입니다.
 출처를 검증할 수 있는 외부 공개 정보만 입력합니다.
 
 **데이터 파일**: `docs/data/market.json`
 
-### 갱신 절차 (권장: 주 1회)
+### 웹 검색 기반 자동 갱신 (주 1회)
 
-1. `docs/data/market.json` 직접 편집
-2. `checked_date` 를 오늘 날짜로 업데이트
-3. 각 섹션 (`overview`, `freight_indices`, `commodity_prices`, `freight_rates_indicative`, `commodity_news`, `shipping_news`, `events`) 의 항목 추가/교체
-4. 모든 항목에 **반드시** `source`, `source_url`, `published_date` (이벤트는 `checked_date`) 포함
-5. 검증 안 된 수치는 `"indicative": true` 로 표시
-6. `python scripts/lint_language.py` 통과 확인 (가치 판단 표현 금지)
-7. `git commit -m "Market <date> 갱신"` + `git push` → GitHub Pages 자동 배포
+가격·지수·뉴스 필드는 **예약된 Claude 에이전트**가 매주 웹 검색 + 인도네시아 로컬
+SNS 큐레이션으로 자동 갱신하고 commit/push 합니다. GitHub Pages 가 자동 배포합니다.
+
+- **절차서**: [`MARKET_REFRESH_PLAYBOOK.md`](MARKET_REFRESH_PLAYBOOK.md) — 자동
+  에이전트와 수동 실행이 공통으로 따르는 단일 SOP
+- **수동 실행**: Claude Code 에서 `/market-refresh` (절차서를 그대로 수행)
+- **스케줄 변경**: `/schedule` skill 로 루틴 cadence/시각 수정
+- 도메스틱 선박 가격표(`domestic_vessel_pricing`)는 공개 표가 없으므로 Facebook
+  Marketplace·LinkedIn·OLX·로컬 브로커 게시물에서 매물/용선 사례를 검색해 보강하며,
+  근거 못 찾은 행은 추정 없이 그대로 둡니다.
+
+### 수동 직접 편집 (예외 시)
+
+1. `docs/data/market.json` 직접 편집 — 스키마는 `MARKET_REFRESH_PLAYBOOK.md` §4 참조
+2. `checked_date`·`last_updated`·`next_scheduled`·`report_week` 갱신
+3. 모든 항목에 **반드시** 출처(`source_name`/`sources[]`)·URL·날짜 포함
+4. 검증 안 된 수치는 `"status": "indicative"` 로 표시
+5. `python scripts/lint_language.py` 통과 확인 (가치 판단 표현 금지)
+6. `git commit -m "Market <date> 갱신"` + `git push` → GitHub Pages 자동 배포
 
 ### 권장 출처
 

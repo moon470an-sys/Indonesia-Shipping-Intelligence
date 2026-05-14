@@ -1,41 +1,59 @@
 {
   "schema_version": 3,
-  "report_week": "1st Week of May 2026 (Apr 1 ~ May 6)",
-  "checked_date": "2026-05-13",
-  "last_updated": "2026-05-13",
-  "next_scheduled": "2026-05-20",
-  "build_run_id": "seed-2026w19-pdf-ocr",
+  "report_week": "2nd Week of May 2026 (May 7 ~ May 13)",
+  "checked_date": "2026-05-14",
+  "last_updated": "2026-05-14",
+  "next_scheduled": "2026-05-21",
+  "build_run_id": "web-2026w20-auto",
   "watermark": "Indicative prices only · 외부 공개 정보 큐레이션 · 투자 자문 아님",
   "review_cadence": "weekly",
   "reference_pdf": "[SBS] Weekly Marketing Report 2026.05.07.pdf",
 
   "overview": [
     {
-      "headline": "BDI +34.5% M/M — 2,730p, BCI +47.1% M/M — 4,447p (5월 1일)",
-      "detail_ko": "Baltic Dry Index 2,730 (May 1, 2026) — 1m +34.48%, 3m +28.53%, 6m +40.36%. Baltic Capesize 4,447 — 1m +47.11%, 3m +29.50%, 6m +53.98%. 인니 석탄·니켈 수출 운임의 인상 사이클 진입 신호.",
-      "source_name": "BDI/BCI via email (PDF p.1)",
-      "source_tier": "official",
-      "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
-      "as_of": "2026-05-01",
+      "headline": "BDI 2,978p (5월 8일) — Capesize 4,955p, Panamax 다년 최고치 부근",
+      "detail_ko": "Baltic Dry Index 2,978 (2026-05-08). Capesize 4,955p·평균 일당 $41,438, Panamax 2,233p·$20,099, Supramax 1,522p·$19,240. 5월 7일 BDI 3,001p로 2024년 3월 이후 최고치 기록 후 소폭 조정. 인니 석탄·니켈 수출 운임 강세 흐름 지속.",
+      "source_name": "HandyBulk — Baltic Dry Index",
+      "source_tier": "media",
+      "source_url": "https://www.handybulk.com/baltic-dry-index/",
+      "as_of": "2026-05-08",
       "category": "Freight"
     },
     {
-      "headline": "GAPKI CPO Price Index — IDR 15,400/kg, 16개월 최고치 근접",
-      "detail_ko": "GAPKI 일별 지수 5월 첫째 주 ~ IDR 15,400/kg. 2025-03 직전 피크 ~16,000 IDR/kg 근접. El Niño 가뭄 시나리오 + 1Q26 생산 감소 우려가 가격 지지.",
-      "source_name": "GAPKI (PDF p.2)",
+      "headline": "정부, 석탄 수출세 1~5% + windfall tax 도입 추진",
+      "detail_ko": "재무장관 Purbaya Yudhi Sadewa (5월 4일 발표) — 석탄 수출세 1~5%, 석탄·니켈 windfall tax 검토. 보조금 부담 상쇄·국가 수입 확대 목적. 석탄 수출세만으로 2026년 최대 IDR 20조(약 USD 12억) 추가 세수 전망. 석탄 종류별 차등 세율 가능성.",
+      "source_name": "Jakarta Globe / ANTARA News",
+      "source_tier": "media",
+      "source_url": "https://jakartaglobe.id/business/indonesia-coal-export-tax-coming-in-2026-profit-impact-small-minister-says",
+      "as_of": "2026-05-04",
+      "category": "Policy"
+    },
+    {
+      "headline": "GAPKI CPO 지수 — ICDX 15,610 IDR/kg (5월 12일), 5월 들어 완만한 조정",
+      "detail_ko": "GAPKI 일별 종가 — ICDX CPO 5월 12일 15,610 IDR/kg, KPB Nusantara 인도가 15,150 IDR/kg. 5월 6일 16,355 → 12일 15,610으로 첫 2주간 하락 흐름. 직전 16개월 피크(2026-03 ~16,000) 대비 조정 국면.",
+      "source_name": "GAPKI — Commodity Price Position",
       "source_tier": "official",
-      "source_url": "https://gapki.id/",
-      "as_of": "2026-05-01",
+      "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
+      "as_of": "2026-05-12",
       "category": "Commodity"
     },
     {
-      "headline": "정부, 니켈·석탄 windfall tax 검토",
-      "detail_ko": "재무장관 Purbaya Yudhi Sadewa — ESDM 장관과 협의 중. 글로벌 commodity 가격 급등기 extractive 산업 초과 이익 재분배 목적. EV 배터리 산업은 인센티브로 별도 지원.",
-      "source_name": "E-paper Bisnis p.14",
+      "headline": "니켈 — 2026 RKAB 채굴 쿼터 250M톤, 전년 대비 -34%",
+      "detail_ko": "2026년 니켈 광석 채굴 쿼터(RKAB) 250M톤으로 2025년 379M톤 대비 34% 이상 감소. 니켈 광석 기준가격 산정식 개편 병행. SunSirs — 쿼터 축소 + 세제 조정 시 니켈 가격 140,000~150,000 RMB/톤 구간 전망.",
+      "source_name": "SunSirs",
       "source_tier": "media",
-      "source_url": null,
+      "source_url": "https://www.sunsirs.com/uk/detail_news-29519.html",
       "as_of": "2026-05-05",
-      "category": "Policy"
+      "category": "Commodity"
+    },
+    {
+      "headline": "Pertamina International Shipping (PIS) — IPO 추진, 최소 10% 지분 공개 계획",
+      "detail_ko": "PIS 기업공개(IPO) 계획 — 최소 10% 지분 공개 방침. PIS 보유 탱커 102척, 2034년까지 선대 500척 확대 목표. 최근 VLGC 2척 인도 등 가스선 중심 확장 지속.",
+      "source_name": "Indonesia Business Post",
+      "source_tier": "media",
+      "source_url": "https://indonesiabusinesspost.com/2026/business-and-investment/pertamina-international-shipping-plans-ipo-set-to-release-minimum-10-of-shares",
+      "as_of": "2026-05-08",
+      "category": "Shipping"
     },
     {
       "headline": "El Niño 리스크 — CPO 생산 1~2M MT 감소 전망",
@@ -45,85 +63,74 @@
       "source_url": null,
       "as_of": "2026-05-05",
       "category": "Commodity"
-    },
-    {
-      "headline": "EU CBAM 압박 — 100 GW 재생에너지 산업 참여 독려",
-      "detail_ko": "Kementerian Koordinator Bidang Perekonomian — 수출 시장 접근에 청정에너지 사용 필수화. 현 인도네시아 전력 60%가 석탄. Green Industrial Zone 지원 위해 100 GW 재생 capacity 확대 추진.",
-      "source_name": "CNBC Indonesia",
-      "source_tier": "media",
-      "source_url": null,
-      "as_of": "2026-04-28",
-      "category": "Policy"
-    },
-    {
-      "headline": "PT Chandra Daya Investasi Tbk — 9,000 DWT 화학 탱커 fleet 추가",
-      "detail_ko": "해운·재생에너지 동시 확장. 태양광 설비 11 MWp까지 확대. 수처리·항만 인프라 병행. 지역 물류 통합 및 장기 안정 성장 전략.",
-      "source_name": "RRI Batam",
-      "source_tier": "media",
-      "source_url": null,
-      "as_of": "2026-04-30",
-      "category": "Shipping"
     }
   ],
 
   "international_freight": {
     "indices": [
-      { "name": "BDI", "value": 2730, "unit": "points", "as_of": "2026-05-01",
-        "wow_pct": 0.0, "m1_pct": 34.48, "m3_pct": 28.53, "m6_pct": 40.36, "y1_pct": 93.48, "y5_pct": -13.53,
-        "source_name": "BDI via email (PDF p.1)", "source_tier": "official",
-        "source_url": "https://www.thedcn.com.au/news/baltic-exchange-weekly-report-8-may-2026",
-        "status": "verified" },
-      { "name": "BCI (Baltic Capesize Index)", "value": 4447, "unit": "points", "as_of": "2026-05-01",
-        "wow_pct": 0.0, "m1_pct": 47.11, "m3_pct": 29.50, "m6_pct": 53.98, "y1_pct": 117.67, "y5_pct": -14.15,
-        "source_name": "BCI via email (PDF p.1)", "source_tier": "official",
-        "source_url": null,
-        "status": "verified" },
-      { "name": "BDI (subsequent)", "value": 3034, "unit": "points", "as_of": "2026-05-11",
-        "source_name": "HandyBulk", "source_tier": "media",
+      { "name": "BDI", "value": 2978, "unit": "points", "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "5월 7일 3,001p로 2024-03 이후 최고치 기록 후 소폭 조정",
         "status": "verified" },
-      { "name": "Baltic Capesize 5TC (weekly avg)", "value": 28, "unit": "USD/day (thousand)", "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
-        "source_url": null,
-        "note": "approx mid-band of latest week, line-chart read",
-        "status": "indicative" },
-      { "name": "Baltic Panamax 5TC (weekly avg)", "value": 10, "unit": "USD/day (thousand)", "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
-        "source_url": null,
-        "note": "approx mid-band of latest week, line-chart read",
-        "status": "indicative" },
-      { "name": "Baltic Supramax 5TC (weekly avg)", "value": 12, "unit": "USD/day (thousand)", "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
-        "source_url": null,
-        "note": "approx mid-band of latest week, line-chart read",
-        "status": "indicative" }
+      { "name": "BCI (Baltic Capesize Index)", "value": 4955, "unit": "points", "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "평균 일당 $41,438",
+        "status": "verified" },
+      { "name": "BPI (Baltic Panamax Index)", "value": 2233, "unit": "points", "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "평균 일당 $20,099 — 다년 최고치 부근",
+        "status": "verified" },
+      { "name": "BSI (Baltic Supramax Index)", "value": 1522, "unit": "points", "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "평균 일당 $19,240",
+        "status": "verified" },
+      { "name": "Capesize 5TC (C5TC 182, weekly close)", "value": 45, "unit": "USD/day (thousand)", "as_of": "2026-05-11",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "주간 마감 $44,941 (주중 고점 $46,610)",
+        "status": "verified" },
+      { "name": "Panamax 5TC (P5TC)", "value": 20, "unit": "USD/day (thousand)", "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "주간 $18,490 → $20,099 상승 마감",
+        "status": "verified" },
+      { "name": "Supramax 5TC", "value": 19, "unit": "USD/day (thousand)", "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "source_url": "https://www.handybulk.com/baltic-dry-index/",
+        "note": "BSI 평균 일당 $19,240 기준",
+        "status": "verified" }
     ],
     "scrap_dry_bulk": [
-      { "region": "Bangladesh", "ldt_usd": 450, "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+      { "region": "Bangladesh", "ldt_usd": 450, "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
         "source_url": null,
-        "note": "approx — line chart, end-of-week",
+        "note": "dry bulk indication — 선박 공급 부진 속 강보합",
         "status": "indicative" },
-      { "region": "India", "ldt_usd": 440, "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+      { "region": "India", "ldt_usd": 425, "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
         "source_url": null,
         "status": "indicative" },
-      { "region": "Pakistan", "ldt_usd": 445, "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+      { "region": "Pakistan", "ldt_usd": 440, "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
         "source_url": null,
         "status": "indicative" }
     ],
     "scrap_tanker": [
-      { "region": "Bangladesh", "ldt_usd": 450, "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+      { "region": "Bangladesh", "ldt_usd": 470, "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+        "source_url": null,
+        "note": "tanker indication; LNG 선 1척 $513/LDT 거래 보고",
+        "status": "indicative" },
+      { "region": "India", "ldt_usd": 445, "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
         "source_url": null,
         "status": "indicative" },
-      { "region": "India", "ldt_usd": 440, "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
-        "source_url": null,
-        "status": "indicative" },
-      { "region": "Pakistan", "ldt_usd": 445, "as_of": "2026-04-28",
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker",
+      { "region": "Pakistan", "ldt_usd": 460, "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
         "source_url": null,
         "status": "indicative" }
     ],
@@ -138,7 +145,7 @@
   },
 
   "domestic_vessel_pricing": {
-    "as_of": "2026-W19 (1st Week of May 2026)",
+    "as_of": "2026-W20 (2nd Week of May 2026)",
     "currency": "IDR (millions)",
     "validation_policy": {
       "min_sources_per_row": 2,
@@ -425,36 +432,63 @@
             ]
           }
         ]
+      },
+      {
+        "market": "Domestic Charter Rates — Web Cross-Check",
+        "currency_unit": "millions IDR",
+        "_note": "공개 웹 listing 호가 — SBS 브로커 시세(위 4개 market)와 별개의 cross-check 용. listing 사이트 호가는 협상 전 indicative 값이며 SBS 분기평균과 직접 비교 불가.",
+        "categories": [
+          {
+            "label": "Tug & Barge TC — Web Listing (kapal.co.id)",
+            "kind": "TC",
+            "rows": [
+              { "size": "270ft", "year_built": "various", "value_low": 655, "value_high": 655,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가" },
+              { "size": "300ft", "year_built": "various", "value_low": 825, "value_high": 825,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가 — 적재 ~8,000톤" },
+              { "size": "330ft", "year_built": "various", "value_low": 925, "value_high": 925,
+                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
+                "status": "indicative", "note": "월 time charter 호가 (TB+barge)" }
+            ]
+          }
+        ]
       }
     ],
-    "_note": "PDF p.2 chart bars are image-based; values seeded via visual OCR. Year-bucket distinctions reflect bar-color legend (green=2022/23, light-blue=2024, dark-blue=2025, yellow=2026). All rows status=indicative pending TC↔SHB cross-validation."
+    "_note": "PDF p.2 chart bars are image-based; values seeded via visual OCR. Year-bucket distinctions reflect bar-color legend (green=2022/23, light-blue=2024, dark-blue=2025, yellow=2026). SBS 4개 market rows status=indicative pending TC↔SHB cross-validation. 'Domestic Charter Rates — Web Cross-Check' market은 2026-W20 웹 검색으로 추가된 공개 listing 호가."
   },
 
   "domestic_fuel_scrap": {
     "cpo_price_index_gapki": [
-      { "value": 15400, "unit": "IDR/kg", "as_of": "2026-05-01",
-        "source_name": "GAPKI (PDF p.2)", "source_tier": "official",
-        "source_url": "https://gapki.id/",
-        "note": "early May reading; 16-month peak ~16,000 IDR/kg (Mar 2026)",
-        "status": "indicative" }
+      { "value": 15610, "unit": "IDR/kg (ICDX)", "as_of": "2026-05-12",
+        "source_name": "GAPKI — Commodity Price Position (12 May 2026)", "source_tier": "official",
+        "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
+        "note": "ICDX 종가; 5월 6일 16,355 → 12일 15,610 하락 흐름",
+        "status": "verified" },
+      { "value": 15150, "unit": "IDR/kg (KPB Nusantara, delivered)", "as_of": "2026-05-12",
+        "source_name": "GAPKI — Commodity Price Position (12 May 2026)", "source_tier": "official",
+        "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
+        "note": "KPB Nusantara 인도가 (Dmi/Blw/Ktj)",
+        "status": "verified" }
     ],
     "solar_b40_hsd": [
       { "value": 22000, "unit": "IDR/liter (Wilayah I+II avg)", "as_of": "2026-04-01",
         "source_name": "PDF p.1 — Solar B40/HSD Index", "source_tier": "broker",
         "source_url": null,
-        "note": "excl. PPn, PPH, PBBKB; line-chart end-of-period read",
+        "note": "excl. PPn, PPH, PBBKB; line-chart end-of-period read. 2026-W20 웹검색에서 동일 SBS 지수의 공개 출처 미확인 — 값 동결.",
         "status": "indicative" },
       { "value": 22500, "unit": "IDR/liter (Wilayah III+IV avg)", "as_of": "2026-04-01",
         "source_name": "PDF p.1 — Solar B40/HSD Index", "source_tier": "broker",
         "source_url": null,
-        "note": "excl. PPn, PPH, PBBKB",
+        "note": "excl. PPn, PPH, PBBKB. 2026-W20 웹검색 공개 출처 미확인 — 값 동결.",
         "status": "indicative" }
     ],
     "hfo_180_mfo": [
       { "value": 14500, "unit": "IDR/liter", "as_of": "2026-04-01",
         "source_name": "PDF p.1 — HFO 180/MFO Index", "source_tier": "broker",
         "source_url": null,
-        "note": "excl. PPn, PPH, PBBKB; 4-Areas avg, line-chart end-of-period",
+        "note": "excl. PPn, PPH, PBBKB; 4-Areas avg, line-chart end-of-period. 2026-W20 웹검색 공개 출처 미확인 — 값 동결.",
         "status": "indicative" }
     ],
     "scrap_domestic": [
@@ -477,34 +511,34 @@
   "commodity_news": {
     "coal": [
       {
-        "title": "Indonesia 석탄 메탄 배출량, 공식 보고치보다 크게 과소 추정 가능성",
-        "summary_ko": "IEA 및 EMBER 보고서 — 인도네시아 석탄 광산의 메탄 배출이 공식치보다 수 배 높을 수 있으며, 추정 방식 노후화 및 누락 출처로 인한 격차. 인도네시아가 글로벌 최대 메탄 배출국 중 하나로 분류될 가능성. 직접 측정 및 데이터 정확도 개선 필요 의견.",
-        "source_name": "E-paper Bisnis p.15",
+        "title": "정부, 석탄 수출세 1~5% 도입 추진 — 2026년 최대 IDR 20조 세수 전망",
+        "summary_ko": "재무장관 Purbaya Yudhi Sadewa (5월 4일) — 석탄 수출세 1~5%, 석탄·니켈 windfall tax 검토. 보조금 부담 상쇄 목적. 석탄 종류별 차등 세율 가능성. 석탄 수출세만으로 2026년 최대 IDR 20조(약 USD 12억) 추가 세수 전망. 재무장관은 기업 이익에 미치는 영향은 '작다'고 언급.",
+        "source_name": "Jakarta Globe / ANTARA News",
         "source_tier": "media",
-        "source_url": null,
-        "published_date": "2026-05-05",
+        "source_url": "https://en.antaranews.com/amp/news/414635/indonesia-to-impose-export-duties-windfall-tax-on-coal-nickel",
+        "published_date": "2026-05-04",
         "status": "verified"
       }
     ],
     "nickel": [
       {
-        "title": "정부, 글로벌 가격 상승기에 니켈·석탄 수출세 + windfall tax 검토",
-        "summary_ko": "재무부 Purbaya Yudhi Sadewa — Bahlil Lahadalia(ESDM)와 정책 협의 중. 국가 수입 확대와 에너지 보조금 상쇄 목적. 전기차 배터리 산업 등 핵심 분야는 인센티브로 지원. 경제학자들은 글로벌 commodity 가격 급등기 extractive 산업 초과 이익의 공정 재분배 관점에서 정책을 평가.",
-        "source_name": "E-paper Bisnis p.14",
+        "title": "2026 니켈 광석 채굴 쿼터(RKAB) 250M톤 — 전년 대비 -34%",
+        "summary_ko": "2026년 니켈 광석 채굴 쿼터(RKAB) 250M톤으로 2025년 379M톤 대비 34% 이상 감소. 니켈 광석 기준가격 산정식 개편 병행. SunSirs — 쿼터 축소 + 세제 조정 시 니켈 가격이 140,000~150,000 RMB/톤 구간에 이를 수 있다고 전망. 3월 대통령의 수출세 승인 이후 니켈 가격 변동성 확대.",
+        "source_name": "SunSirs",
         "source_tier": "media",
-        "source_url": null,
+        "source_url": "https://www.sunsirs.com/uk/detail_news-29519.html",
         "published_date": "2026-05-05",
         "status": "verified"
       }
     ],
     "cpo": [
       {
-        "title": "\"Godzilla El Niño\" — 2026년 인도네시아 CPO 생산 1~2M톤 감소 전망",
-        "summary_ko": "S&P Global — 극단적 El Niño 가 인도네시아·말레이시아 주요 산지에서 장기 가뭄 유발, CPO 생산 1~2M MT 감소 가능. 비료 가격 상승이 소농 사용 제한 가중. 기후 리스크와 글로벌 경제 요인이 2026년 commodity 시장 변동성 확대 시그널.",
-        "source_name": "Insight Kontan",
-        "source_tier": "media",
-        "source_url": null,
-        "published_date": "2026-05-05",
+        "title": "GAPKI CPO 지수 5월 들어 완만한 조정 — ICDX 15,610 IDR/kg (5월 12일)",
+        "summary_ko": "GAPKI 일별 종가 — ICDX CPO 5월 6일 16,355 → 12일 15,610 IDR/kg로 첫 2주간 하락. KPB Nusantara 인도가 15,150 IDR/kg. 직전 16개월 피크(2026-03 ~16,000) 대비 조정 국면. 별도로 S&P Global은 극단적 El Niño 가뭄에 따른 2026년 CPO 생산 1~2M MT 감소 가능성을 제기.",
+        "source_name": "GAPKI / S&P Global (Insight Kontan)",
+        "source_tier": "official",
+        "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
+        "published_date": "2026-05-12",
         "status": "verified"
       }
     ],
@@ -521,12 +555,12 @@
     ],
     "shipping": [
       {
-        "title": "PT Chandra Daya Investasi Tbk — 2026 초 해운·재생에너지 확장",
-        "summary_ko": "9,000 DWT 화학 탱커 fleet 추가. 태양광 설비 11 MWp 까지 확대 (추가 진행 중). 수처리 및 항만 인프라 개발 병행. 지역 물류 통합과 장기 안정 성장 지원이 목표.",
-        "source_name": "RRI Batam",
+        "title": "Pertamina International Shipping (PIS) — IPO 추진, 최소 10% 지분 공개 계획",
+        "summary_ko": "PIS 기업공개(IPO) 계획 — 최소 10% 지분 공개 방침. PIS 보유 탱커 102척, 자산은 통합 관리되며 국내·국제 노선 에너지 운송 담당. 2034년까지 선대 500척 확대 목표. 최근 VLGC 2척 인도 등 친환경 가스선 중심 확장 지속.",
+        "source_name": "Indonesia Business Post",
         "source_tier": "media",
-        "source_url": null,
-        "published_date": "2026-04-30",
+        "source_url": "https://indonesiabusinesspost.com/2026/business-and-investment/pertamina-international-shipping-plans-ipo-set-to-release-minimum-10-of-shares",
+        "published_date": "2026-05-08",
         "status": "verified"
       }
     ]
@@ -535,38 +569,27 @@
   "events": {
     "monthly": [
       {
-        "name": "16th PALMEX Indonesia 2026 (Jakarta)",
-        "date": "2026-05-06 ~ 2026-05-07",
-        "location": "Jakarta International Expo (JIExpo)",
-        "category": "Palm Oil / CPO",
-        "note": "Theme: Indonesia: Driving Global Palm Oil Through Innovation & Digital Transformation. +30% exhibitors vs prior edition.",
-        "source_name": "PALMEX Indonesia 2026 (PDF p.4)",
-        "source_url": null,
-        "checked_date": "2026-05-13",
+        "name": "Indonesia Coal & Energy Expo (ICEE 2026)",
+        "date": "2026-05-11 ~ 2026-05-13",
+        "location": "JIEXPO Jakarta",
+        "category": "Coal / Energy / Mining",
+        "note": "지난주(W20) 종료. Open-pit & underground mining technology, coal processing, green mine development, new energy.",
+        "source_name": "ICEE 2026 (iceeind.com)",
+        "source_url": "https://www.iceeind.com/",
+        "checked_date": "2026-05-14",
         "status": "verified"
       }
     ],
     "upcoming": [
       {
-        "name": "Indonesia Miner Conference & Exhibitions",
-        "date": "2026-05-05 ~ 2026-05-07",
-        "location": "Jakarta",
-        "category": "Mining / Coal",
-        "note": "08:00 AM",
-        "source_name": "PDF p.5 (Sea Bridge Shipping)",
-        "source_url": "https://www.indonesiaminer.com/",
-        "checked_date": "2026-05-13",
-        "status": "verified"
-      },
-      {
-        "name": "Indonesia Coal & Energy Expo (ICEE 2026)",
-        "date": "2026-05-11 ~ 2026-05-13",
-        "location": "JIEXPO Jakarta",
-        "category": "Coal / Energy / Mining",
-        "note": "Open-pit & underground mining technology, coal processing. 08:00 ~ 17:00",
-        "source_name": "PDF p.5",
-        "source_url": "https://www.iceeind.com/",
-        "checked_date": "2026-05-13",
+        "name": "Indonesia Critical Minerals Conference & Expo 2026",
+        "date": "2026-06-03 ~ 2026-06-05",
+        "location": "Pullman Jakarta Central Park",
+        "category": "Mining / Nickel / Energy",
+        "note": "석탄·에너지 전환 세션 6월 4~5일, 니켈·코발트·알루미늄 포럼 병행.",
+        "source_name": "Indonesia Critical Minerals Conference & Expo 2026 (metal.com)",
+        "source_url": "https://indonesia-critical-minerals.metal.com/",
+        "checked_date": "2026-05-14",
         "status": "verified"
       },
       {
@@ -577,7 +600,7 @@
         "note": "Indonesia's largest trade show for Maritime & Offshore Industries. 08:00 ~ 17:00",
         "source_name": "PDF p.5",
         "source_url": "https://inamarine-exhibition.net/",
-        "checked_date": "2026-05-13",
+        "checked_date": "2026-05-14",
         "status": "verified"
       },
       {
@@ -588,24 +611,24 @@
         "note": "Palm oil processing technology, plantation equipment, sustainability solutions. 10:00 ~ 17:00",
         "source_name": "PDF p.5",
         "source_url": null,
-        "checked_date": "2026-05-13",
+        "checked_date": "2026-05-14",
         "status": "verified"
       }
     ]
   },
 
   "build_meta": {
-    "collectors_run": ["pdf_seabridge_2026_w19_ocr"],
-    "rows_collected": 78,
+    "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20"],
+    "rows_collected": 92,
     "rows_published_news": 5,
-    "rows_published_events": 5,
-    "rows_published_indices": 6,
-    "rows_published_vessel_pricing": 60,
-    "rows_published_fuel_scrap": 7,
+    "rows_published_events": 4,
+    "rows_published_indices": 7,
+    "rows_published_vessel_pricing": 63,
+    "rows_published_fuel_scrap": 8,
     "rows_no_data_matrix": 1,
-    "rows_published": 88,
+    "rows_published": 94,
     "rows_no_data": 2,
     "rows_withheld_jump": 0,
-    "extraction_method": "PyMuPDF render @350dpi + visual chart-bar read"
+    "extraction_method": "PyMuPDF render @350dpi (vessel-pricing base) + web search & Indonesian local source curation (indices, fuel/CPO, scrap, news, events, web cross-check)"
   }
 }
