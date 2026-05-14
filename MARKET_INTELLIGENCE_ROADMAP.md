@@ -200,3 +200,19 @@
   PDF 단독 — Phase 4 유지모드의 주 타깃.
 
 이후는 아래 Phase 4 유지모드로 무한 순환.
+
+---
+
+## Phase 4 유지모드 로그
+
+### maint 1 — 2026-05-14 — NB Tug & Barge 웹 출처 시도 (변경 없음)
+- **대상**: "NB Tug & Barge — Domestic / — China" PDF 단독 행.
+- **검색·확인**: kapal.co.id, KTU Shipyard 자체 페이지(2023-01 기사 — tugboat ~20B·barge
+  ~30B·set ~50B, size 무관 generic), jualbelitongkang.com(300ft 1-SET Rp 21B, **게시일
+  미표기·NB/SHB 불명**), Humpuss·Hasnur 거래 보도(특정 자산, 단가 분해 불가).
+- **결론**: §2 출처 규칙(날짜 필수·추정 금지) 충족하는 신규 데이터 없음 → **market.json
+  미변경**. 본 로그만 커밋.
+- **구조적 학습**: 남은 81 PDF-단독 행 중 "SET Tug & Barge TC — Quarterly Average" 등
+  SBS 분기평균 지수는 **본질적으로 공개 웹 등가물이 없음**(SBS 독자 집계). 유지모드는
+  이런 행을 반복 재시도하지 말고, NB/SHB 매물성 행 위주로 dated 출처가 나올 때만 보강.
+- **다음**: maint 2 — CPO/SPOB 또는 Oil Tanker NB 행 대상 dated 매물 재탐색.
