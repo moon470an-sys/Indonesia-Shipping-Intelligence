@@ -550,18 +550,20 @@
     ],
     "scrap_domestic": [
       { "value": 5600, "unit": "IDR/kg (Kelas A)", "as_of": "2026-03-01",
-        "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
-        "source_url": null,
-        "note": "Kelas A = iron thickness ≥6mm",
-        "status": "verified" },
+        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas A 5,600)", "source_tier": "media",
+        "source_url": "https://digitaleksplorasi.com/harga-besi-bekas-2026-di-pasar-ini-pengepul-terbaiknya/",
+        "note": "Kelas A = iron thickness ≥6mm. 웹 출처가 PDF p.1 값 5,600 을 정확히 확인 (PDF+웹 일치). 동 출처의 'besi kapal'(선체 고철) 별도 호가는 4,600–5,100/kg. 2026-W20 roadmap iter 6 — PDF 단독 → 웹 검증.",
+        "status": "indicative" },
       { "value": 5425, "unit": "IDR/kg (Kelas B)", "as_of": "2026-03-01",
-        "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
-        "source_url": null,
-        "status": "verified" },
+        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas B 5,350–5,500)", "source_tier": "media",
+        "source_url": "https://digitaleksplorasi.com/harga-besi-bekas-2026-di-pasar-ini-pengepul-terbaiknya/",
+        "note": "PDF p.1 값 5,425 는 웹 출처 Kelas B range 5,350–5,500 의 중앙값과 일치. roadmap iter 6 — PDF 단독 → 웹 검증.",
+        "status": "indicative" },
       { "value": 4700, "unit": "IDR/kg (Kelas C)", "as_of": "2026-03-01",
-        "source_name": "PDF p.1 — Scrap Prices Domestic", "source_tier": "broker",
-        "source_url": null,
-        "status": "verified" }
+        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas C 4,500–4,900)", "source_tier": "media",
+        "source_url": "https://digitaleksplorasi.com/harga-besi-bekas-2026-di-pasar-ini-pengepul-terbaiknya/",
+        "note": "PDF p.1 값 4,700 은 웹 출처 Kelas C range 4,500–4,900 의 중앙값과 일치. roadmap iter 6 — PDF 단독 → 웹 검증.",
+        "status": "indicative" }
     ]
   },
 

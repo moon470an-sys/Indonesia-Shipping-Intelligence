@@ -38,7 +38,7 @@
 | 3 | `domestic_vessel_pricing` — Oil Tanker (Domestic) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물 3행 추가 (376KL·500KL·3200DWT). TC 호가는 너무 broad — 미반영 |
 | 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id LCT 용선료 6행 → Web Cross-Check 마켓에 신규 카테고리. PDF LCT TC 와 큰 격차 발견 |
 | 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ✅ done | 2026-05-14 | solarindustri.com B40·MFO 실가격으로 PDF 동결값 교체, solar 2→3행 |
-| 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ⬜ todo | — | 인니 고철 시세 보도 |
+| 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ✅ done | 2026-05-14 | digitaleksplorasi.com 이 PDF Kelas A/B/C 값 정확히 확인 → 웹 출처로 교체 |
 | 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ⬜ todo | — | 이미 웹 기반, 깊이 보강 |
 | 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ⬜ todo | — | GMS/Allied 주간, "No data acquired" 해소 |
 | 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ⬜ todo | — | coal/nickel/cpo/power/shipping |
@@ -111,3 +111,14 @@
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta fuel_scrap 9 행 동기화.
 - **남은 PDF 의존**: domestic_fuel_scrap 에서 PDF 단독은 이제 scrap_domestic(Kelas A/B/C)만.
 - **다음**: iter 6 — scrap_domestic (Kelas A/B/C) 웹 보강.
+
+### iter 6 — 2026-05-14 — scrap_domestic (Kelas A/B/C)
+- **출처**: digitaleksplorasi.com "Harga Besi Bekas 2026" (article 2026-03-01), tier=media.
+  steelindonesia.com scrap-price 페이지는 403 으로 미접근.
+- **결과**: 웹 출처가 PDF p.1 값을 **정확히 확인** — Kelas A 5,600 동일, Kelas B 5,425 는
+  웹 range 5,350–5,500 중앙값, Kelas C 4,700 은 웹 range 4,500–4,900 중앙값. 3행 모두
+  source 를 PDF → 웹으로 교체 (값·as_of 유지, tier media, status indicative).
+- **부가**: 동 출처 'besi kapal'(선체 고철) 4,600–5,100/kg 을 Kelas A note 에 병기.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과. 행 수 변동 없음(3행).
+- **Phase 2 진행**: domestic_fuel_scrap 전체가 이제 웹 출처 (PDF 단독 의존 0).
+- **다음**: iter 7 — international_freight.indices 변화율 보강.
