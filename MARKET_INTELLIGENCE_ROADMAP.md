@@ -250,3 +250,13 @@
 - PIS 니켈 해운 진출 보도는 dated 1차 URL 미확보 → §2 에 따라 미반영.
 - 검증: JSON 유효 · `lint_language.py` 0건. build_meta news 8.
 - **다음**: maint 8 — international_freight.scrap_* / scrap_domestic 재검증 또는 PDF 행 점검.
+
+### maint 8 — 2026-05-14 — GAPKI CPO 종가 재검증 (빈 사이클)
+- cpo_price_index_gapki 가 GAPKI 최신 발표분(5/12 종가)과 이미 일치 — 5/13~14 미발표. 미커밋.
+
+### maint 9 — 2026-05-14 — commodity_news.nickel 신규 보도 (갱신함)
+- **commodity_news.nickel**: 신규 항목 — 인니-필리핀 ASEAN 니켈 코리도 추진 (2026-05-11,
+  The Manila Tribune). 필리핀 가공시설 6월부터 월 20만 톤, 양국 합산 글로벌 니켈 73.6%.
+  Eramet 5월 감산도 병기. news 8→9.
+- 검증: JSON 유효 · `lint_language.py` 0건. build_meta news 9.
+- **다음**: maint 10 — power·shipping 토픽 또는 stale 섹션 재검증.

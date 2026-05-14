@@ -588,6 +588,15 @@
         "source_url": "https://www.sunsirs.com/uk/detail_news-29519.html",
         "published_date": "2026-05-05",
         "status": "verified"
+      },
+      {
+        "title": "인니-필리핀 ASEAN 니켈 코리도 추진 — 원광 수출 → 통합 가치사슬 전환",
+        "summary_ko": "인도네시아 니켈광업협회와 필리핀 니켈산업협회가 양국 통합 니켈 공급망 '코리도' 구축을 추진. 원자재 수출에서 가공·제조·기술개발을 포함하는 통합 산업 가치사슬로의 전환이 목표. 필리핀 내 가공시설(Agro Investama·RBN Solutions·Ploutus 참여)은 2026년 6월부터 월 최소 20만 톤 니켈 공급 예정. 양국 합산 생산량은 2025년 USGS 기준 글로벌 니켈 산출의 약 73.6%. 별도로 Eramet 은 RKAB 감축에 따라 2026년 5월부터 일시 감산.",
+        "source_name": "The Manila Tribune",
+        "source_tier": "media",
+        "source_url": "https://tribune.net.ph/2026/05/11/philippines-indonesia-push-asean-nickel-corridor",
+        "published_date": "2026-05-11",
+        "status": "verified"
       }
     ],
     "cpo": [
@@ -695,14 +704,14 @@
 
   "build_meta": {
     "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
-    "rows_collected": 125,
-    "rows_published_news": 8,
+    "rows_collected": 126,
+    "rows_published_news": 9,
     "rows_published_events": 4,
     "rows_published_indices": 7,
     "rows_published_vessel_pricing": 99,
     "rows_published_fuel_scrap": 7,
     "rows_no_data_matrix": 1,
-    "rows_published": 125,
+    "rows_published": 126,
     "rows_no_data": 1,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
