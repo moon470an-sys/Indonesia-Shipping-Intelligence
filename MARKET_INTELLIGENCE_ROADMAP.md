@@ -39,7 +39,7 @@
 | 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id LCT 용선료 6행 → Web Cross-Check 마켓에 신규 카테고리. PDF LCT TC 와 큰 격차 발견 |
 | 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ✅ done | 2026-05-14 | solarindustri.com B40·MFO 실가격으로 PDF 동결값 교체, solar 2→3행 |
 | 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ✅ done | 2026-05-14 | digitaleksplorasi.com 이 PDF Kelas A/B/C 값 정확히 확인 → 웹 출처로 교체 |
-| 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ⬜ todo | — | 이미 웹 기반, 깊이 보강 |
+| 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ✅ done | 2026-05-14 | BDI/BCI/BPI 2026-05-14 최신값 + wow_pct 보강. BSI·5TC 는 신규 데이터 없어 동결 |
 | 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ⬜ todo | — | GMS/Allied 주간, "No data acquired" 해소 |
 | 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ⬜ todo | — | coal/nickel/cpo/power/shipping |
 | 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ⬜ todo | — | INAMARINE/ICEE/PALMEX 등 |
@@ -122,3 +122,12 @@
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. 행 수 변동 없음(3행).
 - **Phase 2 진행**: domestic_fuel_scrap 전체가 이제 웹 출처 (PDF 단독 의존 0).
 - **다음**: iter 7 — international_freight.indices 변화율 보강.
+
+### iter 7 — 2026-05-14 — international_freight.indices
+- **출처**: Trading Economics / Baltic Exchange — Dry Index (tradingeconomics.com), tier=media.
+- **갱신**: BDI 2,978→3,189 (2023-11 이후 최고) · BCI 4,955→5,340 · BPI 2,233→2,454,
+  as_of 2026-05-08→2026-05-14. 각 행에 `wow_pct`(직전 스냅샷 대비 +7.1/+7.8/+9.9) 신규.
+- **미갱신**: BSI·Capesize/Panamax/Supramax 5TC 는 2026-05-14 시점 공개 수치 미확인 →
+  §3-A 에 따라 값·as_of 동결 (직전 값 복사 금지).
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과.
+- **다음**: iter 8 — international_freight.scrap_* / sale_purchase (S&P 실거래 확보).
