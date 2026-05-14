@@ -34,7 +34,7 @@
 | # | 타깃 | 단계 | 상태 | 마지막 실행 | 비고 |
 |---|------|------|------|-------------|------|
 | 1 | `domestic_vessel_pricing` — Tug & Barge (Domestic Coal/General) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물·용선 페이지로 SHB 300ft 2-source 보강 + 230ft·180ft 행 추가, 웹 cross-check 5행 재판독 |
-| 2 | `domestic_vessel_pricing` — CPO Market (Tug & Oil Barge / SPOB) 웹·SNS 보강 | Phase 1 | ⬜ todo | — | "jual SPOB", "oil barge charter" |
+| 2 | `domestic_vessel_pricing` — CPO Market (Tug & Oil Barge / SPOB) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | BSI Vessel SPOB 매물 2행 추가. SPOB/oil barge 매물 多이나 가격 미표기 — 추가 검색 필요 |
 | 3 | `domestic_vessel_pricing` — Oil Tanker (Domestic) 웹·SNS 보강 | Phase 1 | ⬜ todo | — | "jual kapal tanker bekas" |
 | 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ⬜ todo | — | "jual/charter LCT" |
 | 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ⬜ todo | — | Pertamina Patra Niaga 산업용 고시가 |
@@ -67,3 +67,15 @@
   listing 호가와 직접 비교 불가하므로 미변경.
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 행 수 88 로 동기화.
 - **다음**: iter 2 — CPO Market (Tug & Oil Barge / SPOB).
+
+### iter 2 — 2026-05-14 — CPO Market (Tug & Oil Barge / SPOB)
+- **출처**: BSI Vessel (bsivessel.com) SPOB 매물 페이지, tier=broker.
+- **2nd SPOB — SHB Price** 카테고리: 신규 행 `200KL (2003)` 3,000 · `300KL (2016)` 3,700
+  추가 (BSI Vessel 중개 호가, IDR 3.0B·3.7B). **listing 시점이 2023-05 로 stale** 하므로
+  source_name·note 에 시점을 명시하고 status indicative.
+- **미확보**: SPOB/oil barge **charter rate**, NB SPOB **galangan 가격**,
+  kapal.co.id 의 oil barge/SPOB 매물(capacity 만 표기, 가격 미표기) — 모두 값 미입력.
+  Ratson 등 galangan 은 capacity 라인업만 공개, 단가 비공개. → §3-C 추정 금지로 행 미추가.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 90 행 동기화.
+- **다음**: iter 3 — Oil Tanker (Domestic). kapal.co.id 에서 Mini Tanker 376KL·500KL,
+  Tanker 3200DWT 매물 호가 이미 확인 — iter 3 에서 반영 예정.

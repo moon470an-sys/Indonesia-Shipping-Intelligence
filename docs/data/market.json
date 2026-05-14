@@ -336,7 +336,13 @@
               { "size": "3200 KL", "year_built": "various", "value_low": 29000, "value_high": 29000,
                 "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
               { "size": "4000 KL", "year_built": "various", "value_low": 47000, "value_high": 47000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "200 KL", "year_built": "2003", "value_low": 3000, "value_high": 3000,
+                "sources": [{ "name": "BSI Vessel — Self Propelled Oil Barge for sale (listing 2023-05)", "tier": "broker", "url": "https://www.bsivessel.com/vessel-for-sale/self-propelled-oil-barge" }],
+                "status": "indicative", "note": "BSI Vessel 중개 매물 호가 (IDR 3.0B). 2023-05 listing — 시점 명시. 2026-W20 roadmap iter 2 신규 행." },
+              { "size": "300 KL", "year_built": "2016", "value_low": 3700, "value_high": 3700,
+                "sources": [{ "name": "BSI Vessel — Self Propelled Oil Barge for sale (listing 2023-05)", "tier": "broker", "url": "https://www.bsivessel.com/vessel-for-sale/self-propelled-oil-barge" }],
+                "status": "indicative", "note": "BSI Vessel 중개 매물 호가 (IDR 3.7B, 2016년 건조). 2023-05 listing. 동일 size 'various' PDF 행(5,000)과 별개 데이터 포인트 — roadmap iter 2 신규 행." }
             ]
           },
           {
@@ -632,14 +638,14 @@
 
   "build_meta": {
     "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
-    "rows_collected": 112,
+    "rows_collected": 114,
     "rows_published_news": 5,
     "rows_published_events": 4,
     "rows_published_indices": 7,
-    "rows_published_vessel_pricing": 88,
+    "rows_published_vessel_pricing": 90,
     "rows_published_fuel_scrap": 8,
     "rows_no_data_matrix": 1,
-    "rows_published": 112,
+    "rows_published": 114,
     "rows_no_data": 2,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
