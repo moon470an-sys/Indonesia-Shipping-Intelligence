@@ -238,3 +238,15 @@
 - **hfo_180_mfo**: bbmindustri 5월판에 MFO 미표기 → §3-A 에 따라 미갱신 (3월값 동결 유지).
 - 검증: JSON 유효 · `lint_language.py` 0건. build_meta fuel_scrap 9→7.
 - **다음**: maint 6 — scrap_domestic(as_of 2026-03-01) 또는 hfo_180_mfo 재검증.
+
+### maint 6 — 2026-05-14 — scrap_domestic / MFO 재검증 (빈 사이클)
+- scrap_domestic: digitaleksplorasi(2026-03-01) 외 더 신선한 dated 출처 없음. MFO: shasolo.com 403,
+  다른 출처 dated 5월값 없음. §2 미충족 → 미커밋.
+
+### maint 7 — 2026-05-14 — commodity_news 신규 보도 (갱신함)
+- **commodity_news.coal**: 신규 항목 — 석탄·니켈 수출세·로열티 인상 **보류** (ESDM 장관 Bahlil,
+  5/8 발표). 5/4 도입 추진에서 1주 만의 속도 조절. 출처 Discovery Alert(Reuters 인용). news 7→8.
+- **overview[1]**: 헤드라인 카드를 "도입 추진" → "도입 1주 만에 보류"로 갱신, as_of 5/4→5/12.
+- PIS 니켈 해운 진출 보도는 dated 1차 URL 미확보 → §2 에 따라 미반영.
+- 검증: JSON 유효 · `lint_language.py` 0건. build_meta news 8.
+- **다음**: maint 8 — international_freight.scrap_* / scrap_domestic 재검증 또는 PDF 행 점검.

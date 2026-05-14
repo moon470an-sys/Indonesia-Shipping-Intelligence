@@ -20,12 +20,12 @@
       "category": "Freight"
     },
     {
-      "headline": "정부, 석탄 수출세 1~5% + windfall tax 도입 추진",
-      "detail_ko": "재무장관 Purbaya Yudhi Sadewa (5월 4일 발표) — 석탄 수출세 1~5%, 석탄·니켈 windfall tax 검토. 보조금 부담 상쇄·국가 수입 확대 목적. 석탄 수출세만으로 2026년 최대 IDR 20조(약 USD 12억) 추가 세수 전망. 석탄 종류별 차등 세율 가능성.",
-      "source_name": "Jakarta Globe / ANTARA News",
+      "headline": "석탄·니켈 수출세·로열티 인상, 도입 1주 만에 보류 — 업계 협의로 전환",
+      "detail_ko": "재무장관 Purbaya (5월 4일) 가 석탄 수출세 1~5%·windfall tax 도입을 추진했으나, ESDM 장관 Bahlil Lahadalia 가 5월 8일 로열티 인상·수출세 도입을 일시 보류한다고 발표. 누진 로열티(가격 연동)·windfall 부과금 구조를 업계·이해관계자와 협의 후 재설계 방침 — 원안의 시기·세율이 업계 투자 계획에 부담이 될 수 있다는 점 반영. 도입 방향 자체는 유효하나 시행 시점·세율 미정. 2026-W20 roadmap maint 7 갱신.",
+      "source_name": "Discovery Alert (Reuters 인용) / Jakarta Globe",
       "source_tier": "media",
-      "source_url": "https://jakartaglobe.id/business/indonesia-coal-export-tax-coming-in-2026-profit-impact-small-minister-says",
-      "as_of": "2026-05-04",
+      "source_url": "https://discoveryalert.com.au/indonesia-delays-mineral-royalties-export-duties-2026/",
+      "as_of": "2026-05-12",
       "category": "Policy"
     },
     {
@@ -568,6 +568,15 @@
         "source_url": "https://en.antaranews.com/amp/news/414635/indonesia-to-impose-export-duties-windfall-tax-on-coal-nickel",
         "published_date": "2026-05-04",
         "status": "verified"
+      },
+      {
+        "title": "석탄·니켈 수출세·로열티 인상 보류 — ESDM 장관 Bahlil, 업계 협의 위해 일시 중단",
+        "summary_ko": "ESDM 장관 Bahlil Lahadalia 가 5월 8일(Reuters) 석탄·니켈·구리·금·주석·은에 대한 로열티 인상 및 수출세 도입을 일시 보류한다고 발표. 누진 로열티(가격 연동)·windfall 부과금 구조를 업계·이해관계자와 협의 후 재설계할 시간이 필요하다는 입장. 5월 4일 재무장관의 도입 추진 발표에서 1주 만의 속도 조절 — 원안의 시기·세율이 업계 투자 계획에 부담이 될 수 있다는 점이 반영됨.",
+        "source_name": "Discovery Alert (Reuters 인용)",
+        "source_tier": "media",
+        "source_url": "https://discoveryalert.com.au/indonesia-delays-mineral-royalties-export-duties-2026/",
+        "published_date": "2026-05-12",
+        "status": "verified"
       }
     ],
     "nickel": [
@@ -686,14 +695,14 @@
 
   "build_meta": {
     "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
-    "rows_collected": 124,
-    "rows_published_news": 7,
+    "rows_collected": 125,
+    "rows_published_news": 8,
     "rows_published_events": 4,
     "rows_published_indices": 7,
     "rows_published_vessel_pricing": 99,
     "rows_published_fuel_scrap": 7,
     "rows_no_data_matrix": 1,
-    "rows_published": 124,
+    "rows_published": 125,
     "rows_no_data": 1,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
