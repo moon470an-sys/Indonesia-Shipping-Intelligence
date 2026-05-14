@@ -390,7 +390,16 @@
               { "size": "5000 KL (larger)", "year_built": "various", "value_low": 88400, "value_high": 88400,
                 "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
               { "size": "6500 KL", "year_built": "various", "value_low": 40000, "value_high": 40000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
+              { "size": "376 KL (Mini Tanker)", "year_built": "2006", "value_low": 3000, "value_high": 3000,
+                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
+                "status": "indicative", "note": "kapal.co.id 매물 호가 (Rp 3.0B). 웹 단독 출처 — 2026-W20 roadmap iter 3 신규 행." },
+              { "size": "500 KL (Mini Tanker)", "year_built": "various", "value_low": 5500, "value_high": 5500,
+                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
+                "status": "indicative", "note": "kapal.co.id 매물 호가 (Rp 5.5B). 웹 단독 출처 — roadmap iter 3 신규 행." },
+              { "size": "3200 DWT", "year_built": "2006", "value_low": 30000, "value_high": 30000,
+                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
+                "status": "indicative", "note": "kapal.co.id 매물 호가 (Rp 30B, last docking 2024). DWT 표기 — KL 환산 미적용. roadmap iter 3 신규 행." }
             ]
           },
           {
@@ -638,14 +647,14 @@
 
   "build_meta": {
     "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
-    "rows_collected": 114,
+    "rows_collected": 117,
     "rows_published_news": 5,
     "rows_published_events": 4,
     "rows_published_indices": 7,
-    "rows_published_vessel_pricing": 90,
+    "rows_published_vessel_pricing": 93,
     "rows_published_fuel_scrap": 8,
     "rows_no_data_matrix": 1,
-    "rows_published": 114,
+    "rows_published": 117,
     "rows_no_data": 2,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",

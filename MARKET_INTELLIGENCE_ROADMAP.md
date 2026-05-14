@@ -35,7 +35,7 @@
 |---|------|------|------|-------------|------|
 | 1 | `domestic_vessel_pricing` — Tug & Barge (Domestic Coal/General) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물·용선 페이지로 SHB 300ft 2-source 보강 + 230ft·180ft 행 추가, 웹 cross-check 5행 재판독 |
 | 2 | `domestic_vessel_pricing` — CPO Market (Tug & Oil Barge / SPOB) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | BSI Vessel SPOB 매물 2행 추가. SPOB/oil barge 매물 多이나 가격 미표기 — 추가 검색 필요 |
-| 3 | `domestic_vessel_pricing` — Oil Tanker (Domestic) 웹·SNS 보강 | Phase 1 | ⬜ todo | — | "jual kapal tanker bekas" |
+| 3 | `domestic_vessel_pricing` — Oil Tanker (Domestic) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물 3행 추가 (376KL·500KL·3200DWT). TC 호가는 너무 broad — 미반영 |
 | 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ⬜ todo | — | "jual/charter LCT" |
 | 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ⬜ todo | — | Pertamina Patra Niaga 산업용 고시가 |
 | 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ⬜ todo | — | 인니 고철 시세 보도 |
@@ -79,3 +79,12 @@
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 90 행 동기화.
 - **다음**: iter 3 — Oil Tanker (Domestic). kapal.co.id 에서 Mini Tanker 376KL·500KL,
   Tanker 3200DWT 매물 호가 이미 확인 — iter 3 에서 반영 예정.
+
+### iter 3 — 2026-05-14 — Oil Tanker (Domestic)
+- **출처**: kapal.co.id 매물 페이지 (2025-03-11), tier=media.
+- **2nd Oil Tanker — SHB Price** 카테고리: 신규 행 3개 — `376KL Mini Tanker (2006)` 3,000 ·
+  `500KL Mini Tanker` 5,500 · `3200 DWT (2006)` 30,000. PDF 단독이던 카테고리에 첫 웹 출처.
+- **미반영**: 도메스틱 오일탱커 time charter 호가는 "Rp 1–3 miliar/월" 식 broad range
+  뿐 — size 별 분해 불가, §2 추정 금지로 미입력. NB Oil Tanker 는 여전히 No data acquired.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 93 행 동기화.
+- **다음**: iter 4 — LCT (Landing Craft Tank).
