@@ -6065,7 +6065,7 @@ function _mkTierChip(tier) {
   return `<span class="px-1 py-0.5 text-[9px] font-mono rounded ${v.cls}">${_esc(v.label)}</span>`;
 }
 
-// Overview card — 이번 주 핵심 요약 (Cycle 4: icon + colored left border + bigger headline)
+// Overview card — 이번 주 핵심 요약. Bigger headline + body, left accent stripe.
 function _mkOverviewCard(o) {
   const cat = o.category || "—";
   const catMeta = ({
@@ -6078,16 +6078,16 @@ function _mkOverviewCard(o) {
     ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "src")}</a>`
     : _esc(o.source_name || "—");
   return `
-    <div class="border border-slate-200 ${catMeta.border} border-l-4 rounded-lg p-3 pl-3 bg-white hover:shadow-sm hover:-translate-y-px transition-all">
-      <div class="flex items-center gap-1.5 mb-1.5">
-        <span class="text-[14px] leading-none">${catMeta.icon}</span>
-        <span class="px-1.5 py-0.5 text-[9px] font-mono rounded border ${catMeta.chip}">${_esc(cat)}</span>
+    <div class="border border-slate-200 ${catMeta.border} border-l-4 rounded-lg p-4 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all">
+      <div class="flex items-center gap-1.5 mb-2.5">
+        <span class="text-[16px] leading-none">${catMeta.icon}</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded border ${catMeta.chip}">${_esc(cat)}</span>
         ${_mkTierChip(o.source_tier)}
         <span class="text-[10px] text-slate-400 font-mono ml-auto">${_esc(o.as_of || "—")}</span>
       </div>
-      <div class="text-[13px] font-semibold text-slate-800 leading-snug mb-1.5">${_esc(o.headline || "—")}</div>
-      <div class="text-[11px] text-slate-600 leading-relaxed">${_esc(o.detail_ko || "")}</div>
-      <div class="text-[10px] text-slate-500 mt-2 pt-1.5 border-t border-slate-100">${srcLink}</div>
+      <div class="text-[15px] font-semibold text-slate-900 leading-snug mb-2 tracking-tight">${_esc(o.headline || "—")}</div>
+      <div class="text-[12.5px] text-slate-600 leading-relaxed">${_esc(o.detail_ko || "")}</div>
+      <div class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-100">${srcLink}</div>
     </div>`;
 }
 
@@ -6316,7 +6316,7 @@ function _mkMarketBlock(mk) {
     ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded ${filled === total ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : filled === 0 ? "bg-slate-100 text-slate-500" : "bg-amber-50 text-amber-700 border border-amber-200"}">rows ${filled}/${total}</span>`
     : "";
   const chartPanel = (dataCount > 0)
-    ? `<div id="${chartId}" class="bg-white rounded border border-slate-200 mb-3" style="min-height:240px;" data-market='${_esc(JSON.stringify(mk))}'></div>`
+    ? `<div id="${chartId}" class="bg-white rounded border border-slate-200 mb-3" style="min-height:340px;" data-market='${_esc(JSON.stringify(mk))}'></div>`
     : `<div class="bg-slate-50/60 border border-dashed border-slate-300 rounded-md p-3 mb-3 text-[11px] text-slate-500 flex items-start gap-2">
          <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
          <div>
@@ -6337,14 +6337,14 @@ function _mkMarketBlock(mk) {
   // Cycle 9: wrap in <details open> so users can collapse individual markets
   return `
     <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden" open data-view="both">
-      <summary class="cursor-pointer list-none p-3 select-none">
+      <summary class="cursor-pointer list-none p-3.5 select-none">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-slate-500 text-[11px] font-mono transition-transform group-open:rotate-90 inline-block w-3">▶</span>
-          <h4 class="font-semibold text-slate-800 text-[13px]">${_esc(mk.market)}</h4>
+          <h4 class="font-semibold text-slate-900 text-[15px] tracking-tight">${_esc(mk.market)}</h4>
           <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-800">${_esc(mk.currency_unit || "—")}</span>
-          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 ml-auto inline-flex items-center gap-1"><span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>Indicative — not transactable</span>
+          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-50 text-amber-700 border border-amber-200 ml-auto inline-flex items-center gap-1"><span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>Indicative</span>
         </div>
-        <div class="flex items-center gap-1 mt-1 flex-wrap text-slate-600 pl-5">${fillChip}${kindChips}${rangeChip}</div>
+        <div class="flex items-center gap-1.5 mt-2 flex-wrap text-slate-600 pl-5">${fillChip}${kindChips}${rangeChip}</div>
       </summary>
       <div class="px-3 pb-3 pt-1 border-t border-slate-200">
         ${viewToggle}
@@ -6367,9 +6367,9 @@ function _renderMarketCharts() {
     let mk;
     try { mk = JSON.parse(host.dataset.market || "{}"); } catch (e) { return; }
     const cats = mk.categories || [];
-    // Cycle 6: match Tailwind table stripe colors exactly
-    //   TC = blue-500, SHB = emerald-500, NB = amber-500
-    const kindColor = { TC: "#3B82F6", SHB: "#10B981", NB: "#F59E0B" };
+    // Stronger, more accessible palette — bumped one step darker for legibility on white.
+    //   TC = blue-600, SHB = emerald-600, NB = amber-600
+    const kindColor = { TC: "#2563EB", SHB: "#059669", NB: "#D97706" };
     const traces = [];
     const xLabels = new Set();
     cats.forEach(c => {
@@ -6383,7 +6383,6 @@ function _renderMarketCharts() {
         const mid = (lo != null && hi != null) ? (lo + hi) / 2 : (lo ?? hi);
         xs.push(lbl);
         lows.push(lo); highs.push(hi); mids.push(mid);
-        // Bold kind + size, range or single value, currency unit
         const valTxt = (lo != null && hi != null && lo !== hi)
           ? `${lo.toLocaleString()} – ${hi.toLocaleString()}`
           : `${(mid ?? "—").toLocaleString?.() ?? "—"}`;
@@ -6400,15 +6399,15 @@ function _renderMarketCharts() {
           name: c.kind || c.label,
           marker: {
             color: kindColor[c.kind] || "#94A3B8",
-            opacity: 0.9,
-            line: { color: "rgba(15,23,42,0.08)", width: 1 },
+            opacity: 0.92,
+            line: { color: "rgba(15,23,42,0.10)", width: 1 },
           },
           error_y: {
             type: "data",
             symmetric: false,
             array: highs.map((h, i) => (h != null && mids[i] != null) ? Math.max(0, h - mids[i]) : 0),
             arrayminus: lows.map((l, i) => (l != null && mids[i] != null) ? Math.max(0, mids[i] - l) : 0),
-            color: "#475569", thickness: 1, width: 3,
+            color: "#1e293b", thickness: 1.2, width: 5,
           },
           hovertemplate: "%{customdata}<extra></extra>",
           customdata: hovers,
@@ -6416,35 +6415,31 @@ function _renderMarketCharts() {
       }
     });
     if (!traces.length) { host.style.display = "none"; return; }
-    // Cycle 13: taller chart on narrow viewports so rotated x-labels remain readable
+    // Wider chart on narrow viewports so rotated x-labels remain readable.
     const _w = host.clientWidth || window.innerWidth || 600;
-    const chartHeight = _w < 480 ? 300 : _w < 768 ? 270 : 250;
+    const chartHeight = _w < 480 ? 380 : _w < 768 ? 360 : 340;
     const layout = {
-      font: { family: "Pretendard, system-ui, sans-serif", size: 11, color: "#334155" },
+      font: { family: "Pretendard, system-ui, sans-serif", size: 12, color: "#1e293b" },
       barmode: "group",
-      bargap: 0.22, bargroupgap: 0.08,
-      margin: { l: 50, r: 16, t: 24, b: 60 },
+      bargap: 0.30, bargroupgap: 0.10,
+      margin: { l: 68, r: 24, t: 40, b: 92 },
       height: chartHeight,
       xaxis: {
-        tickangle: -25, automargin: true, tickfont: { size: 10, color: "#64748B" },
-        showgrid: false, showline: true, linecolor: "#E2E8F0",
+        tickangle: -32, automargin: true, tickfont: { size: 11, color: "#475569" },
+        showgrid: false, showline: true, linecolor: "#CBD5E1", linewidth: 1, ticklen: 4, tickcolor: "#CBD5E1",
       },
       yaxis: {
-        title: { text: mk.currency_unit || "", font: { size: 10, color: "#64748B" } },
-        tickfont: { size: 10, color: "#64748B" },
-        gridcolor: "#F1F5F9", zerolinecolor: "#E2E8F0", zerolinewidth: 1,
+        title: { text: mk.currency_unit || "", font: { size: 11, color: "#475569" }, standoff: 10 },
+        tickfont: { size: 11, color: "#475569" },
+        gridcolor: "#E2E8F0", zerolinecolor: "#CBD5E1", zerolinewidth: 1,
+        showline: false,
       },
       legend: {
-        orientation: "h", x: 0, y: 1.14, font: { size: 10 },
-        bgcolor: "rgba(255,255,255,0.6)", bordercolor: "#E2E8F0", borderwidth: 0,
+        orientation: "h", x: 0, y: 1.10, font: { size: 11, color: "#334155" },
+        bgcolor: "rgba(255,255,255,0)", bordercolor: "transparent", borderwidth: 0,
+        itemwidth: 30,
       },
-      hoverlabel: { bgcolor: "#0F172A", font: { color: "white", size: 11 } },
-      annotations: [{
-        xref: "paper", yref: "paper", x: 0.5, y: 0.5, xanchor: "center", yanchor: "middle",
-        text: "INDICATIVE", showarrow: false,
-        font: { size: 28, family: "Pretendard, system-ui, sans-serif", color: "rgba(148,163,184,0.14)" },
-        textangle: -16,
-      }],
+      hoverlabel: { bgcolor: "#0F172A", font: { color: "white", size: 12, family: "Pretendard, system-ui, sans-serif" } },
       paper_bgcolor: "white",
       plot_bgcolor: "white",
     };
