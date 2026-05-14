@@ -216,3 +216,16 @@
   SBS 분기평균 지수는 **본질적으로 공개 웹 등가물이 없음**(SBS 독자 집계). 유지모드는
   이런 행을 반복 재시도하지 말고, NB/SHB 매물성 행 위주로 dated 출처가 나올 때만 보강.
 - **다음**: maint 2 — CPO/SPOB 또는 Oil Tanker NB 행 대상 dated 매물 재탐색.
+
+### maint 2~3 — 2026-05-14 — 빈 사이클 (커밋 없음)
+- maint 2: CPO/SPOB TC 행 — SPOB charter 호가가 size·날짜 없는 generic 수치뿐. §2 미충족.
+- maint 3: NB SPOB/LCT 행 — Ratson 등 galangan 가격 비공개(custom quote), undated 단일 매물뿐.
+- 결론 확정: 남은 PDF 단독 행은 (a) SBS 독자 분기지수 (b) galangan custom-quote 항목 —
+  공개 dated 웹 출처가 구조적으로 부재. §6.6 에 따라 미커밋.
+
+### maint 4 — 2026-05-14 — international_freight.indices stale 행 재검증 (갱신함)
+- iter 7 에서 동결로 남긴 BSI·Supramax 5TC 재검증 → HandyBulk 에서 신선한 값 확인.
+- **BSI** 1,522(05-08) → 1,540(05-11), 일당 $19,240 → $19,468, wow_pct +1.2 추가.
+- **Supramax 5TC** as_of 05-08 → 05-11, 일당 기준 $19,468 로 note 갱신 (value 19 유지).
+- 검증: JSON 유효 · `lint_language.py` 0건. 유지모드 첫 productive 사이클.
+- **다음**: maint 5 — 다른 stale 섹션(scrap LDT·fuel as_of) 재검증 또는 PDF 행 재시도.
