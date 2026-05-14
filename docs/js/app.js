@@ -3569,7 +3569,7 @@ function _drawFlChartYear(rows, I) {
              showgrid: false },
     yaxis: { title: { text: "척수", font: { size: 10 } }, tickfont: { size: 10 },
              gridcolor: "#eef2f7" },
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
 }
 
@@ -3623,7 +3623,7 @@ function _drawFlChartType(rows, I) {
     margin: { t: 5, l: 140, r: 50, b: 30 },
     xaxis: { tickfont: { size: 10 }, gridcolor: "#eef2f7" },
     yaxis: { tickfont: { size: 10 } },
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Click-to-filter on Vessel Type bars. Cycle 18: re-bind every render.
   const host = document.getElementById("fl-ch-type");
@@ -3731,7 +3731,7 @@ function _drawFlChartFlag(rows, I) {
     margin: { t: 5, l: 90, r: 50, b: 30 },
     xaxis: { tickfont: { size: 10 }, gridcolor: "#eef2f7", type: "log" },
     yaxis: { tickfont: { size: 10 } },
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Cycle 18: Flag chart 클릭 → flagFilter 적용. Plotly.newPlot 시마다 re-bind.
   //   Plotly v2.35는 newPlot 시 기존 .on() 핸들러를 제거하므로 매번 재등록.
@@ -3798,7 +3798,7 @@ function _drawFlChartGtHist(rows, I) {
       type: "log", title: { text: "GT (log)", font: { size: 10 } },
       tickfont: { size: 10 }, gridcolor: "#eef2f7",
     },
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
 
   // Cycle 23: GT 전체 통계 (필터 결과). p25, median, p75, max
@@ -3917,7 +3917,7 @@ function _drawFlChartAge(rows, I) {
         bordercolor: "#cbd5e1", borderwidth: 1, borderpad: 2,
       },
     ] : [],
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Cycle 15: 막대 클릭 시 해당 bucket 이상 노후만 보기. Cycle 18: re-bind every render.
   const host = document.getElementById("fl-ch-age");
@@ -4002,7 +4002,7 @@ function _drawFlChartGtBucket(rows, I) {
     yaxis2: { title: { text: "GT 점유 %", font: { size: 10 } }, overlaying: "y",
               side: "right", tickfont: { size: 10 }, showgrid: false,
               rangemode: "tozero", ticksuffix: "%" },
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Cycle 17: 막대 클릭 → gtMin/gtMax 필터. Cycle 18: re-bind every render.
   const gtHost = document.getElementById("fl-ch-gt-bucket");
@@ -4359,7 +4359,7 @@ function _drawFleetOwnerScatter(rows, I) {
         text: `↙ 소규모 신생`,
         showarrow: false, font: { size: 9, color: "#475569" }, xanchor: "left" },
     ],
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // 클릭 → owner 필터. Cycle 22: customdata로 top[] 인덱스 역추적
   if (host) {
@@ -4600,7 +4600,7 @@ function _drawFleetAgeClassHeatmap(rows, I) {
     margin: { t: 10, l: 85, r: 50, b: 40 },
     xaxis: { tickfont: { size: 10 }, side: "bottom" },
     yaxis: { tickfont: { size: 10 }, autorange: "reversed" },  // <5 위, Σ 아래
-    plot_bgcolor: "#2a2925", paper_bgcolor: "#25241f", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+    plot_bgcolor: "white", paper_bgcolor: "white",
   }, { displayModeBar: false, responsive: true });
   // Cycle 17: 셀 클릭 → age bucket + vc class 둘 다 필터. Cycle 18: re-bind every render.
   const heatHost = document.getElementById("fl-age-class-heatmap");
@@ -5071,7 +5071,7 @@ function _cvInitMap() {
     attributionControl: true,
     scrollWheelZoom: true,
   });
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
     attribution: "&copy; OpenStreetMap &copy; CARTO",
     subdomains: "abcd",
     maxZoom: 19,
@@ -6445,8 +6445,8 @@ function _renderMarketCharts() {
         font: { size: 28, family: "Pretendard, system-ui, sans-serif", color: "rgba(148,163,184,0.14)" },
         textangle: -16,
       }],
-      paper_bgcolor: "#25241f",
-      plot_bgcolor: "#2a2925", font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace" },
+      paper_bgcolor: "white",
+      plot_bgcolor: "white",
     };
     Plotly.newPlot(host, traces, layout, { displayModeBar: false, responsive: true });
     host.dataset.rendered = "1";
