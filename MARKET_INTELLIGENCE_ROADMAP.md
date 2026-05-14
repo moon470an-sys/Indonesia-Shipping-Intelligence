@@ -43,7 +43,7 @@
 | 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ✅ done | 2026-05-14 | S&P "No data acquired" → Capesize Bulk Joyance $33M 실거래. 스크랩 LDT는 GMS W14가 기존값 확인 |
 | 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ✅ done | 2026-05-14 | CPO 뉴스 2건 추가(수출 기준가·KPBN), overview[0] BDI 3,189 동기화 |
 | 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ✅ done | 2026-05-14 | ICEE 종료 제거, Mining Indonesia 신규, INAMARINE PDF→웹 출처 |
-| 11 | 구조 — "출처 구성 / PDF 의존도" 커버리지 지표 추가 | Phase 3 | ⬜ todo | — | meta 필드 + Vessel Pricing 섹션 소형 UI |
+| 11 | 구조 — "출처 구성 / PDF 의존도" 커버리지 지표 추가 | Phase 3 | ✅ done | 2026-05-14 | _mkSourceCoverage 미터 + build_meta 스냅샷. 현재 웹 18 / PDF 단독 81 (18%) |
 | 12 | 구조 — Market 탭에 "웹/SNS 출처 vs PDF" 범례·필터 노출 | Phase 3 | ⬜ todo | — | 기존 tier 필터 확장 |
 
 ### Phase 4 — 유지 모드 (12번 완료 후 무한 순환)
@@ -163,3 +163,14 @@
 - **잔여 PDF 의존**: events 에서 PALMEX 2026 만 PDF p.5 — 유지모드 재검증 대상.
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과.
 - **다음**: iter 11 — 구조: PDF 의존도 커버리지 지표.
+
+### iter 11 — 2026-05-14 — 구조: 출처 구성 커버리지 미터
+- **app.js**: `_mkSourceCoverage(markets)` 신규 — vessel-pricing 전 행을 스캔해 웹/SNS
+  출처 보유 행 vs PDF(SBS Weekly) 단독 행 비율을 막대 미터로 표시. Vessel Pricing 섹션
+  Auto Insights 바로 아래 삽입. market.json 에서 매 렌더 실시간 재계산 → stale 불가.
+- **market.json**: `build_meta.vessel_pricing_source_coverage` 스냅샷 추가
+  (total 99 / web 18 / pdf-only 81 / 18%).
+- **현황**: 웹 출처 전환율 **18%** — iter 1~4 에서 추가한 kapal.co.id·BSI Vessel 행들이
+  웹 백업. 나머지 81행은 아직 SBS Weekly PDF 단독 → Phase 4 유지모드의 주 타깃.
+- **검증**: `node --check` JS OK · JSON 유효 · `lint_language.py` 0건. 자산 캐시 v=20260514d.
+- **다음**: iter 12 — Market 탭 tier 필터에 web/PDF 출처 구분 노출.

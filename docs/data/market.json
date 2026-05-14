@@ -707,6 +707,7 @@
     "rows_no_data": 1,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
+    "vessel_pricing_source_coverage": { "as_of": "2026-05-14", "total_rows": 99, "web_backed": 18, "pdf_only": 81, "web_pct": 18, "note": "roadmap iter 11 스냅샷. Market 탭 UI(_mkSourceCoverage)는 market.json 에서 실시간 재계산하므로 이 값은 기록용." },
     "extraction_method": "PyMuPDF render @350dpi (vessel-pricing base) + web search & Indonesian local source curation (indices, fuel/CPO, scrap, news, events, web cross-check) + roadmap iter web/SNS source enrichment"
   }
 }

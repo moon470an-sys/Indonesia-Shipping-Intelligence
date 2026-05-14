@@ -5940,7 +5940,7 @@ async function renderMarket() {
     if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
       vpHost.innerHTML = emptyMsg();
     } else {
-      vpHost.innerHTML = _mkInsightStrip(vp.markets, m.checked_date) + _mkBulkControls() + vp.markets.map((mk, i) => _mkMarketBlock(mk, i === 0)).join("");
+      vpHost.innerHTML = _mkInsightStrip(vp.markets, m.checked_date) + _mkSourceCoverage(vp.markets) + _mkBulkControls() + vp.markets.map((mk, i) => _mkMarketBlock(mk, i === 0)).join("");
       _renderMarketCharts();
     }
   }
@@ -6087,6 +6087,46 @@ function _mkOverviewCard(o) {
       <div class="text-[15px] font-semibold text-slate-900 leading-snug mb-2 tracking-tight">${_esc(o.headline || "—")}</div>
       <div class="text-[12.5px] text-slate-600 leading-relaxed">${_esc(o.detail_ko || "")}</div>
       <div class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-100">${srcLink}</div>
+    </div>`;
+}
+
+// roadmap iter 11: source-composition meter. Shows how much of the vessel-pricing
+// matrix is backed by a web/SNS source vs PDF-only (SBS Weekly) — makes the
+// "PDF 의존 → 웹 검색 기반" transition progress visible at a glance.
+// Recomputed live from market.json each render, so it never goes stale.
+function _mkSourceCoverage(markets) {
+  if (!markets || !markets.length) return "";
+  const isPdf = (name) => /PDF|SBS Weekly/i.test(String(name || ""));
+  let total = 0, web = 0, pdfOnly = 0;
+  for (const mk of markets) {
+    for (const c of mk.categories || []) {
+      for (const r of c.rows || []) {
+        total++;
+        const srcs = r.sources || [];
+        if (!srcs.length) { pdfOnly++; continue; }
+        if (srcs.some(s => !isPdf(s.name))) web++;
+        else pdfOnly++;
+      }
+    }
+  }
+  if (!total) return "";
+  const webPct = Math.round((web / total) * 100);
+  const pdfPct = 100 - webPct;
+  return `
+    <div class="mb-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+      <div class="flex items-center gap-2 flex-wrap text-[10px] font-mono mb-1.5">
+        <span class="uppercase tracking-wider text-slate-500 font-semibold">출처 구성</span>
+        <span class="text-slate-400">PDF 의존 → 웹 검색 기반 전환 진행률</span>
+        <span class="ml-auto text-slate-600"><strong class="text-emerald-700">${web}</strong> 웹·SNS · <strong class="text-slate-700">${pdfOnly}</strong> PDF 단독 · 총 ${total} rows</span>
+      </div>
+      <div class="h-2 rounded-full overflow-hidden bg-slate-100 flex" role="img" aria-label="웹·SNS 출처 ${webPct}%, PDF 단독 ${pdfPct}%">
+        <div class="bg-emerald-500" style="width:${webPct}%"></div>
+        <div class="bg-slate-300" style="width:${pdfPct}%"></div>
+      </div>
+      <div class="flex items-center gap-3 mt-1 text-[9px] font-mono text-slate-500">
+        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-emerald-500"></span>웹·SNS 출처 ${webPct}%</span>
+        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-slate-300"></span>PDF(SBS Weekly) 단독 ${pdfPct}%</span>
+      </div>
     </div>`;
 }
 
