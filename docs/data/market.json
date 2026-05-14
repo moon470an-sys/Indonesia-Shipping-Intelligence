@@ -135,12 +135,13 @@
         "status": "indicative" }
     ],
     "sale_purchase_bulk": [
-      { "vessel_name": null, "type": "Bulk Carrier", "dwt": null, "year": null,
-        "price_musd": null, "buyer": null, "seller": null,
-        "source_name": "Allied (PDF p.1)", "source_tier": "broker", "source_url": null,
-        "as_of": "2026-04-28",
-        "note": "S&P specific deals not transcribed in PDF p.1 — average movement chart only",
-        "status": "No data acquired" }
+      { "vessel_name": "Bulk Joyance", "type": "Capesize Bulk Carrier", "dwt": null, "year": 2012,
+        "price_musd": 33, "buyer": null, "seller": null,
+        "source_name": "Lloyd's List — S&P report (08 May 2026)", "source_tier": "media",
+        "source_url": "https://www.lloydslist.com/LL1157097/Strong-demand-for-modern-bulk-carriers-pushes-up-secondhand-prices-across-most-segments",
+        "as_of": "2026-05-08",
+        "note": "2012년 건조 Capesize 'Bulk Joyance' $33M 매각 보도 (Lloyd's List, 2026-05-08). 2026-W20 roadmap iter 8 — PDF placeholder 'No data acquired' 를 웹 실거래 사례로 대체. DWT·buyer·seller 미보도.",
+        "status": "indicative" }
     ]
   },
 
@@ -686,7 +687,7 @@
     "rows_published_fuel_scrap": 9,
     "rows_no_data_matrix": 1,
     "rows_published": 124,
-    "rows_no_data": 2,
+    "rows_no_data": 1,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
     "extraction_method": "PyMuPDF render @350dpi (vessel-pricing base) + web search & Indonesian local source curation (indices, fuel/CPO, scrap, news, events, web cross-check) + roadmap iter web/SNS source enrichment"

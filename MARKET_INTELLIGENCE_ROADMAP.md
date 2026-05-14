@@ -40,7 +40,7 @@
 | 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ✅ done | 2026-05-14 | solarindustri.com B40·MFO 실가격으로 PDF 동결값 교체, solar 2→3행 |
 | 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ✅ done | 2026-05-14 | digitaleksplorasi.com 이 PDF Kelas A/B/C 값 정확히 확인 → 웹 출처로 교체 |
 | 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ✅ done | 2026-05-14 | BDI/BCI/BPI 2026-05-14 최신값 + wow_pct 보강. BSI·5TC 는 신규 데이터 없어 동결 |
-| 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ⬜ todo | — | GMS/Allied 주간, "No data acquired" 해소 |
+| 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ✅ done | 2026-05-14 | S&P "No data acquired" → Capesize Bulk Joyance $33M 실거래. 스크랩 LDT는 GMS W14가 기존값 확인 |
 | 9 | `commodity_news` + `overview` — 토픽별 최신 보도 심화 | Phase 2 | ⬜ todo | — | coal/nickel/cpo/power/shipping |
 | 10 | `events` — 인니 해운·석탄·CPO 컨퍼런스 일정 검증·확장 | Phase 2 | ⬜ todo | — | INAMARINE/ICEE/PALMEX 등 |
 | 11 | 구조 — "출처 구성 / PDF 의존도" 커버리지 지표 추가 | Phase 3 | ⬜ todo | — | meta 필드 + Vessel Pricing 섹션 소형 UI |
@@ -131,3 +131,14 @@
   §3-A 에 따라 값·as_of 동결 (직전 값 복사 금지).
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과.
 - **다음**: iter 8 — international_freight.scrap_* / sale_purchase (S&P 실거래 확보).
+
+### iter 8 — 2026-05-14 — S&P 실거래 + 스크랩 LDT 검증
+- **출처**: Lloyd's List S&P report (2026-05-08), tier=media. GMS Week-14 2026 리포트(보조).
+- **sale_purchase_bulk**: PDF placeholder `No data acquired` → 웹 실거래로 대체 —
+  2012년 건조 Capesize **'Bulk Joyance' $33M** 매각. status indicative (DWT·buyer·seller 미보도).
+  build_meta `rows_no_data` 2→1.
+- **scrap_dry_bulk / scrap_tanker**: GMS Week-14 2026 리포트가 기존 값(Bangladesh 450/470,
+  India 425/445, Pakistan 440/460)을 **정확히 확인** — 값 변동 없음. (container LDT
+  480/455/470 은 스키마에 카테고리 없어 미반영.) source_url 보강은 유지모드 과제로 이월.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과.
+- **다음**: iter 9 — commodity_news + overview 심화.
