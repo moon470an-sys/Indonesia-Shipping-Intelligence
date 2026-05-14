@@ -5798,6 +5798,8 @@ function _mkSetupTocSpy() {
     ev.preventDefault();
     const t = document.getElementById(a.dataset.section);
     if (t) {
+      // News/Events sections are collapsible <details> — open them on navigation
+      if (t.tagName === "DETAILS") t.open = true;
       t.scrollIntoView({ behavior: "smooth", block: "start" });
       // Click immediately reflects URL (scroll-spy will confirm on settle)
       try { history.replaceState(null, "", "#" + a.dataset.section); } catch (_) {}
@@ -5826,10 +5828,6 @@ async function renderMarket() {
   }
 
   const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? "—"; };
-  setText("mk-checked-date", m.checked_date);
-  setText("mk-cadence", m.review_cadence || "—");
-  setText("mk-last-updated", m.last_updated || "—");
-  setText("mk-next-scheduled", m.next_scheduled || "—");
   setText("mk-vp-asof", `as of ${m?.domestic_vessel_pricing?.as_of || "—"}`);
 
   // Cycle 15: section count chips
@@ -5846,9 +5844,10 @@ async function renderMarket() {
   _cnt("mk-cnt-vessel", `${(_vp.markets || []).length} markets · ${_vFil}/${_vTot} rows`);
   const _fs = m.domestic_fuel_scrap || {};
   const _fsN = (_fs.cpo_price_index_gapki || []).length + (_fs.solar_b40_hsd || []).length + (_fs.hfo_180_mfo || []).length + (_fs.scrap_domestic || []).length;
-  _cnt("mk-cnt-fuel", `${_fsN} cards`);
   const _if = m.international_freight || {};
-  _cnt("mk-cnt-intfreight", `${(_if.indices || []).length} idx · ${((_if.scrap_dry_bulk || []).length + (_if.scrap_tanker || []).length)} scrap · ${((_if.sale_purchase_bulk || _if.sale_purchase || []).filter(o => o.vessel_name || o.price_musd != null)).length} S&P`);
+  const _ifScrap = (_if.scrap_dry_bulk || []).length + (_if.scrap_tanker || []).length;
+  const _ifSp = (_if.sale_purchase_bulk || _if.sale_purchase || []).filter(o => o.vessel_name || o.price_musd != null).length;
+  _cnt("mk-cnt-indices", `${(_if.indices || []).length} idx · ${_fsN} fuel · ${_ifScrap} scrap · ${_ifSp} S&P`);
   const _cn = m.commodity_news || {};
   const _cnTotal = Object.values(_cn).reduce((s, arr) => s + (arr || []).length, 0);
   _cnt("mk-cnt-news", `${_cnTotal} items · ${Object.keys(_cn).length} topics`);

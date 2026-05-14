@@ -817,41 +817,34 @@
     <!-- Market 탭 — 주간 시장 인텔리전스. 외부 공개 정보 큐레이션, 출처 명시 필수.
          docs/data/market.json 으로 콘텐츠 분리, README §Market data update 참조. -->
     <section id="tab-market" class="tab-panel hidden" role="tabpanel" tabindex="-1">
-      <div class="mb-5">
+      <!-- Header — title + freshness chips, one tight band -->
+      <div class="mb-3">
         <div class="flex items-baseline gap-3 flex-wrap">
           <h2 class="text-[26px] font-bold text-slate-900 tracking-tight">📊 Market</h2>
           <span class="text-[13px] text-slate-500">— 주간 시장 인텔리전스</span>
+          <span class="text-[12px] text-slate-400 hidden md:inline">해운·벌크·탱커·CPO·석탄·니켈 · 외부 공개 정보 큐레이션</span>
         </div>
-        <p class="text-[12px] text-slate-500 mt-1">해운·벌크·탱커·CPO·석탄·니켈 — 외부 공개 정보 큐레이션. 출처 표기 필수.</p>
-        <div class="mt-3 inline-flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 font-mono">
-          <span>data checked <strong id="mk-checked-date" class="text-blue-800 font-semibold">—</strong></span>
-          <span class="text-slate-300">·</span>
-          <span>cadence <span id="mk-cadence" class="text-slate-700">—</span></span>
-          <span class="text-slate-300">·</span>
-          <span>last update <strong id="mk-last-updated" class="text-emerald-700 font-semibold">—</strong></span>
-          <span class="text-slate-300">·</span>
-          <span>next <strong id="mk-next-scheduled" class="text-slate-700 font-semibold">—</strong></span>
-        </div>
+        <div id="mk-freshness" class="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] font-mono"></div>
       </div>
 
-      <!-- Cycle 38: top headline banner — pulled from overview[0] -->
+      <!-- Cycle 38: today's top headline — pulled from overview[0] -->
       <div id="mk-top-headline" class="mb-3"></div>
 
-      <!-- Cycle 14 + 18: unified info bar — freshness + tier legend + collapsible disclaimer -->
-      <div class="mb-4 rounded-lg border border-slate-200 bg-white">
-        <div id="mk-freshness" class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono px-3 py-2"></div>
-        <details class="border-t border-slate-100 group">
-          <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 text-[10px] text-slate-500 hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden">
-            <span class="uppercase tracking-wider font-semibold text-slate-400">source tier 범례</span>
-            <span class="inline-flex items-center gap-1">
-              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">tier1</span>
-              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-sky-100 text-sky-800">tier2</span>
-              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-100 text-amber-800">tier3</span>
-            </span>
-            <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
-          </summary>
-          <div class="px-3 py-2 text-[10px] text-slate-500 flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60">
-            <span class="text-slate-400 text-[10px] font-mono mr-1">click to filter rows:</span>
+      <!-- Disclaimer + source-tier legend — single collapsible band -->
+      <details class="mb-4 rounded-lg border border-slate-200 bg-white group">
+        <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-2 text-[11px] text-amber-900 hover:bg-amber-50/60 transition-colors [&::-webkit-details-marker]:hidden rounded-lg">
+          <span class="font-semibold">⚠ Indicative prices only</span>
+          <span class="text-amber-700 text-[10px] hidden sm:inline">— 투자 자문 아님 · 출처·tier·as_of 표기 · 검증 정책 적용</span>
+          <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
+        </summary>
+        <div class="border-t border-slate-100 px-3 py-2.5 space-y-2.5">
+          <p class="text-[11px] text-amber-900 leading-relaxed">
+            본 섹션의 모든 가격은 외부 공개 정보 큐레이션이며 <strong>indicative</strong> 으로 표기됩니다. 거래 가능한 quote 가 아닙니다.
+            데이터 row 별 출처·tier(공식/매체/브로커)·as_of 명시. 검증 정책: ±15% 교차 소스 밴드 · ±30% 주간 점프 차단 · TC↔SHB 논리 체크.
+            결측 셀은 <em>No data acquired</em> 그대로 노출 — 0 으로 채우지 않습니다.
+          </p>
+          <div class="text-[10px] text-slate-500 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            <span class="text-slate-400 font-mono mr-1">source tier — 클릭하면 해당 tier row 만 필터:</span>
             <button type="button" data-tier-filter="tier1" class="mk-tier-filter inline-flex items-center gap-1 hover:opacity-80 transition-opacity" aria-pressed="false">
               <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">tier1·공식</span>
               <span class="text-slate-500">정부·거래소 (Baltic, GAPKI, IDX)</span>
@@ -866,35 +859,22 @@
             </button>
             <button type="button" data-tier-filter="" class="mk-tier-filter ml-auto text-slate-500 underline-offset-2 hover:underline" aria-label="모든 tier 표시">전체 해제</button>
           </div>
-        </details>
-        <details class="border-t border-slate-100 group">
-          <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-1.5 text-[11px] text-amber-900 bg-amber-50/60 hover:bg-amber-50 transition-colors [&::-webkit-details-marker]:hidden rounded-b-lg">
-            <span class="font-semibold">⚠ Indicative prices only</span>
-            <span class="text-amber-700 text-[10px]">— 투자 자문 아님 · 출처·tier·as_of 표기 · 검증 정책 적용</span>
-            <span class="ml-auto text-[10px] text-amber-700 font-mono group-open:rotate-180 transition-transform">▾</span>
-          </summary>
-          <div class="px-3 py-2 text-[11px] text-amber-900 bg-amber-50 leading-relaxed border-t border-amber-200 rounded-b-lg">
-            본 섹션의 모든 가격은 외부 공개 정보 큐레이션이며 <strong>indicative</strong> 으로 표기됩니다. 거래 가능한 quote 가 아닙니다.
-            데이터 row 별 출처·tier(공식/매체/브로커)·as_of 명시. 검증 정책: ±15% 교차 소스 밴드 · ±30% 주간 점프 차단 · TC↔SHB 논리 체크.
-            결측 셀은 <em>No data acquired</em> 그대로 노출 — 0 으로 채우지 않습니다.
-          </div>
-        </details>
-      </div>
+        </div>
+      </details>
 
       <!-- Sticky section TOC — unified pill style, color reserved for active state -->
       <nav id="mk-toc" class="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-white/95 backdrop-blur border-b border-slate-200 mb-5 overflow-x-auto mk-no-scrollbar relative" aria-label="Market sections">
         <ul class="flex items-center gap-1.5 text-[12px] whitespace-nowrap">
-          <li><a href="#mk-sec-overview"   class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-overview">핵심 요약</a></li>
-          <li><a href="#mk-sec-vessel"     class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition font-semibold" data-section="mk-sec-vessel">★ Vessel Pricing</a></li>
-          <li><a href="#mk-sec-fuel"       class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-fuel">Fuel · Scrap</a></li>
-          <li><a href="#mk-sec-intfreight" class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-intfreight">Int'l Freight</a></li>
-          <li><a href="#mk-sec-news"       class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-news">Commodity News</a></li>
-          <li><a href="#mk-sec-events"     class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-events">Events</a></li>
+          <li><a href="#mk-sec-overview" class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-overview">핵심 요약</a></li>
+          <li><a href="#mk-sec-vessel"   class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition font-semibold" data-section="mk-sec-vessel">★ Vessel Pricing</a></li>
+          <li><a href="#mk-sec-indices"  class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-indices">Indices &amp; Prices</a></li>
+          <li><a href="#mk-sec-news"     class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-news">Commodity News</a></li>
+          <li><a href="#mk-sec-events"   class="mk-toc-link px-3 py-1.5 rounded-full border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 hover:bg-slate-50 transition" data-section="mk-sec-events">Events</a></li>
         </ul>
       </nav>
 
       <!-- 이번 주 핵심 요약 (Overview) -->
-      <div id="mk-sec-overview" class="bg-white rounded-xl shadow-sm p-5 mb-5 scroll-mt-16 border-t-4 border-t-blue-700" data-source="docs/data/market.json">
+      <div id="mk-sec-overview" class="bg-white rounded-xl border border-slate-200 p-5 mb-4 scroll-mt-16" data-source="docs/data/market.json">
         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 flex-wrap">
           <span class="inline-block w-1 h-5 bg-blue-700 rounded-sm"></span>
           이번 주 핵심 요약
@@ -905,7 +885,7 @@
       </div>
 
       <!-- ★ Page 2 — Domestic Vessel Pricing (KEY ASSET PRICING MATRIX) ★ -->
-      <div id="mk-sec-vessel" class="bg-white rounded-xl shadow-sm p-5 mb-5 scroll-mt-16 border-t-4 border-t-blue-700" data-source="docs/data/market.json">
+      <div id="mk-sec-vessel" class="bg-white rounded-xl border border-slate-200 p-5 mb-4 scroll-mt-16" data-source="docs/data/market.json">
         <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center justify-between gap-2 flex-wrap">
           <span class="flex items-center gap-2.5">
             <span class="inline-block w-1 h-5 bg-blue-700 rounded-sm"></span>
@@ -919,56 +899,63 @@
         <div id="mk-vessel-pricing" class="space-y-5"></div>
       </div>
 
-      <!-- Domestic Fuel & Scrap (CPO Price Index · Solar B40 · HFO · Scrap) -->
-      <div id="mk-sec-fuel" class="bg-white rounded-xl shadow-sm p-5 mb-5 scroll-mt-16 border-t-4 border-t-teal-600" data-source="docs/data/market.json">
+      <!-- Indices & Prices — International freight + domestic fuel/scrap + scrap + S&P 통합 -->
+      <div id="mk-sec-indices" class="bg-white rounded-xl border border-slate-200 p-5 mb-4 scroll-mt-16" data-source="docs/data/market.json">
         <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 flex-wrap">
-          <span class="inline-block w-1 h-5 bg-teal-600 rounded-sm"></span>
-          Domestic Fuel · Scrap · CPO Price Index
-          <span id="mk-cnt-fuel" class="ml-auto text-[10px] font-mono text-slate-400">—</span>
+          <span class="inline-block w-1 h-5 bg-blue-700 rounded-sm"></span>
+          Indices &amp; Prices
+          <span class="text-[12px] font-normal text-slate-400">— 운임 · 연료 · 스크랩 · S&amp;P</span>
+          <span id="mk-cnt-indices" class="ml-auto text-[10px] font-mono text-slate-400">—</span>
         </h3>
-        <div id="mk-fuel-scrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
-        <div class="text-[10px] text-slate-400 mt-3">* excl. PPn, PPH, PBBKB (per PDF p.1)</div>
+        <div class="space-y-6">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">운임 지수 — International</div>
+            <div id="mk-int-indices" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">국내 연료 · 스크랩 · CPO 지수</div>
+            <div id="mk-fuel-scrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+            <div class="text-[10px] text-slate-400 mt-2">* excl. PPn, PPH, PBBKB (per PDF p.1)</div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">스크랩 가격 — International</div>
+            <div id="mk-int-scrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+          <div>
+            <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">2차 매매 (Sale &amp; Purchase)</div>
+            <div id="mk-int-sp" class="space-y-2"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Page 1 — International Freight (운임 지수 + 스크랩 + 2차매매) -->
-      <div id="mk-sec-intfreight" class="bg-white rounded-xl shadow-sm p-5 mb-5 scroll-mt-16 border-t-4 border-t-emerald-600" data-source="docs/data/market.json">
-        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 flex-wrap">
-          <span class="inline-block w-1 h-5 bg-emerald-600 rounded-sm"></span>
-          International Freight
-          <span id="mk-cnt-intfreight" class="ml-auto text-[10px] font-mono text-slate-400">—</span>
-        </h3>
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">운임 지수</div>
-        <div id="mk-int-indices" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5"></div>
+      <!-- Commodity News (Coal / Nickel / CPO / Power / Shipping) — 기본 접힘 -->
+      <details id="mk-sec-news" class="bg-white rounded-xl border border-slate-200 mb-4 scroll-mt-16 group" data-source="docs/data/market.json">
+        <summary class="list-none cursor-pointer flex items-center gap-2.5 p-5 select-none [&::-webkit-details-marker]:hidden">
+          <span class="inline-block w-1 h-5 bg-blue-700 rounded-sm"></span>
+          <span class="text-base font-bold text-slate-900">Commodity News</span>
+          <span id="mk-cnt-news" class="text-[10px] font-mono text-slate-400">—</span>
+          <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
+        </summary>
+        <div class="px-5 pb-5 -mt-1">
+          <div id="mk-commodity-news-v2" class="space-y-5"></div>
+        </div>
+      </details>
 
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">스크랩 가격</div>
-        <div id="mk-int-scrap" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5"></div>
-
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">2차 매매 (Sale & Purchase)</div>
-        <div id="mk-int-sp" class="space-y-2"></div>
-      </div>
-
-      <!-- Page 3 — Commodity News (Coal / Nickel / CPO / Power / Shipping) -->
-      <div id="mk-sec-news" class="bg-white rounded-xl shadow-sm p-5 mb-5 scroll-mt-16 border-t-4 border-t-amber-600" data-source="docs/data/market.json">
-        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 flex-wrap">
-          <span class="inline-block w-1 h-5 bg-amber-600 rounded-sm"></span>
-          Commodity News
-          <span id="mk-cnt-news" class="ml-auto text-[10px] font-mono text-slate-400">—</span>
-        </h3>
-        <div id="mk-commodity-news-v2" class="space-y-5"></div>
-      </div>
-
-      <!-- Page 4-5 — Events -->
-      <div id="mk-sec-events" class="bg-white rounded-xl shadow-sm p-5 mb-6 scroll-mt-16 border-t-4 border-t-rose-600" data-source="docs/data/market.json">
-        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2.5 flex-wrap">
-          <span class="inline-block w-1 h-5 bg-rose-600 rounded-sm"></span>
-          Events
-          <span id="mk-cnt-events" class="ml-auto text-[10px] font-mono text-slate-400">—</span>
-        </h3>
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">이번 달 진행 중</div>
-        <div id="mk-events-monthly" class="space-y-2 mb-5"></div>
-        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">예정</div>
-        <div id="mk-events-upcoming" class="space-y-2"></div>
-      </div>
+      <!-- Events — 기본 접힘 -->
+      <details id="mk-sec-events" class="bg-white rounded-xl border border-slate-200 mb-4 scroll-mt-16 group" data-source="docs/data/market.json">
+        <summary class="list-none cursor-pointer flex items-center gap-2.5 p-5 select-none [&::-webkit-details-marker]:hidden">
+          <span class="inline-block w-1 h-5 bg-blue-700 rounded-sm"></span>
+          <span class="text-base font-bold text-slate-900">Events</span>
+          <span id="mk-cnt-events" class="text-[10px] font-mono text-slate-400">—</span>
+          <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
+        </summary>
+        <div class="px-5 pb-5 -mt-1">
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">이번 달 진행 중</div>
+          <div id="mk-events-monthly" class="space-y-2 mb-5"></div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-2 font-semibold">예정</div>
+          <div id="mk-events-upcoming" class="space-y-2"></div>
+        </div>
+      </details>
 
       <!-- Build meta footer -->
       <div id="mk-build-meta" class="mb-6 text-[10px] text-slate-400 font-mono"></div>
