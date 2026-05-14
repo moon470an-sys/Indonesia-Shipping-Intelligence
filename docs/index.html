@@ -22,12 +22,53 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <script>
+    /* Terminal restyle: monkey-patch Plotly.newPlot so every chart gets a
+       dark layout by default. Existing calls that already set bg/font are
+       preserved (the patch only fills missing keys). */
+    (function () {
+      if (!window.Plotly) return;
+      var TERMINAL = {
+        paper_bgcolor: "#25241f",
+        plot_bgcolor: "#2a2925",
+        font: { color: "#b7b3a8", family: "IBM Plex Mono, ui-monospace, monospace", size: 11 },
+        xaxis: { gridcolor: "#3a382f", zerolinecolor: "#423f37", linecolor: "#423f37", tickcolor: "#423f37", color: "#b7b3a8" },
+        yaxis: { gridcolor: "#3a382f", zerolinecolor: "#423f37", linecolor: "#423f37", tickcolor: "#423f37", color: "#b7b3a8" },
+        legend: { bgcolor: "rgba(0,0,0,0)", font: { color: "#b7b3a8" } },
+        hoverlabel: { bgcolor: "#2a2925", bordercolor: "#423f37", font: { color: "#efece5", family: "IBM Plex Mono, monospace" } },
+      };
+      function mergeAxis(dst, src) {
+        if (!dst) return Object.assign({}, src);
+        var out = Object.assign({}, src, dst);
+        return out;
+      }
+      var orig = Plotly.newPlot;
+      Plotly.newPlot = function (gd, data, layout, config) {
+        layout = layout || {};
+        if (layout.paper_bgcolor === undefined) layout.paper_bgcolor = TERMINAL.paper_bgcolor;
+        if (layout.plot_bgcolor  === undefined) layout.plot_bgcolor  = TERMINAL.plot_bgcolor;
+        layout.font = Object.assign({}, TERMINAL.font, layout.font || {});
+        layout.xaxis = mergeAxis(layout.xaxis, TERMINAL.xaxis);
+        layout.yaxis = mergeAxis(layout.yaxis, TERMINAL.yaxis);
+        layout.legend = Object.assign({}, TERMINAL.legend, layout.legend || {});
+        if (!layout.hoverlabel) layout.hoverlabel = TERMINAL.hoverlabel;
+        return orig.call(this, gd, data, layout, config);
+      };
+    })();
+  </script>
   <!-- Cycle 3: d3 + topojson 의존성 제거. Demand 탭의 메인 지도는 cv-app
        (Leaflet) 으로 일원화. d3는 Plotly 내부 의존이라 별도 로드 불필요. -->
   <!-- Leaflet for the port-volume infographic (Demand 탭 메인 지도) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" charset="utf-8"></script>
   <link rel="stylesheet" href="./css/site.css" />
+
+  <!-- Terminal-theme overlay (Bloomberg-style restyle). Loaded after site.css
+       so utility overrides win. Defines dark amber tokens + IBM Plex fonts. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/terminal.css" />
 </head>
 <body class="bg-slate-50 text-slate-800">
   <a href="#tab-overview" class="skip-link">본문으로 건너뛰기</a>
@@ -35,7 +76,7 @@
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
       <div class="flex items-center gap-3 flex-wrap">
         <div>
-          <h1 class="text-xl font-bold tracking-tight">🚢 Indonesia Shipping Intelligence</h1>
+          <h1 class="text-xl font-bold tracking-tight"><span class="brand-label">INDONESIA SHIPPING</span> INTELLIGENCE</h1>
         </div>
         <span class="freshness-badge" id="header-freshness" title="데이터 기준일">
           <span class="freshness-dot" aria-hidden="true"></span><span id="header-freshness-text">loading…</span>
@@ -44,14 +85,45 @@
       <nav class="flex gap-1 text-sm flex-wrap" aria-label="Primary tabs" role="tablist">
         <!-- Cycle 1: 5탭 → 4탭 재편. Cargo×Fleet 수급 분석에 집중.
              tab-id는 호환을 위해 유지하되 라벨/순서를 재정의: -->
-        <button data-tab="overview"      class="tab px-3 py-1.5 rounded bg-slate-700"        role="tab" aria-selected="true"  aria-controls="tab-overview"      title="Cargo 수요 — 흐름 지도 + 시계열">📦 Demand</button>
-        <button data-tab="fleet"         class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-fleet"         title="Fleet 공급 — 선대 탐색기 + 시계열">🚢 Supply</button>
-        <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-tanker-sector" title="수급 균형 — Demand × Supply 교차">⚖️ Balance</button>
-        <button data-tab="market"        class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-market"        title="Market — 주간 시장·뉴스·이벤트 (외부 정보)">📊 Market</button>
-        <button data-tab="explorer"      class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-explorer"      title="원천 데이터 탐색">🔎 Explorer</button>
+        <button data-tab="overview"      class="tab active px-3 py-1.5 rounded bg-slate-700"        role="tab" aria-selected="true"  aria-controls="tab-overview"      title="Cargo 수요 — 흐름 지도 + 시계열"><span class="fkey">F1</span>DEMAND</button>
+        <button data-tab="fleet"         class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-fleet"         title="Fleet 공급 — 선대 탐색기 + 시계열"><span class="fkey">F2</span>SUPPLY</button>
+        <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-tanker-sector" title="수급 균형 — Demand × Supply 교차"><span class="fkey">F3</span>BALANCE</button>
+        <button data-tab="market"        class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-market"        title="Market — 주간 시장·뉴스·이벤트 (외부 정보)"><span class="fkey">F4</span>MARKET</button>
+        <button data-tab="explorer"      class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-explorer"      title="원천 데이터 탐색"><span class="fkey">F5</span>EXPLORER</button>
       </nav>
     </div>
   </header>
+
+  <!-- Terminal ticker strip — scrolling market quotes. Hardcoded snapshot;
+       can be wired to market.json later via JS for live values. -->
+  <section class="tk-strip" aria-label="Market ticker">
+    <div class="tk-track">
+      <span class="tk-item"><span class="sym">BDI</span><span class="v">1,847</span><span class="d down">−0.67%</span></span>
+      <span class="tk-item"><span class="sym">BDTI</span><span class="v">1,089</span><span class="d up">+0.76%</span></span>
+      <span class="tk-item"><span class="sym">BCTI</span><span class="v">612</span><span class="d down">−0.50%</span></span>
+      <span class="tk-item"><span class="sym">CCFI</span><span class="v">1,247</span><span class="d up">+1.49%</span></span>
+      <span class="tk-item"><span class="sym">SCFI</span><span class="v">1,486</span><span class="d up">+2.10%</span></span>
+      <span class="tk-item"><span class="sym">CPO MYR</span><span class="v">4,210</span><span class="d up">+0.91%</span></span>
+      <span class="tk-item"><span class="sym">COAL NEWC</span><span class="v">142.50</span><span class="d down">−1.45%</span></span>
+      <span class="tk-item"><span class="sym">NICKEL LME</span><span class="v">17,420</span><span class="d up">+0.49%</span></span>
+      <span class="tk-item"><span class="sym">BRENT</span><span class="v">82.34</span><span class="d up">+0.62%</span></span>
+      <span class="tk-item"><span class="sym">USD/IDR</span><span class="v">15,872</span><span class="d down">−0.18%</span></span>
+      <span class="tk-item"><span class="sym">IDX:HITS</span><span class="v">1,485</span><span class="d up">+3.40%</span></span>
+      <span class="tk-item"><span class="sym">IDX:SMDR</span><span class="v">408</span><span class="d down">−0.49%</span></span>
+      <span class="tk-item"><span class="sym">BDI</span><span class="v">1,847</span><span class="d down">−0.67%</span></span>
+      <span class="tk-item"><span class="sym">BDTI</span><span class="v">1,089</span><span class="d up">+0.76%</span></span>
+      <span class="tk-item"><span class="sym">BCTI</span><span class="v">612</span><span class="d down">−0.50%</span></span>
+      <span class="tk-item"><span class="sym">CCFI</span><span class="v">1,247</span><span class="d up">+1.49%</span></span>
+      <span class="tk-item"><span class="sym">SCFI</span><span class="v">1,486</span><span class="d up">+2.10%</span></span>
+      <span class="tk-item"><span class="sym">CPO MYR</span><span class="v">4,210</span><span class="d up">+0.91%</span></span>
+      <span class="tk-item"><span class="sym">COAL NEWC</span><span class="v">142.50</span><span class="d down">−1.45%</span></span>
+      <span class="tk-item"><span class="sym">NICKEL LME</span><span class="v">17,420</span><span class="d up">+0.49%</span></span>
+      <span class="tk-item"><span class="sym">BRENT</span><span class="v">82.34</span><span class="d up">+0.62%</span></span>
+      <span class="tk-item"><span class="sym">USD/IDR</span><span class="v">15,872</span><span class="d down">−0.18%</span></span>
+      <span class="tk-item"><span class="sym">IDX:HITS</span><span class="v">1,485</span><span class="d up">+3.40%</span></span>
+      <span class="tk-item"><span class="sym">IDX:SMDR</span><span class="v">408</span><span class="d down">−0.49%</span></span>
+    </div>
+  </section>
 
   <main id="main-content" class="max-w-7xl mx-auto px-4 py-6" role="main">
     <!-- Cycle 1: Home → 📦 Demand 탭으로 전환. 수요 흐름 지도 + 시계열을
