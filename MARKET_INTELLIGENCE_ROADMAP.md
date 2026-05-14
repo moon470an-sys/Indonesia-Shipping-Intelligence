@@ -37,7 +37,7 @@
 | 2 | `domestic_vessel_pricing` — CPO Market (Tug & Oil Barge / SPOB) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | BSI Vessel SPOB 매물 2행 추가. SPOB/oil barge 매물 多이나 가격 미표기 — 추가 검색 필요 |
 | 3 | `domestic_vessel_pricing` — Oil Tanker (Domestic) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id 매물 3행 추가 (376KL·500KL·3200DWT). TC 호가는 너무 broad — 미반영 |
 | 4 | `domestic_vessel_pricing` — LCT (Landing Craft Tank) 웹·SNS 보강 | Phase 1 | ✅ done | 2026-05-14 | kapal.co.id LCT 용선료 6행 → Web Cross-Check 마켓에 신규 카테고리. PDF LCT TC 와 큰 격차 발견 |
-| 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ⬜ todo | — | Pertamina Patra Niaga 산업용 고시가 |
+| 5 | `domestic_fuel_scrap` — solar B40 / HFO 180 (PDF 동결값 대체) | Phase 2 | ✅ done | 2026-05-14 | solarindustri.com B40·MFO 실가격으로 PDF 동결값 교체, solar 2→3행 |
 | 6 | `domestic_fuel_scrap` — scrap_domestic (Kelas A/B/C) 웹 보강 | Phase 2 | ⬜ todo | — | 인니 고철 시세 보도 |
 | 7 | `international_freight.indices` — 지수 확장 + 변화율(WoW/1M/3M) 채우기 | Phase 2 | ⬜ todo | — | 이미 웹 기반, 깊이 보강 |
 | 8 | `international_freight.scrap_*` / `sale_purchase` — S&P 실거래 사례 확보 | Phase 2 | ⬜ todo | — | GMS/Allied 주간, "No data acquired" 해소 |
@@ -99,3 +99,15 @@
 - **미확보**: LCT 매물(SHB) 가격 — indonetwork/OLX 매물 多이나 가격 미표기.
 - **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta 99 행 동기화.
 - **다음**: iter 5 — domestic_fuel_scrap (solar B40 / HFO 180).
+
+### iter 5 — 2026-05-14 — domestic_fuel_scrap (solar B40 / HFO 180)
+- **출처**: solarindustri.com "Harga Solar Industri B40 & MFO 15–31 Mar 2026" (upd 2026-03-24),
+  tier=media. 보조 확인: bbmindustri.com (1–14 Mar 2026).
+- **solar_b40_hsd**: PDF p.1 동결값(22,000 / 22,500)을 웹 출처로 **교체**. B40 Wilayah I+II
+  23,050 · Wilayah III 23,150 · Wilayah IV 23,300 (excl. PPn/PPH/PBBKB — PDF 와 동일 면세 기준).
+  기존 'III+IV avg' 행을 지역별 실값으로 분리해 2→3행.
+- **hfo_180_mfo**: PDF p.1 동결값(14,500)을 solarindustri.com MFO 16,850 (all regions)으로 교체.
+  bbmindustri 의 등급별 구분(Low Sulphur 15,450 / HS 180 13,500–13,850)은 note 에 병기.
+- **검증**: JSON 유효 · `lint_language.py` 0건 통과. build_meta fuel_scrap 9 행 동기화.
+- **남은 PDF 의존**: domestic_fuel_scrap 에서 PDF 단독은 이제 scrap_domestic(Kelas A/B/C)만.
+- **다음**: iter 6 — scrap_domestic (Kelas A/B/C) 웹 보강.
