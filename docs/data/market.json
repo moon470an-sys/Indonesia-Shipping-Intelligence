@@ -1,15 +1,41 @@
 {
   "schema_version": 3,
-  "report_week": "2nd Week of May 2026 (May 7 ~ May 13)",
-  "checked_date": "2026-05-14",
-  "last_updated": "2026-05-14",
-  "next_scheduled": "2026-05-21",
-  "build_run_id": "web-2026w20-auto",
+  "report_week": "3rd Week of May 2026 (May 14 ~ May 20)",
+  "checked_date": "2026-05-16",
+  "last_updated": "2026-05-16",
+  "next_scheduled": "2026-05-23",
+  "build_run_id": "sbs-pdf-w20-manual",
   "watermark": "Indicative prices only · 외부 공개 정보 큐레이션 · 투자 자문 아님",
   "review_cadence": "weekly",
-  "reference_pdf": "[SBS] Weekly Marketing Report 2026.05.07.pdf",
-
+  "reference_pdf": "[SBS] Weekly Marketing Report 2026.05.15.pdf",
   "overview": [
+    {
+      "headline": "SMDR — 1Q26 순이익 감소, 선대 확장 지속 (탱커 2척 IDR 460M + 컨테이너 1척 IDR 240M)",
+      "detail_ko": "PT Samudera Indonesia Tbk (SMDR) — 2026년 초 선대 확장과 감가상각비 증가로 순이익 감소. 투자금 배분: 탱커 2척 IDR 460M + 컨테이너 1척 IDR 240M 신규 인수, 인도·일본·유럽 신규 노선 개설 계획. 연초 운임 약세가 수익성에 부담; 경영진은 연말로 갈수록 운임 개선 기대를 표명. SBS Weekly W20 PDF p.3 인용 (Kontan Insight 5월 8일).",
+      "source_name": "SBS Weekly Marketing Report 2026.05.15 (Kontan Insight 인용)",
+      "source_tier": "broker",
+      "source_url": null,
+      "as_of": "2026-05-08",
+      "category": "Shipping"
+    },
+    {
+      "headline": "B50 바이오디젤 — 2026년 7월 1일 의무화 일정 유지, 기술적 이슈 발생 시 연기 가능",
+      "detail_ko": "ESDM 장관 — B50 바이오디젤 의무화는 2026년 7월 1일 시행을 목표로 진행 중. 현재 차량·중장비·선박·열차·발전기 등 다양한 부문에서 시험 진행, 차량 안정성·성능 결과는 만족스러운 수준. 시험 단계에서 기술적·운영적 이슈가 식별되면 일정 조정 가능성. 정부는 B50 으로 화석연료 수입 의존도 축소 목표. SBS Weekly W20 PDF p.3 인용 (Bloomberg Technoz 5월 11일).",
+      "source_name": "SBS Weekly Marketing Report 2026.05.15 (Bloomberg Technoz 인용)",
+      "source_tier": "broker",
+      "source_url": null,
+      "as_of": "2026-05-11",
+      "category": "Policy"
+    },
+    {
+      "headline": "에너지 전환 — 100 GW 태양광 이니셔티브, 신규 석탄 발전 모라토리엄, 수소·암모니아·원전 병행 추진",
+      "detail_ko": "정부 — 100 GW 태양광 발전 이니셔티브 + 수소·암모니아·원전 활용 + 전기차·인덕션 보급 + 신규 석탄 발전 모라토리엄 + CCS 기술 도입. ASEAN 역내 배출 감축 목표 달성을 위한 패키지. Prabowo 대통령 지침에 따라 에너지 안보·화석연료 의존도 축소 가속. SBS Weekly W20 PDF p.3 인용 (CNBC Indonesia 4월 28일).",
+      "source_name": "SBS Weekly Marketing Report 2026.05.15 (CNBC Indonesia 인용)",
+      "source_tier": "broker",
+      "source_url": null,
+      "as_of": "2026-04-28",
+      "category": "Policy"
+    },
     {
       "headline": "BDI 3,189p (5월 14일) — 2023년 11월 이후 최고, Capesize 5,340p",
       "detail_ko": "Baltic Dry Index 5월 14일 3,189p 로 2023년 11월 이후 최고치. Capesize Index 5,340p(일간 +5.1%), Panamax Index 2,454p(일간 +4.0%). 5월 9일 3,034p 에서 상승 지속 — 전 선형에 걸친 수요 강세. 인니 석탄·니켈 수출 운임 강세 흐름과 맞물림. 2026-W20 roadmap iter 9 갱신.",
@@ -65,86 +91,168 @@
       "category": "Commodity"
     }
   ],
-
   "international_freight": {
     "indices": [
-      { "name": "BDI", "value": 3189, "unit": "points", "as_of": "2026-05-14", "wow_pct": 7.1,
-        "source_name": "Trading Economics / Baltic Exchange — Dry Index", "source_tier": "media",
+      {
+        "name": "BDI",
+        "value": 3189,
+        "unit": "points",
+        "as_of": "2026-05-14",
+        "wow_pct": 7.1,
+        "source_name": "Trading Economics / Baltic Exchange — Dry Index",
+        "source_tier": "media",
         "source_url": "https://tradingeconomics.com/commodity/baltic",
         "note": "5월 14일 3,189p — 2023-11 이후 최고. 일간 +4.1%, 5월 9일 3,034 → 상승 지속. wow_pct 는 직전 스냅샷(2026-05-08, 2,978) 대비. 2026-W20 roadmap iter 7 갱신.",
-        "status": "verified" },
-      { "name": "BCI (Baltic Capesize Index)", "value": 5340, "unit": "points", "as_of": "2026-05-14", "wow_pct": 7.8,
-        "source_name": "Trading Economics / Baltic Exchange — Capesize Index", "source_tier": "media",
+        "status": "verified"
+      },
+      {
+        "name": "BCI (Baltic Capesize Index)",
+        "value": 5340,
+        "unit": "points",
+        "as_of": "2026-05-14",
+        "wow_pct": 7.8,
+        "source_name": "Trading Economics / Baltic Exchange — Capesize Index",
+        "source_tier": "media",
         "source_url": "https://tradingeconomics.com/commodity/baltic",
         "note": "5월 14일 5,340p, 일간 +5.1%. wow_pct 는 직전 스냅샷(2026-05-08, 4,955) 대비. iter 7 갱신.",
-        "status": "verified" },
-      { "name": "BPI (Baltic Panamax Index)", "value": 2454, "unit": "points", "as_of": "2026-05-14", "wow_pct": 9.9,
-        "source_name": "Trading Economics / Baltic Exchange — Panamax Index", "source_tier": "media",
+        "status": "verified"
+      },
+      {
+        "name": "BPI (Baltic Panamax Index)",
+        "value": 2454,
+        "unit": "points",
+        "as_of": "2026-05-14",
+        "wow_pct": 9.9,
+        "source_name": "Trading Economics / Baltic Exchange — Panamax Index",
+        "source_tier": "media",
         "source_url": "https://tradingeconomics.com/commodity/baltic",
         "note": "5월 14일 2,454p, 일간 +4.0%. wow_pct 는 직전 스냅샷(2026-05-08, 2,233) 대비. iter 7 갱신.",
-        "status": "verified" },
-      { "name": "BSI (Baltic Supramax Index)", "value": 1540, "unit": "points", "as_of": "2026-05-11", "wow_pct": 1.2,
-        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "status": "verified"
+      },
+      {
+        "name": "BSI (Baltic Supramax Index)",
+        "value": 1540,
+        "unit": "points",
+        "as_of": "2026-05-11",
+        "wow_pct": 1.2,
+        "source_name": "HandyBulk — Baltic Dry Index",
+        "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "평균 일당 $19,468. 2026-W20 roadmap maint 4 갱신 — 직전 1,522 / 2026-05-08 대비.",
-        "status": "verified" },
-      { "name": "Capesize 5TC (C5TC 182, weekly close)", "value": 45, "unit": "USD/day (thousand)", "as_of": "2026-05-11",
-        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "status": "verified"
+      },
+      {
+        "name": "Capesize 5TC (C5TC 182, weekly close)",
+        "value": 45,
+        "unit": "USD/day (thousand)",
+        "as_of": "2026-05-11",
+        "source_name": "HandyBulk — Baltic Dry Index",
+        "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "주간 마감 $44,941 (주중 고점 $46,610)",
-        "status": "verified" },
-      { "name": "Panamax 5TC (P5TC)", "value": 20, "unit": "USD/day (thousand)", "as_of": "2026-05-08",
-        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "status": "verified"
+      },
+      {
+        "name": "Panamax 5TC (P5TC)",
+        "value": 20,
+        "unit": "USD/day (thousand)",
+        "as_of": "2026-05-08",
+        "source_name": "HandyBulk — Baltic Dry Index",
+        "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "주간 $18,490 → $20,099 상승 마감",
-        "status": "verified" },
-      { "name": "Supramax 5TC", "value": 19, "unit": "USD/day (thousand)", "as_of": "2026-05-11",
-        "source_name": "HandyBulk — Baltic Dry Index", "source_tier": "media",
+        "status": "verified"
+      },
+      {
+        "name": "Supramax 5TC",
+        "value": 19,
+        "unit": "USD/day (thousand)",
+        "as_of": "2026-05-11",
+        "source_name": "HandyBulk — Baltic Dry Index",
+        "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "BSI 평균 일당 $19,468 기준 (2026-05-11). 천 USD 단위 반올림으로 value 19 유지. roadmap maint 4 갱신.",
-        "status": "verified" }
+        "status": "verified"
+      }
     ],
     "scrap_dry_bulk": [
-      { "region": "Bangladesh", "ldt_usd": 450, "as_of": "2026-05-13",
-        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+      {
+        "region": "Bangladesh",
+        "ldt_usd": 450,
+        "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)",
+        "source_tier": "broker",
         "source_url": null,
         "note": "dry bulk indication — 선박 공급 부진 속 강보합",
-        "status": "indicative" },
-      { "region": "India", "ldt_usd": 425, "as_of": "2026-05-13",
-        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+        "status": "indicative"
+      },
+      {
+        "region": "India",
+        "ldt_usd": 425,
+        "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)",
+        "source_tier": "broker",
         "source_url": null,
-        "status": "indicative" },
-      { "region": "Pakistan", "ldt_usd": 440, "as_of": "2026-05-13",
-        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+        "status": "indicative"
+      },
+      {
+        "region": "Pakistan",
+        "ldt_usd": 440,
+        "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)",
+        "source_tier": "broker",
         "source_url": null,
-        "status": "indicative" }
+        "status": "indicative"
+      }
     ],
     "scrap_tanker": [
-      { "region": "Bangladesh", "ldt_usd": 470, "as_of": "2026-05-13",
-        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+      {
+        "region": "Bangladesh",
+        "ldt_usd": 470,
+        "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)",
+        "source_tier": "broker",
         "source_url": null,
         "note": "tanker indication; LNG 선 1척 $513/LDT 거래 보고",
-        "status": "indicative" },
-      { "region": "India", "ldt_usd": 445, "as_of": "2026-05-13",
-        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+        "status": "indicative"
+      },
+      {
+        "region": "India",
+        "ldt_usd": 445,
+        "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)",
+        "source_tier": "broker",
         "source_url": null,
-        "status": "indicative" },
-      { "region": "Pakistan", "ldt_usd": 460, "as_of": "2026-05-13",
-        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)", "source_tier": "broker",
+        "status": "indicative"
+      },
+      {
+        "region": "Pakistan",
+        "ldt_usd": 460,
+        "as_of": "2026-05-13",
+        "source_name": "GMS Ship Recycling Weekly Market Report (mid-May 2026)",
+        "source_tier": "broker",
         "source_url": null,
-        "status": "indicative" }
+        "status": "indicative"
+      }
     ],
     "sale_purchase_bulk": [
-      { "vessel_name": "Bulk Joyance", "type": "Capesize Bulk Carrier", "dwt": null, "year": 2012,
-        "price_musd": 33, "buyer": null, "seller": null,
-        "source_name": "Lloyd's List — S&P report (08 May 2026)", "source_tier": "media",
+      {
+        "vessel_name": "Bulk Joyance",
+        "type": "Capesize Bulk Carrier",
+        "dwt": null,
+        "year": 2012,
+        "price_musd": 33,
+        "buyer": null,
+        "seller": null,
+        "source_name": "Lloyd's List — S&P report (08 May 2026)",
+        "source_tier": "media",
         "source_url": "https://www.lloydslist.com/LL1157097/Strong-demand-for-modern-bulk-carriers-pushes-up-secondhand-prices-across-most-segments",
         "as_of": "2026-05-08",
         "note": "2012년 건조 Capesize 'Bulk Joyance' $33M 매각 보도 (Lloyd's List, 2026-05-08). 2026-W20 roadmap iter 8 — PDF placeholder 'No data acquired' 를 웹 실거래 사례로 대체. DWT·buyer·seller 미보도.",
-        "status": "indicative" }
+        "status": "indicative"
+      }
     ]
   },
-
   "domestic_vessel_pricing": {
     "as_of": "2026-W20 (2nd Week of May 2026)",
     "currency": "IDR (millions)",
@@ -163,91 +271,465 @@
             "label": "SET Tug & Barge TC — Quarterly Average",
             "kind": "TC",
             "rows": [
-              { "size": "270ft", "year_built": "Q1 (Jan-Mar)", "value_low": 875, "value_high": 875,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "Q1 (Jan-Mar)", "value_low": 1165, "value_high": 1166,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "330ft", "year_built": "Q1 (Jan-Mar)", "value_low": 1525, "value_high": 1525,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "Q2 (Apr-Jun)", "value_low": 1332, "value_high": 1333,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "330ft", "year_built": "Q2 (Apr-Jun)", "value_low": 1300, "value_high": 1300,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "270ft", "year_built": "Q3 (Jul-Sep)", "value_low": 737, "value_high": 738,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "Q3 (Jul-Sep)", "value_low": 1085, "value_high": 1086,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "330ft", "year_built": "Q3 (Jul-Sep)", "value_low": 1400, "value_high": 1400,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "270ft", "year_built": "Q4 (Oct-Dec)", "value_low": 775, "value_high": 775,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "Q4 (Oct-Dec)", "value_low": 750, "value_high": 750,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "270ft", "year_built": "Q1-26 (Jan-Mar 2026)", "value_low": 720, "value_high": 721,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "Q1-26 (Jan-Mar 2026)", "value_low": 875, "value_high": 875,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "270ft", "year_built": "Q2-26 (Apr-Jun 2026)", "value_low": 800, "value_high": 800,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "270ft",
+                "year_built": "Q1 (Jan-Mar)",
+                "value_low": 875,
+                "value_high": 875,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "Q1 (Jan-Mar)",
+                "value_low": 1165,
+                "value_high": 1166,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "330ft",
+                "year_built": "Q1 (Jan-Mar)",
+                "value_low": 1525,
+                "value_high": 1525,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "Q2 (Apr-Jun)",
+                "value_low": 1332,
+                "value_high": 1333,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "330ft",
+                "year_built": "Q2 (Apr-Jun)",
+                "value_low": 1300,
+                "value_high": 1300,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "270ft",
+                "year_built": "Q3 (Jul-Sep)",
+                "value_low": 737,
+                "value_high": 738,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "Q3 (Jul-Sep)",
+                "value_low": 1085,
+                "value_high": 1086,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "330ft",
+                "year_built": "Q3 (Jul-Sep)",
+                "value_low": 1400,
+                "value_high": 1400,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "270ft",
+                "year_built": "Q4 (Oct-Dec)",
+                "value_low": 775,
+                "value_high": 775,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "Q4 (Oct-Dec)",
+                "value_low": 750,
+                "value_high": 750,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "270ft",
+                "year_built": "Q1-26 (Jan-Mar 2026)",
+                "value_low": 720,
+                "value_high": 721,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "Q1-26 (Jan-Mar 2026)",
+                "value_low": 875,
+                "value_high": 875,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "270ft",
+                "year_built": "Q2-26 (Apr-Jun 2026)",
+                "value_low": 800,
+                "value_high": 800,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "NB Tug & Barge — China",
             "kind": "NB",
             "rows": [
-              { "size": "various", "year_built": "2026 NB", "value_low": 28800, "value_high": 28800,
-                "sources": [{ "name": "China's Shipyard (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "330ft", "year_built": "2026 NB", "value_low": 41600, "value_high": 41600,
-                "sources": [{ "name": "China's Shipyard (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "2026 NB", "value_low": 26000, "value_high": 26000,
-                "sources": [{ "name": "China's Shipyard (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "2026 NB", "value_low": 27050, "value_high": 27050,
-                "sources": [{ "name": "CV. Samudera Jaya (PDF p.1)", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "various",
+                "year_built": "2026 NB",
+                "value_low": 28800,
+                "value_high": 28800,
+                "sources": [
+                  {
+                    "name": "China's Shipyard (PDF p.1)",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "330ft",
+                "year_built": "2026 NB",
+                "value_low": 41600,
+                "value_high": 41600,
+                "sources": [
+                  {
+                    "name": "China's Shipyard (PDF p.1)",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "2026 NB",
+                "value_low": 26000,
+                "value_high": 26000,
+                "sources": [
+                  {
+                    "name": "China's Shipyard (PDF p.1)",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "2026 NB",
+                "value_low": 27050,
+                "value_high": 27050,
+                "sources": [
+                  {
+                    "name": "CV. Samudera Jaya (PDF p.1)",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "NB Tug & Barge — Domestic (SBY/SMD/BATAM)",
             "kind": "NB",
             "rows": [
-              { "size": "300ft (default)", "year_built": "Ratson (SBY)", "value_low": 22000, "value_high": 22000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft (default)", "year_built": "Borneo Selebes (SMD)", "value_low": 19000, "value_high": 19000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft (default)", "year_built": "MKS (SMD)", "value_low": 17000, "value_high": 17000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft (default)", "year_built": "Syukur Bersaudara (SMD)", "value_low": 20000, "value_high": 20000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft (default)", "year_built": "Pancaran Samudera (SMD)", "value_low": 21000, "value_high": 21000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft (default)", "year_built": "Untung Brawijaya (SMD)", "value_low": 19500, "value_high": 19500,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft (default)", "year_built": "Bahari Prima (SMD)", "value_low": 20000, "value_high": 20000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "Bandar Victory (BATAM)", "value_low": 31250, "value_high": 31250,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "KTU (BATAM)", "value_low": 20900, "value_high": 33600,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "300ft (default)",
+                "year_built": "Ratson (SBY)",
+                "value_low": 22000,
+                "value_high": 22000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft (default)",
+                "year_built": "Borneo Selebes (SMD)",
+                "value_low": 19000,
+                "value_high": 19000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft (default)",
+                "year_built": "MKS (SMD)",
+                "value_low": 17000,
+                "value_high": 17000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft (default)",
+                "year_built": "Syukur Bersaudara (SMD)",
+                "value_low": 20000,
+                "value_high": 20000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft (default)",
+                "year_built": "Pancaran Samudera (SMD)",
+                "value_low": 21000,
+                "value_high": 21000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft (default)",
+                "year_built": "Untung Brawijaya (SMD)",
+                "value_low": 19500,
+                "value_high": 19500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft (default)",
+                "year_built": "Bahari Prima (SMD)",
+                "value_low": 20000,
+                "value_high": 20000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "Bandar Victory (BATAM)",
+                "value_low": 31250,
+                "value_high": 31250,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "KTU (BATAM)",
+                "value_low": 20900,
+                "value_high": 33600,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "2nd Tug & Barge — SHB",
             "kind": "SHB",
             "rows": [
-              { "size": "330ft", "year_built": "various", "value_low": 35000, "value_high": 59000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "300ft", "year_built": "various", "value_low": 26000, "value_high": 35000,
+              {
+                "size": "330ft",
+                "year_built": "various",
+                "value_low": 35000,
+                "value_high": 59000,
                 "sources": [
-                  { "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null },
-                  { "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }
-                ], "status": "indicative",
-                "note": "kapal.co.id 매물 호가 2-source 보강: 2006/2000 set 26,000 ~ 2016·2017 set 45,000 (millions IDR). SBS 상단(35,000)과 웹 상단(45,000) 15% 초과 차이로 status indicative 유지." },
-              { "size": "300ft (green)", "year_built": "various", "value_low": 24500, "value_high": 29500,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "270ft", "year_built": "various", "value_low": 11500, "value_high": 13000,
-                "sources": [{ "name": "SBS Weekly W19 p.1", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "230ft (set)", "year_built": "various", "value_low": 14000, "value_high": 20000,
-                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
-                "status": "indicative", "note": "웹 매물 호가: 2009/2001 set 14,000 · 2010/2011 set 20,000 (millions IDR). 웹 단독 출처 — 2026-W20 roadmap iter 1 신규 행." }
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "300ft",
+                "year_built": "various",
+                "value_low": 26000,
+                "value_high": 35000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  },
+                  {
+                    "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "kapal.co.id 매물 호가 2-source 보강: 2006/2000 set 26,000 ~ 2016·2017 set 45,000 (millions IDR). SBS 상단(35,000)과 웹 상단(45,000) 15% 초과 차이로 status indicative 유지."
+              },
+              {
+                "size": "300ft (green)",
+                "year_built": "various",
+                "value_low": 24500,
+                "value_high": 29500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "270ft",
+                "year_built": "various",
+                "value_low": 11500,
+                "value_high": 13000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.1",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "230ft (set)",
+                "year_built": "various",
+                "value_low": 14000,
+                "value_high": 20000,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "웹 매물 호가: 2009/2001 set 14,000 · 2010/2011 set 20,000 (millions IDR). 웹 단독 출처 — 2026-W20 roadmap iter 1 신규 행."
+              }
             ]
           }
         ]
@@ -260,100 +742,508 @@
             "label": "CPO Tug & Oil Barge — TC (1-SET TB+OB)",
             "kind": "TC",
             "rows": [
-              { "size": "2500 KL", "year_built": "2024", "value_low": 500, "value_high": 500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "3500 KL", "year_built": "2023", "value_low": 875, "value_high": 875,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4000 KL", "year_built": "2025", "value_low": 1100, "value_high": 1100,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4500 KL", "year_built": "2024", "value_low": 1400, "value_high": 1400,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "5000 KL", "year_built": "2024", "value_low": 1500, "value_high": 1500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "2500 KL",
+                "year_built": "2024",
+                "value_low": 500,
+                "value_high": 500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "3500 KL",
+                "year_built": "2023",
+                "value_low": 875,
+                "value_high": 875,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4000 KL",
+                "year_built": "2025",
+                "value_low": 1100,
+                "value_high": 1100,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4500 KL",
+                "year_built": "2024",
+                "value_low": 1400,
+                "value_high": 1400,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "5000 KL",
+                "year_built": "2024",
+                "value_low": 1500,
+                "value_high": 1500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "2nd Tug & Oil Barge — SHB (1-SET TB+OB)",
             "kind": "SHB",
             "rows": [
-              { "size": "2000 KL", "year_built": "2025", "value_low": 23500, "value_high": 23500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "2500 KL", "year_built": "2025", "value_low": 36000, "value_high": 36000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "3100 KL", "year_built": "2025", "value_low": 25000, "value_high": 25000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "3500 KL", "year_built": "2022", "value_low": 33000, "value_high": 33000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "3500 KL", "year_built": "2023", "value_low": 34000, "value_high": 34000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4000 KL", "year_built": "2025", "value_low": 48000, "value_high": 48000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "2000 KL",
+                "year_built": "2025",
+                "value_low": 23500,
+                "value_high": 23500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "2500 KL",
+                "year_built": "2025",
+                "value_low": 36000,
+                "value_high": 36000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "3100 KL",
+                "year_built": "2025",
+                "value_low": 25000,
+                "value_high": 25000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "3500 KL",
+                "year_built": "2022",
+                "value_low": 33000,
+                "value_high": 33000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "3500 KL",
+                "year_built": "2023",
+                "value_low": 34000,
+                "value_high": 34000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4000 KL",
+                "year_built": "2025",
+                "value_low": 48000,
+                "value_high": 48000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "SPOB — Time Charter (TC SPOB)",
             "kind": "TC",
             "rows": [
-              { "size": "2000 KL", "year_built": "2023", "value_low": 800, "value_high": 800,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "2000 KL", "year_built": "2026", "value_low": 1250, "value_high": 1250,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "3000 KL", "year_built": "2025", "value_low": 1200, "value_high": 1200,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4000 KL", "year_built": "2024", "value_low": 1400, "value_high": 1400,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4000 KL", "year_built": "2026", "value_low": 1650, "value_high": 1650,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4500 KL", "year_built": "2025", "value_low": 1550, "value_high": 1550,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "5000 KL", "year_built": "2024", "value_low": 1383, "value_high": 1383,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "5000 KL", "year_built": "2025", "value_low": 1600, "value_high": 1600,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "5000 KL", "year_built": "2026", "value_low": 3000, "value_high": 3000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "6200 KL", "year_built": "2024", "value_low": 2100, "value_high": 2100,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "2000 KL",
+                "year_built": "2023",
+                "value_low": 800,
+                "value_high": 800,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "2000 KL",
+                "year_built": "2026",
+                "value_low": 1250,
+                "value_high": 1250,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "3000 KL",
+                "year_built": "2025",
+                "value_low": 1200,
+                "value_high": 1200,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4000 KL",
+                "year_built": "2024",
+                "value_low": 1400,
+                "value_high": 1400,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4000 KL",
+                "year_built": "2026",
+                "value_low": 1650,
+                "value_high": 1650,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4500 KL",
+                "year_built": "2025",
+                "value_low": 1550,
+                "value_high": 1550,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "5000 KL",
+                "year_built": "2024",
+                "value_low": 1383,
+                "value_high": 1383,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "5000 KL",
+                "year_built": "2025",
+                "value_low": 1600,
+                "value_high": 1600,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "5000 KL",
+                "year_built": "2026",
+                "value_low": 3000,
+                "value_high": 3000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "6200 KL",
+                "year_built": "2024",
+                "value_low": 2100,
+                "value_high": 2100,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "2nd SPOB — SHB Price",
             "kind": "SHB",
             "rows": [
-              { "size": "300 KL", "year_built": "various", "value_low": 5000, "value_high": 5000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "350 KL", "year_built": "various", "value_low": 10000, "value_high": 10000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "450 KL", "year_built": "various", "value_low": 7000, "value_high": 7000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "500 KL", "year_built": "various", "value_low": 6500, "value_high": 12000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "1000 KL", "year_built": "various", "value_low": 17500, "value_high": 17500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "1500 KL", "year_built": "various", "value_low": 25000, "value_high": 25000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "2000 KL", "year_built": "various", "value_low": 35000, "value_high": 35000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "3200 KL", "year_built": "various", "value_low": 29000, "value_high": 29000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4000 KL", "year_built": "various", "value_low": 47000, "value_high": 47000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "200 KL", "year_built": "2003", "value_low": 3000, "value_high": 3000,
-                "sources": [{ "name": "BSI Vessel — Self Propelled Oil Barge for sale (listing 2023-05)", "tier": "broker", "url": "https://www.bsivessel.com/vessel-for-sale/self-propelled-oil-barge" }],
-                "status": "indicative", "note": "BSI Vessel 중개 매물 호가 (IDR 3.0B). 2023-05 listing — 시점 명시. 2026-W20 roadmap iter 2 신규 행." },
-              { "size": "300 KL", "year_built": "2016", "value_low": 3700, "value_high": 3700,
-                "sources": [{ "name": "BSI Vessel — Self Propelled Oil Barge for sale (listing 2023-05)", "tier": "broker", "url": "https://www.bsivessel.com/vessel-for-sale/self-propelled-oil-barge" }],
-                "status": "indicative", "note": "BSI Vessel 중개 매물 호가 (IDR 3.7B, 2016년 건조). 2023-05 listing. 동일 size 'various' PDF 행(5,000)과 별개 데이터 포인트 — roadmap iter 2 신규 행." }
+              {
+                "size": "300 KL",
+                "year_built": "various",
+                "value_low": 5000,
+                "value_high": 5000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "350 KL",
+                "year_built": "various",
+                "value_low": 10000,
+                "value_high": 10000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "450 KL",
+                "year_built": "various",
+                "value_low": 7000,
+                "value_high": 7000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "500 KL",
+                "year_built": "various",
+                "value_low": 6500,
+                "value_high": 12000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "1000 KL",
+                "year_built": "various",
+                "value_low": 17500,
+                "value_high": 17500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "1500 KL",
+                "year_built": "various",
+                "value_low": 25000,
+                "value_high": 25000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "2000 KL",
+                "year_built": "various",
+                "value_low": 35000,
+                "value_high": 35000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "3200 KL",
+                "year_built": "various",
+                "value_low": 29000,
+                "value_high": 29000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4000 KL",
+                "year_built": "various",
+                "value_low": 47000,
+                "value_high": 47000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "200 KL",
+                "year_built": "2003",
+                "value_low": 3000,
+                "value_high": 3000,
+                "sources": [
+                  {
+                    "name": "BSI Vessel — Self Propelled Oil Barge for sale (listing 2023-05)",
+                    "tier": "broker",
+                    "url": "https://www.bsivessel.com/vessel-for-sale/self-propelled-oil-barge"
+                  }
+                ],
+                "status": "indicative",
+                "note": "BSI Vessel 중개 매물 호가 (IDR 3.0B). 2023-05 listing — 시점 명시. 2026-W20 roadmap iter 2 신규 행."
+              },
+              {
+                "size": "300 KL",
+                "year_built": "2016",
+                "value_low": 3700,
+                "value_high": 3700,
+                "sources": [
+                  {
+                    "name": "BSI Vessel — Self Propelled Oil Barge for sale (listing 2023-05)",
+                    "tier": "broker",
+                    "url": "https://www.bsivessel.com/vessel-for-sale/self-propelled-oil-barge"
+                  }
+                ],
+                "status": "indicative",
+                "note": "BSI Vessel 중개 매물 호가 (IDR 3.7B, 2016년 건조). 2023-05 listing. 동일 size 'various' PDF 행(5,000)과 별개 데이터 포인트 — roadmap iter 2 신규 행."
+              }
             ]
           },
           {
             "label": "NB SPOB 2025",
             "kind": "NB",
             "rows": [
-              { "size": "500 KL", "year_built": "2025 NB", "value_low": 15000, "value_high": 15000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "600 KL", "year_built": "2025 NB", "value_low": 17500, "value_high": 17500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "500 KL",
+                "year_built": "2025 NB",
+                "value_low": 15000,
+                "value_high": 15000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "600 KL",
+                "year_built": "2025 NB",
+                "value_low": 17500,
+                "value_high": 17500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           }
         ]
@@ -366,50 +1256,218 @@
             "label": "Oil Tanker — Time Charter (TC Oil Tanker)",
             "kind": "TC",
             "rows": [
-              { "size": "various small", "year_built": "various", "value_low": 1500, "value_high": 1500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "various mid-1", "year_built": "various", "value_low": 1900, "value_high": 1900,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "various mid-2", "year_built": "various", "value_low": 2400, "value_high": 2400,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "various mid-3", "year_built": "various", "value_low": 2500, "value_high": 2500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "various large", "year_built": "various", "value_low": 3300, "value_high": 3300,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "various small",
+                "year_built": "various",
+                "value_low": 1500,
+                "value_high": 1500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "various mid-1",
+                "year_built": "various",
+                "value_low": 1900,
+                "value_high": 1900,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "various mid-2",
+                "year_built": "various",
+                "value_low": 2400,
+                "value_high": 2400,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "various mid-3",
+                "year_built": "various",
+                "value_low": 2500,
+                "value_high": 2500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "various large",
+                "year_built": "various",
+                "value_low": 3300,
+                "value_high": 3300,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "2nd Oil Tanker — SHB Price",
             "kind": "SHB",
             "rows": [
-              { "size": "4000 KL (smaller)", "year_built": "various", "value_low": 40000, "value_high": 42500,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "4000 KL (larger)", "year_built": "various", "value_low": 47600, "value_high": 47600,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "5000 KL (smaller)", "year_built": "various", "value_low": 65000, "value_high": 65000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "5000 KL (larger)", "year_built": "various", "value_low": 88400, "value_high": 88400,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "6500 KL", "year_built": "various", "value_low": 40000, "value_high": 40000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "376 KL (Mini Tanker)", "year_built": "2006", "value_low": 3000, "value_high": 3000,
-                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
-                "status": "indicative", "note": "kapal.co.id 매물 호가 (Rp 3.0B). 웹 단독 출처 — 2026-W20 roadmap iter 3 신규 행." },
-              { "size": "500 KL (Mini Tanker)", "year_built": "various", "value_low": 5500, "value_high": 5500,
-                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
-                "status": "indicative", "note": "kapal.co.id 매물 호가 (Rp 5.5B). 웹 단독 출처 — roadmap iter 3 신규 행." },
-              { "size": "3200 DWT", "year_built": "2006", "value_low": 30000, "value_high": 30000,
-                "sources": [{ "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)", "tier": "media", "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/" }],
-                "status": "indicative", "note": "kapal.co.id 매물 호가 (Rp 30B, last docking 2024). DWT 표기 — KL 환산 미적용. roadmap iter 3 신규 행." }
+              {
+                "size": "4000 KL (smaller)",
+                "year_built": "various",
+                "value_low": 40000,
+                "value_high": 42500,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "4000 KL (larger)",
+                "year_built": "various",
+                "value_low": 47600,
+                "value_high": 47600,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "5000 KL (smaller)",
+                "year_built": "various",
+                "value_low": 65000,
+                "value_high": 65000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "5000 KL (larger)",
+                "year_built": "various",
+                "value_low": 88400,
+                "value_high": 88400,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "6500 KL",
+                "year_built": "various",
+                "value_low": 40000,
+                "value_high": 40000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "376 KL (Mini Tanker)",
+                "year_built": "2006",
+                "value_low": 3000,
+                "value_high": 3000,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "kapal.co.id 매물 호가 (Rp 3.0B). 웹 단독 출처 — 2026-W20 roadmap iter 3 신규 행."
+              },
+              {
+                "size": "500 KL (Mini Tanker)",
+                "year_built": "various",
+                "value_low": 5500,
+                "value_high": 5500,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "kapal.co.id 매물 호가 (Rp 5.5B). 웹 단독 출처 — roadmap iter 3 신규 행."
+              },
+              {
+                "size": "3200 DWT",
+                "year_built": "2006",
+                "value_low": 30000,
+                "value_high": 30000,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Dijual Berbagai Jenis Kapal Tongkang/Tugboat (2025-03-11)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/dijual-berbagai-jenis-kapal-tongkang-tanker-tugboat-oil-barge/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "kapal.co.id 매물 호가 (Rp 30B, last docking 2024). DWT 표기 — KL 환산 미적용. roadmap iter 3 신규 행."
+              }
             ]
           },
           {
             "label": "NB Oil Tanker",
             "kind": "NB",
             "rows": [
-              { "size": "—", "year_built": "2026 NB", "value_low": null, "value_high": null,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "No data acquired",
-                "note": "Per PDF p.2 caption: \"No data has been acquired yet.\"" }
+              {
+                "size": "—",
+                "year_built": "2026 NB",
+                "value_low": null,
+                "value_high": null,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "No data acquired",
+                "note": "Per PDF p.2 caption: \"No data has been acquired yet.\""
+              }
             ]
           }
         ]
@@ -422,36 +1480,144 @@
             "label": "LCT — Time Charter (TC LCT)",
             "kind": "TC",
             "rows": [
-              { "size": "smaller", "year_built": "various", "value_low": 1100, "value_high": 1100,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "larger", "year_built": "various", "value_low": 1200, "value_high": 1200,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "smaller",
+                "year_built": "various",
+                "value_low": 1100,
+                "value_high": 1100,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "larger",
+                "year_built": "various",
+                "value_low": 1200,
+                "value_high": 1200,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "2nd LCT — SHB Price",
             "kind": "SHB",
             "rows": [
-              { "size": "smaller", "year_built": "various", "value_low": 29500, "value_high": 30000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "mid (green/2022)", "year_built": "2022", "value_low": 40000, "value_high": 40000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "larger", "year_built": "various", "value_low": 38000, "value_high": 38000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "largest", "year_built": "various", "value_low": 65000, "value_high": 65000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "smaller",
+                "year_built": "various",
+                "value_low": 29500,
+                "value_high": 30000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "mid (green/2022)",
+                "year_built": "2022",
+                "value_low": 40000,
+                "value_high": 40000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "larger",
+                "year_built": "various",
+                "value_low": 38000,
+                "value_high": 38000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "largest",
+                "year_built": "various",
+                "value_low": 65000,
+                "value_high": 65000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           },
           {
             "label": "NB LCT 2025",
             "kind": "NB",
             "rows": [
-              { "size": "smaller", "year_built": "2025 NB", "value_low": 21000, "value_high": 23000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "mid", "year_built": "2025 NB", "value_low": 30000, "value_high": 30000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" },
-              { "size": "larger", "year_built": "2025 NB", "value_low": 37000, "value_high": 37000,
-                "sources": [{ "name": "SBS Weekly W19 p.2", "tier": "broker", "url": null }], "status": "indicative" }
+              {
+                "size": "smaller",
+                "year_built": "2025 NB",
+                "value_low": 21000,
+                "value_high": 23000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "mid",
+                "year_built": "2025 NB",
+                "value_low": 30000,
+                "value_high": 30000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              },
+              {
+                "size": "larger",
+                "year_built": "2025 NB",
+                "value_low": 37000,
+                "value_high": 37000,
+                "sources": [
+                  {
+                    "name": "SBS Weekly W19 p.2",
+                    "tier": "broker",
+                    "url": null
+                  }
+                ],
+                "status": "indicative"
+              }
             ]
           }
         ]
@@ -465,45 +1631,177 @@
             "label": "Tug & Barge TC — Web Listing (kapal.co.id)",
             "kind": "TC",
             "rows": [
-              { "size": "180ft", "year_built": "various", "value_low": 215, "value_high": 235,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~5,000톤. 2026-W20 roadmap iter 1 신규 행." },
-              { "size": "230ft", "year_built": "various", "value_low": 420, "value_high": 420,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가. 2026-W20 roadmap iter 1 신규 행." },
-              { "size": "270ft", "year_built": "various", "value_low": 655, "value_high": 670,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~8,000톤. iter 1 에서 출처 페이지 재판독으로 655–670 range 반영." },
-              { "size": "300ft", "year_built": "various", "value_low": 770, "value_high": 900,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 10,000~12,000톤. iter 1 재판독으로 770–900 range 반영." },
-              { "size": "330ft", "year_built": "various", "value_low": 965, "value_high": 965,
-                "sources": [{ "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)", "tier": "media", "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/" }],
-                "status": "indicative", "note": "월 time charter 호가 — ocean-going barge. iter 1 재판독으로 925→965 갱신." }
+              {
+                "size": "180ft",
+                "year_built": "various",
+                "value_low": 215,
+                "value_high": 235,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~5,000톤. 2026-W20 roadmap iter 1 신규 행."
+              },
+              {
+                "size": "230ft",
+                "year_built": "various",
+                "value_low": 420,
+                "value_high": 420,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가. 2026-W20 roadmap iter 1 신규 행."
+              },
+              {
+                "size": "270ft",
+                "year_built": "various",
+                "value_low": 655,
+                "value_high": 670,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~8,000톤. iter 1 에서 출처 페이지 재판독으로 655–670 range 반영."
+              },
+              {
+                "size": "300ft",
+                "year_built": "various",
+                "value_low": 770,
+                "value_high": 900,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 10,000~12,000톤. iter 1 재판독으로 770–900 range 반영."
+              },
+              {
+                "size": "330ft",
+                "year_built": "various",
+                "value_low": 965,
+                "value_high": 965,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Harga Sewa Kapal Tongkang 2025–2026 (2025-06-13)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/harga-sewa-kapal-tongkang-2025-2026/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — ocean-going barge. iter 1 재판독으로 925→965 갱신."
+              }
             ]
           },
           {
             "label": "LCT TC — Web Listing (kapal.co.id)",
             "kind": "TC",
             "rows": [
-              { "size": "LCT 500 DWT", "year_built": "various", "value_low": 80, "value_high": 100,
-                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~350톤. 2026-W20 roadmap iter 4 신규. PDF LCT TC 행과 단위·선급 기준이 달라 직접 비교 불가." },
-              { "size": "LCT 1000 DWT", "year_built": "various", "value_low": 120, "value_high": 150,
-                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~500톤." },
-              { "size": "LCT 1200 DWT", "year_built": "various", "value_low": 160, "value_high": 180,
-                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~700톤." },
-              { "size": "LCT 1500 DWT", "year_built": "various", "value_low": 200, "value_high": 230,
-                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~800톤." },
-              { "size": "LCT 1700 DWT", "year_built": "various", "value_low": 250, "value_high": 280,
-                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~1,100톤." },
-              { "size": "LCT 2000 DWT", "year_built": "various", "value_low": 300, "value_high": 350,
-                "sources": [{ "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)", "tier": "media", "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/" }],
-                "status": "indicative", "note": "월 time charter 호가 — 적재 ~1,300톤." }
+              {
+                "size": "LCT 500 DWT",
+                "year_built": "various",
+                "value_low": 80,
+                "value_high": 100,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~350톤. 2026-W20 roadmap iter 4 신규. PDF LCT TC 행과 단위·선급 기준이 달라 직접 비교 불가."
+              },
+              {
+                "size": "LCT 1000 DWT",
+                "year_built": "various",
+                "value_low": 120,
+                "value_high": 150,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~500톤."
+              },
+              {
+                "size": "LCT 1200 DWT",
+                "year_built": "various",
+                "value_low": 160,
+                "value_high": 180,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~700톤."
+              },
+              {
+                "size": "LCT 1500 DWT",
+                "year_built": "various",
+                "value_low": 200,
+                "value_high": 230,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~800톤."
+              },
+              {
+                "size": "LCT 1700 DWT",
+                "year_built": "various",
+                "value_low": 250,
+                "value_high": 280,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~1,100톤."
+              },
+              {
+                "size": "LCT 2000 DWT",
+                "year_built": "various",
+                "value_low": 300,
+                "value_high": 350,
+                "sources": [
+                  {
+                    "name": "kapal.co.id — Sewa Kapal LCT Indonesia (2025-03-10)",
+                    "tier": "media",
+                    "url": "https://kapal.co.id/sewa-kapal-lct-indonesia/"
+                  }
+                ],
+                "status": "indicative",
+                "note": "월 time charter 호가 — 적재 ~1,300톤."
+              }
             ]
           }
         ]
@@ -511,55 +1809,97 @@
     ],
     "_note": "PDF p.2 chart bars are image-based; values seeded via visual OCR. Year-bucket distinctions reflect bar-color legend (green=2022/23, light-blue=2024, dark-blue=2025, yellow=2026). SBS 4개 market rows status=indicative pending TC↔SHB cross-validation. 'Domestic Charter Rates — Web Cross-Check' market은 2026-W20 웹 검색으로 추가된 공개 listing 호가."
   },
-
   "domestic_fuel_scrap": {
     "cpo_price_index_gapki": [
-      { "value": 15610, "unit": "IDR/kg (ICDX)", "as_of": "2026-05-12",
-        "source_name": "GAPKI — Commodity Price Position (12 May 2026)", "source_tier": "official",
+      {
+        "value": 15610,
+        "unit": "IDR/kg (ICDX)",
+        "as_of": "2026-05-12",
+        "source_name": "GAPKI — Commodity Price Position (12 May 2026)",
+        "source_tier": "official",
         "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
         "note": "ICDX 종가; 5월 6일 16,355 → 12일 15,610 하락 흐름",
-        "status": "verified" },
-      { "value": 15150, "unit": "IDR/kg (KPB Nusantara, delivered)", "as_of": "2026-05-12",
-        "source_name": "GAPKI — Commodity Price Position (12 May 2026)", "source_tier": "official",
+        "status": "verified"
+      },
+      {
+        "value": 15150,
+        "unit": "IDR/kg (KPB Nusantara, delivered)",
+        "as_of": "2026-05-12",
+        "source_name": "GAPKI — Commodity Price Position (12 May 2026)",
+        "source_tier": "official",
         "source_url": "https://gapki.id/en/news/2026/05/13/may-12-2026-commodity-price-position-at-the-closing-of-physical-exchange-market/",
         "note": "KPB Nusantara 인도가 (Dmi/Blw/Ktj)",
-        "status": "verified" }
+        "status": "verified"
+      }
     ],
     "solar_b40_hsd": [
-      { "value": 26350, "unit": "IDR/liter (B40 HSD, national, excl. tax)", "as_of": "2026-05-14",
-        "source_name": "bbmindustri.com — Harga Solar Industri Terbaru 1–14 Mei 2026", "source_tier": "media",
+      {
+        "value": 26350,
+        "unit": "IDR/liter (B40 HSD, national, excl. tax)",
+        "as_of": "2026-05-14",
+        "source_name": "bbmindustri.com — Harga Solar Industri Terbaru 1–14 Mei 2026",
+        "source_tier": "media",
         "source_url": "https://www.bbmindustri.com/2026/05/harga-solar-industri-terbaru-hari-ini-1.html",
         "note": "Harga Dasar Keekonomian, excl. PPn(11%)·PBBKB·PPH (inc.tax 환산 29,553.93). 2026-W20 roadmap maint 5 — solarindustri.com 3월 지역별 값(23,050~23,300)이 stale 라 5월 최신 단일 국가값으로 교체. 4월 30,550 → 5월 26,350 으로 변동성 큼. 본 판에는 지역 분해·MFO 미표기.",
-        "status": "indicative" }
+        "status": "indicative"
+      }
     ],
     "hfo_180_mfo": [
-      { "value": 16850, "unit": "IDR/liter (MFO, all regions)", "as_of": "2026-03-31",
-        "source_name": "solarindustri.com — Harga Solar Industri B40 & MFO (15–31 Mar 2026, upd 2026-03-24)", "source_tier": "media",
+      {
+        "value": 16850,
+        "unit": "IDR/liter (MFO, all regions)",
+        "as_of": "2026-03-31",
+        "source_name": "solarindustri.com — Harga Solar Industri B40 & MFO (15–31 Mar 2026, upd 2026-03-24)",
+        "source_tier": "media",
         "source_url": "https://solarindustri.com/berita/harga-solar-industri-15-31-maret-2026/",
         "note": "excl. PPn, PPH, PBBKB. 2026-W20 roadmap iter 5 — PDF p.1 동결값(14,500)을 웹 출처로 교체. 참고: bbmindustri.com(1–14 Mar)은 MFO Low Sulphur 15,450 / HS 180 Cst 13,500–13,850 으로 등급별 구분.",
-        "status": "indicative" }
+        "status": "indicative"
+      }
     ],
     "scrap_domestic": [
-      { "value": 5600, "unit": "IDR/kg (Kelas A)", "as_of": "2026-03-01",
-        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas A 5,600)", "source_tier": "media",
+      {
+        "value": 5600,
+        "unit": "IDR/kg (Kelas A)",
+        "as_of": "2026-03-01",
+        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas A 5,600)",
+        "source_tier": "media",
         "source_url": "https://digitaleksplorasi.com/harga-besi-bekas-2026-di-pasar-ini-pengepul-terbaiknya/",
         "note": "Kelas A = iron thickness ≥6mm. 웹 출처가 PDF p.1 값 5,600 을 정확히 확인 (PDF+웹 일치). 동 출처의 'besi kapal'(선체 고철) 별도 호가는 4,600–5,100/kg. 2026-W20 roadmap iter 6 — PDF 단독 → 웹 검증.",
-        "status": "indicative" },
-      { "value": 5425, "unit": "IDR/kg (Kelas B)", "as_of": "2026-03-01",
-        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas B 5,350–5,500)", "source_tier": "media",
+        "status": "indicative"
+      },
+      {
+        "value": 5425,
+        "unit": "IDR/kg (Kelas B)",
+        "as_of": "2026-03-01",
+        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas B 5,350–5,500)",
+        "source_tier": "media",
         "source_url": "https://digitaleksplorasi.com/harga-besi-bekas-2026-di-pasar-ini-pengepul-terbaiknya/",
         "note": "PDF p.1 값 5,425 는 웹 출처 Kelas B range 5,350–5,500 의 중앙값과 일치. roadmap iter 6 — PDF 단독 → 웹 검증.",
-        "status": "indicative" },
-      { "value": 4700, "unit": "IDR/kg (Kelas C)", "as_of": "2026-03-01",
-        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas C 4,500–4,900)", "source_tier": "media",
+        "status": "indicative"
+      },
+      {
+        "value": 4700,
+        "unit": "IDR/kg (Kelas C)",
+        "as_of": "2026-03-01",
+        "source_name": "digitaleksplorasi.com — Harga Besi Bekas 2026 (Kelas C 4,500–4,900)",
+        "source_tier": "media",
         "source_url": "https://digitaleksplorasi.com/harga-besi-bekas-2026-di-pasar-ini-pengepul-terbaiknya/",
         "note": "PDF p.1 값 4,700 은 웹 출처 Kelas C range 4,500–4,900 의 중앙값과 일치. roadmap iter 6 — PDF 단독 → 웹 검증.",
-        "status": "indicative" }
+        "status": "indicative"
+      }
     ]
   },
-
   "commodity_news": {
     "coal": [
+      {
+        "title": "석탄·니켈 로열티 인상 — 2026년 6월 초 시행 목표, ESDM 장관은 시점 조정 가능성 시사",
+        "summary_ko": "재무장관 Purbaya Yudhi Sadewa — 석탄·니켈 등 광물 로열티 개정안의 시행을 2026년 6월 초로 명시. 광업 부문 국가 세수 확대, 원자재 가격 상승 국면에서 로열티·수출세 조정 추진. 다만 ESDM 장관 Bahlil Lahadalia 는 국가·업계가 모두 수용 가능한 공식 마련을 위해 시행 시점 연기 가능성을 언급.",
+        "source_name": "SBS Weekly Marketing Report 2026.05.15 (Tempo 5월 11일 인용)",
+        "source_tier": "broker",
+        "source_url": null,
+        "published_date": "2026-05-11",
+        "status": "indicative"
+      },
       {
         "title": "정부, 석탄 수출세 1~5% 도입 추진 — 2026년 최대 IDR 20조 세수 전망",
         "summary_ko": "재무장관 Purbaya Yudhi Sadewa (5월 4일) — 석탄 수출세 1~5%, 석탄·니켈 windfall tax 검토. 보조금 부담 상쇄 목적. 석탄 종류별 차등 세율 가능성. 석탄 수출세만으로 2026년 최대 IDR 20조(약 USD 12억) 추가 세수 전망. 재무장관은 기업 이익에 미치는 영향은 '작다'고 언급.",
@@ -581,6 +1921,15 @@
     ],
     "nickel": [
       {
+        "title": "다운스트림 니켈 수출세 — ESDM 장관, 정부·업계 합의 가능 공식 마련 위해 일시 보류",
+        "summary_ko": "ESDM 장관 — 다운스트림 니켈 제품에 대한 수출세 부과 계획을 일시 보류. 국가·업계가 모두 수용 가능한 공식 마련 후 재추진 방침. 다운스트림 가공이 중간재에 머무르는 비중이 높다는 점에서 다운스트림 심화를 위한 추가 인센티브 — 특히 국내 EV 배터리 산업 가속화 — 도 함께 검토.",
+        "source_name": "SBS Weekly Marketing Report 2026.05.15 (Bisnis 5월 11일 인용)",
+        "source_tier": "broker",
+        "source_url": null,
+        "published_date": "2026-05-11",
+        "status": "indicative"
+      },
+      {
         "title": "2026 니켈 광석 채굴 쿼터(RKAB) 250M톤 — 전년 대비 -34%",
         "summary_ko": "2026년 니켈 광석 채굴 쿼터(RKAB) 250M톤으로 2025년 379M톤 대비 34% 이상 감소. 니켈 광석 기준가격 산정식 개편 병행. SunSirs — 쿼터 축소 + 세제 조정 시 니켈 가격이 140,000~150,000 RMB/톤 구간에 이를 수 있다고 전망. 3월 대통령의 수출세 승인 이후 니켈 가격 변동성 확대.",
         "source_name": "SunSirs",
@@ -600,6 +1949,15 @@
       }
     ],
     "cpo": [
+      {
+        "title": "B50 바이오디젤 — 2026년 7월 1일 의무화 일정 유지, 기술 이슈 발생 시 연기 가능",
+        "summary_ko": "ESDM 장관 — B50 의무화는 7월 1일 시행을 목표로 진행. 차량·중장비·선박·열차·발전기 등 부문별 시험 진행, 차량 안정성·성능 결과 만족. 기술적·운영적 이슈 식별 시 일정 조정 가능성. 화석연료 수입 의존도 축소 목표.",
+        "source_name": "SBS Weekly Marketing Report 2026.05.15 (Bloomberg Technoz 5월 11일 인용)",
+        "source_tier": "broker",
+        "source_url": null,
+        "published_date": "2026-05-11",
+        "status": "indicative"
+      },
       {
         "title": "GAPKI CPO 지수 5월 들어 완만한 조정 — ICDX 15,610 IDR/kg (5월 12일)",
         "summary_ko": "GAPKI 일별 종가 — ICDX CPO 5월 6일 16,355 → 12일 15,610 IDR/kg로 첫 2주간 하락. KPB Nusantara 인도가 15,150 IDR/kg. 직전 16개월 피크(2026-03 ~16,000) 대비 조정 국면. 별도로 S&P Global은 극단적 El Niño 가뭄에 따른 2026년 CPO 생산 1~2M MT 감소 가능성을 제기.",
@@ -630,6 +1988,15 @@
     ],
     "power": [
       {
+        "title": "에너지 전환 패키지 — 100 GW 태양광, 수소·암모니아·원전, 전기차·인덕션, 신규 석탄 모라토리엄",
+        "summary_ko": "정부 — 100 GW 태양광 발전 이니셔티브 + 수소·암모니아·원전 활용 + 전기차·인덕션 스토브 보급 + 신규 석탄 발전 모라토리엄 + 탄소 포집·저장 기술 확대. Prabowo 대통령 지침. 화석연료 의존도 축소·국가 에너지 안보 강화·ASEAN 역내 배출 감축 목표.",
+        "source_name": "SBS Weekly Marketing Report 2026.05.15 (CNBC Indonesia 4월 28일 인용)",
+        "source_tier": "broker",
+        "source_url": null,
+        "published_date": "2026-04-28",
+        "status": "indicative"
+      },
+      {
         "title": "산업 경쟁력 ↔ 재생에너지 연계 — EU CBAM 압박, 100 GW 재생 목표",
         "summary_ko": "Kementerian Koordinator Bidang Perekonomian — EU CBAM 등 정책으로 인해 수출 시장 접근에 청정에너지 사용이 필수화. 현재 인도네시아 전력 60% 가 석탄 의존, 재생 capacity 확대는 중국 등 대비 지연. Green Industrial Zone 지원 위해 최대 100 GW 재생에너지 개발에 산업 참여 독려.",
         "source_name": "CNBC Indonesia",
@@ -641,6 +2008,15 @@
     ],
     "shipping": [
       {
+        "title": "SMDR — 1Q26 순이익 감소, 선대·노선 확장 (탱커 2척 IDR 460M + 컨테이너 1척 IDR 240M)",
+        "summary_ko": "PT Samudera Indonesia Tbk (SMDR) — 2026년 초 선대 확장 + 감가상각비 증가로 순이익 감소. 투자금: 탱커 2척 IDR 460M + 컨테이너 1척 IDR 240M 인수, 인도·일본·유럽 신규 노선 개설 계획. 경영진 — 연말로 갈수록 운임 개선 기대.",
+        "source_name": "SBS Weekly Marketing Report 2026.05.15 (Kontan Insight 5월 8일 인용)",
+        "source_tier": "broker",
+        "source_url": null,
+        "published_date": "2026-05-08",
+        "status": "indicative"
+      },
+      {
         "title": "Pertamina International Shipping (PIS) — IPO 추진, 최소 10% 지분 공개 계획",
         "summary_ko": "PIS 기업공개(IPO) 계획 — 최소 10% 지분 공개 방침. PIS 보유 탱커 102척, 자산은 통합 관리되며 국내·국제 노선 에너지 운송 담당. 2034년까지 선대 500척 확대 목표. 최근 VLGC 2척 인도 등 친환경 가스선 중심 확장 지속.",
         "source_name": "Indonesia Business Post",
@@ -651,7 +2027,6 @@
       }
     ]
   },
-
   "events": {
     "monthly": [],
     "upcoming": [
@@ -678,6 +2053,17 @@
         "status": "verified"
       },
       {
+        "name": "Coal Trans Asia 2026",
+        "date": "2026-09-27 ~ 2026-09-30",
+        "location": "Intercontinental Bali Resort",
+        "category": "Coal / Energy",
+        "note": "Indonesia mining and coal conference. 출처 SBS Weekly W20 PDF p.5 — 웹 재검증 예정.",
+        "source_name": "SBS Weekly Marketing Report 2026.05.15 (PDF p.5)",
+        "source_url": null,
+        "checked_date": "2026-05-16",
+        "status": "indicative"
+      },
+      {
         "name": "Mining Indonesia 2026",
         "date": "2026-09-09 ~ 2026-09-12",
         "location": "JIExpo Kemayoran, Jakarta",
@@ -701,9 +2087,12 @@
       }
     ]
   },
-
   "build_meta": {
-    "collectors_run": ["pdf_seabridge_2026_w19_ocr", "web_search_auto_2026_w20", "roadmap_iter_2026-05-14"],
+    "collectors_run": [
+      "pdf_seabridge_2026_w19_ocr",
+      "web_search_auto_2026_w20",
+      "roadmap_iter_2026-05-14"
+    ],
     "rows_collected": 126,
     "rows_published_news": 9,
     "rows_published_events": 4,
@@ -715,7 +2104,14 @@
     "rows_no_data": 1,
     "rows_withheld_jump": 0,
     "_build_meta_note": "rows_published_vessel_pricing 는 roadmap iter 1 에서 실제 행 수(88)로 동기화. 이전 값(63)은 과거 스냅샷 기준 stale 였음.",
-    "vessel_pricing_source_coverage": { "as_of": "2026-05-14", "total_rows": 99, "web_backed": 18, "pdf_only": 81, "web_pct": 18, "note": "roadmap iter 11 스냅샷. Market 탭 UI(_mkSourceCoverage)는 market.json 에서 실시간 재계산하므로 이 값은 기록용." },
+    "vessel_pricing_source_coverage": {
+      "as_of": "2026-05-14",
+      "total_rows": 99,
+      "web_backed": 18,
+      "pdf_only": 81,
+      "web_pct": 18,
+      "note": "roadmap iter 11 스냅샷. Market 탭 UI(_mkSourceCoverage)는 market.json 에서 실시간 재계산하므로 이 값은 기록용."
+    },
     "extraction_method": "PyMuPDF render @350dpi (vessel-pricing base) + web search & Indonesian local source curation (indices, fuel/CPO, scrap, news, events, web cross-check) + roadmap iter web/SNS source enrichment"
   }
 }
