@@ -54,6 +54,7 @@ BLACKLIST: tuple[str, ...] = (
 # File globs to scan. Each pattern is repo-rooted.
 SCAN_GLOBS: tuple[str, ...] = (
     "docs/index.html",
+    "docs/data/*.json",
     "docs/derived/*.json",
     "docs/derived/*.html",
     "data/*.md",
