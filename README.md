@@ -59,6 +59,7 @@ python -m backend.scheduler   # 매월 1일 03:00 KST
 | `python -m backend.main monthly --resume` | 누락분만 보충 |
 | `python -m backend.resume_run` | 코드 단위 누락 + diff + 리포트 |
 | `python -m backend.build_static` | 정적 사이트 JSON 빌드 |
+| `python scripts/fetch_idx_financials.py` | IDX XBRL 해운사 재무 수집 (💼 Financials 탭) |
 | `python -m backend.scheduler` | APScheduler 실행 |
 
 ## 변경 탐지 의미
@@ -114,3 +115,28 @@ SNS 큐레이션으로 자동 갱신하고 commit/push 합니다. GitHub Pages �
 - **빈 섹션** → "No recent verified data found" 자동 표시
 - **가치 판단 표현 금지** — `scripts/lint_language.py` 블랙리스트 (유망/추천/기회/투자 테제 등) 회피
 - **추정·해석 금지** — 외부 분석/예측은 출처 기관 명시 후 인용 형태로만 노출
+
+## 💼 Financials 탭 — 상장 해운사 재무 (IDX XBRL)
+
+인도네시아 증권거래소(IDX)가 상장사별로 공시하는 **감사받은 연차 재무제표
+XBRL 인스턴스**(`instance.zip`)를 자동 수집해, 해운/항만 ~37개사의 매출·순이익·
+자산·부채·자본 및 파생 비율(순이익률·ROE·ROA·DER·유동비율)을 표시합니다.
+
+**수집기**: `scripts/fetch_idx_financials.py`
+
+```bash
+python scripts/fetch_idx_financials.py                 # 캐시 활용 수집
+python scripts/fetch_idx_financials.py --workers 1 --delay 1.2   # throttle 회피(정중)
+python scripts/fetch_idx_financials.py --refresh       # 전체 재다운로드
+python scripts/fetch_idx_financials.py --only SMDR BULL  # 일부만
+```
+
+- **출처**: `GetFinancialReport` API → `instance.zip` 내 `instance.xbrl`
+  (idx-cor / idx-dei 개념). 값은 항상 전액(full amount) 단위.
+- **통화**: 보고통화가 제각각(SMDR·BULL 등 USD, Temas 등 IDR)이라 **USD 백만**으로
+  환산 비교(연도별 평균환율)하고, 개별 상세에는 **원 보고통화** 수치를 병기.
+- **출력**: `data/idx_financials.json`(정본) + `docs/data/companies_financials.json`(배포).
+  `backend.build_static` 는 정본이 있으면 이를 그대로 통과(없으면 레거시 YAML 폴백).
+- **캐시**: `data/idx_xbrl_cache/*.zip` (gitignore). XBRL 은 연 1회 갱신이므로 재실행은
+  네트워크를 건너뜀. IDX 는 Cloudflare 가 Python TLS 를 차단(403)하므로 `curl` 로 우회.
+- **갱신 주기**: 연 1회 감사보고서 제출(통상 3~4월) 이후 1회 실행으로 충분.

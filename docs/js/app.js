@@ -712,45 +712,118 @@ function drawTankerOperatorDonut() {
   }, { displayModeBar: false, responsive: true });
 }
 
-// ---------- Financials ----------
-const fnState = { year: null, sortBy: "revenue", initialized: false };
+// ---------- Financials (IDX XBRL) ----------
+// docs/data/companies_financials.json schema (scripts/fetch_idx_financials.py):
+//   metadata{ comparison_currency:"USD", comparison_unit:"million", years[],
+//             fx_idr_per_usd{}, fx_note, ... }
+//   companies[]{ ticker, name, name_short, segment, currency, homepage, years[],
+//                latest_year }
+//   rows[]{ ticker, year, currency, revenue, net_income, total_assets, equity,
+//           total_liabilities, op_cash_flow, net_margin, roe, roa, der,
+//           current_ratio, native{revenue,net_income,total_assets,...}, ... }
+// 모든 금액은 USD 백만(USD M). native.* 는 보고통화 백만.
+const fnState = { year: null, segment: "all", sortBy: "revenue", sortDir: -1,
+                  selected: null, initialized: false };
+
+// 정밀 세그먼트 → 색·필터용 그룹 (테이블엔 원래 세그먼트 표기).
+const FN_SEG_GROUP = (seg) => {
+  const s = String(seg || "");
+  if (/Tanker|Gas/i.test(s)) return "Tanker · Gas";
+  if (/Bulk|Coal/i.test(s)) return "Bulk · Coal";
+  if (/Offshore/i.test(s)) return "Offshore";
+  if (/Port|Service/i.test(s)) return "Port · Services";
+  return "Container · General";
+};
+const FN_SEG_COLORS = {
+  "Tanker · Gas":       "#1A3A6B",
+  "Bulk · Coal":        "#8B5E34",
+  "Offshore":           "#2E7D6B",
+  "Container · General":"#C2643B",
+  "Port · Services":    "#6B5B95",
+};
+
+// USD 백만 포맷: ≥1,000 → "$1.15B", else "$738M"
+const fnUSD = (v) => {
+  if (v == null) return "—";
+  const n = Number(v);
+  if (Math.abs(n) >= 1000) return `$${(n / 1000).toFixed(2)}B`;
+  return `$${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}M`;
+};
+const fnPct = (v) => v == null ? "—" : `${Number(v).toFixed(1)}%`;
+const fnX = (v) => v == null ? "—" : `${Number(v).toFixed(2)}×`;
+// native(보고통화) 백만 포맷
+const fnNative = (v, cur) => {
+  if (v == null) return "—";
+  const n = Number(v);
+  if (cur === "IDR") {  // n = IDR 백만 → 조(T) / 십억(bn)
+    if (Math.abs(n) >= 1e6) return `Rp ${(n / 1e6).toFixed(2)}T`;
+    return `Rp ${(n / 1e3).toLocaleString(undefined, { maximumFractionDigits: 0 })}bn`;
+  }
+  if (Math.abs(n) >= 1000) return `${cur} ${(n / 1000).toFixed(2)}B`;
+  return `${cur} ${n.toLocaleString(undefined, { maximumFractionDigits: 0 })}M`;
+};
+const curBadge = (cur) => {
+  const bg = cur === "USD" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800";
+  return `<span class="inline-block px-1 rounded text-[9px] font-semibold ${bg}" title="원 보고통화">${cur}</span>`;
+};
 
 function renderFinancials() {
   const f = state.financials;
-  const container = document.getElementById("kpi-financials");
-  if (!f || !f.companies || !f.companies.length) {
-    container.innerHTML = `<div class="col-span-full text-center text-slate-400 py-12">
-      재무 데이터를 로드하지 못했습니다 (companies_financials.json 미존재).
-    </div>`;
+  const kpiEl = document.getElementById("fn-kpi");
+  if (!f || !f.companies || !f.companies.length || !f.rows) {
+    if (kpiEl) kpiEl.innerHTML = `<div class="col-span-full text-center text-slate-400 py-12">
+      재무 데이터를 로드하지 못했습니다 (companies_financials.json).</div>`;
     return;
   }
+  const meta = f.metadata || {};
+  const byTicker = {};
+  for (const c of f.companies) byTicker[c.ticker] = c;
 
-  // PR-7: fn-banner element removed; the global footer + Listed Operators
-  // tab description already carry the IDX source attribution.
-
-  // First-time setup: year dropdown + sortable column header bindings.
+  // First-time setup: subtitle, year pills, segment options, sort headers.
   if (!fnState.initialized) {
     fnState.initialized = true;
-    fnState.sortDir = -1;  // default desc on first sort
-    const years = Array.from(new Set(f.rows.map(r => r.year))).sort();
-    const yrSel = document.getElementById("fn-year");
-    yrSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
-    yrSel.value = years[years.length - 1];
-    fnState.year = yrSel.value;
-    yrSel.addEventListener("change", (e) => { fnState.year = e.target.value; renderFinancials(); });
-    // PR-14: clickable / keyboard-activated column headers
+    const sub = document.getElementById("fn-subtitle");
+    const yy = meta.years || [];
+    if (sub) sub.innerHTML = `${meta.source || "IDX XBRL"} · ${f.companies.length}개사 · `
+      + `${yy.length ? yy[0] + "–" + yy[yy.length - 1] : ""} · 수집 ${meta.fetched_at || ""}`;
+    const fxEl = document.getElementById("fn-fx-note");
+    if (fxEl) {
+      const fx = meta.fx_idr_per_usd || {};
+      fxEl.textContent = `환율(USD/IDR) ${meta.years ? meta.years[meta.years.length - 1] : ""}: ${fmt0(fx[meta.years ? meta.years[meta.years.length - 1] : ""])}`;
+      fxEl.title = (meta.fx_note || "") + "\n" + Object.entries(fx).map(([y, v]) => `${y}: ${fmt0(v)}`).join("  ");
+    }
+    // year pills
+    const years = (meta.years && meta.years.length)
+      ? meta.years.slice()
+      : Array.from(new Set(f.rows.map(r => r.year))).sort();
+    fnState.year = years[years.length - 1];
+    const pills = document.getElementById("fn-year-pills");
+    if (pills) {
+      pills.innerHTML = years.map(y =>
+        `<button data-year="${y}" class="px-2.5 py-1 text-xs border-r border-slate-200 last:border-r-0">${y}</button>`
+      ).join("");
+      pills.querySelectorAll("button").forEach(b => {
+        b.addEventListener("click", () => { fnState.year = b.dataset.year; renderFinancials(); });
+      });
+    }
+    // segment dropdown (그룹 단위)
+    const segSel = document.getElementById("fn-segment");
+    if (segSel) {
+      const groups = Array.from(new Set(f.companies.map(c => FN_SEG_GROUP(c.segment)))).sort();
+      segSel.innerHTML = `<option value="all">전체</option>`
+        + groups.map(g => `<option value="${g}">${g}</option>`).join("");
+      segSel.value = fnState.segment;
+      segSel.addEventListener("change", (e) => { fnState.segment = e.target.value; renderFinancials(); });
+    }
+    // sortable headers
     document.querySelectorAll("#fn-tbl th[data-sort]").forEach(th => {
       th.setAttribute("tabindex", "0");
       th.setAttribute("role", "columnheader");
-      th.setAttribute("aria-sort", "none");
+      th.classList.add("cursor-pointer", "select-none");
       const handler = () => {
         const key = th.dataset.sort;
-        if (fnState.sortBy === key) {
-          fnState.sortDir = -(fnState.sortDir);
-        } else {
-          fnState.sortBy = key;
-          fnState.sortDir = th.dataset.numeric ? -1 : 1;  // numeric default desc, text default asc
-        }
+        if (fnState.sortBy === key) fnState.sortDir = -(fnState.sortDir);
+        else { fnState.sortBy = key; fnState.sortDir = th.dataset.numeric ? -1 : 1; }
         renderFinancials();
       };
       th.addEventListener("click", handler);
@@ -760,97 +833,197 @@ function renderFinancials() {
     });
   }
 
-  const yr = fnState.year;
-  const sortBy = fnState.sortBy;
-  const sortDir = fnState.sortDir || -1;
-  const yrRows = f.rows.filter(r => r.year === yr);
+  // year pill active state
+  document.querySelectorAll("#fn-year-pills button").forEach(b => {
+    const on = b.dataset.year === fnState.year;
+    b.classList.toggle("bg-slate-800", on);
+    b.classList.toggle("text-white", on);
+    b.classList.toggle("bg-white", !on);
+    b.classList.toggle("hover:bg-slate-100", !on);
+  });
 
-  // KPI strip — industry totals for the selected year
+  const yr = fnState.year;
+  const seg = fnState.segment;
+  const inSeg = (t) => seg === "all" || FN_SEG_GROUP((byTicker[t] || {}).segment) === seg;
+  const yrRows = f.rows.filter(r => r.year === yr && inSeg(r.ticker));
+
+  // KPI hero — industry totals for the selected year/segment
   const sumOf = (k) => yrRows.reduce((s, r) => s + (r[k] || 0), 0);
   const totRev = sumOf("revenue");
   const totNi = sumOf("net_income");
-  const totFleetGt = sumOf("fleet_gt");
-  const margin = totRev ? (totNi / totRev * 100) : null;
-  // Renewal v2 §7.1: 4 KPI hero
-  const avgDebt = yrRows.length
-    ? yrRows.reduce((s, r) => s + (r.debt_to_assets || 0), 0) / yrRows.length
-    : null;
-  renderKpis("kpi-financials", [
-    { label: `합산 매출 (${yr})`, value: fmt0(totRev), sub: "IDR billion" },
-    { label: "평균 순이익률",
-      value: margin == null ? "—" : `${margin.toFixed(1)}%`,
-      sub: `${yrRows.length}개사 가중 평균` },
-    { label: "평균 부채비율",
-      value: avgDebt == null ? "—" : `${avgDebt.toFixed(1)}%`,
-      sub: "Debt / Assets" },
-    { label: "합산 선대 GT", value: fmt0(totFleetGt), sub: "kGT (1,000 GT)" },
+  const totAssets = sumOf("total_assets");
+  const margins = yrRows.map(r => r.net_margin).filter(v => v != null).sort((a, b) => a - b);
+  const medMargin = margins.length ? margins[Math.floor(margins.length / 2)] : null;
+  renderKpis("fn-kpi", [
+    { label: `대상 기업 (${yr})`, value: String(yrRows.length), sub: seg === "all" ? "전체 세그먼트" : seg },
+    { label: "합산 매출", value: fnUSD(totRev), sub: "USD · IDX XBRL" },
+    { label: "합산 순이익", value: fnUSD(totNi), sub: totRev ? `이익률 ${(totNi / totRev * 100).toFixed(1)}%` : "—" },
+    { label: "중앙값 순이익률", value: fnPct(medMargin), sub: `합산 자산 ${fnUSD(totAssets)}` },
   ]);
 
-  // Renewal v2 §7.2: scatter — x=매출 log, y=순이익률, size=선대 GT
-  Plotly.newPlot("chart-fn-scatter", [{
-    x: yrRows.map(r => r.revenue),
-    y: yrRows.map(r => r.net_margin),
-    text: yrRows.map(r => r.ticker),
+  // Scatter — x=revenue(log), y=net_margin, size=assets, color=segment group
+  const groups = {};
+  for (const r of yrRows) {
+    const g = FN_SEG_GROUP((byTicker[r.ticker] || {}).segment);
+    (groups[g] = groups[g] || []).push(r);
+  }
+  const maxAssets = Math.max(1, ...yrRows.map(r => r.total_assets || 0));
+  const traces = Object.entries(groups).map(([g, rs]) => ({
+    name: g,
+    x: rs.map(r => r.revenue),
+    y: rs.map(r => r.net_margin),
+    text: rs.map(r => r.ticker),
+    customdata: rs.map(r => [(byTicker[r.ticker] || {}).name_short || r.ticker, r.total_assets, r.roe]),
     mode: "markers+text",
     textposition: "top center",
+    textfont: { size: 9, color: "#475569" },
     marker: {
-      size: yrRows.map(r => Math.max(10, Math.sqrt((r.fleet_gt || 0) / 5))),
-      color: "#1A3A6B",
-      opacity: 0.75,
+      size: rs.map(r => Math.max(9, Math.sqrt((r.total_assets || 0) / maxAssets) * 46)),
+      color: FN_SEG_COLORS[g] || "#64748b",
+      opacity: 0.78,
       line: { color: "#0f172a", width: 1 },
     },
-    hovertemplate: "<b>%{text}</b><br>매출 %{x:,} bn IDR<br>순이익률 %{y:.1f}%<extra></extra>",
-  }], {
-    margin: { t: 10, l: 60, r: 10, b: 50 },
-    xaxis: { title: "매출 (IDR bn, log)", type: "log", zeroline: false },
-    yaxis: { title: "순이익률 (%)", zeroline: true, zerolinecolor: "#cbd5e1" },
+    hovertemplate: "<b>%{text}</b> %{customdata[0]}<br>매출 $%{x:,.0f}M · 순이익률 %{y:.1f}%"
+      + "<br>총자산 $%{customdata[1]:,.0f}M · ROE %{customdata[2]:.1f}%<extra>" + g + "</extra>",
+  }));
+  const scYr = document.getElementById("fn-scatter-year");
+  if (scYr) scYr.textContent = `(${yr})`;
+  Plotly.newPlot("fn-scatter", traces, {
+    margin: { t: 10, l: 56, r: 10, b: 46 },
+    xaxis: { title: "매출 (USD M, 로그)", type: "log", zeroline: false, gridcolor: "#eef2f7" },
+    yaxis: { title: "순이익률 (%)", zeroline: true, zerolinecolor: "#cbd5e1", gridcolor: "#eef2f7" },
+    legend: { orientation: "h", y: -0.18, font: { size: 10 } },
+    hoverlabel: { align: "left" },
   }, { displayModeBar: false, responsive: true });
+  const gd = document.getElementById("fn-scatter");
+  if (gd && !gd._fnClickBound) {
+    gd._fnClickBound = true;
+    gd.on("plotly_click", (ev) => {
+      const t = ev.points && ev.points[0] && ev.points[0].text;
+      if (t) { fnState.selected = t; renderFnDetail(); }
+    });
+  }
 
-  // Comparison table — PR-14: bidirectional sort with header indicators
+  // League table
   const yearTxt = document.getElementById("fn-table-year");
-  if (yearTxt) yearTxt.textContent = `(${yr} 기준)`;
-  // Resolve cell value: ticker / name come from the company catalog, others from rows
-  const byTicker = {};
-  for (const c of f.companies) byTicker[c.ticker] = c;
+  if (yearTxt) yearTxt.textContent = `(${yr}${seg === "all" ? "" : " · " + seg})`;
   const cellVal = (r, key) => {
-    if (key === "ticker") return r.ticker || "";
-    if (key === "name") return (byTicker[r.ticker] || {}).name_short || "";
+    if (key === "name_short") return (byTicker[r.ticker] || {}).name_short || "";
+    if (key === "segment") return (byTicker[r.ticker] || {}).segment || "";
     return r[key];
   };
+  // sortDir: +1 오름차순, -1 내림차순 (문자/숫자 동일 부호 규약)
   const sorted = yrRows.slice().sort((a, b) => {
-    const x = cellVal(a, sortBy), y = cellVal(b, sortBy);
+    const x = cellVal(a, fnState.sortBy), y = cellVal(b, fnState.sortBy);
     if (x == null && y == null) return 0;
     if (x == null) return 1; if (y == null) return -1;
     if (typeof x === "string" || typeof y === "string") {
-      return String(x).localeCompare(String(y)) * sortDir;
+      return String(x).localeCompare(String(y)) * fnState.sortDir;
     }
-    return (x > y ? 1 : (x < y ? -1 : 0)) * -sortDir;
+    return (x < y ? -1 : (x > y ? 1 : 0)) * fnState.sortDir;
   });
-  // Update sort indicators on each header
   document.querySelectorAll("#fn-tbl th[data-sort]").forEach(th => {
     th.classList.remove("sort-asc", "sort-desc");
     th.setAttribute("aria-sort", "none");
-    if (th.dataset.sort === sortBy) {
-      const cls = sortDir === 1 ? "sort-asc" : "sort-desc";
-      th.classList.add(cls);
-      th.setAttribute("aria-sort", sortDir === 1 ? "ascending" : "descending");
+    if (th.dataset.sort === fnState.sortBy) {
+      th.classList.add(fnState.sortDir === 1 ? "sort-asc" : "sort-desc");
+      th.setAttribute("aria-sort", fnState.sortDir === 1 ? "ascending" : "descending");
     }
   });
-
-  const num0 = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
-  const pct1 = (v) => v == null ? "—" : `${Number(v).toFixed(1)}%`;
+  const niCls = (v) => v == null ? "" : (v < 0 ? "text-red-600 font-semibold" : "");
+  const derCls = (v) => v == null ? "" : (v >= 2.0 ? "text-amber-600 font-semibold" : "");
   document.querySelector("#fn-tbl tbody").innerHTML = sorted.map(r => {
     const c = byTicker[r.ticker] || {};
-    return `<tr>
-      <td class="px-2 py-1 font-mono">${idxLink(r.ticker)}</td>
+    const sel = r.ticker === fnState.selected ? "bg-blue-50" : "";
+    return `<tr class="fn-row cursor-pointer hover:bg-slate-50 ${sel}" data-ticker="${r.ticker}">
+      <td class="px-2 py-1 font-mono">${idxLink(r.ticker)} ${curBadge(r.currency)}</td>
       <td class="px-2 py-1">${c.name_short || ""}</td>
-      <td class="px-2 py-1 text-right">${num0(r.revenue)}</td>
-      <td class="px-2 py-1 text-right">${pct1(r.net_margin)}</td>
-      <td class="px-2 py-1 text-right">${pct1(r.roa)}</td>
-      <td class="px-2 py-1 text-right">${pct1(r.debt_to_assets)}</td>
-      <td class="px-2 py-1 text-right">${num0(r.fleet_gt)}</td>
+      <td class="px-2 py-1 text-[11px] text-slate-500">${c.segment || ""}</td>
+      <td class="px-2 py-1 text-right">${fnUSD(r.revenue)}</td>
+      <td class="px-2 py-1 text-right ${niCls(r.net_income)}">${fnUSD(r.net_income)}</td>
+      <td class="px-2 py-1 text-right ${niCls(r.net_margin)}">${fnPct(r.net_margin)}</td>
+      <td class="px-2 py-1 text-right">${fnPct(r.roe)}</td>
+      <td class="px-2 py-1 text-right ${derCls(r.der)}">${fnX(r.der)}</td>
+      <td class="px-2 py-1 text-right">${fnX(r.current_ratio)}</td>
+      <td class="px-2 py-1 text-right">${fnUSD(r.total_assets)}</td>
     </tr>`;
   }).join("");
+  document.querySelectorAll("#fn-tbl tbody tr.fn-row").forEach(tr => {
+    tr.addEventListener("click", () => { fnState.selected = tr.dataset.ticker; renderFinancials(); });
+  });
+
+  // Detail — default to the largest-revenue company in current view
+  if (!fnState.selected || !sorted.some(r => r.ticker === fnState.selected)) {
+    const top = yrRows.slice().sort((a, b) => (b.revenue || 0) - (a.revenue || 0))[0];
+    fnState.selected = top ? top.ticker : null;
+  }
+  renderFnDetail();
+}
+
+// 개별 기업 5개년 상세 — 매출/순이익 막대 + 비율 추이 + native 수치
+function renderFnDetail() {
+  const f = state.financials;
+  const host = document.getElementById("fn-detail");
+  if (!f || !host) return;
+  const ticker = fnState.selected;
+  const c = (f.companies || []).find(x => x.ticker === ticker);
+  if (!ticker || !c) {
+    host.innerHTML = `<p class="text-xs text-slate-400">표의 행이나 그래프의 점을 클릭하면 기업별 5개년 추이가 표시됩니다.</p>`;
+    return;
+  }
+  const rows = f.rows.filter(r => r.ticker === ticker).sort((a, b) => a.year.localeCompare(b.year));
+  const latest = rows[rows.length - 1] || {};
+  const homepage = c.homepage
+    ? `<a href="${/^https?:/.test(c.homepage) ? "" : "https://"}${c.homepage}" target="_blank" rel="noopener" class="text-blue-600 hover:underline">${c.homepage.replace(/^https?:\/\//, "")}</a>`
+    : "";
+  host.innerHTML = `
+    <div class="flex items-baseline justify-between flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="font-semibold text-lg">${c.name_short} <span class="font-mono text-sm text-slate-500">${idxLink(c.ticker)}</span> ${curBadge(c.currency)}</h3>
+        <p class="text-xs text-slate-500">${c.name} · ${c.segment} ${homepage ? "· " + homepage : ""}</p>
+      </div>
+      <div class="text-right text-xs text-slate-500">
+        <div>원 보고통화 <strong class="text-slate-700">${c.currency}</strong></div>
+        <div>${latest.year} 매출 ${fnNative(latest.native ? latest.native.revenue : null, c.currency)} · 순이익 ${fnNative(latest.native ? latest.native.net_income : null, c.currency)}</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div><div id="fn-detail-bars" style="height:260px"></div></div>
+      <div class="overflow-auto">
+        <table class="min-w-full text-xs">
+          <thead class="bg-slate-50 text-slate-500"><tr class="text-right">
+            <th class="px-2 py-1 text-left">연도</th><th class="px-2 py-1">매출</th><th class="px-2 py-1">순이익</th>
+            <th class="px-2 py-1">순이익률</th><th class="px-2 py-1">ROE</th><th class="px-2 py-1">부채/자본</th>
+            <th class="px-2 py-1">유동비율</th><th class="px-2 py-1">총자산</th>
+          </tr></thead>
+          <tbody>${rows.map(r => `<tr class="text-right border-t border-slate-100">
+            <td class="px-2 py-1 text-left font-mono">${r.year}</td>
+            <td class="px-2 py-1">${fnUSD(r.revenue)}</td>
+            <td class="px-2 py-1 ${r.net_income < 0 ? "text-red-600" : ""}">${fnUSD(r.net_income)}</td>
+            <td class="px-2 py-1">${fnPct(r.net_margin)}</td>
+            <td class="px-2 py-1">${fnPct(r.roe)}</td>
+            <td class="px-2 py-1">${fnX(r.der)}</td>
+            <td class="px-2 py-1">${fnX(r.current_ratio)}</td>
+            <td class="px-2 py-1">${fnUSD(r.total_assets)}</td>
+          </tr>`).join("")}</tbody>
+        </table>
+        <p class="text-[10px] text-slate-400 mt-1">금액 USD 백만 (비교용 환산). 원 보고통화 기준 native 수치는 상단 우측.</p>
+      </div>
+    </div>`;
+  Plotly.newPlot("fn-detail-bars", [
+    { type: "bar", name: "매출", x: rows.map(r => r.year), y: rows.map(r => r.revenue),
+      marker: { color: "#1A3A6B" },
+      hovertemplate: "%{x} 매출 $%{y:,.0f}M<extra></extra>" },
+    { type: "bar", name: "순이익", x: rows.map(r => r.year), y: rows.map(r => r.net_income),
+      marker: { color: rows.map(r => (r.net_income < 0 ? "#dc2626" : "#3b82f6")) },
+      hovertemplate: "%{x} 순이익 $%{y:,.0f}M<extra></extra>" },
+  ], {
+    margin: { t: 10, l: 48, r: 8, b: 30 },
+    barmode: "group",
+    yaxis: { title: "USD M", zeroline: true, zerolinecolor: "#cbd5e1", gridcolor: "#eef2f7" },
+    xaxis: { gridcolor: "#eef2f7" },
+    legend: { orientation: "h", y: -0.16, font: { size: 10 } },
+  }, { displayModeBar: false, responsive: true });
 }
 
 // ---------- Tabs ----------
@@ -861,9 +1034,9 @@ const TAB_TITLES = {
   "fleet":         "Supply",
   "tanker-sector": "Balance",
   "explorer":      "Explorer",
+  "financials":    "Financials",
   // legacy ids — accessible via deep-link only, hidden from nav
   "cargo":         "Cargo (legacy)",
-  "financials":    "Listed Operators (legacy)",
 };
 
 async function showTab(name) {

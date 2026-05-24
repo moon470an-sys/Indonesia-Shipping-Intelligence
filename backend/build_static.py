@@ -1160,21 +1160,26 @@ def tanker_focus_payload(month: str) -> dict:
 
 
 def companies_financials_payload() -> dict:
-    """Read data/companies_financials.yml and emit a chart-ready JSON.
+    """Emit the listed-operator financials JSON.
 
-    The YAML lives outside the snapshot pipeline because it's hand-curated
-    -- IDX annual reports are released yearly, so we don't try to scrape
-    them. The payload is denormalized to a flat list of {ticker, year,
-    metric...} rows so the frontend can pivot client-side without
-    re-implementing a YAML parser.
+    Primary source: ``data/idx_financials.json`` produced by
+    ``scripts/fetch_idx_financials.py`` (real IDX XBRL, audited). That file is
+    already chart-ready (USD-normalized + native + ratios), so we pass it
+    through verbatim to keep build_static the single emitter without schema
+    drift.
 
-    Computed columns added per (company, year):
-      net_margin     = net_income / revenue
-      debt_to_assets = total_debt / total_assets
-      roa            = net_income / total_assets
+    Fallback: the legacy hand-curated ``data/companies_financials.yml``
+    placeholder, kept only so the build degrades gracefully when the XBRL
+    snapshot is absent (e.g. CI without network history).
     """
+    xbrl_src = PROJECT_ROOT / "data" / "idx_financials.json"
+    if xbrl_src.exists():
+        log.info("companies_financials: using IDX XBRL source %s", xbrl_src)
+        return json.loads(xbrl_src.read_text(encoding="utf-8"))
+
     import yaml
 
+    log.warning("idx_financials.json absent -- falling back to YAML placeholder")
     src = PROJECT_ROOT / "data" / "companies_financials.yml"
     if not src.exists():
         log.warning("companies_financials.yml not found at %s -- emitting empty payload",

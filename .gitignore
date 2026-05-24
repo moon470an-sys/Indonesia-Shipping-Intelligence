@@ -34,3 +34,12 @@ Thumbs.db
 
 # Temp inspection scripts (created during dev, not for commit)
 tmp_*.py
+scripts/_*.py
+scripts/_*.mjs
+scripts/_*.png
+
+# IDX XBRL instance cache (regenerable via scripts/fetch_idx_financials.py)
+data/idx_xbrl_cache/
+
+# Node (playwright etc. — not part of the deployed static site)
+node_modules/

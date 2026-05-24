@@ -48,6 +48,7 @@
         <button data-tab="fleet"         class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-fleet"         title="Fleet 공급 — 선대 탐색기 + 시계열">🚢 Supply</button>
         <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-tanker-sector" title="수급 균형 — Demand × Supply 교차">⚖️ Balance</button>
         <button data-tab="market"        class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-market"        title="Market — 주간 시장·뉴스·이벤트 (외부 정보)">📊 Market</button>
+        <button data-tab="financials"    class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-financials"    title="상장 해운사 재무 — IDX XBRL 감사 재무제표">💼 Financials</button>
         <button data-tab="explorer"      class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-explorer"      title="원천 데이터 탐색">🔎 Explorer</button>
       </nav>
     </div>
@@ -678,56 +679,80 @@
     </section>
 
 
-    <!-- Cycle 1: Listed Operators 탭은 본 사이트의 수급 분석 목적과 무관.
-         nav에서 제거하되 DOM은 보존하여 deep-link 호환. 별도 sub-domain
-         으로 이관 검토. -->
+    <!-- Financials — 상장 해운사 재무 (IDX XBRL 감사 재무제표).
+         scripts/fetch_idx_financials.py 가 instance.zip(XBRL)을 수집·정규화하여
+         docs/data/companies_financials.json 으로 배포. 보고통화(USD/IDR)가
+         제각각이라 USD 백만으로 환산 비교 + native 상세 병기. -->
     <section id="tab-financials" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
-        <h2 class="text-2xl font-bold text-slate-800">💼 Listed Operators <span class="text-xs text-slate-400 font-normal">(분리 예정)</span></h2>
-        <p class="text-xs text-slate-500">상장 운영사 재무는 본 사이트(수급 분석)의 핵심 범위가 아니므로 향후 별도 sub-domain으로 분리됩니다.</p>
+        <h2 class="text-2xl font-bold text-slate-800">💼 Financials — 상장 해운사 재무</h2>
+        <p class="text-xs text-slate-500 mt-1" id="fn-subtitle">IDX XBRL 감사 재무제표 기반 · 로딩 중…</p>
       </div>
 
-      <!-- KPI strip -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="kpi-financials"></div>
-
-      <!-- Filter strip (year only — sort is now via column-header clicks) -->
-      <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-3">
-        <div>
-          <label class="text-xs text-slate-500 block" for="fn-year">기준 연도</label>
-          <select id="fn-year" class="border rounded px-2 py-1 text-sm"></select>
+      <!-- Controls: 연도 pills + 세그먼트 필터 -->
+      <div class="bg-white rounded-xl shadow p-3 mb-4 flex flex-wrap items-center gap-x-6 gap-y-3" data-source="docs/data/companies_financials.json">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold text-slate-600">기준 연도</span>
+          <div class="flex rounded border border-slate-200 overflow-hidden bg-white" id="fn-year-pills" role="tablist" aria-label="재무 연도 선택">
+            <button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>loading…</button>
+          </div>
         </div>
-        <p class="text-[11px] text-slate-500 ml-auto">정렬은 표 헤더 클릭</p>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold text-slate-600" for="fn-segment">세그먼트</label>
+          <select id="fn-segment" class="border rounded px-2 py-1 text-sm bg-white">
+            <option value="all">전체</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2 ml-auto text-[11px] text-slate-500">
+          <span>비교 통화 <strong class="text-slate-700">USD (백만)</strong></span>
+          <span class="text-slate-300">·</span>
+          <span id="fn-fx-note" class="cursor-help underline decoration-dotted" title="">환율 정보</span>
+        </div>
       </div>
 
-      <!-- Single scatter (renewal v2 §7.2): x=매출 log · y=순이익률 · size=선대 GT -->
-      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="data/companies_financials.yml">
-        <h3 class="font-semibold mb-2">매출 × 순이익률 (선택 연도)</h3>
-        <p class="text-xs text-slate-500 mb-1">x = 매출 (log), y = 순이익률 (%), 크기 = 선대 GT. 영역 라벨 없음.</p>
-        <div id="chart-fn-scatter" style="height:380px"></div>
+      <!-- KPI hero (선택 연도 산업 합계) -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="fn-kpi"></div>
+
+      <!-- 시장 구조 scatter: 매출 × 순이익률, 크기=총자산, 색=세그먼트 -->
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/data/companies_financials.json">
+        <h3 class="font-semibold mb-1">시장 구조 — 매출 × 순이익률 <span class="text-xs text-slate-500 font-normal" id="fn-scatter-year"></span></h3>
+        <p class="text-xs text-slate-500 mb-2">x = 매출(USD M, 로그) · y = 순이익률(%) · 점 크기 = 총자산 · 색 = 세그먼트. 점 클릭 시 하단 상세.</p>
+        <div id="fn-scatter" style="height:400px"></div>
       </div>
 
-      <!-- Comparison table (renewal v2 §7.3: 7 columns only) -->
-      <div class="bg-white rounded-xl shadow p-4 mb-4" data-source="data/companies_financials.yml">
-        <h2 class="font-semibold mb-2">기업별 재무 비교 <span class="text-xs text-slate-400" id="fn-table-year"></span></h2>
+      <!-- League table (정렬·행클릭 상세) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-6" data-source="docs/data/companies_financials.json">
+        <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
+          <h3 class="font-semibold">기업별 재무 비교 <span class="text-xs text-slate-400" id="fn-table-year"></span></h3>
+          <p class="text-[11px] text-slate-500">행 클릭 = 상세 · 헤더 클릭 = 정렬 · 금액 USD 백만</p>
+        </div>
         <div class="overflow-auto max-h-[60vh] border rounded">
           <table class="min-w-full text-sm fn-sortable" id="fn-tbl">
             <thead class="bg-slate-100 sticky top-0">
               <tr class="text-left">
-                <th class="px-2 py-1"                 data-sort="ticker"        scope="col">ticker</th>
-                <th class="px-2 py-1"                 data-sort="name"          scope="col">name</th>
-                <th class="px-2 py-1 text-right"      data-sort="revenue"        data-numeric="1" scope="col">매출 (IDR bn)</th>
-                <th class="px-2 py-1 text-right"      data-sort="net_margin"     data-numeric="1" scope="col">순이익률</th>
-                <th class="px-2 py-1 text-right"      data-sort="roa"            data-numeric="1" scope="col">ROA</th>
-                <th class="px-2 py-1 text-right"      data-sort="debt_to_assets" data-numeric="1" scope="col">부채비율</th>
-                <th class="px-2 py-1 text-right"      data-sort="fleet_gt"       data-numeric="1" scope="col">선대 GT</th>
+                <th class="px-2 py-1"            data-sort="ticker"        scope="col">티커</th>
+                <th class="px-2 py-1"            data-sort="name_short"    scope="col">기업</th>
+                <th class="px-2 py-1"            data-sort="segment"       scope="col">세그먼트</th>
+                <th class="px-2 py-1 text-right" data-sort="revenue"       data-numeric="1" scope="col">매출</th>
+                <th class="px-2 py-1 text-right" data-sort="net_income"    data-numeric="1" scope="col">순이익</th>
+                <th class="px-2 py-1 text-right" data-sort="net_margin"    data-numeric="1" scope="col">순이익률</th>
+                <th class="px-2 py-1 text-right" data-sort="roe"           data-numeric="1" scope="col">ROE</th>
+                <th class="px-2 py-1 text-right" data-sort="der"           data-numeric="1" scope="col">부채/자본</th>
+                <th class="px-2 py-1 text-right" data-sort="current_ratio" data-numeric="1" scope="col">유동비율</th>
+                <th class="px-2 py-1 text-right" data-sort="total_assets"  data-numeric="1" scope="col">총자산</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <p class="text-[11px] text-slate-400 mt-2">
-          금액 단위: IDR 10억 (= billion). 음수 순이익은 빨강.
+          매출·순이익·총자산 = USD 백만. 음수 순이익은 빨강, 부채/자본(DER) ≥ 2.0 주황. 통화 뱃지는 원 보고통화.
         </p>
+      </div>
+
+      <!-- 개별 기업 상세 (행/점 클릭 시 갱신) -->
+      <div class="bg-white rounded-xl shadow p-4 mb-4" id="fn-detail" data-source="docs/data/companies_financials.json">
+        <p class="text-xs text-slate-400">표의 행이나 그래프의 점을 클릭하면 기업별 5개년 추이가 표시됩니다.</p>
       </div>
     </section>
 
