@@ -940,6 +940,7 @@ function renderFinancials() {
       <td class="px-2 py-1">${c.name_short || ""}</td>
       <td class="px-2 py-1 text-[11px] text-slate-500">${c.segment || ""}</td>
       <td class="px-2 py-1 text-right">${fnUSD(r.revenue)}</td>
+      <td class="px-2 py-1 text-right ${niCls(r.operating_profit)}">${fnUSD(r.operating_profit)}</td>
       <td class="px-2 py-1 text-right ${niCls(r.net_income)}">${fnUSD(r.net_income)}</td>
       <td class="px-2 py-1 text-right ${niCls(r.net_margin)}">${fnPct(r.net_margin)}</td>
       <td class="px-2 py-1 text-right">${fnPct(r.roe)}</td>
@@ -960,7 +961,7 @@ function renderFinancials() {
   renderFnDetail();
 }
 
-// 개별 기업 5개년 상세 — 매출/순이익 막대 + 비율 추이 + native 수치
+// 개별 기업 5개년 상세 — 매출/영업이익/순이익 막대 + 비율 추이 + native 수치
 function renderFnDetail() {
   const f = state.financials;
   const host = document.getElementById("fn-detail");
@@ -984,7 +985,7 @@ function renderFnDetail() {
       </div>
       <div class="text-right text-xs text-slate-500">
         <div>원 보고통화 <strong class="text-slate-700">${c.currency}</strong></div>
-        <div>${latest.year} 매출 ${fnNative(latest.native ? latest.native.revenue : null, c.currency)} · 순이익 ${fnNative(latest.native ? latest.native.net_income : null, c.currency)}</div>
+        <div>${latest.year} 매출 ${fnNative(latest.native ? latest.native.revenue : null, c.currency)} · 영업이익 ${fnNative(latest.native ? latest.native.operating_profit : null, c.currency)} · 순이익 ${fnNative(latest.native ? latest.native.net_income : null, c.currency)}</div>
       </div>
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -992,14 +993,16 @@ function renderFnDetail() {
       <div class="overflow-auto">
         <table class="min-w-full text-xs">
           <thead class="bg-slate-50 text-slate-500"><tr class="text-right">
-            <th class="px-2 py-1 text-left">연도</th><th class="px-2 py-1">매출</th><th class="px-2 py-1">순이익</th>
-            <th class="px-2 py-1">순이익률</th><th class="px-2 py-1">ROE</th><th class="px-2 py-1">부채/자본</th>
+            <th class="px-2 py-1 text-left">연도</th><th class="px-2 py-1">매출</th><th class="px-2 py-1">영업이익</th><th class="px-2 py-1">순이익</th>
+            <th class="px-2 py-1">영업이익률</th><th class="px-2 py-1">순이익률</th><th class="px-2 py-1">ROE</th><th class="px-2 py-1">부채/자본</th>
             <th class="px-2 py-1">유동비율</th><th class="px-2 py-1">총자산</th>
           </tr></thead>
           <tbody>${rows.map(r => `<tr class="text-right border-t border-slate-100">
             <td class="px-2 py-1 text-left font-mono">${r.year}</td>
             <td class="px-2 py-1">${fnUSD(r.revenue)}</td>
+            <td class="px-2 py-1 ${r.operating_profit < 0 ? "text-red-600" : ""}">${fnUSD(r.operating_profit)}</td>
             <td class="px-2 py-1 ${r.net_income < 0 ? "text-red-600" : ""}">${fnUSD(r.net_income)}</td>
+            <td class="px-2 py-1">${fnPct(r.operating_margin)}</td>
             <td class="px-2 py-1">${fnPct(r.net_margin)}</td>
             <td class="px-2 py-1">${fnPct(r.roe)}</td>
             <td class="px-2 py-1">${fnX(r.der)}</td>
@@ -1007,13 +1010,16 @@ function renderFnDetail() {
             <td class="px-2 py-1">${fnUSD(r.total_assets)}</td>
           </tr>`).join("")}</tbody>
         </table>
-        <p class="text-[10px] text-slate-400 mt-1">금액 USD 백만 (비교용 환산). 원 보고통화 기준 native 수치는 상단 우측.</p>
+        <p class="text-[10px] text-slate-400 mt-1">금액 USD 백만 (비교용 환산). 영업이익 = 매출총이익 − 판관비 + 기타영업손익(IDX XBRL 컴포넌트 도출). 원 보고통화 native 는 상단 우측.</p>
       </div>
     </div>`;
   Plotly.newPlot("fn-detail-bars", [
     { type: "bar", name: "매출", x: rows.map(r => r.year), y: rows.map(r => r.revenue),
       marker: { color: "#1A3A6B" },
       hovertemplate: "%{x} 매출 $%{y:,.0f}M<extra></extra>" },
+    { type: "bar", name: "영업이익", x: rows.map(r => r.year), y: rows.map(r => r.operating_profit),
+      marker: { color: rows.map(r => (r.operating_profit < 0 ? "#dc2626" : "#2E7D6B")) },
+      hovertemplate: "%{x} 영업이익 $%{y:,.0f}M<extra></extra>" },
     { type: "bar", name: "순이익", x: rows.map(r => r.year), y: rows.map(r => r.net_income),
       marker: { color: rows.map(r => (r.net_income < 0 ? "#dc2626" : "#3b82f6")) },
       hovertemplate: "%{x} 순이익 $%{y:,.0f}M<extra></extra>" },

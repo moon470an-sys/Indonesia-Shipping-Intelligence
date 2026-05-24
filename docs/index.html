@@ -733,8 +733,9 @@
                 <th class="px-2 py-1"            data-sort="ticker"        scope="col">티커</th>
                 <th class="px-2 py-1"            data-sort="name_short"    scope="col">기업</th>
                 <th class="px-2 py-1"            data-sort="segment"       scope="col">세그먼트</th>
-                <th class="px-2 py-1 text-right" data-sort="revenue"       data-numeric="1" scope="col">매출</th>
-                <th class="px-2 py-1 text-right" data-sort="net_income"    data-numeric="1" scope="col">순이익</th>
+                <th class="px-2 py-1 text-right" data-sort="revenue"          data-numeric="1" scope="col">매출</th>
+                <th class="px-2 py-1 text-right" data-sort="operating_profit" data-numeric="1" scope="col">영업이익</th>
+                <th class="px-2 py-1 text-right" data-sort="net_income"       data-numeric="1" scope="col">순이익</th>
                 <th class="px-2 py-1 text-right" data-sort="net_margin"    data-numeric="1" scope="col">순이익률</th>
                 <th class="px-2 py-1 text-right" data-sort="roe"           data-numeric="1" scope="col">ROE</th>
                 <th class="px-2 py-1 text-right" data-sort="der"           data-numeric="1" scope="col">부채/자본</th>
@@ -746,7 +747,8 @@
           </table>
         </div>
         <p class="text-[11px] text-slate-400 mt-2">
-          매출·순이익·총자산 = USD 백만. 음수 순이익은 빨강, 부채/자본(DER) ≥ 2.0 주황. 통화 뱃지는 원 보고통화.
+          매출·영업이익·순이익·총자산 = USD 백만. 음수 손익은 빨강, 부채/자본(DER) ≥ 2.0 주황. 통화 뱃지는 원 보고통화.
+          영업이익 = 매출총이익 − 판관비 + 기타영업손익 (IDX XBRL 컴포넌트 도출).
         </p>
       </div>
 

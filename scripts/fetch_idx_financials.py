@@ -125,6 +125,13 @@ CONCEPTS_DURATION = {
     "revenue": "SalesAndRevenue",
     "cogs": "CostOfSalesAndRevenue",
     "gross_profit": "GrossProfit",
+    # 영업이익(Laba Usaha) 구성요소 — IDX 택소노미엔 영업이익 단일 태그가 없어
+    # gross_profit − 판관비 + 기타영업손익 으로 도출(pretax 와 재무손익·지분법으로
+    # 정확히 정합). 아래 4개는 도출용 컴포넌트.
+    "selling_expenses": "SellingExpenses",
+    "ga_expenses": "GeneralAndAdministrativeExpenses",
+    "other_income": "OtherIncome",
+    "other_expenses": "OtherExpenses",
     "pretax": "ProfitLossBeforeIncomeTax",
     "net_income": "ProfitLoss",
     "net_income_parent": "ProfitLossAttributableToParentEntity",
@@ -359,6 +366,18 @@ def build_row(ticker: str, year: str, native: dict) -> dict:
     if gp is None and rev is not None and native.get("cogs") is not None:
         gp = rev - native["cogs"]
 
+    # 영업이익(Laba Usaha) = 매출총이익 − 판매비 − 일반관리비 + 기타영업수익 − 기타영업비용
+    # (재무손익·지분법손익은 비영업으로 제외 → pretax 와 정합 확인됨)
+    op_profit = None
+    if gp is not None:
+        op_profit = (gp
+                     - (native.get("selling_expenses") or 0.0)
+                     - (native.get("ga_expenses") or 0.0)
+                     + (native.get("other_income") or 0.0)
+                     - (native.get("other_expenses") or 0.0))
+    usd_m["operating_profit"] = round(to_usd(op_profit) / 1e6, 3) if op_profit is not None else None
+    nat_m["operating_profit"] = round(op_profit / 1e6, 3) if op_profit is not None else None
+
     row = {
         "ticker": ticker,
         "year": year,
@@ -367,9 +386,10 @@ def build_row(ticker: str, year: str, native: dict) -> dict:
         # USD 백만 (비교 정본)
         **usd_m,
         # native 백만 (상세용)
-        "native": {k: nat_m[k] for k in ("revenue", "net_income", "total_assets",
-                                          "total_liabilities", "equity")},
+        "native": {k: nat_m[k] for k in ("revenue", "operating_profit", "net_income",
+                                          "total_assets", "total_liabilities", "equity")},
         # 비율 (통화 무관)
+        "operating_margin": _pct(_ratio(op_profit, rev)),
         "net_margin": _pct(_ratio(ni, rev)),
         "gross_margin": _pct(_ratio(gp, rev)),
         "roe": _pct(_ratio(nip if nip is not None else ni, eqp if eqp is not None else eq)),
