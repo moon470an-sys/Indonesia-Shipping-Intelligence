@@ -6085,1361 +6085,331 @@ function drawFleetOwnerClassmix(owners) {
 }
 
 // ────────────────────────────────────────────────────────────
-// Market 탭 — 주간 시장 인텔리전스 (schema v2, PDF 5페이지 1:1 매핑).
-//   docs/data/market.json. 모든 row 출처·tier·as_of 표기.
-//   검증 정책: ±15% 교차, ±30% 점프, TC↔SHB 논리.
-//   빈 셀은 "No data acquired" — 0 채우기 금지.
+// Market 탭 — 표 + 그래프 중심 (2026-05-27 모던 재설계).
+//   docs/data/market.json 의 indices / scrap / fuel / vessel pricing /
+//   S&P / news / events 를 정렬 가능한 표로 노출. 부가 카드·설명은 제거.
 // ────────────────────────────────────────────────────────────
-// Scroll-spy for the Market tab TOC (Cycle 2). Idempotent — guarded by a flag.
-function _mkSetupTocSpy() {
-  if (window.__mkTocSpyReady) return;
-  const toc = document.getElementById("mk-toc");
-  if (!toc) return;
-  const links = Array.from(toc.querySelectorAll(".mk-toc-link"));
-  const targets = links
-    .map(a => ({ a, el: document.getElementById(a.dataset.section) }))
-    .filter(o => o.el);
-  if (!targets.length) return;
-  // Cycle 20: subtler active state — slate fill + bold + dark text + URL hash sync
-  let currentId = null;
-  const setActive = (id) => {
-    if (id === currentId) return;
-    currentId = id;
-    targets.forEach(({ a, el }) => {
-      const on = el.id === id;
-      a.classList.toggle("bg-slate-100", on);
-      a.classList.toggle("border-slate-400", on);
-      a.classList.toggle("text-slate-900", on);
-      a.classList.toggle("font-semibold", on);
-      a.classList.toggle("border-slate-200", !on);
-      a.setAttribute("aria-current", on ? "true" : "false");
-    });
-    // Reflect in URL hash without scrolling or polluting history
-    if (id) {
-      try { history.replaceState(null, "", "#" + id); } catch (_) { /* ignore */ }
-    }
-  };
-  const io = new IntersectionObserver((entries) => {
-    const visible = entries
-      .filter(e => e.isIntersecting)
-      .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-    if (visible[0]) setActive(visible[0].target.id);
-  }, { rootMargin: "-80px 0px -60% 0px", threshold: [0, 0.1, 0.5] });
-  targets.forEach(({ el }) => io.observe(el));
-  links.forEach(a => a.addEventListener("click", (ev) => {
-    ev.preventDefault();
-    const t = document.getElementById(a.dataset.section);
-    if (t) {
-      // News/Events sections are collapsible <details> — open them on navigation
-      if (t.tagName === "DETAILS") t.open = true;
-      t.scrollIntoView({ behavior: "smooth", block: "start" });
-      // Click immediately reflects URL (scroll-spy will confirm on settle)
-      try { history.replaceState(null, "", "#" + a.dataset.section); } catch (_) {}
-    }
-  }));
-  window.__mkTocSpyReady = true;
+const mkSort = {
+  indices: { key: "value", dir: -1 },
+  sp:      { key: "price", dir: -1 },
+  news:    { key: "date",  dir: -1 },
+  events:  { key: "date",  dir:  1 },
+};
+
+const _fmtNum = (v) => v == null ? "—" : Number(v).toLocaleString(undefined, { maximumFractionDigits: 1 });
+const _fmtPct = (v) => v == null ? '<span class="text-slate-300">—</span>'
+  : `<span class="${v >= 0 ? "text-emerald-600" : "text-rose-600"} font-medium">${v >= 0 ? "+" : ""}${v.toFixed(1)}%</span>`;
+
+function _mkSrcLink(name, url) {
+  const label = _esc(name || "—");
+  return url
+    ? `<a href="${_esc(url)}" target="_blank" rel="noopener" class="text-sky-700 hover:underline">${label}</a>`
+    : `<span class="text-slate-500">${label}</span>`;
 }
 
+function _mkSortRows(rows, key, dir) {
+  rows.sort((a, b) => {
+    const av = a[key], bv = b[key];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "string") return av.localeCompare(bv) * dir;
+    return (av - bv) * dir;
+  });
+}
+
+function _mkWireSort(tableId, stateKey, redraw) {
+  const t = document.getElementById(tableId);
+  if (!t || t.dataset.sortWired) return;
+  t.dataset.sortWired = "1";
+  t.querySelectorAll("th[data-sort]").forEach(th => {
+    th.classList.add("cursor-pointer", "select-none", "hover:bg-slate-100");
+    th.addEventListener("click", () => {
+      const k = th.dataset.sort;
+      const s = mkSort[stateKey];
+      if (s.key === k) s.dir *= -1;
+      else { s.key = k; s.dir = (k === "name" || k === "date" || k === "as_of") ? 1 : -1; }
+      redraw();
+    });
+  });
+}
+
+function _mkRefreshSortArrows(tableId, stateKey) {
+  const t = document.getElementById(tableId);
+  if (!t) return;
+  const s = mkSort[stateKey];
+  t.querySelectorAll("th[data-sort]").forEach(th => {
+    const base = th.dataset.sortBase || (th.dataset.sortBase = th.innerHTML);
+    th.innerHTML = base + (th.dataset.sort === s.key
+      ? ` <span class="text-slate-400 text-[10px]">${s.dir > 0 ? "▲" : "▼"}</span>` : "");
+  });
+}
+
+// ---- Indices: chart + table ----
+function _mkRenderIndicesChart(rows) {
+  const el = document.getElementById("mk-indices-chart");
+  if (!el || !rows.length) return;
+  const sorted = rows.slice().sort((a, b) => (b.wow_pct ?? -999) - (a.wow_pct ?? -999));
+  const trace = {
+    type: "bar",
+    orientation: "h",
+    x: sorted.map(r => r.wow_pct ?? 0),
+    y: sorted.map(r => r.name),
+    marker: { color: sorted.map(r => (r.wow_pct ?? 0) >= 0 ? "#0284c7" : "#f43f5e") },
+    text: sorted.map(r => r.wow_pct == null ? "—" : `${r.wow_pct >= 0 ? "+" : ""}${r.wow_pct.toFixed(1)}%`),
+    textposition: "outside",
+    customdata: sorted.map(r => [_fmtNum(r.value), r.unit || ""]),
+    hovertemplate: "<b>%{y}</b><br>Value: %{customdata[0]} %{customdata[1]}<br>W-o-W: %{x:+.1f}%<extra></extra>",
+    cliponaxis: false,
+  };
+  Plotly.newPlot("mk-indices-chart", [trace], {
+    margin: { t: 16, l: 240, r: 56, b: 36 },
+    xaxis: { title: "W-o-W %", zeroline: true, zerolinecolor: "#cbd5e1", gridcolor: "#f1f5f9" },
+    yaxis: { automargin: true, tickfont: { size: 11 } },
+    paper_bgcolor: "white", plot_bgcolor: "white",
+    showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function _mkRenderIndicesTable(rows) {
+  const host = document.getElementById("mk-indices-tbody");
+  if (!host) return;
+  const data = rows.map(r => ({
+    name: r.name, value: r.value, unit: r.unit, wow: r.wow_pct,
+    as_of: r.as_of, source_name: r.source_name, source_url: r.source_url, _raw: r,
+  }));
+  _mkSortRows(data, mkSort.indices.key, mkSort.indices.dir);
+  host.innerHTML = data.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.name)}</td>
+    <td class="px-3 py-2.5 text-right font-mono font-semibold text-slate-900">${_fmtNum(r.value)}</td>
+    <td class="px-3 py-2.5 text-slate-500 text-[12px]">${_esc(r.unit || "—")}</td>
+    <td class="px-3 py-2.5 text-right">${_fmtPct(r.wow)}</td>
+    <td class="px-3 py-2.5 text-slate-500 font-mono text-[12px]">${_esc(r.as_of || "—")}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[28rem]">${_mkSrcLink(r.source_name, r.source_url)}</td>
+  </tr>`).join("");
+  _mkWireSort("mk-indices-table", "indices", () => _mkRenderIndicesTable(rows));
+  _mkRefreshSortArrows("mk-indices-table", "indices");
+  const cnt = document.getElementById("mk-cnt-indices");
+  if (cnt) cnt.textContent = `${rows.length} rows`;
+}
+
+// ---- Scrap matrix: pivot dry+tanker into a single region table ----
+function _mkRenderScrapMatrix(dry, tnk) {
+  const host = document.getElementById("mk-scrap-tbody");
+  if (!host) return;
+  const byRegion = new Map();
+  const seed = (reg) => byRegion.set(reg, { region: reg, bulker: null, tanker: null, as_of: null, src_name: null, src_url: null });
+  for (const r of dry || []) {
+    if (!byRegion.has(r.region)) seed(r.region);
+    const o = byRegion.get(r.region);
+    o.bulker = r.ldt_usd; o.as_of = r.as_of; o.src_name = r.source_name; o.src_url = r.source_url;
+  }
+  for (const r of tnk || []) {
+    if (!byRegion.has(r.region)) seed(r.region);
+    const o = byRegion.get(r.region);
+    o.tanker = r.ldt_usd; if (!o.as_of) o.as_of = r.as_of; if (!o.src_name) { o.src_name = r.source_name; o.src_url = r.source_url; }
+  }
+  const rows = [...byRegion.values()].sort((a, b) => (b.bulker ?? 0) - (a.bulker ?? 0));
+  host.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.region)}</td>
+    <td class="px-3 py-2.5 text-right font-mono">${r.bulker == null ? '<span class="text-slate-300">—</span>' : _fmtNum(r.bulker)}</td>
+    <td class="px-3 py-2.5 text-right font-mono">${r.tanker == null ? '<span class="text-slate-300">—</span>' : _fmtNum(r.tanker)}</td>
+    <td class="px-3 py-2.5 text-slate-500 font-mono text-[12px]">${_esc(r.as_of || "—")}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[24rem]">${_mkSrcLink(r.src_name, r.src_url)}</td>
+  </tr>`).join("");
+  const cnt = document.getElementById("mk-cnt-scrap");
+  if (cnt) cnt.textContent = `${rows.length} regions`;
+}
+
+// ---- Fuel / domestic commodities ----
+function _mkRenderFuelTable(fs) {
+  const host = document.getElementById("mk-fuel-tbody");
+  if (!host) return;
+  const flat = [];
+  const push = (label, arr) => (arr || []).forEach(o => flat.push({
+    label, value: o.value ?? o.price ?? o.ldt_usd,
+    unit: o.unit, as_of: o.as_of,
+    src_name: o.source_name || (o.sources?.[0]?.name),
+    src_url: o.source_url || (o.sources?.[0]?.url),
+  }));
+  push("CPO Price (GAPKI)", fs.cpo_price_index_gapki);
+  push("Solar B40 / HSD",   fs.solar_b40_hsd);
+  push("HFO 180 / MFO",     fs.hfo_180_mfo);
+  push("Scrap — Domestic",  fs.scrap_domestic);
+  host.innerHTML = flat.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.label)}</td>
+    <td class="px-3 py-2.5 text-right font-mono">${_fmtNum(r.value)}</td>
+    <td class="px-3 py-2.5 text-slate-500 text-[12px]">${_esc(r.unit || "—")}</td>
+    <td class="px-3 py-2.5 text-slate-500 font-mono text-[12px]">${_esc(r.as_of || "—")}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[24rem]">${_mkSrcLink(r.src_name, r.src_url)}</td>
+  </tr>`).join("");
+  const cnt = document.getElementById("mk-cnt-fuel");
+  if (cnt) cnt.textContent = `${flat.length} items`;
+}
+
+// ---- Vessel pricing: web listings, chart + table ----
+function _mkRenderVesselChart(rows) {
+  const el = document.getElementById("mk-vessel-chart");
+  if (!el || !rows.length) return;
+  const trace = {
+    type: "bar",
+    x: rows.map(r => `${r.category} ${r.size}`),
+    y: rows.map(r => (r.value_low + r.value_high) / 2),
+    error_y: { type: "data",
+      symmetric: false,
+      array:      rows.map(r => r.value_high - (r.value_low + r.value_high) / 2),
+      arrayminus: rows.map(r => (r.value_low + r.value_high) / 2 - r.value_low),
+      color: "#475569", thickness: 1, width: 4,
+    },
+    marker: { color: "#0284c7" },
+    hovertemplate: "<b>%{x}</b><br>Range: %{customdata[0]} ~ %{customdata[1]} M IDR<extra></extra>",
+    customdata: rows.map(r => [_fmtNum(r.value_low), _fmtNum(r.value_high)]),
+  };
+  Plotly.newPlot("mk-vessel-chart", [trace], {
+    margin: { t: 16, l: 56, r: 16, b: 90 },
+    xaxis: { tickangle: -32, automargin: true, tickfont: { size: 10 } },
+    yaxis: { title: "millions IDR", gridcolor: "#f1f5f9" },
+    paper_bgcolor: "white", plot_bgcolor: "white",
+    showlegend: false,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function _mkRenderVesselTable(markets) {
+  const host = document.getElementById("mk-vessel-tbody");
+  if (!host) return;
+  const rows = [];
+  for (const mk of markets || []) {
+    for (const c of mk.categories || []) {
+      const className = (c.label || "").replace(/—.*$/, "").trim();
+      for (const r of c.rows || []) {
+        if (r.value_low == null && r.value_high == null) continue;
+        rows.push({ category: className, ...r,
+          src_name: r.sources?.[0]?.name, src_url: r.sources?.[0]?.url });
+      }
+    }
+  }
+  host.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 text-[12px] text-slate-600">${_esc(r.category)}</td>
+    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.size)}</td>
+    <td class="px-3 py-2.5 text-slate-500 text-[12px]">${_esc(r.year_built || "—")}</td>
+    <td class="px-3 py-2.5 text-right font-mono">${_fmtNum(r.value_low)}</td>
+    <td class="px-3 py-2.5 text-right font-mono font-semibold">${_fmtNum(r.value_high)}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[24rem]">${_mkSrcLink(r.src_name, r.src_url)}</td>
+  </tr>`).join("");
+  const cnt = document.getElementById("mk-cnt-vessel");
+  if (cnt) cnt.textContent = `${rows.length} listings`;
+  _mkRenderVesselChart(rows);
+}
+
+// ---- S&P transactions ----
+function _mkRenderSpTable(rows) {
+  const host = document.getElementById("mk-sp-tbody");
+  if (!host) return;
+  const data = rows.map(r => ({
+    name: r.vessel_name, type: r.type, dwt: r.dwt, year: r.year,
+    price: r.price_musd, buyer: r.buyer, as_of: r.as_of,
+    src_name: r.source_name, src_url: r.source_url,
+  }));
+  _mkSortRows(data, mkSort.sp.key, mkSort.sp.dir);
+  host.innerHTML = data.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.name)}</td>
+    <td class="px-3 py-2.5 text-[12px] text-slate-600">${_esc(r.type)}</td>
+    <td class="px-3 py-2.5 text-right font-mono text-slate-700">${r.dwt == null ? '<span class="text-slate-300">—</span>' : Number(r.dwt).toLocaleString()}</td>
+    <td class="px-3 py-2.5 text-right font-mono text-slate-700">${r.year ?? "—"}</td>
+    <td class="px-3 py-2.5 text-right font-mono font-semibold text-slate-900">${r.price == null ? "—" : "$" + Number(r.price).toFixed(1)}</td>
+    <td class="px-3 py-2.5 text-[12px] text-slate-600">${_esc(r.buyer || "—")}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[20rem]">${_mkSrcLink(r.src_name, r.src_url)}</td>
+  </tr>`).join("");
+  _mkWireSort("mk-sp-table", "sp", () => _mkRenderSpTable(rows));
+  _mkRefreshSortArrows("mk-sp-table", "sp");
+  const cnt = document.getElementById("mk-cnt-sp");
+  if (cnt) cnt.textContent = `${rows.length} deals`;
+}
+
+// ---- Commodity news ----
+function _mkRenderNewsTable(byTopic) {
+  const host = document.getElementById("mk-news-tbody");
+  if (!host) return;
+  const data = [];
+  for (const [topic, items] of Object.entries(byTopic || {})) {
+    for (const it of items) {
+      data.push({
+        topic, name: it.title_ko || it.title, date: it.as_of,
+        src_name: it.source_name, src_url: it.source_url,
+      });
+    }
+  }
+  _mkSortRows(data, mkSort.news.key, mkSort.news.dir);
+  host.innerHTML = data.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 text-[11px] uppercase tracking-wider text-slate-500 font-medium">${_esc(r.topic)}</td>
+    <td class="px-3 py-2.5 text-slate-800">${_esc(r.name)}</td>
+    <td class="px-3 py-2.5 text-slate-500 font-mono text-[12px]">${_esc(r.date || "—")}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[24rem]">${_mkSrcLink(r.src_name, r.src_url)}</td>
+  </tr>`).join("");
+  _mkWireSort("mk-news-table", "news", () => _mkRenderNewsTable(byTopic));
+  _mkRefreshSortArrows("mk-news-table", "news");
+  const cnt = document.getElementById("mk-cnt-news");
+  if (cnt) cnt.textContent = `${data.length} items`;
+}
+
+// ---- Events ----
+function _mkRenderEventsTable(events) {
+  const host = document.getElementById("mk-events-tbody");
+  if (!host) return;
+  const rows = (events?.upcoming || []).concat(events?.live || []).map(e => ({
+    name: e.name, date: e.date, location: e.location,
+    src_name: e.source_name, src_url: e.source_url,
+  }));
+  _mkSortRows(rows, mkSort.events.key, mkSort.events.dir);
+  host.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50">
+    <td class="px-3 py-2.5 text-slate-500 font-mono text-[12px]">${_esc(r.date || "—")}</td>
+    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.name)}</td>
+    <td class="px-3 py-2.5 text-[12px] text-slate-600">${_esc(r.location || "—")}</td>
+    <td class="px-3 py-2.5 text-[12px] truncate max-w-[24rem]">${_mkSrcLink(r.src_name, r.src_url)}</td>
+  </tr>`).join("");
+  _mkWireSort("mk-events-table", "events", () => _mkRenderEventsTable(events));
+  _mkRefreshSortArrows("mk-events-table", "events");
+  const cnt = document.getElementById("mk-cnt-events");
+  if (cnt) cnt.textContent = `${rows.length} events`;
+}
+
+// ---- Build meta footer ----
+function _mkRenderBuildMeta(m) {
+  const el = document.getElementById("mk-build-meta");
+  if (!el) return;
+  const bm = m.build_meta || {};
+  el.innerHTML = `run · ${_esc(m.build_run_id || "—")} · ${_esc(bm.collectors_run?.join(", ") || "—")} · ${bm.rows_published ?? 0} rows`;
+}
+
+// ---- Entry point ----
 async function renderMarket() {
   const tabEl = document.getElementById("tab-market");
   if (!tabEl) return;
   setupSourceLabels(tabEl);
-  _mkSetupTocSpy();
-  // Cycle 29: inject loading skeletons before the fetch so the empty placeholders
-  // never flash blank. Real data overwrites these innerHTML containers below.
-  _mkPaintSkeletons();
   let m;
   try {
-    const r = await fetch("./data/market.json");
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    m = await r.json();
+    m = await loadJson("market.json");
   } catch (e) {
-    const host = document.getElementById("mk-vessel-pricing");
-    if (host) host.innerHTML = errorState(`market.json 로드 실패: ${e.message}`);
+    tabEl.insertAdjacentHTML("beforeend",
+      `<div class="m-4">${errorState(`market.json 로드 실패: ${e.message}`)}</div>`);
     return;
   }
+  const rw = document.getElementById("mk-report-week");
+  const asof = document.getElementById("mk-asof");
+  if (rw)   rw.textContent = m.report_week ? `· ${m.report_week}` : "";
+  if (asof) asof.textContent = `as of ${m.checked_date || m.last_updated || "—"}`;
 
-  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? "—"; };
-  setText("mk-vp-asof", `as of ${m?.domestic_vessel_pricing?.as_of || "—"}`);
-
-  // Cycle 15: section count chips
-  const _cnt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-  // Cycle 39: overview[0] is rendered in the top headline banner, so the grid
-  // count below should exclude it.
-  _cnt("mk-cnt-overview", `${Math.max(0, (m.overview || []).length - 1)} more`);
-  const _vp = m.domestic_vessel_pricing || {};
-  let _vTot = 0, _vFil = 0;
-  (_vp.markets || []).forEach(mk => (mk.categories || []).forEach(c => (c.rows || []).forEach(r => {
-    _vTot++;
-    if (r.value_low != null || r.value_high != null) _vFil++;
-  })));
-  _cnt("mk-cnt-vessel", `${(_vp.markets || []).length} markets · ${_vFil}/${_vTot} rows`);
-  const _fs = m.domestic_fuel_scrap || {};
-  const _fsN = (_fs.cpo_price_index_gapki || []).length + (_fs.solar_b40_hsd || []).length + (_fs.hfo_180_mfo || []).length + (_fs.scrap_domestic || []).length;
-  const _if = m.international_freight || {};
-  const _ifScrap = (_if.scrap_dry_bulk || []).length + (_if.scrap_tanker || []).length;
-  const _ifSp = (_if.sale_purchase_bulk || _if.sale_purchase || []).filter(o => o.vessel_name || o.price_musd != null).length;
-  _cnt("mk-cnt-indices", `${(_if.indices || []).length} idx · ${_fsN} fuel · ${_ifScrap} scrap · ${_ifSp} S&P`);
-  const _cn = m.commodity_news || {};
-  const _cnTotal = Object.values(_cn).reduce((s, arr) => s + (arr || []).length, 0);
-  _cnt("mk-cnt-news", `${_cnTotal} items · ${Object.keys(_cn).length} topics`);
-  const _ev = m.events || {};
-  _cnt("mk-cnt-events", `${(_ev.monthly || []).length} live · ${(_ev.upcoming || []).length} upcoming`);
-
-  // Freshness chip strip — last vs next + days-since/until
-  const frHost = document.getElementById("mk-freshness");
-  if (frHost) {
-    const today = m.checked_date ? new Date(m.checked_date) : new Date();
-    const daysBetween = (a, b) => {
-      if (!a || !b) return null;
-      const da = new Date(a), db = new Date(b);
-      return Math.round((db - da) / (1000 * 60 * 60 * 24));
-    };
-    const dLast = m.last_updated ? daysBetween(m.last_updated, today.toISOString().slice(0,10)) : null;
-    const dNext = m.next_scheduled ? daysBetween(today.toISOString().slice(0,10), m.next_scheduled) : null;
-    const chip = (cls, text) => `<span class="px-2 py-0.5 rounded ${cls}">${_esc(text)}</span>`;
-    const items = [];
-    items.push(chip("bg-blue-100 text-blue-800", `cadence: ${m.review_cadence || "weekly"}`));
-    if (dLast != null) {
-      const cls = dLast <= 7 ? "bg-emerald-100 text-emerald-800" : (dLast <= 14 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800");
-      items.push(chip(cls, `last ${dLast}d ago`));
-    }
-    if (dNext != null) {
-      const cls = dNext >= 0 ? "bg-slate-100 text-slate-700" : "bg-rose-100 text-rose-800";
-      items.push(chip(cls, dNext >= 0 ? `next in ${dNext}d` : `overdue ${Math.abs(dNext)}d`));
-    }
-    if (m.report_week) items.push(chip("bg-slate-100 text-slate-600", m.report_week));
-    if (m.reference_pdf) items.push(chip("bg-slate-50 text-slate-500 border border-slate-200", `ref: ${m.reference_pdf}`));
-    frHost.innerHTML = items.join("");
-  }
-
-  // Cycle 38: top headline banner — uses overview[0] as the lede
-  const topHost = document.getElementById("mk-top-headline");
-  if (topHost) {
-    const top = (m.overview || [])[0];
-    if (top) {
-      const cat = top.category || "—";
-      const meta = ({
-        "Freight":   { icon: "⚓", bg: "from-emerald-50 to-white",  border: "border-emerald-300" },
-        "Policy":    { icon: "🏛", bg: "from-rose-50 to-white",     border: "border-rose-300" },
-        "Commodity": { icon: "🛢", bg: "from-amber-50 to-white",    border: "border-amber-300" },
-        "Shipping":  { icon: "🚢", bg: "from-blue-50 to-white",     border: "border-blue-300" },
-      })[cat] || { icon: "•", bg: "from-slate-50 to-white", border: "border-slate-300" };
-      const src = top.source_url
-        ? `<a href="${_esc(top.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(top.source_name || "src")}</a>`
-        : `<span class="text-slate-600">${_esc(top.source_name || "—")}</span>`;
-      topHost.innerHTML = `
-        <div class="rounded-lg border ${meta.border} bg-gradient-to-r ${meta.bg} p-3 flex items-start gap-3">
-          <div class="text-2xl leading-none">${meta.icon}</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1.5 mb-0.5">
-              <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-white/70 text-slate-600 uppercase tracking-wider">today's top · ${_esc(cat)}</span>
-              <span class="text-[10px] text-slate-400 font-mono">${_esc(top.as_of || "—")}</span>
-            </div>
-            <div class="text-[14px] font-semibold text-slate-800 leading-snug">${_esc(top.headline || "—")}</div>
-            ${top.detail_ko ? `<div class="text-[11px] text-slate-600 leading-relaxed mt-1">${_esc(top.detail_ko)}</div>` : ""}
-            <div class="text-[10px] text-slate-500 mt-1.5">출처: ${src}${top.source_tier ? " " + _mkTierChip(top.source_tier) : ""}</div>
-          </div>
-        </div>`;
-    } else {
-      topHost.innerHTML = "";
-    }
-  }
-
-  // Overview cards (이번 주 핵심 요약) — Cycle 39: skip overview[0] (top headline)
-  const ovHost = document.getElementById("mk-overview");
-  if (ovHost) {
-    const arr = (m.overview || []).slice(1);
-    ovHost.innerHTML = arr.length
-      ? arr.map(_mkOverviewCard).join("")
-      : `<div class="col-span-full text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[14px]">◌</span><span>추가 요약 없음.</span></div>`;
-  }
-
-  // Cycle 19: unified empty-state — dashed slate border, ◌ icon, optional hint sublabel
-  const emptyMsg = (label = "최근 검증된 데이터가 없습니다.", hint = null) => `
-    <div class="text-[11px] text-slate-500 px-3 py-3 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-start gap-2">
-      <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
-      <div>
-        <div class="text-slate-700">${_esc(label)}</div>
-        ${hint ? `<div class="text-[10px] text-slate-400 mt-0.5">${_esc(hint)}</div>` : ""}
-      </div>
-    </div>`;
-
-  // ★ Domestic Vessel Pricing — markets > categories > rows  (PDF p.2 구조)
-  const vpHost = document.getElementById("mk-vessel-pricing");
-  if (vpHost) {
-    const vp = m.domestic_vessel_pricing;
-    if (!vp || !Array.isArray(vp.markets) || !vp.markets.length) {
-      vpHost.innerHTML = emptyMsg();
-    } else {
-      vpHost.innerHTML = _mkInsightStrip(vp.markets, m.checked_date) + _mkSourceCoverage(vp.markets) + _mkBulkControls() + vp.markets.map((mk, i) => _mkMarketBlock(mk, i === 0)).join("");
-      _renderMarketCharts();
-    }
-  }
-
-  // Domestic Fuel · Scrap · CPO Price Index — small cards
-  const fsHost = document.getElementById("mk-fuel-scrap");
-  if (fsHost) {
-    const fs = m.domestic_fuel_scrap || {};
-    const cards = [];
-    (fs.cpo_price_index_gapki || []).forEach(o => cards.push(_mkFuelCard("CPO Price Index (GAPKI)", o)));
-    (fs.solar_b40_hsd        || []).forEach(o => cards.push(_mkFuelCard("Solar B40 / HSD", o)));
-    (fs.hfo_180_mfo          || []).forEach(o => cards.push(_mkFuelCard("HFO 180 / MFO", o)));
-    (fs.scrap_domestic       || []).forEach(o => cards.push(_mkFuelCard("Scrap — Domestic", o)));
-    fsHost.innerHTML = cards.length ? cards.join("") : emptyMsg();
-  }
-
-  // International Freight — indices / scrap (dry+tanker) / S&P
-  const intF = m.international_freight || {};
-  const idxHost = document.getElementById("mk-int-indices");
-  if (idxHost) {
-    const arr = intF.indices || [];
-    idxHost.innerHTML = arr.length ? arr.map(o => _mkIndexCardV2(o)).join("") : emptyMsg();
-  }
-  const scrapHost = document.getElementById("mk-int-scrap");
-  if (scrapHost) {
-    const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry — " + (o.region || o.size || "—") }));
-    const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker — " + (o.region || o.size || "—") }));
-    const arr = [...dry, ...tnk];
-    scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired", "웹 출처 추가 시 표시");
-  }
-  const spHost = document.getElementById("mk-int-sp");
-  if (spHost) {
-    const arr = intF.sale_purchase_bulk || intF.sale_purchase || [];
-    const visible = arr.filter(o => o.vessel_name || o.price_musd != null);
-    spHost.innerHTML = visible.length
-      ? visible.map(o => _mkSpCard(o)).join("")
-      : emptyMsg("S&P 활동 — No data acquired", "웹 출처 추가 시 표시");
-  }
-
-  // Commodity News (Coal / Nickel / CPO / Power / Shipping) — Cycle 7 styling
-  const cnHost = document.getElementById("mk-commodity-news-v2");
-  if (cnHost) {
-    const blocks = m.commodity_news || {};
-    const order = ["coal", "nickel", "cpo", "power", "shipping"];
-    const meta = {
-      coal:     { label: "Coal",              icon: "⚫", header: "bg-slate-100 text-slate-700 border-slate-300",   stripe: "border-l-slate-700",   hover: "hover:bg-slate-50" },
-      nickel:   { label: "Nickel",            icon: "🔋", header: "bg-indigo-50 text-indigo-700 border-indigo-200", stripe: "border-l-indigo-500",  hover: "hover:bg-indigo-50/60" },
-      cpo:      { label: "CPO",               icon: "🌴", header: "bg-amber-50 text-amber-700 border-amber-200",    stripe: "border-l-amber-500",   hover: "hover:bg-amber-50/60" },
-      power:    { label: "Power Plant",       icon: "⚡", header: "bg-teal-50 text-teal-700 border-teal-200",       stripe: "border-l-teal-500",    hover: "hover:bg-teal-50/60" },
-      shipping: { label: "Indonesia Shipping", icon: "🚢", header: "bg-blue-50 text-blue-700 border-blue-200",       stripe: "border-l-blue-500",    hover: "hover:bg-blue-50/60" },
-    };
-    const html = order.map(k => {
-      const m_ = meta[k];
-      const items = blocks[k] || [];
-      const countChip = `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-600">${items.length}</span>`;
-      const inner = items.length
-        ? items.map(o => _mkNewsCard(o, { stripe: m_.stripe, hover: m_.hover })).join("")
-        : `<div class="text-[11px] text-slate-500 px-3 py-2 border border-dashed border-slate-300 rounded-md bg-slate-50/60 flex items-center gap-2"><span class="text-slate-400 text-[12px]">◌</span><span>최근 검증된 데이터가 없습니다.</span></div>`;
-      return `<div>
-        <div class="flex items-center gap-1.5 mb-1.5">
-          <span class="px-2 py-0.5 text-[10px] font-mono rounded border ${m_.header} inline-flex items-center gap-1">
-            <span>${m_.icon}</span><span>${_esc(m_.label)}</span>
-          </span>
-          ${countChip}
-        </div>
-        <div class="space-y-1.5">${inner}</div>
-      </div>`;
-    }).join("");
-    cnHost.innerHTML = html;
-  }
-
-  // Events — monthly / upcoming
-  const evMonthly = document.getElementById("mk-events-monthly");
-  if (evMonthly) {
-    const arr = (m.events && m.events.monthly) || [];
-    evMonthly.innerHTML = arr.length ? arr.map(_mkEventCard).join("") : emptyMsg();
-  }
-  const evUpcoming = document.getElementById("mk-events-upcoming");
-  if (evUpcoming) {
-    const arr = (m.events && m.events.upcoming) || [];
-    evUpcoming.innerHTML = arr.length ? arr.map(_mkEventCard).join("") : emptyMsg();
-  }
-
-  // Build meta — Cycle 17: spec grid layout
-  const bmHost = document.getElementById("mk-build-meta");
-  if (bmHost && m.build_meta) {
-    const bm = m.build_meta;
-    const _cell = (k, v) => `
-      <div class="px-2 py-1 rounded border border-slate-200 bg-white">
-        <div class="text-[9px] uppercase tracking-wider text-slate-400">${_esc(k)}</div>
-        <div class="text-[10px] text-slate-700 font-mono truncate" title="${_esc(String(v))}">${_esc(String(v))}</div>
-      </div>`;
-    bmHost.innerHTML = `
-      <div class="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1.5">build meta</div>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
-        ${_cell("run_id", m.build_run_id || "—")}
-        ${_cell("report_week", m.report_week || "—")}
-        ${_cell("rows_pub", bm.rows_published ?? bm.rows_collected ?? "—")}
-        ${_cell("rows_no_data", bm.rows_no_data ?? "—")}
-        ${_cell("withheld_jump", bm.rows_withheld_jump ?? 0)}
-        ${_cell("collectors", (bm.collectors_run || []).join(", ") || "(none)")}
-      </div>
-      ${bm.extraction_method ? `<div class="mt-1 text-[10px] text-slate-400 font-mono">method: ${_esc(bm.extraction_method)}</div>` : ""}
-    `;
-  }
+  _mkRenderIndicesTable(m.international_freight?.indices || []);
+  _mkRenderIndicesChart(m.international_freight?.indices || []);
+  _mkRenderScrapMatrix(m.international_freight?.scrap_dry_bulk, m.international_freight?.scrap_tanker);
+  _mkRenderFuelTable(m.domestic_fuel_scrap || {});
+  _mkRenderVesselTable(m.domestic_vessel_pricing?.markets || []);
+  _mkRenderSpTable(m.international_freight?.sale_purchase_bulk || []);
+  _mkRenderNewsTable(m.commodity_news || {});
+  _mkRenderEventsTable(m.events || {});
+  _mkRenderBuildMeta(m);
 }
 
-// tier chip — tier1 (공식) / tier2 (media) / tier3 (broker·SNS)
-function _mkTierChip(tier) {
-  const t = String(tier || "").toLowerCase();
-  const map = {
-    "tier1":    { cls: "bg-emerald-100 text-emerald-800", label: "tier1·공식" },
-    "official": { cls: "bg-emerald-100 text-emerald-800", label: "tier1·공식" },
-    "tier2":    { cls: "bg-sky-100 text-sky-800",         label: "tier2·매체" },
-    "media":    { cls: "bg-sky-100 text-sky-800",         label: "tier2·매체" },
-    "tier3":    { cls: "bg-amber-100 text-amber-800",     label: "tier3·브로커" },
-    "broker":   { cls: "bg-amber-100 text-amber-800",     label: "tier3·브로커" },
-    "sns":      { cls: "bg-amber-100 text-amber-800",     label: "tier3·SNS" },
-  };
-  const v = map[t] || { cls: "bg-slate-100 text-slate-600", label: tier || "—" };
-  return `<span class="px-1 py-0.5 text-[9px] font-mono rounded ${v.cls}">${_esc(v.label)}</span>`;
-}
-
-// Overview card — 이번 주 핵심 요약. Bigger headline + body, left accent stripe.
-function _mkOverviewCard(o) {
-  const cat = o.category || "—";
-  const catMeta = ({
-    "Freight":   { icon: "⚓", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", border: "border-l-emerald-500" },
-    "Policy":    { icon: "🏛", chip: "bg-rose-50 text-rose-700 border-rose-200",         border: "border-l-rose-500" },
-    "Commodity": { icon: "🛢", chip: "bg-amber-50 text-amber-700 border-amber-200",       border: "border-l-amber-500" },
-    "Shipping":  { icon: "🚢", chip: "bg-blue-50 text-blue-700 border-blue-200",          border: "border-l-blue-500" },
-  })[cat] || { icon: "•", chip: "bg-slate-50 text-slate-700 border-slate-200", border: "border-l-slate-400" };
-  const srcLink = o.source_url
-    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "src")}</a>`
-    : _esc(o.source_name || "—");
-  return `
-    <div class="border border-slate-200 ${catMeta.border} border-l-4 rounded-lg p-4 bg-white hover:shadow-md hover:-translate-y-0.5 transition-all">
-      <div class="flex items-center gap-1.5 mb-2.5">
-        <span class="text-[16px] leading-none">${catMeta.icon}</span>
-        <span class="px-1.5 py-0.5 text-[10px] font-mono rounded border ${catMeta.chip}">${_esc(cat)}</span>
-        ${_mkTierChip(o.source_tier)}
-        <span class="text-[10px] text-slate-400 font-mono ml-auto">${_esc(o.as_of || "—")}</span>
-      </div>
-      <div class="text-[15px] font-semibold text-slate-900 leading-snug mb-2 tracking-tight">${_esc(o.headline || "—")}</div>
-      <div class="text-[12.5px] text-slate-600 leading-relaxed">${_esc(o.detail_ko || "")}</div>
-      <div class="text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-100">${srcLink}</div>
-    </div>`;
-}
-
-// 출처 구성 미터 — SBS PDF 제거 이후 100% 웹 상태이므로 별도 표시 생략.
-function _mkSourceCoverage(_markets) {
-  return "";
-}
-
-// Cycle 11: Auto-insight strip derived from the vessel-pricing markets.
-// Surfaces: Top TC (highest charter rate), Top SHB (highest secondhand quote),
-// Cheapest NB (entry-cost benchmark), and a data-completeness alert if any
-// market has 0 filled rows. All metrics ride on the same currency unit
-// (millions IDR) since every market in this section uses it.
-function _mkInsightStrip(markets, asOf) {
-  if (!markets || !markets.length) return "";
-  const bestByKind = { TC: null, SHB: null, NB: null };
-  const cheapByKind = { NB: null };
-  const incomplete = []; // markets with 0 filled rows
-  // Cycle 21: spread alert — group by (market, kind, size), find max/min across year buckets
-  const groupMap = new Map(); // key -> { vals: [{v, yr}], market, kind, size }
-  for (const mk of markets) {
-    let filled = 0, total = 0;
-    for (const c of mk.categories || []) {
-      for (const r of c.rows || []) {
-        total++;
-        const v = r.value_high != null ? Number(r.value_high)
-                : r.value_low  != null ? Number(r.value_low)
-                : null;
-        if (v == null) continue;
-        filled++;
-        const rec = { v, market: mk.market, label: c.label, kind: c.kind, size: r.size, yr: r.year_built };
-        if (bestByKind[c.kind] == null || v > bestByKind[c.kind].v) bestByKind[c.kind] = rec;
-        if (c.kind === "NB") {
-          const lo = r.value_low != null ? Number(r.value_low) : v;
-          if (cheapByKind.NB == null || lo < cheapByKind.NB.v) cheapByKind.NB = { ...rec, v: lo };
-        }
-        // Spread grouping uses value_low (mid of bar) for cleaner year-on-year compare
-        const baseV = r.value_low != null ? Number(r.value_low) : v;
-        const key = `${mk.market}|${c.kind}|${r.size}`;
-        if (!groupMap.has(key)) groupMap.set(key, { vals: [], market: mk.market, kind: c.kind, size: r.size });
-        groupMap.get(key).vals.push({ v: baseV, yr: r.year_built });
-      }
-    }
-    if (total > 0 && filled === 0) incomplete.push(mk.market);
-  }
-  // Pick the group with the widest spread (≥2 buckets)
-  let spread = null;
-  for (const g of groupMap.values()) {
-    if (g.vals.length < 2) continue;
-    const lo = Math.min(...g.vals.map(o => o.v));
-    const hi = Math.max(...g.vals.map(o => o.v));
-    if (lo <= 0) continue;
-    const ratio = hi / lo;
-    if (!spread || ratio > spread.ratio) {
-      const loRec = g.vals.find(o => o.v === lo);
-      const hiRec = g.vals.find(o => o.v === hi);
-      spread = { ratio, lo, hi, loYr: loRec.yr, hiYr: hiRec.yr, market: g.market, kind: g.kind, size: g.size };
-    }
-  }
-  const _short = (s, n = 22) => {
-    const t = String(s || "");
-    return t.length > n ? t.slice(0, n - 1) + "…" : t;
-  };
-  // Cycle 41: cards are now <button> with data-deep-* attrs so clicking jumps to source row
-  const card = (icon, label, rec, accent) => {
-    if (!rec) return "";
-    return `
-      <button type="button" class="mk-insight-card text-left w-full flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 ${accent} hover:shadow-md hover:-translate-y-px transition-all cursor-pointer"
-              data-deep-market="${_esc(rec.market || "")}"
-              data-deep-kind="${_esc(rec.kind || "")}"
-              data-deep-size="${_esc(rec.size || "")}"
-              data-deep-year="${_esc(rec.yr || "")}"
-              aria-label="${_esc(label)}: ${_esc(rec.market || "")} ${_esc(rec.size || "")} ${_esc(rec.yr || "")} — source row 로 이동">
-        <span class="text-[14px] leading-none mt-0.5">${icon}</span>
-        <div class="leading-tight min-w-0">
-          <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">${_esc(label)} <span class="text-slate-300">↗</span></div>
-          <div class="text-[12px] font-semibold text-slate-800">${Number(rec.v).toLocaleString()} <span class="text-[10px] font-normal text-slate-400">M IDR</span></div>
-          <div class="text-[10px] text-slate-500 truncate">${_esc(_short(rec.market, 18))} · ${_esc(_short(rec.size, 14))} · ${_esc(_short(rec.yr, 12))}</div>
-        </div>
-      </button>`;
-  };
-  const spreadCard = spread ? `
-    <button type="button" class="mk-insight-card text-left w-full flex items-start gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 border-l-4 border-l-rose-500 hover:shadow-md hover:-translate-y-px transition-all cursor-pointer"
-            data-deep-market="${_esc(spread.market)}"
-            data-deep-kind="${_esc(spread.kind || "")}"
-            data-deep-size="${_esc(spread.size || "")}"
-            data-deep-year="${_esc(spread.hiYr || "")}"
-            aria-label="Widest year-bucket spread: ${_esc(spread.market)} ${_esc(spread.size)} ${_esc(spread.hiYr)} — source row 로 이동">
-      <span class="text-[14px] leading-none mt-0.5">📐</span>
-      <div class="leading-tight min-w-0">
-        <div class="text-[9px] uppercase tracking-wider text-slate-500 font-mono">Widest year-bucket spread <span class="text-slate-300">↗</span></div>
-        <div class="text-[12px] font-semibold text-slate-800">${spread.ratio.toFixed(2)}× <span class="text-[10px] font-normal text-slate-500">(${spread.lo.toLocaleString()} → ${spread.hi.toLocaleString()})</span></div>
-        <div class="text-[10px] text-slate-500 truncate">${_esc(_short(spread.market, 16))} · ${_esc(spread.kind || "")} ${_esc(_short(spread.size, 12))} · ${_esc(_short(spread.loYr, 8))} → ${_esc(_short(spread.hiYr, 8))}</div>
-      </div>
-    </button>` : "";
-  const cards = [
-    card("🏷", "Top TC (charter)",      bestByKind.TC,  "border-l-4 border-l-blue-500"),
-    card("💎", "Top SHB (secondhand)",  bestByKind.SHB, "border-l-4 border-l-emerald-500"),
-    card("🚧", "Cheapest NB entry",      cheapByKind.NB, "border-l-4 border-l-amber-500"),
-    spreadCard,
-  ].filter(Boolean).join("");
-  const alert = incomplete.length
-    ? `<div class="mt-1 px-2 py-1 rounded bg-rose-50 border border-rose-200 text-[10px] text-rose-700 font-mono">
-         ⚠ 결측 마켓: ${incomplete.map(_esc).join(" · ")} — 추가 웹 출처 확보 필요
-       </div>` : "";
-  // Cycle 40: count seeded rows to show how many data points drive the insights
-  let seededRows = 0;
-  for (const mk of markets) {
-    for (const c of mk.categories || []) {
-      for (const r of c.rows || []) {
-        if (r.value_low != null || r.value_high != null) seededRows++;
-      }
-    }
-  }
-  return `
-    <div class="mb-3">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono mb-1 flex items-center gap-1 flex-wrap">
-        <span>Auto Insights</span>
-        <span class="text-slate-300">·</span>
-        <span class="text-slate-400">자동 도출 — 외부 해석 없음</span>
-        <span class="ml-auto text-slate-400 normal-case tracking-normal">${seededRows} rows seeded${asOf ? ` · as of ${_esc(asOf)}` : ""}</span>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">${cards}</div>
-      ${alert}
-    </div>`;
-}
-
-// Cycle 29: loading skeletons — injected before fetch resolves, replaced once data arrives.
-// Uses Tailwind animate-pulse on slate-200 bars to convey "in flight".
-function _mkPaintSkeletons() {
-  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
-  const bar = (w, h = "h-3") => `<div class="${h} ${w} bg-slate-200 rounded animate-pulse"></div>`;
-  const card = (extra = "") => `
-    <div class="border border-slate-200 rounded-lg p-3 bg-white space-y-2">
-      <div class="flex items-center gap-1.5">${bar("w-12", "h-2.5")} ${bar("w-16", "h-2.5")}</div>
-      ${bar("w-4/5", "h-3.5")}
-      ${bar("w-3/4", "h-3")}
-      <div class="border-t border-slate-100 pt-1.5">${bar("w-1/3", "h-2.5")}</div>
-      ${extra}
-    </div>`;
-  // Overview: 3 cards
-  set("mk-overview", Array.from({ length: 3 }).map(() => card()).join(""));
-  // Vessel pricing: 1 chunky market card with mini chart skeleton + 2 row strips
-  set("mk-vessel-pricing", `
-    <div class="border border-slate-200 rounded-lg bg-slate-50/40 p-3 space-y-3">
-      <div class="flex items-center gap-2">${bar("w-40", "h-3.5")} ${bar("w-20", "h-2.5")} <div class="ml-auto">${bar("w-24", "h-2.5")}</div></div>
-      <div class="h-40 bg-slate-100 rounded border border-slate-200 animate-pulse"></div>
-      ${["w-full", "w-11/12", "w-10/12"].map(w => bar(w, "h-2.5")).join('<div class="my-1"></div>')}
-    </div>`);
-  // Fuel/scrap: 4 cards
-  set("mk-fuel-scrap", Array.from({ length: 4 }).map(() => card()).join(""));
-  // Int'l indices: 3 cards
-  set("mk-int-indices", Array.from({ length: 3 }).map(() => card()).join(""));
-  // Int'l scrap: 3 cards
-  set("mk-int-scrap", Array.from({ length: 3 }).map(() => card()).join(""));
-  // S&P: 1 placeholder row
-  set("mk-int-sp", `<div class="border border-slate-200 rounded-md p-3 space-y-2">${bar("w-1/2", "h-3")} ${bar("w-1/3", "h-2.5")}</div>`);
-  // News v2: 5 topic stubs
-  set("mk-commodity-news-v2", Array.from({ length: 3 }).map(() => `
-    <div class="space-y-1.5">
-      <div class="flex items-center gap-1.5">${bar("w-16", "h-2.5")} ${bar("w-6", "h-2.5")}</div>
-      <div class="border border-slate-200 rounded-md p-3 space-y-2">
-        ${bar("w-3/4", "h-3")} ${bar("w-2/3", "h-2.5")} ${bar("w-1/4", "h-2.5")}
-      </div>
-    </div>`).join(""));
-  // Events monthly/upcoming
-  const evRow = `<div class="border border-slate-200 rounded-md p-2 grid grid-cols-12 gap-2">
-    <div class="col-span-3">${bar("w-full", "h-2.5")}</div>
-    <div class="col-span-7 space-y-1.5">${bar("w-3/4", "h-3")} ${bar("w-1/2", "h-2.5")}</div>
-    <div class="col-span-2">${bar("w-full", "h-2.5")}</div>
-  </div>`;
-  set("mk-events-monthly", evRow);
-  set("mk-events-upcoming", evRow + '<div class="my-1.5"></div>' + evRow);
-}
-
-// Cycle 27: bulk expand/collapse + bulk view-mode controls above the markets list
-function _mkBulkControls() {
-  return `
-    <div class="mb-3 flex flex-wrap items-center gap-1.5 text-[10px]" role="toolbar" aria-label="Bulk market controls">
-      <span class="text-slate-400 font-mono mr-1 uppercase tracking-wider">모든 마켓:</span>
-      <button type="button" data-mk-bulk="expand"   class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 펼치기">⤵ 모두 펼치기</button>
-      <button type="button" data-mk-bulk="collapse" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 접기">⤴ 모두 접기</button>
-      <span class="text-slate-300 mx-1">·</span>
-      <button type="button" data-mk-bulk="view-both"  class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 차트+테이블">🔀 Both</button>
-      <button type="button" data-mk-bulk="view-chart" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 차트만">📊 차트</button>
-      <button type="button" data-mk-bulk="view-table" class="mk-bulk-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700" aria-label="모든 마켓 테이블만">📋 테이블</button>
-      <span class="text-slate-300 mx-1">·</span>
-      <input type="search" id="mk-row-search" placeholder="size · year 검색 (예: 5000KL · 2025)" aria-label="Vessel pricing row search" class="px-2 py-0.5 rounded border border-slate-200 text-[10px] font-mono w-44 sm:w-56 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-      <span id="mk-row-search-hits" class="text-[10px] text-slate-400 font-mono"></span>
-    </div>`;
-}
-
-// Market block — PDF p.2 구조: market > categories(TC/SHB/NB) > rows(size × year).
-// Plotly 차트(데이터 존재 시) + 카테고리별 테이블.
-function _mkMarketBlock(mk, isOpen = true) {
-  const cats = mk.categories || [];
-  const blocks = cats.map(c => _mkCategoryTable(c, mk.currency_unit)).join("");
-  // unique chart id
-  const chartId = `mk-chart-${_slug(mk.market || "mkt")}-${Math.random().toString(36).slice(2,6)}`;
-  // Aggregate stats for the KPI chip strip (Cycle 3)
-  let total = 0, filled = 0, lo = Infinity, hi = -Infinity;
-  const kindCount = {}; // { TC: n, SHB: n, NB: n }
-  cats.forEach(c => {
-    const kind = c.kind || "?";
-    (c.rows || []).forEach(r => {
-      total++;
-      const v1 = r.value_low != null ? Number(r.value_low) : null;
-      const v2 = r.value_high != null ? Number(r.value_high) : null;
-      if (v1 != null || v2 != null) {
-        filled++;
-        kindCount[kind] = (kindCount[kind] || 0) + 1;
-        if (v1 != null) { lo = Math.min(lo, v1); hi = Math.max(hi, v1); }
-        if (v2 != null) { lo = Math.min(lo, v2); hi = Math.max(hi, v2); }
-      }
-    });
-  });
-  const dataCount = filled;
-  const _fmtCompact = (n) => {
-    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k";
-    return String(n);
-  };
-  const kindKey = { TC: "bg-blue-100 text-blue-800", SHB: "bg-emerald-100 text-emerald-800", NB: "bg-amber-100 text-amber-800" };
-  const kindChips = ["TC", "SHB", "NB"]
-    .filter(k => kindCount[k])
-    .map(k => `<button type="button" data-kind-filter="${k}" class="mk-kind-filter px-1.5 py-0.5 text-[9px] font-mono rounded ${kindKey[k] || "bg-slate-100 text-slate-700"} hover:ring-1 hover:ring-slate-400 cursor-pointer transition-shadow" aria-pressed="false" title="${k} 만 표시 (다시 누르면 해제)">${k} ${kindCount[k]}</button>`)
-    .join("");
-  const rangeChip = filled > 0
-    ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700">range ${_fmtCompact(lo)}–${_fmtCompact(hi)}</span>`
-    : "";
-  const fillChip = total > 0
-    ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded ${filled === total ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : filled === 0 ? "bg-slate-100 text-slate-500" : "bg-amber-50 text-amber-700 border border-amber-200"}">rows ${filled}/${total}</span>`
-    : "";
-  const chartPanel = (dataCount > 0)
-    ? `<div id="${chartId}" class="bg-white rounded border border-slate-200 mb-3" style="min-height:340px;" data-market='${_esc(JSON.stringify(mk))}'></div>`
-    : `<div class="bg-slate-50/60 border border-dashed border-slate-300 rounded-md p-3 mb-3 text-[11px] text-slate-500 flex items-start gap-2">
-         <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
-         <div>
-           <div class="text-slate-700">차트 데이터 미수집 — No quotes available</div>
-           <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em> — 웹 출처 확보 시 갱신.</div>
-         </div>
-       </div>`;
-  // Cycle 22: chart/table view toggle — Cycle 24: a11y — Cycle 26: CSV export button
-  const viewToggle = (dataCount > 0) ? `
-    <div class="flex items-center justify-end gap-1 mb-2 text-[10px] flex-wrap">
-      <button type="button" class="mk-export-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors text-slate-600" aria-label="Download ${_esc(mk.market)} as CSV">⬇ CSV</button>
-      <span class="text-slate-300 mx-0.5">·</span>
-      <span class="text-slate-400 font-mono mr-1" role="group" aria-label="${_esc(mk.market)} 표시 모드">표시:</span>
-      <button type="button" data-mk-view="both"  class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="true"  aria-label="Show chart and tables">🔀 Both</button>
-      <button type="button" data-mk-view="chart" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show chart only">📊 Chart</button>
-      <button type="button" data-mk-view="table" class="mk-view-btn px-2 py-0.5 rounded border border-slate-200 hover:bg-slate-100 transition-colors" aria-pressed="false" aria-label="Show tables only">📋 Tables</button>
-    </div>` : "";
-  // Cycle 9: wrap in <details open> so users can collapse individual markets
-  return `
-    <details class="mk-market group border border-slate-200 rounded-lg bg-slate-50/40 open:bg-slate-50/40 [&_summary::-webkit-details-marker]:hidden"${isOpen ? " open" : ""} data-view="both">
-      <summary class="cursor-pointer list-none p-3.5 select-none">
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="text-slate-500 text-[11px] font-mono transition-transform group-open:rotate-90 inline-block w-3">▶</span>
-          <h4 class="font-semibold text-slate-900 text-[15px] tracking-tight">${_esc(mk.market)}</h4>
-          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-100 text-blue-800">${_esc(mk.currency_unit || "—")}</span>
-          <span class="px-1.5 py-0.5 text-[9px] font-mono rounded bg-amber-50 text-amber-700 border border-amber-200 ml-auto inline-flex items-center gap-1"><span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>Indicative</span>
-        </div>
-        <div class="flex items-center gap-1.5 mt-2 flex-wrap text-slate-600 pl-5">${fillChip}${kindChips}${rangeChip}</div>
-      </summary>
-      <div class="px-3 pb-3 pt-1 border-t border-slate-200">
-        ${viewToggle}
-        <div class="mk-filter-status hidden mb-2 px-2 py-1 rounded bg-slate-700 text-white text-[10px] font-mono flex items-center gap-2"></div>
-        <div class="mk-chart-wrap">${chartPanel}</div>
-        <div class="mk-tables-wrap space-y-3">${blocks}</div>
-      </div>
-    </details>`;
-}
-
-function _slug(s) {
-  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
-}
-
-// After render, scan placeholders and instantiate Plotly charts.
-function _renderMarketCharts() {
-  if (typeof Plotly === "undefined") return;
-  document.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
-    if (host.dataset.rendered === "1") return;
-    let mk;
-    try { mk = JSON.parse(host.dataset.market || "{}"); } catch (e) { return; }
-    const cats = mk.categories || [];
-    // Stronger, more accessible palette — bumped one step darker for legibility on white.
-    //   TC = blue-600, SHB = emerald-600, NB = amber-600
-    const kindColor = { TC: "#2563EB", SHB: "#059669", NB: "#D97706" };
-    const traces = [];
-    const xLabels = new Set();
-    cats.forEach(c => {
-      const xs = [], lows = [], highs = [], mids = [], hovers = [];
-      (c.rows || []).forEach(r => {
-        if (r.value_low == null && r.value_high == null) return;
-        const lbl = `${r.size || "—"} · ${r.year_built || "—"}`;
-        xLabels.add(lbl);
-        const lo = r.value_low != null ? Number(r.value_low) : null;
-        const hi = r.value_high != null ? Number(r.value_high) : lo;
-        const mid = (lo != null && hi != null) ? (lo + hi) / 2 : (lo ?? hi);
-        xs.push(lbl);
-        lows.push(lo); highs.push(hi); mids.push(mid);
-        const valTxt = (lo != null && hi != null && lo !== hi)
-          ? `${lo.toLocaleString()} – ${hi.toLocaleString()}`
-          : `${(mid ?? "—").toLocaleString?.() ?? "—"}`;
-        hovers.push(
-          `<b>${_esc(c.kind || c.label)}</b> · ${_esc(c.label || "")}<br>` +
-          `${_esc(lbl)}<br>` +
-          `<b>${valTxt}</b> ${_esc(mk.currency_unit || "")}`
-        );
-      });
-      if (xs.length) {
-        traces.push({
-          x: xs, y: mids,
-          type: "bar",
-          name: c.kind || c.label,
-          marker: {
-            color: kindColor[c.kind] || "#94A3B8",
-            opacity: 0.92,
-            line: { color: "rgba(15,23,42,0.10)", width: 1 },
-          },
-          error_y: {
-            type: "data",
-            symmetric: false,
-            array: highs.map((h, i) => (h != null && mids[i] != null) ? Math.max(0, h - mids[i]) : 0),
-            arrayminus: lows.map((l, i) => (l != null && mids[i] != null) ? Math.max(0, mids[i] - l) : 0),
-            color: "#1e293b", thickness: 1.2, width: 5,
-          },
-          hovertemplate: "%{customdata}<extra></extra>",
-          customdata: hovers,
-        });
-      }
-    });
-    if (!traces.length) { host.style.display = "none"; return; }
-    // Wider chart on narrow viewports so rotated x-labels remain readable.
-    const _w = host.clientWidth || window.innerWidth || 600;
-    const chartHeight = _w < 480 ? 380 : _w < 768 ? 360 : 340;
-    const layout = {
-      font: { family: "Pretendard, system-ui, sans-serif", size: 12, color: "#1e293b" },
-      barmode: "group",
-      bargap: 0.30, bargroupgap: 0.10,
-      margin: { l: 68, r: 24, t: 40, b: 92 },
-      height: chartHeight,
-      xaxis: {
-        tickangle: -32, automargin: true, tickfont: { size: 11, color: "#475569" },
-        showgrid: false, showline: true, linecolor: "#CBD5E1", linewidth: 1, ticklen: 4, tickcolor: "#CBD5E1",
-      },
-      yaxis: {
-        title: { text: mk.currency_unit || "", font: { size: 11, color: "#475569" }, standoff: 10 },
-        tickfont: { size: 11, color: "#475569" },
-        gridcolor: "#E2E8F0", zerolinecolor: "#CBD5E1", zerolinewidth: 1,
-        showline: false,
-      },
-      legend: {
-        orientation: "h", x: 0, y: 1.10, font: { size: 11, color: "#334155" },
-        bgcolor: "rgba(255,255,255,0)", bordercolor: "transparent", borderwidth: 0,
-        itemwidth: 30,
-      },
-      hoverlabel: { bgcolor: "#0F172A", font: { color: "white", size: 12, family: "Pretendard, system-ui, sans-serif" } },
-      paper_bgcolor: "white",
-      plot_bgcolor: "white",
-    };
-    Plotly.newPlot(host, traces, layout, { displayModeBar: false, responsive: true });
-    host.dataset.rendered = "1";
-  });
-  _mkBindDetailsResize();
-}
-
-// Cycle 10: re-size Plotly charts when their <details> wrapper toggles open.
-// Without this, a chart drawn while details was already open will appear stretched
-// or zero-sized if the user collapses and re-opens, especially on viewport changes
-// in between. Idempotent — guarded by data-resize-bound.
-function _mkBindDetailsResize() {
-  if (typeof Plotly === "undefined") return;
-  document.querySelectorAll("details.mk-market").forEach(det => {
-    if (det.dataset.resizeBound === "1") return;
-    det.addEventListener("toggle", () => {
-      if (!det.open) return;
-      det.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
-        if (host.dataset.rendered === "1") {
-          try { Plotly.Plots.resize(host); } catch (_) { /* ignore */ }
-        }
-      });
-    });
-    det.dataset.resizeBound = "1";
-  });
-  // Cycle 22: chart/table view-mode toggle. Buttons live inside the details body
-  // so the click does not bubble to the summary's default-toggle behavior.
-  document.querySelectorAll("button.mk-view-btn").forEach(btn => {
-    if (btn.dataset.viewBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const det = btn.closest("details.mk-market");
-      if (!det) return;
-      const mode = btn.dataset.mkView || "both";
-      det.dataset.view = mode;
-      det.querySelectorAll(".mk-view-btn").forEach(b => {
-        b.setAttribute("aria-pressed", b.dataset.mkView === mode ? "true" : "false");
-      });
-      if ((mode === "chart" || mode === "both") && typeof Plotly !== "undefined") {
-        det.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
-          if (host.dataset.rendered === "1") {
-            try { Plotly.Plots.resize(host); } catch (_) {}
-          }
-        });
-      }
-    });
-    btn.dataset.viewBound = "1";
-  });
-  // Cycle 41: insight card deep-link — expand matching market, scroll to row, highlight 2s
-  document.querySelectorAll("button.mk-insight-card").forEach(btn => {
-    if (btn.dataset.deepBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const market = btn.dataset.deepMarket || "";
-      const size = btn.dataset.deepSize || "";
-      const year = btn.dataset.deepYear || "";
-      if (!market) return;
-      // Find the matching market <details> by looking up its <summary> h4 text
-      let targetDet = null;
-      document.querySelectorAll("details.mk-market").forEach(det => {
-        if (targetDet) return;
-        const h = det.querySelector("summary h4");
-        if (h && h.textContent.trim() === market) targetDet = det;
-      });
-      if (!targetDet) return;
-      targetDet.open = true;
-      // Locate the row matching size + year inside this market
-      let targetRow = null;
-      targetDet.querySelectorAll("tbody tr").forEach(tr => {
-        if (targetRow) return;
-        const cells = tr.querySelectorAll("td");
-        const s = (cells[0]?.textContent || "").trim();
-        const y = (cells[1]?.textContent || "").trim();
-        if (s === size && (!year || y === year)) targetRow = tr;
-      });
-      if (targetRow) {
-        targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
-        targetRow.classList.add("mk-row-highlight");
-        setTimeout(() => targetRow.classList.remove("mk-row-highlight"), 2200);
-      } else {
-        // Fall back: scroll to the market header
-        targetDet.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-    btn.dataset.deepBound = "1";
-  });
-  // Cycle 37 + roadmap iter 12: combined row filter — source tier (tier1/2/3) AND
-  // source origin (web/pdf). A row stays bright only if it matches BOTH active
-  // filters; an empty filter matches everything.
-  const _mkApplyRowFilters = () => {
-    const tier = document.body.dataset.mkTierFilter || "";
-    const origin = document.body.dataset.mkOriginFilter || "";
-    document.querySelectorAll("details.mk-market tbody tr").forEach(tr => {
-      const tierOk = !tier || (tr.dataset.tiers || "").includes(tier);
-      const originOk = !origin || (tr.dataset.origin || "") === origin;
-      tr.style.opacity = (tierOk && originOk) ? "" : "0.35";
-    });
-  };
-  document.querySelectorAll("button.mk-tier-filter").forEach(btn => {
-    if (btn.dataset.tierBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const next = btn.dataset.tierFilter || "";
-      document.body.dataset.mkTierFilter = next;
-      document.querySelectorAll("button.mk-tier-filter").forEach(b => {
-        b.setAttribute("aria-pressed", b.dataset.tierFilter && b.dataset.tierFilter === next ? "true" : "false");
-      });
-      _mkApplyRowFilters();
-    });
-    btn.dataset.tierBound = "1";
-  });
-  // roadmap iter 12: source-origin filter (web·SNS vs PDF-only)
-  document.querySelectorAll("button.mk-origin-filter").forEach(btn => {
-    if (btn.dataset.originBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const cur = document.body.dataset.mkOriginFilter || "";
-      const want = btn.dataset.originFilter || "";
-      const next = cur === want ? "" : want; // click active button again to clear
-      document.body.dataset.mkOriginFilter = next;
-      document.querySelectorAll("button.mk-origin-filter").forEach(b => {
-        b.setAttribute("aria-pressed", b.dataset.originFilter === next && next ? "true" : "false");
-      });
-      _mkApplyRowFilters();
-    });
-    btn.dataset.originBound = "1";
-  });
-  // roadmap iter 12: single reset clears both tier and origin filters
-  document.querySelectorAll("button.mk-filter-reset").forEach(btn => {
-    if (btn.dataset.resetBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      document.body.dataset.mkTierFilter = "";
-      document.body.dataset.mkOriginFilter = "";
-      document.querySelectorAll("button.mk-tier-filter, button.mk-origin-filter").forEach(b => {
-        b.setAttribute("aria-pressed", "false");
-      });
-      _mkApplyRowFilters();
-    });
-    btn.dataset.resetBound = "1";
-  });
-  // Cycle 36: row search — filters every tbody tr in every market by size + year_built text
-  const searchEl = document.getElementById("mk-row-search");
-  const hitsEl = document.getElementById("mk-row-search-hits");
-  if (searchEl && !searchEl.dataset.searchBound) {
-    const applySearch = () => {
-      const q = searchEl.value.trim().toLowerCase();
-      let totalMatches = 0;
-      let totalRows = 0;
-      document.querySelectorAll("details.mk-market").forEach(det => {
-        let marketMatches = 0;
-        det.querySelectorAll(".mk-cat").forEach(cat => {
-          cat.querySelectorAll("tbody tr").forEach(tr => {
-            totalRows++;
-            if (!q) { tr.style.display = ""; marketMatches++; return; }
-            const cells = tr.querySelectorAll("td");
-            const hay = ((cells[0]?.textContent || "") + " " + (cells[1]?.textContent || "")).toLowerCase();
-            const ok = hay.includes(q);
-            tr.style.display = ok ? "" : "none";
-            if (ok) marketMatches++;
-          });
-        });
-        if (q) {
-          if (marketMatches === 0) det.style.opacity = "0.45";
-          else det.style.opacity = "";
-        } else {
-          det.style.opacity = "";
-        }
-        totalMatches += marketMatches;
-      });
-      if (hitsEl) hitsEl.textContent = q ? `${totalMatches}/${totalRows} hits` : "";
-    };
-    searchEl.addEventListener("input", applySearch);
-    searchEl.dataset.searchBound = "1";
-  }
-
-  document.querySelectorAll("button.mk-bulk-btn").forEach(btn => {
-    if (btn.dataset.bulkBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const op = btn.dataset.mkBulk;
-      const markets = document.querySelectorAll("details.mk-market");
-      if (op === "expand") {
-        markets.forEach(d => { d.open = true; });
-        if (typeof Plotly !== "undefined") {
-          markets.forEach(d => d.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
-            if (host.dataset.rendered === "1") { try { Plotly.Plots.resize(host); } catch (_) {} }
-          }));
-        }
-      } else if (op === "collapse") {
-        markets.forEach(d => { d.open = false; });
-      } else if (op && op.startsWith("view-")) {
-        const mode = op.slice(5);
-        markets.forEach(d => {
-          d.dataset.view = mode;
-          d.querySelectorAll(".mk-view-btn").forEach(b => {
-            b.setAttribute("aria-pressed", b.dataset.mkView === mode ? "true" : "false");
-          });
-        });
-        if ((mode === "chart" || mode === "both") && typeof Plotly !== "undefined") {
-          markets.forEach(d => d.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
-            if (host.dataset.rendered === "1") { try { Plotly.Plots.resize(host); } catch (_) {} }
-          }));
-        }
-      }
-    });
-    btn.dataset.bulkBound = "1";
-  });
-  // Cycle 33: kind-filter chips (TC/SHB/NB in market header KPI row)
-  // Cycle 34: also drive the in-body status banner so the active filter is
-  // visible when the user scrolls past the summary.
-  const _applyKindFilter = (det, next) => {
-    det.dataset.kindFilter = next || "";
-    det.querySelectorAll("button.mk-kind-filter").forEach(b => {
-      b.setAttribute("aria-pressed", b.dataset.kindFilter === next && next ? "true" : "false");
-    });
-    det.querySelectorAll(".mk-cat").forEach(c => {
-      const show = !next || c.dataset.kind === next;
-      c.style.display = show ? "" : "none";
-    });
-    // Cycle 35: also dim non-matching Plotly traces
-    if (typeof Plotly !== "undefined") {
-      det.querySelectorAll('[id^="mk-chart-"]').forEach(host => {
-        if (host.dataset.rendered !== "1" || !Array.isArray(host.data)) return;
-        const vis = host.data.map(t => (!next || t.name === next) ? true : "legendonly");
-        try { Plotly.restyle(host, { visible: vis }); } catch (_) {}
-      });
-    }
-    const status = det.querySelector(".mk-filter-status");
-    if (status) {
-      if (next) {
-        status.classList.remove("hidden");
-        status.innerHTML = `<span>🔎 <strong>${next}</strong> 만 표시 중</span>
-          <button type="button" class="mk-filter-clear ml-auto text-white/80 hover:text-white" aria-label="필터 해제">× 해제</button>`;
-      } else {
-        status.classList.add("hidden");
-        status.innerHTML = "";
-      }
-    }
-  };
-  document.querySelectorAll("button.mk-kind-filter").forEach(btn => {
-    if (btn.dataset.kindBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const det = btn.closest("details.mk-market");
-      if (!det) return;
-      const kind = btn.dataset.kindFilter;
-      const current = det.dataset.kindFilter || "";
-      const next = current === kind ? "" : kind;
-      _applyKindFilter(det, next);
-    });
-    btn.dataset.kindBound = "1";
-  });
-  // Delegated handler for the × clear button inside the status banner
-  document.querySelectorAll(".mk-filter-status").forEach(node => {
-    if (node.dataset.clearBound === "1") return;
-    node.addEventListener("click", (ev) => {
-      const t = ev.target.closest(".mk-filter-clear");
-      if (!t) return;
-      ev.preventDefault();
-      const det = t.closest("details.mk-market");
-      if (det) _applyKindFilter(det, "");
-    });
-    node.dataset.clearBound = "1";
-  });
-  // Cycle 26: CSV export per market — reads the market payload from the chart panel
-  document.querySelectorAll("button.mk-export-btn").forEach(btn => {
-    if (btn.dataset.exportBound === "1") return;
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      const det = btn.closest("details.mk-market");
-      if (!det) return;
-      const host = det.querySelector('[id^="mk-chart-"][data-market]');
-      if (!host) return;
-      let mk;
-      try { mk = JSON.parse(host.dataset.market || "{}"); } catch (_) { return; }
-      _mkDownloadCsv(mk);
-    });
-    btn.dataset.exportBound = "1";
-  });
-}
-
-// Cycle 26: build a CSV from a single market and trigger browser download.
-function _mkDownloadCsv(mk) {
-  const cell = (v) => {
-    if (v == null) return "";
-    const s = String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const header = ["market","kind","category_label","size","year_built","value_low","value_high","unit","status","sources"];
-  const lines = [header.join(",")];
-  (mk.categories || []).forEach(c => {
-    (c.rows || []).forEach(r => {
-      const srcs = (r.sources || []).map(s => `${s.name || ""} (${s.tier || ""})`).join("; ");
-      lines.push([
-        mk.market, c.kind, c.label,
-        r.size, r.year_built,
-        r.value_low ?? "", r.value_high ?? "",
-        mk.currency_unit, r.status,
-        srcs,
-      ].map(cell).join(","));
-    });
-  });
-  const csv = "﻿" + lines.join("\n"); // BOM so Excel reads UTF-8 correctly
-  const slug = String(mk.market || "market").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `sbs-w19-${slug}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 500);
-}
-
-function _mkCategoryTable(c, unitDefault) {
-  const rows = c.rows || [];
-  const kindChip = (() => {
-    const k = c.kind || "—";
-    const map = {
-      "TC":  "bg-blue-100 text-blue-800",
-      "SHB": "bg-emerald-100 text-emerald-800",
-      "NB":  "bg-amber-100 text-amber-800",
-    };
-    const cls = map[k] || "bg-slate-100 text-slate-700";
-    return `<span class="px-1 py-0.5 text-[9px] font-mono rounded ${cls}">${_esc(k)}</span>`;
-  })();
-  const valueCell = (low, high) => {
-    if (low == null && high == null) return `<span class="text-slate-300">—</span>`;
-    if (low != null && high != null) {
-      return `<span class="font-semibold text-slate-800">${Number(low).toLocaleString()}</span>
-              <span class="text-slate-400"> – </span>
-              <span class="font-semibold text-slate-800">${Number(high).toLocaleString()}</span>`;
-    }
-    if (low != null) return `<span class="font-semibold text-slate-800">${Number(low).toLocaleString()}</span>`;
-    return `<span class="font-semibold text-slate-800">${Number(high).toLocaleString()}</span>`;
-  };
-  const statusChip = (s) => {
-    if (!s || s === "No data acquired") return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`;
-    if (s === "verified")               return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>`;
-    if (s === "indicative")             return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-orange-100 text-orange-800">indicative</span>`;
-    if (s === "withheld_jump")          return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-rose-100 text-rose-800">withheld</span>`;
-    return `<span class="px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">${_esc(s)}</span>`;
-  };
-  const srcCell = (srcs) => {
-    if (!srcs || !srcs.length) return `<span class="text-slate-300 text-[10px]">—</span>`;
-    return srcs.map(s => {
-      const a = s.url
-        ? `<a href="${_esc(s.url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(s.name)}</a>`
-        : `<span>${_esc(s.name)}</span>`;
-      const tierChip = s.tier ? ` ${_mkTierChip(s.tier)}` : "";
-      return a + tierChip;
-    }).join(" · ");
-  };
-  // Cycle 5: kind-color left stripe + zebra rows + stronger hover
-  const stripeMap = {
-    "TC":  "border-l-blue-500",
-    "SHB": "border-l-emerald-500",
-    "NB":  "border-l-amber-500",
-  };
-  const stripeCls = stripeMap[c.kind] || "border-l-slate-300";
-  const _normTier = (t) => {
-    const s = String(t || "").toLowerCase();
-    if (s === "tier1" || s === "official") return "tier1";
-    if (s === "tier2" || s === "media") return "tier2";
-    if (s === "tier3" || s === "broker" || s === "sns") return "tier3";
-    return "";
-  };
-  // Cycle 42: collapse uniform Sources/Status. Almost every category repeats the
-  // exact same single source + status on every row ("SBS Weekly W19 p.1 · tier3 ·
-  // indicative" × 30 rows). When uniform, lift them into a single header line and
-  // drop the two columns so the table is just numbers — the main de-clutter win.
-  const _srcSig = (srcs) => (srcs || []).map(s => `${s.name || ""}|${s.tier || ""}|${s.url || ""}`).join("∥");
-  const srcSigs = new Set(rows.map(r => _srcSig(r.sources)));
-  const statusSigs = new Set(rows.map(r => r.status || ""));
-  const uniform = rows.length > 1 && srcSigs.size === 1 && statusSigs.size === 1
-                  && (rows[0].sources || []).length > 0;
-  // roadmap iter 12: classify each row's source origin — "web" if it carries any
-  // non-PDF source, else "pdf" (SBS Weekly PDF-only). Drives the origin filter.
-  const _isPdfSrc = (n) => /PDF|SBS Weekly/i.test(String(n || ""));
-  const trs = rows.map((r, i) => {
-    const isNoData = (r.value_low == null && r.value_high == null);
-    const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50/60";
-    const dim = isNoData ? "opacity-60" : "";
-    const tierList = Array.from(new Set((r.sources || []).map(s => _normTier(s.tier)).filter(Boolean))).join(",");
-    const origin = (r.sources || []).some(s => !_isPdfSrc(s.name)) ? "web" : "pdf";
-    const tail = uniform ? "" : `
-      <td class="px-2 py-1.5 text-[10px] text-slate-600">${srcCell(r.sources)}</td>
-      <td class="px-2 py-1.5 text-[10px]">${statusChip(r.status)}</td>`;
-    return `
-    <tr class="border-b border-slate-100 hover:bg-blue-50/60 transition-colors ${zebra} ${dim}" data-tiers="${tierList}" data-origin="${origin}">
-      <td class="px-2 py-1.5 text-[11px] font-mono text-slate-800 border-l-4 ${stripeCls}">${_esc(r.size || "—")}</td>
-      <td class="px-2 py-1.5 text-[11px] font-mono text-slate-500">${_esc(r.year_built || "—")}</td>
-      <td class="px-2 py-1.5 text-[11px] text-right tabular-nums">${valueCell(r.value_low, r.value_high)}</td>
-      ${tail}
-    </tr>`;
-  }).join("");
-  const headTail = uniform ? "" : `
-              <th class="px-2 py-1 font-semibold">Sources</th>
-              <th class="px-2 py-1 font-semibold">Status</th>`;
-  // Shared source/status meta line — only rendered in uniform mode
-  const metaLine = uniform ? `
-      <div class="text-[10px] text-slate-400 mb-1.5 pl-0.5 flex items-center gap-1.5 flex-wrap">
-        <span class="uppercase tracking-wider">출처</span>
-        <span class="text-slate-500">${srcCell(rows[0].sources)}</span>
-        <span class="text-slate-300">·</span>
-        ${statusChip(rows[0].status)}
-      </div>` : "";
-  return `
-    <div class="mk-cat" data-kind="${_esc(c.kind || "")}">
-      <div class="text-[11px] mb-1 flex items-center gap-1">
-        ${kindChip}
-        <span class="font-mono text-slate-700">${_esc(c.label || "—")}</span>
-        <span class="text-[10px] text-slate-400 ml-1">${_esc(unitDefault || "")}</span>
-        <span class="text-[10px] text-slate-400 ml-auto font-mono">${rows.length} rows</span>
-      </div>
-      ${metaLine}
-      <div class="overflow-x-auto rounded border border-slate-200">
-        <table class="min-w-full text-[11px] bg-white">
-          <thead class="bg-slate-100 sticky top-0">
-            <tr class="text-left text-slate-600">
-              <th class="px-2 py-1 font-semibold">Size</th>
-              <th class="px-2 py-1 font-semibold">Year built</th>
-              <th class="px-2 py-1 font-semibold text-right">Range</th>${headTail}
-            </tr>
-          </thead>
-          <tbody>${trs}</tbody>
-        </table>
-      </div>
-    </div>`;
-}
-
-function _mkFuelCard(label, o) {
-  // Cycle 12: category-driven icon + colored stripe; split unit "IDR/liter (Kelas A)" into unit + chip
-  const lLower = String(label || "").toLowerCase();
-  const meta = lLower.includes("cpo")    ? { icon: "🌴", stripe: "border-l-amber-500",   chipCls: "bg-amber-50 text-amber-700 border-amber-200" }
-            :  lLower.includes("solar")  ? { icon: "⛽", stripe: "border-l-orange-500",  chipCls: "bg-orange-50 text-orange-700 border-orange-200" }
-            :  lLower.includes("hfo")    ? { icon: "🛢", stripe: "border-l-violet-500",  chipCls: "bg-violet-50 text-violet-700 border-violet-200" }
-            :  lLower.includes("scrap")  ? { icon: "♻", stripe: "border-l-slate-500",   chipCls: "bg-slate-100 text-slate-700 border-slate-300" }
-            :                              { icon: "•", stripe: "border-l-slate-300",   chipCls: "bg-slate-50 text-slate-700 border-slate-200" };
-  // Parse trailing parenthetical from the unit string into its own qualifier chip
-  let unitMain = String(o.unit || "");
-  let qualifier = "";
-  const m = unitMain.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
-  if (m) { unitMain = m[1].trim(); qualifier = m[2].trim(); }
-  const qualifierChip = qualifier
-    ? `<span class="px-1.5 py-0.5 text-[9px] font-mono rounded border ${meta.chipCls}">${_esc(qualifier)}</span>`
-    : "";
-  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
-  const statusBadge = (o.status && o.status !== "verified")
-    ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded ${o.status === "No data acquired" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-800"}">${o.status === "No data acquired" ? "no data" : _esc(o.status)}</span>`
-    : (o.status === "verified" ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>` : "");
-  return `
-    <div class="bg-white rounded-lg p-3 border border-slate-200 border-l-4 ${meta.stripe} hover:shadow-sm transition-shadow">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
-        <span class="text-[13px] leading-none">${meta.icon}</span>
-        <span class="truncate">${_esc(label)}</span>
-        <span class="ml-auto">${statusBadge}</span>
-      </div>
-      <div class="text-lg font-light text-slate-800 mt-1 tabular-nums">
-        ${o.value != null ? Number(o.value).toLocaleString() : "<span class='text-slate-300'>—</span>"}
-        <span class="text-[11px] text-slate-500 ml-1 font-normal">${_esc(unitMain)}</span>
-      </div>
-      ${qualifierChip ? `<div class="mt-1">${qualifierChip}</div>` : ""}
-      ${o.note ? `<div class="text-[10px] text-slate-500 mt-1 leading-snug">${_esc(o.note)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
-        ${o.as_of ? "as of " + _esc(o.as_of) : "as of —"}
-        ${o.source_url ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? " · " + _esc(o.source_name) : "")}${tier}
-      </div>
-    </div>`;
-}
-
-// Cycle 30: removed legacy _mkAssetMatrix (v1 asset_classes shape, no longer called).
-
-function _mkIndexCardV2(o) {
-  // Cycle 16: shell upgrade — white bg, 4-px blue stripe, hover lift, hairline source divider
-  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
-  const wow = (o.wow_pct != null) ? `<span class="ml-2 text-[10px] font-mono ${o.wow_pct > 0 ? 'text-rose-600' : o.wow_pct < 0 ? 'text-emerald-700' : 'text-slate-500'}">${o.wow_pct > 0 ? '+' : ''}${Number(o.wow_pct).toFixed(1)}% WoW</span>` : "";
-  const noData = (o.status === "No data acquired") || (o.value == null);
-  const statusBadge = noData
-    ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-500">no data</span>`
-    : (o.status === "verified" ? `<span class="ml-1 px-1 py-0.5 text-[9px] font-mono rounded bg-emerald-100 text-emerald-800">verified</span>` : "");
-  const stripeCls = noData ? "border-l-slate-300" : "border-l-blue-500";
-  const valueHtml = (o.value != null)
-    ? `${Number(o.value).toLocaleString()}<span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>${wow}`
-    : `<span class="text-slate-300">—</span><span class="text-[11px] text-slate-500 ml-1">${_esc(o.unit || "")}</span>`;
-  const srcHtml = o.source_url
-    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name || "—")}</a>`
-    : `<span>${_esc(o.source_name || "—")}</span>`;
-  // Trend chip strip (1m / 3m / 6m / 1y / 5y) — neutral grey when null, color when present
-  const _trend = (label, v) => {
-    if (v == null) return "";
-    const n = Number(v);
-    const cls = n > 0 ? "bg-rose-50 text-rose-700 border-rose-200"
-              : n < 0 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-slate-50 text-slate-600 border-slate-200";
-    const arrow = n > 0 ? "▲" : n < 0 ? "▼" : "▬";
-    const sign = n > 0 ? "+" : "";
-    return `<span class="inline-flex items-center gap-0.5 px-1 py-0.5 text-[9px] font-mono rounded border ${cls}" title="${label}: ${sign}${n.toFixed(2)}%">
-              <span class="text-slate-400">${label}</span>
-              <span>${arrow}</span>
-              <span class="font-semibold">${sign}${n.toFixed(1)}%</span>
-            </span>`;
-  };
-  const trendStrip = [
-    _trend("1M", o.m1_pct),
-    _trend("3M", o.m3_pct),
-    _trend("6M", o.m6_pct),
-    _trend("1Y", o.y1_pct),
-    _trend("5Y", o.y5_pct),
-  ].filter(Boolean).join("");
-  return `
-    <div class="bg-white rounded-lg p-3 border border-slate-200 border-l-4 ${stripeCls} hover:shadow-sm transition-shadow">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center justify-between gap-1">
-        <span class="truncate">${_esc(o.name)}</span>${statusBadge}
-      </div>
-      <div class="text-xl font-light text-slate-800 mt-0.5 tabular-nums">${valueHtml}</div>
-      ${trendStrip ? `<div class="flex flex-wrap gap-1 mt-1.5">${trendStrip}</div>` : ""}
-      ${o.note ? `<div class="text-[10px] text-slate-500 mt-1">${_esc(o.note)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
-        as of ${_esc(o.as_of || "—")} · ${srcHtml}${tier}
-      </div>
-    </div>`;
-}
-
-// Cycle 16: scrap card matches the new shell with region-based stripe color
-function _mkScrapCard(o) {
-  const label = o._label || o.region || o.size || "—";
-  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
-  const regionMeta = ({
-    "Bangladesh": { flag: "🇧🇩", stripe: "border-l-emerald-500" },
-    "India":      { flag: "🇮🇳", stripe: "border-l-orange-500" },
-    "Pakistan":   { flag: "🇵🇰", stripe: "border-l-green-700" },
-  })[o.region] || { flag: "♻", stripe: "border-l-slate-400" };
-  const noData = (o.ldt_usd == null);
-  const stripeCls = noData ? "border-l-slate-300" : regionMeta.stripe;
-  return `
-    <div class="bg-white rounded-lg p-3 border border-slate-200 border-l-4 ${stripeCls} hover:shadow-sm transition-shadow">
-      <div class="text-[10px] uppercase tracking-wider text-slate-500 font-mono flex items-center gap-1">
-        <span class="text-[13px] leading-none">${regionMeta.flag}</span>
-        <span>${_esc(label)}</span>
-      </div>
-      <div class="text-lg font-light text-slate-800 mt-0.5 tabular-nums">
-        ${o.ldt_usd != null ? Number(o.ldt_usd).toLocaleString() : "<span class='text-slate-300'>—</span>"}
-        <span class="text-[11px] text-slate-500 ml-1 font-normal">USD/LDT</span>
-      </div>
-      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
-        as of ${_esc(o.as_of || "—")}
-        ${o.source_url
-          ? ` · <a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>`
-          : (o.source_name ? ` · ${_esc(o.source_name)}` : "")}${tier}
-      </div>
-    </div>`;
-}
-
-// Cycle 16: S&P card with full card frame + emerald stripe + price emphasis
-function _mkSpCard(o) {
-  const tier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
-  const priceHtml = o.price_musd != null
-    ? `<span class="text-lg font-semibold text-emerald-700 tabular-nums">$${Number(o.price_musd).toFixed(1)}M</span>`
-    : `<span class="text-slate-300 text-lg">—</span>`;
-  return `
-    <div class="text-[12px] bg-white border border-slate-200 border-l-4 border-l-emerald-500 rounded-md p-3 hover:shadow-sm transition-shadow">
-      <div class="flex items-baseline justify-between gap-2 flex-wrap">
-        <div class="font-semibold text-slate-800">
-          ${_esc(o.vessel_name || "—")}
-          <span class="text-slate-500 font-mono text-[10px] ml-1">${_esc(o.type || "—")} · ${o.dwt ? Number(o.dwt).toLocaleString() + " DWT" : "—"} · built ${o.year || "—"}</span>
-        </div>
-        ${priceHtml}
-      </div>
-      <div class="text-slate-700 text-[11px] mt-1">buyer <strong>${_esc(o.buyer || "—")}</strong> · seller <strong>${_esc(o.seller || "—")}</strong></div>
-      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100 leading-snug">
-        ${_esc(o.as_of || "—")}
-        · ${o.source_url ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(o.source_name)}</a>` : (o.source_name ? _esc(o.source_name) : "(source pending)")}
-        ${tier}
-      </div>
-    </div>`;
-}
-
-function _mkNewsCard(o, opts = {}) {
-  const tagChip = (opts.showTag && o[opts.showTag]) ?
-    `<span class="inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 mr-1">${_esc(o[opts.showTag])}</span>` : "";
-  const tagsHtml = (o.tags && o.tags.length) ?
-    o.tags.map(t => `<span class="inline-block px-1.5 py-0.5 text-[9px] font-mono rounded bg-blue-50 text-blue-700 mr-1">${_esc(t)}</span>`).join("") : "";
-  // v2 schema는 summary_ko + source_name. v1는 summary + source. 둘 다 지원.
-  const summary = o.summary_ko || o.summary || "";
-  const srcName = o.source_name || o.source || "";
-  const srcTier = o.source_tier ? ` ${_mkTierChip(o.source_tier)}` : "";
-  const srcLink = o.source_url
-    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">${_esc(srcName)}</a>`
-    : `<span class="text-slate-700">${_esc(srcName)}</span>`;
-  // Cycle 7: topic-color stripe + bg-tinted hover via opts.stripe / opts.hover
-  const stripe = opts.stripe || "border-l-slate-300";
-  const hover = opts.hover || "hover:bg-slate-50";
-  return `
-    <div class="text-[12px] border border-slate-200 border-l-4 ${stripe} rounded-md pl-3 pr-3 py-2 bg-white ${hover} transition-colors">
-      <div class="font-semibold text-slate-800 leading-snug">${tagChip}${tagsHtml}${_esc(o.title)}</div>
-      ${summary ? `<div class="text-slate-700 mt-1 leading-relaxed">${_esc(summary)}</div>` : ""}
-      <div class="text-[10px] text-slate-500 mt-1.5 pt-1 border-t border-slate-100">
-        ${o.published_date ? `<span class="font-mono">${_esc(o.published_date)}</span> · ` : ""}
-        출처: ${srcLink}${srcTier}
-      </div>
-    </div>`;
-}
-
-// Cycle 30: removed legacy _mkIndexCard / _mkPriceCard (v1 schema, superseded by _mkIndexCardV2).
-
-function _mkEventCard(o) {
-  // Cycle 8: parse date range and compute state (LIVE / upcoming / ended) + D-day
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const ds = String(o.date || "");
-  let start = null, end = null;
-  const isoMatch = ds.match(/(\d{4})-(\d{2})-(\d{2})/g);
-  if (isoMatch && isoMatch.length >= 1) {
-    start = new Date(isoMatch[0]);
-    end = isoMatch.length >= 2 ? new Date(isoMatch[1]) : new Date(isoMatch[0]);
-  }
-  const days = (d) => Math.round((d - today) / (1000 * 60 * 60 * 24));
-  let state = "—", stripe = "border-l-slate-300", chipCls = "bg-slate-100 text-slate-600 border-slate-200", chipText = "";
-  if (start && end) {
-    const dStart = days(start), dEnd = days(end);
-    const span = dEnd - dStart + 1;
-    if (dStart <= 0 && dEnd >= 0) {
-      state = "LIVE"; stripe = "border-l-emerald-500";
-      chipCls = "bg-emerald-50 text-emerald-700 border-emerald-300";
-      chipText = dEnd === 0 ? "LIVE · 오늘 종료" : `LIVE · day ${Math.abs(dStart) + 1}/${span}`;
-    } else if (dStart > 0) {
-      state = "upcoming"; stripe = "border-l-blue-500";
-      chipCls = "bg-blue-50 text-blue-700 border-blue-300";
-      chipText = `D-${dStart}`;
-    } else {
-      state = "ended"; stripe = "border-l-slate-400";
-      chipCls = "bg-slate-100 text-slate-500 border-slate-300";
-      chipText = `종료 · ${Math.abs(dEnd)}d 전`;
-    }
-  }
-  const dayChip = chipText
-    ? `<span class="inline-flex px-1.5 py-0.5 text-[9px] font-mono font-semibold rounded border ${chipCls}">${chipText}</span>`
-    : "";
-  const dimCls = state === "ended" ? "opacity-70" : "";
-  const srcLink = o.source_url
-    ? `<a href="${_esc(o.source_url)}" target="_blank" rel="noopener" class="text-blue-700 hover:underline">공식 ↗</a>`
-    : `<span class="text-slate-400">source —</span>`;
-  return `
-    <div class="text-[12px] grid grid-cols-1 md:grid-cols-12 gap-2 items-start border border-slate-200 border-l-4 ${stripe} rounded-md p-2 pl-3 bg-white ${dimCls} hover:bg-slate-50 transition-colors">
-      <div class="md:col-span-3">
-        <div class="font-mono text-slate-700 text-[11px]">${_esc(o.date)}</div>
-        ${dayChip ? `<div class="mt-1">${dayChip}</div>` : ""}
-      </div>
-      <div class="md:col-span-7">
-        <div class="font-semibold text-slate-800">${_esc(o.name)}
-          ${o.category ? `<span class="inline-block ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-rose-50 text-rose-700">${_esc(o.category)}</span>` : ""}
-        </div>
-        <div class="text-slate-600 text-[11px]">${_esc(o.location)}</div>
-        ${o.note ? `<div class="text-[10px] text-slate-500 mt-0.5">${_esc(o.note)}</div>` : ""}
-      </div>
-      <div class="md:col-span-2 text-[10px] text-slate-500 md:text-right">
-        ${srcLink}
-        ${o.checked_date ? `<div class="text-slate-400">checked ${_esc(o.checked_date)}</div>` : ""}
-      </div>
-    </div>`;
-}
 
 boot().catch(e => {
   console.error(e);
