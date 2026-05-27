@@ -268,7 +268,6 @@ const tsState = {
 
 async function renderTankerSector() {
   const cardHost = document.getElementById("ts-cards");
-  const regHost = document.getElementById("ts-regulatory");
   if (!cardHost) return;
 
   try {
@@ -282,18 +281,6 @@ async function renderTankerSector() {
       `Tanker Sector derived JSON 로드 실패: ${e.message}. <code>python scripts/build_derived.py</code>를 실행하세요.`
     )}</div>`;
     return;
-  }
-
-  // Regulatory notes (one-time fetch + inject)
-  if (regHost) {
-    try {
-      const r = await fetch("./derived/regulatory_notes.html");
-      regHost.innerHTML = r.ok
-        ? await r.text()
-        : `<p class="text-xs text-slate-500">regulatory_notes.html 로드 실패 (${r.status}).</p>`;
-    } catch (e) {
-      regHost.innerHTML = `<p class="text-xs text-slate-500">regulatory_notes 로드 오류: ${e.message}</p>`;
-    }
   }
 
   // Monthly toggle wiring (one-time)
@@ -317,22 +304,16 @@ async function renderTankerSector() {
     });
   }
 
-  // PR-33: default Tanker Sector to the most-recent FULL year so cards
-  // align with the Cargo + Home year selectors.
   if (!tsState.activeYear) tsState.activeYear = _pickTankerSectorYear(tsState.tankerSubclass);
   buildTankerYearPills(tsState.tankerSubclass);
+  buildTankerCargoPills(tsState.tankerSubclass);
 
-  // PR-34: surface honest period ranges on the chart headers so users see
-  // exactly which months/years a 12M or 24M window covers.
   const periods = tsState.tankerSubclass?.monthly?.periods || [];
   const periodRange = periods.length
     ? `(${periods[0]} ~ ${periods[periods.length - 1]}, ${periods.length}개월)`
     : "";
-  const scatterPeriodEl = document.getElementById("ts-scatter-period");
-  if (scatterPeriodEl) scatterPeriodEl.textContent = periodRange;
   const monthlyPeriodEl = document.getElementById("ts-monthly-period");
   if (monthlyPeriodEl) monthlyPeriodEl.textContent = periodRange;
-  // Commodity bar is the trailing 12 months
   const last12 = periods.slice(-12);
   const commodityPeriodEl = document.getElementById("ts-commodity-period");
   if (commodityPeriodEl && last12.length) {
@@ -341,11 +322,41 @@ async function renderTankerSector() {
   }
 
   drawTankerCards();
-  drawTankerScatter();
   drawTankerMonthly();
   drawTankerCommodityBars();
   drawTankerOperatorBars();
   drawTankerOperatorDonut();
+}
+
+function buildTankerCargoPills(payload) {
+  const host = document.getElementById("ts-cargo-pills");
+  if (!host) return;
+  const cards = payload?.cards || [];
+  const cargos = cards.map(c => c.subclass);
+  if (!cargos.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
+    return;
+  }
+  const active = tsState.filter || "ALL";
+  const items = [{ key: "ALL", label: "전체" }, ...cargos.map(c => ({ key: c, label: c }))];
+  host.innerHTML = items.map(it => {
+    const isActive = it.key === active;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white text-xs"
+      : "px-2 py-1 bg-white hover:bg-slate-100 text-xs";
+    return `<button data-cargo="${it.key}" class="${cls}" role="tab" aria-selected="${isActive}">${it.label}</button>`;
+  }).join("");
+  host.querySelectorAll("button[data-cargo]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tsState.filter = btn.dataset.cargo;
+      buildTankerCargoPills(payload);
+      drawTankerCards();
+      drawTankerMonthly();
+      drawTankerCommodityBars();
+      drawTankerOperatorBars();
+      drawTankerOperatorDonut();
+    });
+  });
 }
 
 function _pickTankerSectorYear(payload) {
@@ -471,13 +482,15 @@ function drawTankerCards() {
     </div>`;
   }).join("");
 
-  // Click / Enter / Space → toggle filter
+  // Click / Enter / Space → toggle filter (synced with cargo pills)
   const applyFilter = (s) => {
     tsState.filter = (tsState.filter === s) ? "ALL" : s;
+    buildTankerCargoPills(tsState.tankerSubclass);
     drawTankerCards();
-    drawTankerScatter();
     drawTankerMonthly();
     drawTankerCommodityBars();
+    drawTankerOperatorBars();
+    drawTankerOperatorDonut();
   };
   host.querySelectorAll("[data-subclass]").forEach(el => {
     el.addEventListener("click", () => applyFilter(el.dataset.subclass));
@@ -503,57 +516,17 @@ function drawTankerCards() {
   }
 }
 
-function drawTankerScatter() {
-  const subs = (tsState.subclassFacts?.subclasses || []).filter(r => r.subclass !== "UNKNOWN");
-  if (!subs.length) return;
-  const sizeMax = Math.max(...subs.map(r => r.ton_last_12m || 0), 1);
-  const filter = tsState.filter;
-  const opacities = subs.map(r => (filter === "ALL" || filter === r.subclass) ? 0.85 : 0.2);
-  const trace = {
-    x: subs.map(r => r.cagr_24m_pct ?? 0),
-    y: subs.map(r => r.avg_age_gt_weighted ?? 0),
-    text: subs.map(r => r.subclass),
-    mode: "markers+text",
-    type: "scatter",
-    textposition: "top center",
-    textfont: { size: 11 },
-    marker: {
-      size: subs.map(r => Math.max(14, 80 * (r.ton_last_12m || 0) / sizeMax)),
-      color: subs.map(r => SUBCLASS_PALETTE[r.subclass] || "#64748b"),
-      line: { color: "#1e293b", width: 1 },
-      opacity: opacities,
-    },
-    hovertemplate:
-      "<b>%{text}</b><br>" +
-      "CAGR (24M): %{x:.2f}%<br>" +
-      "Avg age: %{y:.1f} yr<br>" +
-      "12M ton: %{customdata:,.0f}<extra></extra>",
-    customdata: subs.map(r => r.ton_last_12m),
-  };
-  const cagrAvail = subs.some(r => r.cagr_24m_pct != null);
-  Plotly.newPlot("ts-scatter", [trace], {
-    margin: { t: 10, l: 50, r: 20, b: 50 },
-    xaxis: {
-      title: cagrAvail ? "24M CAGR (%)" : "24M CAGR (insufficient data — needs 2 full years)",
-      zeroline: true,
-      zerolinecolor: "#cbd5e1",
-    },
-    yaxis: { title: "GT 가중 평균 선령 (years)" },
-    showlegend: false,
-  }, { displayModeBar: false, responsive: true });
-}
-
 function drawTankerMonthly() {
   const data = tsState.tankerSubclass?.monthly;
   if (!data) return;
   const periods = data.periods || [];
   const filter = tsState.filter;
-  const traces = (data.series || []).map(s => {
+  const series = (data.series || []).filter(s => filter === "ALL" || filter === s.subclass);
+  const traces = series.map(s => {
     let y = s.ton_by_period.slice();
     if (tsState.monthlyMode === "yoy") {
       y = y.map((v, i) => (i < 12 || !y[i - 12]) ? null : ((v - y[i - 12]) / y[i - 12]) * 100);
     }
-    const dim = (filter !== "ALL" && filter !== s.subclass);
     return {
       x: periods,
       y,
@@ -563,7 +536,6 @@ function drawTankerMonthly() {
       stackgroup: tsState.monthlyMode === "abs" ? "one" : null,
       line: { color: SUBCLASS_PALETTE[s.subclass] || "#64748b", width: tsState.monthlyMode === "abs" ? 0.5 : 2 },
       fillcolor: SUBCLASS_PALETTE[s.subclass] || "#64748b",
-      opacity: dim ? 0.25 : 1,
       hovertemplate: tsState.monthlyMode === "abs"
         ? `<b>%{x}</b><br>${s.subclass}: %{y:,.0f} tons<extra></extra>`
         : `<b>%{x}</b><br>${s.subclass}: %{y:.1f}%<extra></extra>`,
@@ -616,11 +588,17 @@ function drawTankerMonthly() {
 }
 
 function drawTankerCommodityBars() {
-  const list = (tsState.tankerTop?.top_commodities || []).slice();
-  if (!list.length) return;
+  const filter = tsState.filter;
+  const all = (tsState.tankerTop?.top_commodities || []);
+  const list = (filter === "ALL" ? all : all.filter(c => c.subclass === filter)).slice();
+  if (!list.length) {
+    Plotly.purge("ts-commodity-bars");
+    document.getElementById("ts-commodity-bars").innerHTML =
+      `<div class="text-xs text-slate-400 p-4">선택한 화물(${filter})에 해당하는 코모디티 데이터 없음.</div>`;
+    return;
+  }
   // Reverse so largest sits at top in horizontal bar
   list.reverse();
-  const filter = tsState.filter;
   const trace = {
     x: list.map(c => c.ton_total),
     y: list.map(c => c.name),
@@ -628,7 +606,6 @@ function drawTankerCommodityBars() {
     orientation: "h",
     marker: {
       color: list.map(c => SUBCLASS_PALETTE[c.subclass] || "#64748b"),
-      opacity: list.map(c => (filter === "ALL" || filter === c.subclass) ? 0.9 : 0.25),
     },
     hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
     text: list.map(c => fmtTon(c.ton_total)),
@@ -642,21 +619,48 @@ function drawTankerCommodityBars() {
 }
 
 function drawTankerOperatorBars() {
-  const list = (tsState.tankerTop?.top_operators || []).slice();
-  if (!list.length) return;
+  const filter = tsState.filter;
+  const all = (tsState.tankerTop?.top_operators || []);
+  // When filtered, keep only operators with vessels in that subclass and
+  // re-sort by count_in_subclass (sum_gt isn't broken out per subclass in the data).
+  let list;
+  if (filter === "ALL") {
+    list = all.slice();
+  } else {
+    list = all
+      .filter(o => ((o.subclass_mix || {})[filter] || 0) > 0)
+      .sort((a, b) => ((b.subclass_mix || {})[filter] || 0) - ((a.subclass_mix || {})[filter] || 0))
+      .slice(0, 15);
+  }
+  if (!list.length) {
+    Plotly.purge("ts-operator-bars");
+    document.getElementById("ts-operator-bars").innerHTML =
+      `<div class="text-xs text-slate-400 p-4">선택한 화물(${filter})에 해당하는 운영사 데이터 없음.</div>`;
+    return;
+  }
   list.reverse();   // bar chart paints bottom-up
+  const useSubclassCount = filter !== "ALL";
+  const xVals = useSubclassCount
+    ? list.map(o => (o.subclass_mix || {})[filter] || 0)
+    : list.map(o => o.sum_gt);
+  const xTitle = useSubclassCount ? `${filter} 선박 수` : "Sum GT";
   const trace = {
-    x: list.map(o => o.sum_gt),
+    x: xVals,
     y: list.map(o => o.owner.length > 28 ? o.owner.slice(0, 26) + "…" : o.owner),
     type: "bar",
     orientation: "h",
     marker: { color: list.map(o => o.ticker ? "#1A3A6B" : "#94a3b8") },
-    customdata: list.map(o => [o.tankers, o.ticker || "private", JSON.stringify(o.subclass_mix || {})]),
-    hovertemplate:
-      "<b>%{y}</b><br>" +
-      "Sum GT: %{x:,.0f}<br>" +
-      "Tankers: %{customdata[0]}<br>" +
-      "Listed: %{customdata[1]}<extra></extra>",
+    customdata: list.map(o => [o.tankers, o.ticker || "private", JSON.stringify(o.subclass_mix || {}), o.sum_gt]),
+    hovertemplate: useSubclassCount
+      ? "<b>%{y}</b><br>" +
+        `${filter} 선박: %{x}척<br>` +
+        "총 선박: %{customdata[0]}척<br>" +
+        "Sum GT (전체): %{customdata[3]:,.0f}<br>" +
+        "Listed: %{customdata[1]}<extra></extra>"
+      : "<b>%{y}</b><br>" +
+        "Sum GT: %{x:,.0f}<br>" +
+        "Tankers: %{customdata[0]}<br>" +
+        "Listed: %{customdata[1]}<extra></extra>",
     text: list.map(o => o.ticker ? o.ticker : ""),
     textposition: "outside",
     textfont: { size: 10, color: "#1A3A6B" },
@@ -664,7 +668,7 @@ function drawTankerOperatorBars() {
   };
   Plotly.newPlot("ts-operator-bars", [trace], {
     margin: { t: 10, l: 220, r: 60, b: 40 },
-    xaxis: { title: "Sum GT" },
+    xaxis: { title: xTitle },
   }, { displayModeBar: false, responsive: true });
 
   // PR-12: click on a listed-operator bar opens the IDX search page
@@ -690,23 +694,39 @@ function drawTankerOperatorBars() {
 }
 
 function drawTankerOperatorDonut() {
-  const top5gt = tsState.tankerTop?.operator_top5_gt || 0;
-  const totalGt = tsState.tankerTop?.operator_total_gt || 0;
-  const otherGt = Math.max(0, totalGt - top5gt);
+  const filter = tsState.filter;
+  let top5, total, unit, totalLabel;
+  if (filter === "ALL") {
+    top5 = tsState.tankerTop?.operator_top5_gt || 0;
+    total = tsState.tankerTop?.operator_total_gt || 0;
+    unit = "GT";
+    totalLabel = `${fmtTon(total)} GT`;
+  } else {
+    const ops = (tsState.tankerTop?.top_operators || [])
+      .map(o => (o.subclass_mix || {})[filter] || 0)
+      .filter(v => v > 0)
+      .sort((a, b) => b - a);
+    top5 = ops.slice(0, 5).reduce((a, b) => a + b, 0);
+    const card = (tsState.tankerSubclass?.cards || []).find(c => c.subclass === filter);
+    total = card?.vessel_count || ops.reduce((a, b) => a + b, 0);
+    unit = "척";
+    totalLabel = `${total.toLocaleString()}척`;
+  }
+  const other = Math.max(0, total - top5);
   const trace = {
-    values: [top5gt, otherGt],
+    values: [top5, other],
     labels: ["Top 5", "그 외"],
     type: "pie",
     hole: 0.55,
     marker: { colors: ["#1A3A6B", "#cbd5e1"] },
     textinfo: "label+percent",
-    hovertemplate: "<b>%{label}</b><br>%{value:,.0f} GT (%{percent})<extra></extra>",
+    hovertemplate: `<b>%{label}</b><br>%{value:,.0f} ${unit} (%{percent})<extra></extra>`,
   };
   Plotly.newPlot("ts-operator-donut", [trace], {
     margin: { t: 10, l: 10, r: 10, b: 30 },
     showlegend: false,
     annotations: [{
-      text: `Total<br>${fmtTon(totalGt)} GT`,
+      text: `Total<br>${totalLabel}`,
       x: 0.5, y: 0.5, showarrow: false, font: { size: 12, color: "#475569" },
     }],
   }, { displayModeBar: false, responsive: true });
