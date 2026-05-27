@@ -5,6 +5,7 @@
     {
       "category": "Other Cargo",
       "is_tanker_subclass": false,
+      "is_tanker_aggregate": false,
       "color": "#94a3b8",
       "ton_last_12m": 1177547407.6,
       "yoy_pct": 4.6,
@@ -33,6 +34,7 @@
     {
       "category": "Bulk Carrier",
       "is_tanker_subclass": false,
+      "is_tanker_aggregate": false,
       "color": "#52525b",
       "ton_last_12m": 936540020.6,
       "yoy_pct": -10.9,
@@ -59,8 +61,38 @@
       "top_route": null
     },
     {
+      "category": "Tanker",
+      "is_tanker_subclass": false,
+      "is_tanker_aggregate": true,
+      "color": "#0369a1",
+      "ton_last_12m": 371342244.0,
+      "yoy_pct": -7.6,
+      "ton_by_year": {
+        "2024": 241895548.2,
+        "2025": 395517639.9,
+        "2026": 135995043.7
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 63.5,
+        "2026": -65.6
+      },
+      "avg_age_gt_weighted": 21.08,
+      "operator_count": 8,
+      "vessel_count": 2415,
+      "sum_gt": 8202568.6,
+      "hhi": 3248.0,
+      "top_operator": {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "count_in_category": 57,
+        "sum_gt": 981071.0
+      },
+      "top_route": null
+    },
+    {
       "category": "Product",
       "is_tanker_subclass": true,
+      "is_tanker_aggregate": false,
       "color": "#0284c7",
       "ton_last_12m": 261712163.0,
       "yoy_pct": -9.4,
@@ -89,6 +121,7 @@
     {
       "category": "Container",
       "is_tanker_subclass": false,
+      "is_tanker_aggregate": false,
       "color": "#9333ea",
       "ton_last_12m": 231564168.0,
       "yoy_pct": -10.8,
@@ -117,6 +150,7 @@
     {
       "category": "General Cargo",
       "is_tanker_subclass": false,
+      "is_tanker_aggregate": false,
       "color": "#f97316",
       "ton_last_12m": 146961386.0,
       "yoy_pct": 4.0,
@@ -145,6 +179,7 @@
     {
       "category": "Chemical",
       "is_tanker_subclass": true,
+      "is_tanker_aggregate": false,
       "color": "#059669",
       "ton_last_12m": 58691964.6,
       "yoy_pct": -1.0,
@@ -173,6 +208,7 @@
     {
       "category": "LPG",
       "is_tanker_subclass": true,
+      "is_tanker_aggregate": false,
       "color": "#d97706",
       "ton_last_12m": 26621470.1,
       "yoy_pct": -8.5,
@@ -201,6 +237,7 @@
     {
       "category": "LNG",
       "is_tanker_subclass": true,
+      "is_tanker_aggregate": false,
       "color": "#7c3aed",
       "ton_last_12m": 20640940.5,
       "yoy_pct": 4.6,
@@ -225,6 +262,7 @@
     {
       "category": "FAME / Vegetable Oil",
       "is_tanker_subclass": true,
+      "is_tanker_aggregate": false,
       "color": "#65a30d",
       "ton_last_12m": 3675705.8,
       "yoy_pct": -26.5,
@@ -337,6 +375,36 @@
           79768759.6,
           76547932.6,
           19094397.3
+        ]
+      },
+      {
+        "category": "Tanker",
+        "color": "#0369a1",
+        "ton_by_period": [
+          33747418.1,
+          34743912.2,
+          32654990.3,
+          33874384.4,
+          36905798.3,
+          34101129.8,
+          35867915.1,
+          32096884.4,
+          29713623.2,
+          34929453.1,
+          28633837.7,
+          34796641.2,
+          35692470.7,
+          33848421.5,
+          34331472.5,
+          31430368.9,
+          32301659.4,
+          31788822.5,
+          35953984.8,
+          33692598.9,
+          30604792.3,
+          34160590.7,
+          31597281.3,
+          5939780.5
         ]
       },
       {

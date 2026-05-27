@@ -389,31 +389,21 @@ function buildTankerYearPills(payload) {
   });
 }
 
-// Persistent column-sort state for the Balance comparison table.
+// Persistent column-sort state shared by the main + sub tables.
 const tsTableSort = { key: "ton", dir: -1 };
 
-function drawTankerCards() {
-  const host = document.getElementById("ts-cards");
-  const activeEl = document.getElementById("ts-active-filter");
-  if (!host) return;
-  const cards = tsState.cargoBalance?.cards || [];
-  const monthlyByCat = {};
-  for (const s of (tsState.cargoBalance?.monthly?.series || [])) {
-    monthlyByCat[s.category] = s.ton_by_period || [];
-  }
-  // Year-aware value resolver: if activeYear has ton_by_year, use it; else
-  // fall back to the rolling 12M field. Suppress YoY on partial years.
-  const mpy = tsState.cargoBalance?.months_per_year || {};
-  const activeYear = tsState.activeYear;
-  const yearMonths = activeYear ? (mpy[activeYear] || 0) : 12;
-  const yearLabel = activeYear
-    ? `${activeYear}년${yearMonths < 12 ? ` (${yearMonths}mo)` : ""}`
-    : "12M";
-  const yearLabelEl = document.getElementById("ts-table-year");
-  if (yearLabelEl) yearLabelEl.textContent = `(${yearLabel})`;
+function _tsApplyFilter(cat) {
+  tsState.filter = (tsState.filter === cat) ? "ALL" : cat;
+  buildTankerCargoPills(tsState.cargoBalance);
+  drawTankerCards();
+  drawTankerMonthly();
+  drawTankerCommodityBars();
+  drawTankerOperatorBars();
+  drawTankerOperatorDonut();
+}
 
-  // Flatten card → row with the resolved scalar values used for sorting.
-  const rows = cards.map(c => {
+function _tsRowsFromCards(cards, monthlyByCat, activeYear, yearMonths) {
+  return cards.map(c => {
     let tonVal = c.ton_last_12m;
     let yoy = c.yoy_pct;
     if (activeYear && c.ton_by_year && activeYear in c.ton_by_year) {
@@ -423,111 +413,152 @@ function drawTankerCards() {
     return {
       category: c.category,
       color: c.color || tsState.colorByCat[c.category] || "#64748b",
+      isTankerAgg: !!c.is_tanker_aggregate,
       isTankerSub: !!c.is_tanker_subclass,
       ton: tonVal ?? 0,
-      yoy: yoy,                              // may be null
+      yoy: yoy,
       vessels: c.vessel_count ?? 0,
       ops: c.operator_count ?? 0,
-      age: c.avg_age_gt_weighted,            // may be null
-      hhi: c.hhi,                            // may be null
+      age: c.avg_age_gt_weighted,
+      hhi: c.hhi,
       topOp: c.top_operator,
       monthly: monthlyByCat[c.category] || [],
     };
   });
+}
 
-  // Column-sort. nulls always fall to the bottom regardless of direction.
-  const sortKey = tsTableSort.key;
-  const sortDir = tsTableSort.dir;
+function _tsSortRows(rows) {
+  const k = tsTableSort.key, dir = tsTableSort.dir;
   rows.sort((a, b) => {
-    const av = a[sortKey], bv = b[sortKey];
-    if (sortKey === "category") return a.category.localeCompare(b.category) * sortDir;
+    if (k === "category") return a.category.localeCompare(b.category) * dir;
+    const av = a[k], bv = b[k];
     const aNull = av == null, bNull = bv == null;
     if (aNull && bNull) return 0;
     if (aNull) return 1;
     if (bNull) return -1;
-    return (av - bv) * sortDir;
+    return (av - bv) * dir;
   });
+}
 
-  host.innerHTML = rows.map(r => {
-    const isActive = tsState.filter !== "ALL" && tsState.filter === r.category;
-    const rowCls = isActive ? "bg-amber-50/70 hover:bg-amber-100/70" : "hover:bg-slate-50";
-    const tagBadge = r.isTankerSub
-      ? `<span class="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 ml-1.5 align-middle">Tanker</span>`
-      : "";
-    const tonStr = fmtTon(r.ton);
-    const yoyHtml = r.yoy == null
-      ? `<span class="text-slate-400">—</span>`
-      : `<span class="${r.yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} font-semibold">${r.yoy >= 0 ? "↑" : "↓"} ${Math.abs(r.yoy).toFixed(1)}%</span>`;
-    const ageTxt = r.age == null ? '<span class="text-slate-400">—</span>' : `${r.age.toFixed(1)}년`;
-    const hhiTxt = r.hhi == null ? '<span class="text-slate-400">—</span>' : Math.round(r.hhi).toLocaleString();
-    const opName = r.topOp
-      ? (r.topOp.owner.length > 28 ? r.topOp.owner.slice(0, 26) + "…" : r.topOp.owner)
-      : '<span class="text-slate-400">—</span>';
-    const opCount = r.topOp ? (r.topOp.count_in_category ?? r.topOp.count_in_subclass) : null;
-    const opMeta = opCount != null
-      ? `<span class="text-slate-400 text-[10px] ml-1">${opCount}척</span>`
-      : "";
-    return `<tr class="cursor-pointer ${rowCls}" data-cat="${r.category}"
-                role="button" tabindex="0" aria-pressed="${isActive}"
-                aria-label="${r.category} 필터 토글">
-      <td class="px-3 py-2.5 align-middle">
-        <span class="inline-block w-1 h-4 rounded-sm align-middle mr-2" style="background:${r.color}"></span><span class="font-medium text-slate-800">${r.category}</span>${tagBadge}
-      </td>
-      <td class="px-3 py-2.5 text-right font-mono font-semibold text-slate-900">${tonStr}</td>
-      <td class="px-3 py-2.5 text-right">${yoyHtml}</td>
-      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${(r.vessels || 0).toLocaleString()}</td>
-      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${ageTxt}</td>
-      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${r.ops ?? "—"}</td>
-      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${hhiTxt}</td>
-      <td class="px-3 py-2.5 align-middle truncate max-w-[18rem]"><span class="text-slate-700">${opName}</span>${opMeta}</td>
-      <td class="px-3 py-2.5 text-right" title="24M monthly ton">${sparkline(r.monthly, { color: r.color, width: 80, height: 22 })}</td>
-    </tr>`;
-  }).join("");
+function _tsRenderRow(r, opts = {}) {
+  const compact = !!opts.compact;
+  const pY = compact ? "py-2" : "py-2.5";
+  const isActive = tsState.filter !== "ALL" && tsState.filter === r.category;
+  const rowCls = isActive ? "bg-amber-50/70 hover:bg-amber-100/70" : "hover:bg-slate-50";
+  const tagBadge = r.isTankerAgg
+    ? `<span class="text-[9px] font-medium px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 ml-1.5 align-middle">5 subclass 합계</span>`
+    : "";
+  const tonStr = fmtTon(r.ton);
+  const yoyHtml = r.yoy == null
+    ? `<span class="text-slate-400">—</span>`
+    : `<span class="${r.yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} font-semibold">${r.yoy >= 0 ? "↑" : "↓"} ${Math.abs(r.yoy).toFixed(1)}%</span>`;
+  const ageTxt = r.age == null ? '<span class="text-slate-400">—</span>' : `${r.age.toFixed(1)}년`;
+  const hhiTxt = r.hhi == null ? '<span class="text-slate-400">—</span>' : Math.round(r.hhi).toLocaleString();
+  const opName = r.topOp
+    ? (r.topOp.owner.length > 28 ? r.topOp.owner.slice(0, 26) + "…" : r.topOp.owner)
+    : '<span class="text-slate-400">—</span>';
+  const opCount = r.topOp ? (r.topOp.count_in_category ?? r.topOp.count_in_subclass) : null;
+  const opMeta = opCount != null
+    ? `<span class="text-slate-400 text-[10px] ml-1">${opCount}척</span>`
+    : "";
+  const catNameCls = r.isTankerAgg
+    ? "font-semibold text-slate-900"
+    : (compact ? "font-medium text-slate-700" : "font-medium text-slate-800");
+  return `<tr class="cursor-pointer ${rowCls}" data-cat="${r.category}"
+              role="button" tabindex="0" aria-pressed="${isActive}"
+              aria-label="${r.category} 필터 토글">
+    <td class="px-3 ${pY} align-middle">
+      <span class="inline-block w-1 h-4 rounded-sm align-middle mr-2" style="background:${r.color}"></span><span class="${catNameCls}">${r.category}</span>${tagBadge}
+    </td>
+    <td class="px-3 ${pY} text-right font-mono font-semibold text-slate-900">${tonStr}</td>
+    <td class="px-3 ${pY} text-right">${yoyHtml}</td>
+    <td class="px-3 ${pY} text-right font-mono text-slate-700">${(r.vessels || 0).toLocaleString()}</td>
+    <td class="px-3 ${pY} text-right font-mono text-slate-700">${ageTxt}</td>
+    <td class="px-3 ${pY} text-right font-mono text-slate-700">${r.ops ?? "—"}</td>
+    <td class="px-3 ${pY} text-right font-mono text-slate-700">${hhiTxt}</td>
+    <td class="px-3 ${pY} align-middle truncate max-w-[18rem]"><span class="text-slate-700">${opName}</span>${opMeta}</td>
+    <td class="px-3 ${pY} text-right" title="24M monthly ton">${sparkline(r.monthly, { color: r.color, width: 80, height: 22 })}</td>
+  </tr>`;
+}
 
-  const applyFilter = (cat) => {
-    tsState.filter = (tsState.filter === cat) ? "ALL" : cat;
-    buildTankerCargoPills(tsState.cargoBalance);
-    drawTankerCards();
-    drawTankerMonthly();
-    drawTankerCommodityBars();
-    drawTankerOperatorBars();
-    drawTankerOperatorDonut();
-  };
-  host.querySelectorAll("tr[data-cat]").forEach(el => {
-    el.addEventListener("click", () => applyFilter(el.dataset.cat));
+function _tsWireRowClicks(tbodyEl) {
+  tbodyEl.querySelectorAll("tr[data-cat]").forEach(el => {
+    el.addEventListener("click", () => _tsApplyFilter(el.dataset.cat));
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        applyFilter(el.dataset.cat);
+        _tsApplyFilter(el.dataset.cat);
       }
     });
   });
+}
 
-  // One-time wire-up of sortable column headers.
-  const tableEl = document.getElementById("ts-table");
-  if (tableEl && !tableEl.dataset.sortWired) {
-    tableEl.dataset.sortWired = "1";
-    tableEl.querySelectorAll("th[data-sort]").forEach(th => {
-      th.classList.add("cursor-pointer", "select-none", "hover:bg-slate-100");
-      th.addEventListener("click", () => {
-        const k = th.dataset.sort;
-        if (tsTableSort.key === k) tsTableSort.dir *= -1;
-        else { tsTableSort.key = k; tsTableSort.dir = (k === "category") ? 1 : -1; }
-        drawTankerCards();
-      });
+function _tsWireSortHeaders(tableEl) {
+  if (!tableEl || tableEl.dataset.sortWired) return;
+  tableEl.dataset.sortWired = "1";
+  tableEl.querySelectorAll("th[data-sort]").forEach(th => {
+    th.classList.add("cursor-pointer", "select-none", "hover:bg-slate-100");
+    th.addEventListener("click", () => {
+      const k = th.dataset.sort;
+      if (tsTableSort.key === k) tsTableSort.dir *= -1;
+      else { tsTableSort.key = k; tsTableSort.dir = (k === "category") ? 1 : -1; }
+      drawTankerCards();
     });
+  });
+}
+
+function _tsRefreshSortArrows(tableEl) {
+  if (!tableEl) return;
+  tableEl.querySelectorAll("th[data-sort]").forEach(th => {
+    const base = th.dataset.sortBase || (th.dataset.sortBase = th.innerHTML);
+    const arrow = (th.dataset.sort === tsTableSort.key)
+      ? (tsTableSort.dir > 0 ? " <span class='text-slate-400 text-[10px]'>▲</span>"
+                             : " <span class='text-slate-400 text-[10px]'>▼</span>")
+      : "";
+    th.innerHTML = base + arrow;
+  });
+}
+
+function drawTankerCards() {
+  const host = document.getElementById("ts-cards");
+  const subHost = document.getElementById("ts-cards-sub");
+  const activeEl = document.getElementById("ts-active-filter");
+  if (!host) return;
+  const cards = tsState.cargoBalance?.cards || [];
+  const monthlyByCat = {};
+  for (const s of (tsState.cargoBalance?.monthly?.series || [])) {
+    monthlyByCat[s.category] = s.ton_by_period || [];
   }
-  // Visual sort indicator on the active column header.
-  if (tableEl) {
-    tableEl.querySelectorAll("th[data-sort]").forEach(th => {
-      const base = th.dataset.sortBase || (th.dataset.sortBase = th.innerHTML);
-      const arrow = (th.dataset.sort === tsTableSort.key)
-        ? (tsTableSort.dir > 0 ? " <span class='text-slate-400 text-[10px]'>▲</span>"
-                               : " <span class='text-slate-400 text-[10px]'>▼</span>")
-        : "";
-      th.innerHTML = base + arrow;
-    });
+  const mpy = tsState.cargoBalance?.months_per_year || {};
+  const activeYear = tsState.activeYear;
+  const yearMonths = activeYear ? (mpy[activeYear] || 0) : 12;
+  const yearLabel = activeYear
+    ? `${activeYear}년${yearMonths < 12 ? ` (${yearMonths}mo)` : ""}`
+    : "12M";
+  for (const id of ["ts-table-year", "ts-table-sub-year"]) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `(${yearLabel})`;
   }
+
+  // Split: main = 4 non-tanker + Tanker aggregate; sub = 5 tanker subclasses.
+  const mainCards = cards.filter(c => !c.is_tanker_subclass);
+  const subCards = cards.filter(c => c.is_tanker_subclass);
+  const mainRows = _tsRowsFromCards(mainCards, monthlyByCat, activeYear, yearMonths);
+  const subRows = _tsRowsFromCards(subCards, monthlyByCat, activeYear, yearMonths);
+  _tsSortRows(mainRows);
+  _tsSortRows(subRows);
+
+  host.innerHTML = mainRows.map(r => _tsRenderRow(r)).join("");
+  if (subHost) subHost.innerHTML = subRows.map(r => _tsRenderRow(r, { compact: true })).join("");
+  _tsWireRowClicks(host);
+  if (subHost) _tsWireRowClicks(subHost);
+
+  const mainTableEl = document.getElementById("ts-table");
+  const subTableEl = document.getElementById("ts-table-sub");
+  _tsWireSortHeaders(mainTableEl);
+  _tsWireSortHeaders(subTableEl);
+  _tsRefreshSortArrows(mainTableEl);
+  _tsRefreshSortArrows(subTableEl);
 
   if (activeEl) {
     if (tsState.filter === "ALL") {
@@ -537,9 +568,19 @@ function drawTankerCards() {
       activeEl.innerHTML = `<span class="active-filter-pill">필터: ${tsState.filter}<button type="button" id="ts-filter-clear" aria-label="필터 해제">×</button></span>`;
       activeEl.className = "";
       const clr = document.getElementById("ts-filter-clear");
-      if (clr) clr.addEventListener("click", () => applyFilter(tsState.filter));
+      if (clr) clr.addEventListener("click", () => _tsApplyFilter(tsState.filter));
     }
   }
+}
+
+// Subclass / aggregate name sets (derived from loaded cards).
+function _tsSubclassSet() {
+  return new Set((tsState.cargoBalance?.cards || [])
+    .filter(c => c.is_tanker_subclass).map(c => c.category));
+}
+function _tsIsTankerAggOrSub(cat) {
+  if (cat === "Tanker") return true;
+  return _tsSubclassSet().has(cat);
 }
 
 function drawTankerMonthly() {
@@ -547,7 +588,19 @@ function drawTankerMonthly() {
   if (!data) return;
   const periods = data.periods || [];
   const filter = tsState.filter;
-  const series = (data.series || []).filter(s => filter === "ALL" || filter === s.category);
+  const subSet = _tsSubclassSet();
+  // Rules:
+  //  - filter "ALL" or a non-tanker main: show 4 mains + Tanker aggregate (drop 5 subclasses to avoid double-count)
+  //  - filter "Tanker": expand into the 5 subclass traces (more informative breakdown)
+  //  - filter a single subclass or main: just that one
+  let series;
+  if (filter === "ALL") {
+    series = (data.series || []).filter(s => !subSet.has(s.category));
+  } else if (filter === "Tanker") {
+    series = (data.series || []).filter(s => subSet.has(s.category));
+  } else {
+    series = (data.series || []).filter(s => s.category === filter);
+  }
   const traces = series.map(s => {
     const color = s.color || tsState.colorByCat[s.category] || "#64748b";
     let y = s.ton_by_period.slice();
@@ -617,11 +670,14 @@ function drawTankerMonthly() {
 function drawTankerCommodityBars() {
   const filter = tsState.filter;
   const byCat = tsState.cargoBalanceTop?.top_commodities_by_category || {};
+  const subSet = _tsSubclassSet();
   let list;
   if (filter === "ALL") {
-    // Cross-category top: take top 3 per category, then trim to top 15 by ton.
+    // Cross-category top: take top 3 per non-subclass category (avoid
+    // double-counting Tanker + its 5 subclasses), trim to top 15 by ton.
     const acc = [];
     for (const [cat, rows] of Object.entries(byCat)) {
+      if (subSet.has(cat)) continue;
       for (const r of (rows || []).slice(0, 3)) {
         acc.push({ ...r, category: cat });
       }
@@ -659,11 +715,14 @@ function drawTankerCommodityBars() {
 }
 
 function _aggregateOperatorsAcrossCats() {
-  // ALL-view: aggregate per-owner across the 9 categories so we can rank by
-  // total cargo GT (prorated). Used by operator bars + donut.
+  // ALL-view: aggregate per-owner across the non-subclass categories (4 mains
+  // + Tanker aggregate). Skipping the 5 subclasses avoids double-counting any
+  // tanker operator that also appears under Product/Chemical/etc.
   const byCat = tsState.cargoBalanceTop?.top_operators_by_category || {};
+  const subSet = _tsSubclassSet();
   const agg = new Map();
   for (const [cat, rows] of Object.entries(byCat)) {
+    if (subSet.has(cat)) continue;
     for (const o of (rows || [])) {
       const key = o.owner;
       if (!agg.has(key)) {
@@ -766,8 +825,10 @@ function drawTankerOperatorDonut() {
   const filter = tsState.filter;
   let top5, total, unit, totalLabel;
   if (filter === "ALL") {
+    // Skip the 5 subclasses so we don't double-count the Tanker aggregate.
     const totals = tsState.cargoBalanceTop?.totals_gt_by_category || {};
-    total = Object.values(totals).reduce((a, b) => a + (b || 0), 0);
+    const subSet = _tsSubclassSet();
+    total = Object.entries(totals).reduce((a, [cat, v]) => a + (subSet.has(cat) ? 0 : (v || 0)), 0);
     const agg = _aggregateOperatorsAcrossCats();
     top5 = agg.slice(0, 5).reduce((a, o) => a + (o.sum_gt_in_cargo_est || 0), 0);
     unit = "GT";

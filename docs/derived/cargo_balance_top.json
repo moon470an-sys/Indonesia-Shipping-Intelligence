@@ -64,6 +64,68 @@
         "calls": 1366
       }
     ],
+    "Tanker": [
+      {
+        "name": "CPO",
+        "ton_total": 73098690.6,
+        "calls": 17184
+      },
+      {
+        "name": "CRUDE OIL",
+        "ton_total": 57953908.1,
+        "calls": 2129
+      },
+      {
+        "name": "PERTALITE",
+        "ton_total": 48866520.2,
+        "calls": 22883
+      },
+      {
+        "name": "LNG",
+        "ton_total": 44511545.1,
+        "calls": 1040
+      },
+      {
+        "name": "SOLAR",
+        "ton_total": 35801667.6,
+        "calls": 5606
+      },
+      {
+        "name": "BIO SOLAR",
+        "ton_total": 34928617.0,
+        "calls": 29370
+      },
+      {
+        "name": "LPG",
+        "ton_total": 33720978.3,
+        "calls": 8814
+      },
+      {
+        "name": "FAME",
+        "ton_total": 26794272.8,
+        "calls": 4831
+      },
+      {
+        "name": "BUCO",
+        "ton_total": 24811392.6,
+        "calls": 493
+      },
+      {
+        "name": "BBM",
+        "ton_total": 21002317.2,
+        "calls": 5132
+      },
+      {
+        "name": "RBD PALM OLEIN",
+        "ton_total": 20893947.1,
+        "calls": 2835
+      },
+      {
+        "name": "AVTUR",
+        "ton_total": 19498225.4,
+        "calls": 3596
+      }
+    ],
     "Bulk Carrier": [
       {
         "name": "BATU BARA",
@@ -747,6 +809,72 @@
         "sum_gt_in_category_est": 137567.0
       }
     ],
+    "Tanker": [
+      {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 57,
+        "sum_gt": 981071.0,
+        "sum_gt_in_category_est": 981071.0
+      },
+      {
+        "owner": "PT. USDA SEROJA JAYA",
+        "ticker": null,
+        "vessels": 73,
+        "vessels_in_category": 42,
+        "sum_gt": 175387.0,
+        "sum_gt_in_category_est": 100907.6
+      },
+      {
+        "owner": "PT. PELAYARAN SAHABAT KAPUAS",
+        "ticker": null,
+        "vessels": 62,
+        "vessels_in_category": 19,
+        "sum_gt": 82892.0,
+        "sum_gt_in_category_est": 25402.4
+      },
+      {
+        "owner": "PT. CITRA MARITIME",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 4,
+        "sum_gt": 216271.0,
+        "sum_gt_in_category_est": 15176.9
+      },
+      {
+        "owner": "PT. PELAYARAN PRIMA SAMUDERA JAYA",
+        "ticker": null,
+        "vessels": 52,
+        "vessels_in_category": 3,
+        "sum_gt": 122903.0,
+        "sum_gt_in_category_est": 7090.6
+      },
+      {
+        "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
+        "ticker": null,
+        "vessels": 101,
+        "vessels_in_category": 2,
+        "sum_gt": 221347.0,
+        "sum_gt_in_category_est": 4383.1
+      },
+      {
+        "owner": "PT. DANNY SAMUDERA RAYA LINE",
+        "ticker": null,
+        "vessels": 139,
+        "vessels_in_category": 1,
+        "sum_gt": 488159.0,
+        "sum_gt_in_category_est": 3511.9
+      },
+      {
+        "owner": "PT. JHONLIN MARINE TRANS",
+        "ticker": null,
+        "vessels": 89,
+        "vessels_in_category": 1,
+        "sum_gt": 350369.0,
+        "sum_gt_in_category_est": 3936.7
+      }
+    ],
     "Product": [
       {
         "owner": "PT PERTAMINA PATRA NIAGA",
@@ -858,6 +986,7 @@
     "Bulk Carrier": 3936.7,
     "General Cargo": 197562.4,
     "Other Cargo": 4595301.9,
+    "Tanker": 1141480.2,
     "Product": 948106.8,
     "Chemical": 82080.9,
     "LPG": 103270.6,
@@ -869,6 +998,7 @@
     "Bulk Carrier": 3936.7,
     "General Cargo": 194875.5,
     "Other Cargo": 1692414.0,
+    "Tanker": 1129648.4,
     "Product": 936275.1,
     "Chemical": 82080.9,
     "LPG": 103270.6,

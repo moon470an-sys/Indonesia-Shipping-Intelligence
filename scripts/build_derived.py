@@ -2094,13 +2094,15 @@ def _top_operator_per_subclass(fleet_owners: list[dict]) -> dict[str, dict]:
 # ----------------------------------------------------------------------
 CARGO_BALANCE_NONTANKER = ("Container", "Bulk Carrier", "General Cargo", "Other Cargo")
 CARGO_BALANCE_TANKER_SUBS = ("Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil")
+CARGO_BALANCE_TANKER_AGG = "Tanker"  # aggregate row above the 5 subclasses
 CARGO_BALANCE_PALETTE = {
-    # non-tanker vessel classes
+    # main rows
     "Container":             "#9333ea",   # violet — matches Home map "Container/Gen Cargo"
     "Bulk Carrier":          "#52525b",   # slate — matches coal
     "General Cargo":         "#f97316",   # orange-500
     "Other Cargo":           "#94a3b8",   # slate-400
-    # tanker subclasses (same as SUBCLASS_PALETTE in app.js)
+    "Tanker":                "#0369a1",   # sky-700 — aggregate of the 5 subclasses
+    # tanker subclasses (sub-table)
     "Product":               "#0284c7",
     "Chemical":              "#059669",
     "LPG":                   "#d97706",
@@ -2148,14 +2150,20 @@ def build_cargo_fleet_age_stats(snapshot_month: str) -> dict[str, dict]:
             sector, vclass = classify_vessel_type(jenis)
             if sector != SECTOR_CARGO:
                 continue
+            cats: list[str] = []  # vessel may contribute to a subclass AND the Tanker aggregate row
             if vclass == CLS_TANKER:
-                cat = classify_tanker_subclass(jenis)
-                if cat not in CARGO_BALANCE_TANKER_SUBS:
-                    continue  # drop Crude Oil / Water / UNKNOWN — no time-series data
+                sub = classify_tanker_subclass(jenis)
+                if sub in CARGO_BALANCE_TANKER_SUBS:
+                    cats.append(sub)
+                # Always tally Tanker aggregate — even if subclass is Crude/Water/UNKNOWN —
+                # so the aggregate row matches the true tanker fleet count.
+                cats.append(CARGO_BALANCE_TANKER_AGG)
             else:
-                cat = visual_map.get(vclass)
-                if cat is None:
-                    continue
+                main = visual_map.get(vclass)
+                if main is not None:
+                    cats.append(main)
+            if not cats:
+                continue
             try:
                 gt_v = float(gt) if gt is not None else 0.0
             except (TypeError, ValueError):
@@ -2164,14 +2172,15 @@ def build_cargo_fleet_age_stats(snapshot_month: str) -> dict[str, dict]:
                 age = max(0, cur_year - int(tahun)) if tahun is not None else None
             except (TypeError, ValueError):
                 age = None
-            d = per_cat[cat]
-            d["vessel_count"] += 1
-            d["sum_gt"] += gt_v
-            if age is not None:
-                d["sum_gt_age"] += gt_v * age
-                d["count_with_age"] += 1
-                if age >= 25:
-                    d["count_age_25_plus"] += 1
+            for cat in cats:
+                d = per_cat[cat]
+                d["vessel_count"] += 1
+                d["sum_gt"] += gt_v
+                if age is not None:
+                    d["sum_gt_age"] += gt_v * age
+                    d["count_with_age"] += 1
+                    if age >= 25:
+                        d["count_age_25_plus"] += 1
     out: dict[str, dict] = {}
     for cat, d in per_cat.items():
         avg_age = (d["sum_gt_age"] / d["sum_gt"]) if d["sum_gt"] > 0 else None
@@ -2242,6 +2251,10 @@ def build_cargo_balance() -> dict:
             continue
         period_cat_ton[(p, sub)] += float(r.get("ton_total") or 0)
         period_cat_calls[(p, sub)] += int(r.get("calls") or 0)
+        # Mirror into the Tanker aggregate so its monthly series matches the
+        # main table's roll-up (sum of the 5 subclasses).
+        period_cat_ton[(p, CARGO_BALANCE_TANKER_AGG)] += float(r.get("ton_total") or 0)
+        period_cat_calls[(p, CARGO_BALANCE_TANKER_AGG)] += int(r.get("calls") or 0)
         periods_set.add(p)
     sorted_periods = sorted(periods_set)
 
@@ -2280,6 +2293,10 @@ def build_cargo_balance() -> dict:
     fo_list = fo_payload.get("owners", [])
 
     def _owner_mix(o: dict, cat: str) -> int:
+        if cat == CARGO_BALANCE_TANKER_AGG:
+            # Tanker aggregate uses class_mix["Tanker"] directly (sum across
+            # subclasses with per-owner dedup — exactly what we want for HHI).
+            return int((o.get("class_mix") or {}).get("Tanker", 0))
         if cat in CARGO_BALANCE_TANKER_SUBS:
             return int((o.get("tanker_subclass_mix") or {}).get(cat, 0))
         return int((o.get("class_mix") or {}).get(cat, 0))
@@ -2291,7 +2308,7 @@ def build_cargo_balance() -> dict:
     # "top operator" surface (e.g. General Cargo top = "-" with 51 vessels), so
     # we skip them for the headline pick but keep them in the HHI denominator.
     _BLANK_OWNERS = {"-", "", None}
-    for cat in (*CARGO_BALANCE_NONTANKER, *CARGO_BALANCE_TANKER_SUBS):
+    for cat in (*CARGO_BALANCE_NONTANKER, CARGO_BALANCE_TANKER_AGG, *CARGO_BALANCE_TANKER_SUBS):
         counts = [(o["owner"], _owner_mix(o, cat), o.get("sum_gt"))
                   for o in fo_list if _owner_mix(o, cat) > 0]
         if not counts:
@@ -2316,7 +2333,7 @@ def build_cargo_balance() -> dict:
 
     # ---- Cards ----
     cards = []
-    all_cats = (*CARGO_BALANCE_NONTANKER, *CARGO_BALANCE_TANKER_SUBS)
+    all_cats = (*CARGO_BALANCE_NONTANKER, CARGO_BALANCE_TANKER_AGG, *CARGO_BALANCE_TANKER_SUBS)
     for cat in all_cats:
         ton_last = sum(period_cat_ton.get((p, cat), 0.0) for p in last12)
         ton_prev = sum(period_cat_ton.get((p, cat), 0.0) for p in prev12)
@@ -2326,6 +2343,7 @@ def build_cargo_balance() -> dict:
         cards.append({
             "category": cat,
             "is_tanker_subclass": cat in CARGO_BALANCE_TANKER_SUBS,
+            "is_tanker_aggregate": cat == CARGO_BALANCE_TANKER_AGG,
             "color": CARGO_BALANCE_PALETTE.get(cat, "#64748b"),
             "ton_last_12m": round(ton_last, 1),
             "yoy_pct": round(yoy_pct, 1) if yoy_pct is not None else None,
@@ -2518,23 +2536,29 @@ def build_cargo_balance_top(top_commodities_per_cat: int = 12,
     src_meta = _load_json(DATA / "meta.json")
     snap = src_meta.get("latest")
 
-    # Pre-build mapping JENIS KAPAL string → category (cache for SQL loop)
-    jenis_cat_cache: dict[str, str | None] = {}
-    def cat_of(jenis: str | None) -> str | None:
+    # Pre-build mapping JENIS KAPAL string → list of categories the row should
+    # contribute to (subclass + Tanker aggregate; or single main vessel class).
+    jenis_cat_cache: dict[str, tuple[str, ...]] = {}
+    def cats_of(jenis: str | None) -> tuple[str, ...]:
         if not jenis:
-            return None
+            return ()
         if jenis in jenis_cat_cache:
             return jenis_cat_cache[jenis]
         sector, vclass = classify_vessel_type(jenis)
         if sector != SECTOR_CARGO:
-            jenis_cat_cache[jenis] = None
-            return None
-        if vclass == CLS_TANKER:
+            r: tuple[str, ...] = ()
+        elif vclass == CLS_TANKER:
             sub = classify_tanker_subclass(jenis)
-            r = sub if sub in CARGO_BALANCE_TANKER_SUBS else None
+            # Always include the Tanker aggregate; include the subclass too
+            # when it's one of the 5 known buckets.
+            if sub in CARGO_BALANCE_TANKER_SUBS:
+                r = (sub, CARGO_BALANCE_TANKER_AGG)
+            else:
+                r = (CARGO_BALANCE_TANKER_AGG,)
         else:
-            r = {CLS_CONTAINER: "Container", CLS_BULK: "Bulk Carrier",
-                 CLS_GENERAL: "General Cargo", CLS_OTHER_CARGO: "Other Cargo"}.get(vclass)
+            main = {CLS_CONTAINER: "Container", CLS_BULK: "Bulk Carrier",
+                    CLS_GENERAL: "General Cargo", CLS_OTHER_CARGO: "Other Cargo"}.get(vclass)
+            r = (main,) if main else ()
         jenis_cat_cache[jenis] = r
         return r
 
@@ -2565,15 +2589,16 @@ def build_cargo_balance_top(top_commodities_per_cat: int = 12,
                 (snap,),
             )
             for jenis, kom, t, calls in cur:
-                cat = cat_of(jenis)
-                if not cat or not kom:
+                cats = cats_of(jenis)
+                if not cats or not kom:
                     continue
                 kom_canon = _canonicalize_commodity(kom)
                 if not kom_canon:
                     continue
-                d = cat_kom[cat][kom_canon]
-                d["ton"] += float(t or 0)
-                d["calls"] += int(calls or 0)
+                for cat in cats:
+                    d = cat_kom[cat][kom_canon]
+                    d["ton"] += float(t or 0)
+                    d["calls"] += int(calls or 0)
 
     top_commodities_by_category: dict[str, list[dict]] = {}
     for cat, koms in cat_kom.items():
@@ -2593,6 +2618,8 @@ def build_cargo_balance_top(top_commodities_per_cat: int = 12,
             rev[_norm_company(n)] = ticker
 
     def mix_of(o: dict, cat: str) -> int:
+        if cat == CARGO_BALANCE_TANKER_AGG:
+            return int((o.get("class_mix") or {}).get("Tanker", 0))
         if cat in CARGO_BALANCE_TANKER_SUBS:
             return int((o.get("tanker_subclass_mix") or {}).get(cat, 0))
         return int((o.get("class_mix") or {}).get(cat, 0))
@@ -2604,7 +2631,7 @@ def build_cargo_balance_top(top_commodities_per_cat: int = 12,
     top_operators_by_category: dict[str, list[dict]] = {}
     totals_gt_by_category: dict[str, float] = {}
     top5_gt_by_category: dict[str, float] = {}
-    for cat in (*CARGO_BALANCE_NONTANKER, *CARGO_BALANCE_TANKER_SUBS):
+    for cat in (*CARGO_BALANCE_NONTANKER, CARGO_BALANCE_TANKER_AGG, *CARGO_BALANCE_TANKER_SUBS):
         scored = [(o, mix_of(o, cat)) for o in fo_list
                   if mix_of(o, cat) > 0 and (o.get("owner") or "").strip() not in _BLANK_OWNERS]
         scored.sort(key=lambda t: (-t[1], -(t[0].get("sum_gt") or 0)))
