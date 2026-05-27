@@ -1,0 +1,566 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "cards": [
+    {
+      "category": "Other Cargo",
+      "is_tanker_subclass": false,
+      "color": "#94a3b8",
+      "ton_last_12m": 1177547407.6,
+      "yoy_pct": 4.6,
+      "ton_by_year": {
+        "2024": 655097494.3,
+        "2025": 1211028291.6,
+        "2026": 437476799.8
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 84.9,
+        "2026": -63.9
+      },
+      "avg_age_gt_weighted": 12.48,
+      "operator_count": 23,
+      "vessel_count": 13055,
+      "sum_gt": 28042564.4,
+      "hhi": 538.9,
+      "top_operator": {
+        "owner": "PT. DANNY SAMUDERA RAYA LINE",
+        "count_in_category": 138,
+        "sum_gt": 488159.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "Bulk Carrier",
+      "is_tanker_subclass": false,
+      "color": "#52525b",
+      "ton_last_12m": 936540020.6,
+      "yoy_pct": -10.9,
+      "ton_by_year": {
+        "2024": 638914230.9,
+        "2025": 1026863897.1,
+        "2026": 322345134.3
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 60.7,
+        "2026": -68.6
+      },
+      "avg_age_gt_weighted": 20.38,
+      "operator_count": 1,
+      "vessel_count": 315,
+      "sum_gt": 7001672.0,
+      "hhi": 10000.0,
+      "top_operator": {
+        "owner": "PT. JHONLIN MARINE TRANS",
+        "count_in_category": 1,
+        "sum_gt": 350369.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "Product",
+      "is_tanker_subclass": true,
+      "color": "#0284c7",
+      "ton_last_12m": 261712163.0,
+      "yoy_pct": -9.4,
+      "ton_by_year": {
+        "2024": 174210993.9,
+        "2025": 279422487.9,
+        "2026": 97022271.9
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 60.4,
+        "2026": -65.3
+      },
+      "avg_age_gt_weighted": 20.94,
+      "operator_count": 8,
+      "vessel_count": 1950,
+      "sum_gt": 4842053.6,
+      "hhi": 3692.7,
+      "top_operator": {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "count_in_category": 50,
+        "sum_gt": 981071.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "Container",
+      "is_tanker_subclass": false,
+      "color": "#9333ea",
+      "ton_last_12m": 231564168.0,
+      "yoy_pct": -10.8,
+      "ton_by_year": {
+        "2024": 148764144.5,
+        "2025": 258606481.8,
+        "2026": 83773246.3
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 73.8,
+        "2026": -67.6
+      },
+      "avg_age_gt_weighted": 34.08,
+      "operator_count": 2,
+      "vessel_count": 305,
+      "sum_gt": 1985165.0,
+      "hhi": 5142.5,
+      "top_operator": {
+        "owner": "PT. TANTO INTIM LINE",
+        "count_in_category": 45,
+        "sum_gt": 374684.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "General Cargo",
+      "is_tanker_subclass": false,
+      "color": "#f97316",
+      "ton_last_12m": 146961386.0,
+      "yoy_pct": 4.0,
+      "ton_by_year": {
+        "2024": 87530228.1,
+        "2025": 145771613.7,
+        "2026": 54942673.9
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 66.5,
+        "2026": -62.3
+      },
+      "avg_age_gt_weighted": 30.93,
+      "operator_count": 7,
+      "vessel_count": 13478,
+      "sum_gt": 5674268.6,
+      "hhi": 3674.7,
+      "top_operator": {
+        "owner": "PT. SALAM PACIFIC INDONESIA LINES",
+        "count_in_category": 16,
+        "sum_gt": 347068.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "Chemical",
+      "is_tanker_subclass": true,
+      "color": "#059669",
+      "ton_last_12m": 58691964.6,
+      "yoy_pct": -1.0,
+      "ton_by_year": {
+        "2024": 35918930.0,
+        "2025": 61631779.6,
+        "2026": 20434980.1
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 71.6,
+        "2026": -66.8
+      },
+      "avg_age_gt_weighted": 18.73,
+      "operator_count": 2,
+      "vessel_count": 246,
+      "sum_gt": 1033746.0,
+      "hhi": 9311.2,
+      "top_operator": {
+        "owner": "PT. USDA SEROJA JAYA",
+        "count_in_category": 27,
+        "sum_gt": 175387.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "LPG",
+      "is_tanker_subclass": true,
+      "color": "#d97706",
+      "ton_last_12m": 26621470.1,
+      "yoy_pct": -8.5,
+      "ton_by_year": {
+        "2024": 16890362.4,
+        "2025": 29003049.2,
+        "2026": 9814384.5
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 71.7,
+        "2026": -66.2
+      },
+      "avg_age_gt_weighted": 19.65,
+      "operator_count": 1,
+      "vessel_count": 87,
+      "sum_gt": 1247536.0,
+      "hhi": 10000.0,
+      "top_operator": {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "count_in_category": 6,
+        "sum_gt": 981071.0
+      },
+      "top_route": null
+    },
+    {
+      "category": "LNG",
+      "is_tanker_subclass": true,
+      "color": "#7c3aed",
+      "ton_last_12m": 20640940.5,
+      "yoy_pct": 4.6,
+      "ton_by_year": {
+        "2024": 11522590.8,
+        "2025": 21280906.3,
+        "2026": 7577387.7
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 84.7,
+        "2026": -64.4
+      },
+      "avg_age_gt_weighted": 28.73,
+      "operator_count": 0,
+      "vessel_count": 11,
+      "sum_gt": 882300.0,
+      "hhi": null,
+      "top_operator": null,
+      "top_route": null
+    },
+    {
+      "category": "FAME / Vegetable Oil",
+      "is_tanker_subclass": true,
+      "color": "#65a30d",
+      "ton_last_12m": 3675705.8,
+      "yoy_pct": -26.5,
+      "ton_by_year": {
+        "2024": 3352671.1,
+        "2025": 4179416.9,
+        "2026": 1146019.5
+      },
+      "yoy_by_year": {
+        "2024": null,
+        "2025": 24.7,
+        "2026": -72.6
+      },
+      "avg_age_gt_weighted": 10.33,
+      "operator_count": 1,
+      "vessel_count": 94,
+      "sum_gt": 188034.0,
+      "hhi": 10000.0,
+      "top_operator": {
+        "owner": "PT. PELAYARAN SAHABAT KAPUAS",
+        "count_in_category": 6,
+        "sum_gt": 82892.0
+      },
+      "top_route": null
+    }
+  ],
+  "monthly": {
+    "periods": [
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05"
+    ],
+    "series": [
+      {
+        "category": "Other Cargo",
+        "color": "#94a3b8",
+        "ton_by_period": [
+          88870928.2,
+          79171607.6,
+          96505090.6,
+          99608864.0,
+          94872333.6,
+          106158229.7,
+          89910440.6,
+          97242968.4,
+          94559710.6,
+          90585912.3,
+          90526735.3,
+          98042357.2,
+          98366501.5,
+          110392257.1,
+          96601144.6,
+          103143514.1,
+          111938828.8,
+          109542927.8,
+          110085433.9,
+          102820231.8,
+          104498744.5,
+          110583945.3,
+          104052328.4,
+          15521549.8
+        ]
+      },
+      {
+        "category": "Bulk Carrier",
+        "color": "#52525b",
+        "ton_by_period": [
+          83412895.8,
+          87940270.4,
+          92186566.1,
+          90509207.0,
+          97064997.4,
+          93852772.7,
+          93947521.5,
+          83414328.6,
+          81558251.6,
+          83227676.2,
+          79330887.3,
+          85137867.1,
+          81600719.2,
+          82523552.9,
+          89617875.7,
+          85635093.6,
+          90888717.3,
+          90021757.1,
+          93907170.5,
+          74904952.9,
+          72029091.9,
+          79768759.6,
+          76547932.6,
+          19094397.3
+        ]
+      },
+      {
+        "category": "Product",
+        "color": "#0284c7",
+        "ton_by_period": [
+          24104486.2,
+          24359709.2,
+          23503594.6,
+          25001635.5,
+          26003892.8,
+          25269567.8,
+          25968107.8,
+          23129271.8,
+          21016921.4,
+          25176170.2,
+          20538297.5,
+          24871935.9,
+          25063588.2,
+          23004124.5,
+          24311673.3,
+          22422871.1,
+          22818160.8,
+          22313212.5,
+          24756260.7,
+          24167061.5,
+          21175905.8,
+          24846092.2,
+          22647411.6,
+          4185800.8
+        ]
+      },
+      {
+        "category": "Container",
+        "color": "#9333ea",
+        "ton_by_period": [
+          22494329.0,
+          16878588.2,
+          18332618.8,
+          17323170.0,
+          21146283.9,
+          27430227.4,
+          25158927.2,
+          22923845.5,
+          21632453.1,
+          23946074.2,
+          20089918.9,
+          22223268.4,
+          22736109.7,
+          21915879.2,
+          21349462.6,
+          20340292.8,
+          21286595.6,
+          19186162.3,
+          20976419.5,
+          17840840.1,
+          21533553.4,
+          22383738.0,
+          18369004.9,
+          3646109.9
+        ]
+      },
+      {
+        "category": "General Cargo",
+        "color": "#f97316",
+        "ton_by_period": [
+          11610926.4,
+          12023194.1,
+          12243561.9,
+          16925225.6,
+          11625374.9,
+          11973270.7,
+          11128674.5,
+          11214470.8,
+          9534810.2,
+          11037602.9,
+          9969844.4,
+          11996173.3,
+          11569628.0,
+          15178996.2,
+          13435952.7,
+          13361469.3,
+          12827871.9,
+          12464711.8,
+          13180082.2,
+          12845792.2,
+          10965947.8,
+          14032982.5,
+          14504960.3,
+          2592991.1
+        ]
+      },
+      {
+        "category": "Chemical",
+        "color": "#059669",
+        "ton_by_period": [
+          5204666.3,
+          5697319.7,
+          4919704.4,
+          4535480.1,
+          5735947.7,
+          4935668.1,
+          4890143.7,
+          4510928.2,
+          4501829.8,
+          5107413.9,
+          3937839.8,
+          5316783.4,
+          6271792.1,
+          6140128.6,
+          5505339.6,
+          4313954.8,
+          5173690.3,
+          4632756.2,
+          6219322.9,
+          5215186.7,
+          5111055.8,
+          4640132.8,
+          4717613.1,
+          750991.7
+        ]
+      },
+      {
+        "category": "LPG",
+        "color": "#d97706",
+        "ton_by_period": [
+          2382941.7,
+          2513496.8,
+          2373673.7,
+          2077825.5,
+          2641804.2,
+          2278198.9,
+          2622421.6,
+          2404566.5,
+          2343968.9,
+          2583529.5,
+          2404105.9,
+          2459792.8,
+          2259757.7,
+          2310050.7,
+          2452272.1,
+          2512152.1,
+          2267098.5,
+          2277520.1,
+          2728234.4,
+          2313782.3,
+          2157696.1,
+          2653552.4,
+          2097214.6,
+          592139.1
+        ]
+      },
+      {
+        "category": "LNG",
+        "color": "#7c3aed",
+        "ton_by_period": [
+          1643381.3,
+          1714693.9,
+          1426609.7,
+          1591909.2,
+          1878691.8,
+          1248714.9,
+          2018590.0,
+          1631937.4,
+          1536234.4,
+          1739780.8,
+          1501914.2,
+          1807486.7,
+          1776548.1,
+          2049253.2,
+          1764807.1,
+          1921777.8,
+          1726101.5,
+          1867740.1,
+          1957325.0,
+          1775544.5,
+          1883412.0,
+          1716362.1,
+          1848946.1,
+          353123.0
+        ]
+      },
+      {
+        "category": "FAME / Vegetable Oil",
+        "color": "#65a30d",
+        "ton_by_period": [
+          411942.6,
+          458692.6,
+          431407.9,
+          667534.1,
+          645461.8,
+          368980.1,
+          368652.0,
+          420180.5,
+          314668.7,
+          322558.7,
+          251680.3,
+          340642.4,
+          320784.6,
+          344864.5,
+          297380.4,
+          259613.1,
+          316608.3,
+          697593.6,
+          292841.8,
+          221023.9,
+          276722.6,
+          304451.2,
+          286095.9,
+          57725.9
+        ]
+      }
+    ]
+  },
+  "months_per_year": {
+    "2024": 7,
+    "2025": 12,
+    "2026": 5
+  },
+  "_notes": {
+    "scope": "CARGO sector — 4 non-tanker vessel classes + 5 tanker subclasses (9 cats)",
+    "monthly_source": "docs/data/cargo_sector_monthly.json — rows (vessel_class) + tanker_subclass_rows (subclass)",
+    "ton_by_year": "calendar-year sums; yoy_by_year null if prev year missing/zero",
+    "hhi": "Σ(share^2)*10000 over fleet_owners.class_mix (or tanker_subclass_mix). Top-25 owner truncation = small bias for long tail categories.",
+    "top_route": "비탱커 카테고리는 현재 OD 데이터 미산출 (탱커 subclass도 cargo_balance에서는 생략) — 필요 시 cargo_routes 확장"
+  }
+}

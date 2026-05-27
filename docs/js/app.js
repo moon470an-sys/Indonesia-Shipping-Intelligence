@@ -223,17 +223,9 @@ const SUBCLASS_PALETTE = {
   "UNKNOWN": "#94a3b8",
 };
 
-// ---------- PR-D: Tanker Sector ----------
-const TANKER_SUBCLASS_FILTER_OPTIONS = [
-  { key: "ALL",                   label: "ALL" },
-  { key: "Crude Oil",             label: "Crude" },
-  { key: "Product",               label: "Product" },
-  { key: "Chemical",              label: "Chemical" },
-  { key: "LPG",                   label: "LPG" },
-  { key: "LNG",                   label: "LNG" },
-  { key: "FAME / Vegetable Oil",  label: "FAME" },
-];
-
+// ---------- Balance tab (was: PR-D Tanker Sector) ----------
+// Cycle 2: extended from 5 tanker subclasses → 9 cargo categories
+// (Container, Bulk Carrier, General Cargo, Other Cargo + 5 tanker subclasses).
 // Map a route's bucket array to a coarse subclass for filter matching.
 // Bucket labels in tanker_flow_map.lanes mix English (Crude/LPG/LNG/FAME/Naphtha)
 // with Korean ("BBM-가솔린", "BBM-디젤", "기타", "기타 식용유"). This table
@@ -257,13 +249,13 @@ function bucketsToSubclasses(buckets) {
   return out;
 }
 
-// Renewal v2 state — selected subclass card filters all 5 widgets in this tab.
+// Selected cargo card filters all widgets in the Balance tab.
 const tsState = {
   filter: "ALL",
-  subclassFacts: null,
-  tankerSubclass: null,
-  tankerTop: null,
+  cargoBalance: null,
+  cargoBalanceTop: null,
   monthlyMode: "abs",   // abs | yoy
+  colorByCat: {},       // built from cards[].color after load
 };
 
 async function renderTankerSector() {
@@ -271,17 +263,19 @@ async function renderTankerSector() {
   if (!cardHost) return;
 
   try {
-    [tsState.subclassFacts, tsState.tankerSubclass, tsState.tankerTop] = await Promise.all([
-      loadDerived("subclass_facts.json"),
-      loadDerived("tanker_subclass.json"),
-      loadDerived("tanker_top.json"),
+    [tsState.cargoBalance, tsState.cargoBalanceTop] = await Promise.all([
+      loadDerived("cargo_balance.json"),
+      loadDerived("cargo_balance_top.json"),
     ]);
   } catch (e) {
     cardHost.innerHTML = `<div class="col-span-full">${errorState(
-      `Tanker Sector derived JSON 로드 실패: ${e.message}. <code>python scripts/build_derived.py</code>를 실행하세요.`
+      `Balance derived JSON 로드 실패: ${e.message}. <code>python scripts/build_derived.py</code>를 실행하세요.`
     )}</div>`;
     return;
   }
+  tsState.colorByCat = Object.fromEntries(
+    (tsState.cargoBalance?.cards || []).map(c => [c.category, c.color])
+  );
 
   // Monthly toggle wiring (one-time)
   const toggleHost = document.getElementById("ts-monthly-mode");
@@ -304,11 +298,11 @@ async function renderTankerSector() {
     });
   }
 
-  if (!tsState.activeYear) tsState.activeYear = _pickTankerSectorYear(tsState.tankerSubclass);
-  buildTankerYearPills(tsState.tankerSubclass);
-  buildTankerCargoPills(tsState.tankerSubclass);
+  if (!tsState.activeYear) tsState.activeYear = _pickTankerSectorYear(tsState.cargoBalance);
+  buildTankerYearPills(tsState.cargoBalance);
+  buildTankerCargoPills(tsState.cargoBalance);
 
-  const periods = tsState.tankerSubclass?.monthly?.periods || [];
+  const periods = tsState.cargoBalance?.monthly?.periods || [];
   const periodRange = periods.length
     ? `(${periods[0]} ~ ${periods[periods.length - 1]}, ${periods.length}개월)`
     : "";
@@ -332,7 +326,7 @@ function buildTankerCargoPills(payload) {
   const host = document.getElementById("ts-cargo-pills");
   if (!host) return;
   const cards = payload?.cards || [];
-  const cargos = cards.map(c => c.subclass);
+  const cargos = cards.map(c => c.category);
   if (!cargos.length) {
     host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400 text-xs" disabled>데이터 없음</button>`;
     return;
@@ -399,28 +393,25 @@ function drawTankerCards() {
   const host = document.getElementById("ts-cards");
   const activeEl = document.getElementById("ts-active-filter");
   if (!host) return;
-  const cards = tsState.tankerSubclass?.cards || [];
-  // Build sparkline series lookup from monthly data
-  const monthlyBySub = {};
-  for (const s of (tsState.tankerSubclass?.monthly?.series || [])) {
-    monthlyBySub[s.subclass] = s.ton_by_period || [];
+  const cards = tsState.cargoBalance?.cards || [];
+  const monthlyByCat = {};
+  for (const s of (tsState.cargoBalance?.monthly?.series || [])) {
+    monthlyByCat[s.category] = s.ton_by_period || [];
   }
-  // PR-33: year-aware value resolver. When tsState.activeYear is set and
-  // the card has ton_by_year, prefer those values; else fall back to the
-  // legacy 12M fields. The card label flips accordingly.
-  const mpy = tsState.tankerSubclass?.months_per_year || {};
+  // Year-aware value resolver: if activeYear has ton_by_year, use it;
+  // else fall back to the rolling 12M field.
+  const mpy = tsState.cargoBalance?.months_per_year || {};
   const activeYear = tsState.activeYear;
   const yearMonths = activeYear ? (mpy[activeYear] || 0) : 12;
   const yearLabel = activeYear
     ? `${activeYear}년${yearMonths < 12 ? ` (${yearMonths}mo)` : ""}`
     : "12M";
   host.innerHTML = cards.map(c => {
-    const color = SUBCLASS_PALETTE[c.subclass] || "#64748b";
+    const color = c.color || tsState.colorByCat[c.category] || "#64748b";
     let tonVal = c.ton_last_12m;
     let yoy = c.yoy_pct;
     if (activeYear && c.ton_by_year && activeYear in c.ton_by_year) {
       tonVal = c.ton_by_year[activeYear];
-      // Suppress YoY on partial years (misleading vs full 12 months)
       yoy = yearMonths === 12 ? (c.yoy_by_year || {})[activeYear] : null;
     }
     const tonStr = fmtTon(tonVal);
@@ -429,9 +420,11 @@ function drawTankerCards() {
       : `<span class="${yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} text-base font-semibold">${yoy >= 0 ? "↑" : "↓"} ${Math.abs(yoy).toFixed(1)}%</span>`;
     const ageTxt = c.avg_age_gt_weighted == null ? "—" : `${c.avg_age_gt_weighted.toFixed(1)}년`;
     const hhiTxt = c.hhi == null ? "—" : Math.round(c.hhi).toLocaleString();
-    const isActive = tsState.filter !== "ALL" && tsState.filter === c.subclass;
+    const isActive = tsState.filter !== "ALL" && tsState.filter === c.category;
     const ringCls = isActive ? "ring-2 ring-slate-800" : "";
-    // PR-10: top route + top operator surfaces
+    const subBadge = c.is_tanker_subclass
+      ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 ml-1.5 align-middle">Tanker</span>`
+      : "";
     const routeStr = c.top_route
       ? `${c.top_route.origin} → ${c.top_route.destination}`
       : '<span class="text-slate-400">—</span>';
@@ -441,15 +434,18 @@ function drawTankerCards() {
     const opStr = c.top_operator
       ? `${c.top_operator.owner.length > 24 ? c.top_operator.owner.slice(0, 22) + "…" : c.top_operator.owner}`
       : '<span class="text-slate-400">—</span>';
-    const opMeta = c.top_operator
-      ? `<span class="text-slate-400 text-[10px]">${c.top_operator.count_in_subclass}척</span>`
+    const opCount = c.top_operator
+      ? (c.top_operator.count_in_category ?? c.top_operator.count_in_subclass)
+      : null;
+    const opMeta = opCount != null
+      ? `<span class="text-slate-400 text-[10px]">${opCount}척</span>`
       : "";
     return `<div class="card-interactive bg-white rounded-xl shadow p-4 border-l-4 cursor-pointer ${ringCls}"
-                 style="border-color:${color}" data-subclass="${c.subclass}"
+                 style="border-color:${color}" data-cat="${c.category}"
                  role="button" tabindex="0" aria-pressed="${isActive}"
-                 aria-label="${c.subclass} 필터 토글">
+                 aria-label="${c.category} 필터 토글">
       <div class="flex items-baseline justify-between mb-2">
-        <h4 class="font-semibold text-slate-700">${c.subclass}</h4>
+        <h4 class="font-semibold text-slate-700">${c.category}${subBadge}</h4>
         <span class="text-[10.5px] text-slate-400">${(c.vessel_count || 0).toLocaleString()}척</span>
       </div>
       <div class="flex items-end justify-between gap-2 mb-2">
@@ -457,7 +453,7 @@ function drawTankerCards() {
           <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
           <span class="text-xs text-slate-500">tons (${yearLabel})</span>
         </div>
-        <div title="24M monthly ton trend">${sparkline(monthlyBySub[c.subclass] || [], { color, width: 80, height: 24 })}</div>
+        <div title="24M monthly ton trend">${sparkline(monthlyByCat[c.category] || [], { color, width: 80, height: 24 })}</div>
       </div>
       <div class="mb-3">${trend}</div>
       <dl class="text-xs space-y-1.5 text-slate-600 mb-3">
@@ -482,30 +478,28 @@ function drawTankerCards() {
     </div>`;
   }).join("");
 
-  // Click / Enter / Space → toggle filter (synced with cargo pills)
-  const applyFilter = (s) => {
-    tsState.filter = (tsState.filter === s) ? "ALL" : s;
-    buildTankerCargoPills(tsState.tankerSubclass);
+  const applyFilter = (cat) => {
+    tsState.filter = (tsState.filter === cat) ? "ALL" : cat;
+    buildTankerCargoPills(tsState.cargoBalance);
     drawTankerCards();
     drawTankerMonthly();
     drawTankerCommodityBars();
     drawTankerOperatorBars();
     drawTankerOperatorDonut();
   };
-  host.querySelectorAll("[data-subclass]").forEach(el => {
-    el.addEventListener("click", () => applyFilter(el.dataset.subclass));
+  host.querySelectorAll("[data-cat]").forEach(el => {
+    el.addEventListener("click", () => applyFilter(el.dataset.cat));
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        applyFilter(el.dataset.subclass);
+        applyFilter(el.dataset.cat);
       }
     });
   });
 
-  // PR-8: prominent active-filter pill with explicit Clear button.
   if (activeEl) {
     if (tsState.filter === "ALL") {
-      activeEl.textContent = "전체 subclass — 카드를 클릭하여 필터링";
+      activeEl.textContent = "전체 화물 — 카드를 클릭하여 필터링";
       activeEl.className = "text-xs text-slate-500";
     } else {
       activeEl.innerHTML = `<span class="active-filter-pill">필터: ${tsState.filter}<button type="button" id="ts-filter-clear" aria-label="필터 해제">×</button></span>`;
@@ -517,12 +511,13 @@ function drawTankerCards() {
 }
 
 function drawTankerMonthly() {
-  const data = tsState.tankerSubclass?.monthly;
+  const data = tsState.cargoBalance?.monthly;
   if (!data) return;
   const periods = data.periods || [];
   const filter = tsState.filter;
-  const series = (data.series || []).filter(s => filter === "ALL" || filter === s.subclass);
+  const series = (data.series || []).filter(s => filter === "ALL" || filter === s.category);
   const traces = series.map(s => {
+    const color = s.color || tsState.colorByCat[s.category] || "#64748b";
     let y = s.ton_by_period.slice();
     if (tsState.monthlyMode === "yoy") {
       y = y.map((v, i) => (i < 12 || !y[i - 12]) ? null : ((v - y[i - 12]) / y[i - 12]) * 100);
@@ -530,15 +525,15 @@ function drawTankerMonthly() {
     return {
       x: periods,
       y,
-      name: s.subclass,
+      name: s.category,
       type: "scatter",
       mode: "lines",
       stackgroup: tsState.monthlyMode === "abs" ? "one" : null,
-      line: { color: SUBCLASS_PALETTE[s.subclass] || "#64748b", width: tsState.monthlyMode === "abs" ? 0.5 : 2 },
-      fillcolor: SUBCLASS_PALETTE[s.subclass] || "#64748b",
+      line: { color, width: tsState.monthlyMode === "abs" ? 0.5 : 2 },
+      fillcolor: color,
       hovertemplate: tsState.monthlyMode === "abs"
-        ? `<b>%{x}</b><br>${s.subclass}: %{y:,.0f} tons<extra></extra>`
-        : `<b>%{x}</b><br>${s.subclass}: %{y:.1f}%<extra></extra>`,
+        ? `<b>%{x}</b><br>${s.category}: %{y:,.0f} tons<extra></extra>`
+        : `<b>%{x}</b><br>${s.category}: %{y:.1f}%<extra></extra>`,
     };
   });
 
@@ -589,48 +584,80 @@ function drawTankerMonthly() {
 
 function drawTankerCommodityBars() {
   const filter = tsState.filter;
-  const all = (tsState.tankerTop?.top_commodities || []);
-  const list = (filter === "ALL" ? all : all.filter(c => c.subclass === filter)).slice();
+  const byCat = tsState.cargoBalanceTop?.top_commodities_by_category || {};
+  let list;
+  if (filter === "ALL") {
+    // Cross-category top: take top 3 per category, then trim to top 15 by ton.
+    const acc = [];
+    for (const [cat, rows] of Object.entries(byCat)) {
+      for (const r of (rows || []).slice(0, 3)) {
+        acc.push({ ...r, category: cat });
+      }
+    }
+    acc.sort((a, b) => b.ton_total - a.ton_total);
+    list = acc.slice(0, 15);
+  } else {
+    list = (byCat[filter] || []).map(r => ({ ...r, category: filter }));
+  }
   if (!list.length) {
     Plotly.purge("ts-commodity-bars");
     document.getElementById("ts-commodity-bars").innerHTML =
       `<div class="text-xs text-slate-400 p-4">선택한 화물(${filter})에 해당하는 코모디티 데이터 없음.</div>`;
     return;
   }
-  // Reverse so largest sits at top in horizontal bar
-  list.reverse();
+  list.reverse();  // largest at top
   const trace = {
     x: list.map(c => c.ton_total),
     y: list.map(c => c.name),
     type: "bar",
     orientation: "h",
     marker: {
-      color: list.map(c => SUBCLASS_PALETTE[c.subclass] || "#64748b"),
+      color: list.map(c => tsState.colorByCat[c.category] || "#64748b"),
     },
-    hovertemplate: "<b>%{y}</b><br>%{x:,.0f} tons<extra></extra>",
+    customdata: list.map(c => [c.category, c.calls || 0]),
+    hovertemplate: "<b>%{y}</b><br>%{customdata[0]}<br>%{x:,.0f} tons · %{customdata[1]:,} calls<extra></extra>",
     text: list.map(c => fmtTon(c.ton_total)),
     textposition: "outside",
     cliponaxis: false,
   };
   Plotly.newPlot("ts-commodity-bars", [trace], {
-    margin: { t: 10, l: 130, r: 60, b: 40 },
-    xaxis: { title: "ton (12M)" },
+    margin: { t: 10, l: 180, r: 60, b: 40 },
+    xaxis: { title: "ton (24M aggregate)" },
   }, { displayModeBar: false, responsive: true });
+}
+
+function _aggregateOperatorsAcrossCats() {
+  // ALL-view: aggregate per-owner across the 9 categories so we can rank by
+  // total cargo GT (prorated). Used by operator bars + donut.
+  const byCat = tsState.cargoBalanceTop?.top_operators_by_category || {};
+  const agg = new Map();
+  for (const [cat, rows] of Object.entries(byCat)) {
+    for (const o of (rows || [])) {
+      const key = o.owner;
+      if (!agg.has(key)) {
+        agg.set(key, {
+          owner: o.owner, ticker: o.ticker, vessels: o.vessels, sum_gt: o.sum_gt,
+          vessels_in_cargo: 0, sum_gt_in_cargo_est: 0,
+        });
+      }
+      const a = agg.get(key);
+      a.vessels_in_cargo += o.vessels_in_category || 0;
+      a.sum_gt_in_cargo_est += o.sum_gt_in_category_est || 0;
+    }
+  }
+  return [...agg.values()].sort((a, b) => b.sum_gt_in_cargo_est - a.sum_gt_in_cargo_est);
 }
 
 function drawTankerOperatorBars() {
   const filter = tsState.filter;
-  const all = (tsState.tankerTop?.top_operators || []);
-  // When filtered, keep only operators with vessels in that subclass and
-  // re-sort by count_in_subclass (sum_gt isn't broken out per subclass in the data).
-  let list;
+  const metaEl = document.getElementById("ts-operator-meta");
+  let list, xVals, xTitle, hovertemplate;
   if (filter === "ALL") {
-    list = all.slice();
+    list = _aggregateOperatorsAcrossCats().slice(0, 15);
+    if (metaEl) metaEl.textContent = "(전 화물 합산 · Sum GT 추정치 기준)";
   } else {
-    list = all
-      .filter(o => ((o.subclass_mix || {})[filter] || 0) > 0)
-      .sort((a, b) => ((b.subclass_mix || {})[filter] || 0) - ((a.subclass_mix || {})[filter] || 0))
-      .slice(0, 15);
+    list = (tsState.cargoBalanceTop?.top_operators_by_category?.[filter] || []).slice(0, 15);
+    if (metaEl) metaEl.textContent = `(${filter} · 카테고리 선박수 기준)`;
   }
   if (!list.length) {
     Plotly.purge("ts-operator-bars");
@@ -638,29 +665,39 @@ function drawTankerOperatorBars() {
       `<div class="text-xs text-slate-400 p-4">선택한 화물(${filter})에 해당하는 운영사 데이터 없음.</div>`;
     return;
   }
-  list.reverse();   // bar chart paints bottom-up
-  const useSubclassCount = filter !== "ALL";
-  const xVals = useSubclassCount
-    ? list.map(o => (o.subclass_mix || {})[filter] || 0)
-    : list.map(o => o.sum_gt);
-  const xTitle = useSubclassCount ? `${filter} 선박 수` : "Sum GT";
+  list.reverse();   // bar paints bottom-up
+  if (filter === "ALL") {
+    xVals = list.map(o => o.sum_gt_in_cargo_est);
+    xTitle = "Sum GT (전 화물 추정)";
+    hovertemplate =
+      "<b>%{y}</b><br>" +
+      "전 화물 GT (추정): %{x:,.0f}<br>" +
+      "전 화물 선박: %{customdata[2]}척<br>" +
+      "총 선박: %{customdata[0]}척<br>" +
+      "Listed: %{customdata[1]}<extra></extra>";
+  } else {
+    xVals = list.map(o => o.vessels_in_category || 0);
+    xTitle = `${filter} 선박 수`;
+    hovertemplate =
+      "<b>%{y}</b><br>" +
+      `${filter} 선박: %{x}척<br>` +
+      "총 선박: %{customdata[0]}척<br>" +
+      `${filter} GT (추정): %{customdata[3]:,.0f}<br>` +
+      "Listed: %{customdata[1]}<extra></extra>";
+  }
   const trace = {
     x: xVals,
     y: list.map(o => o.owner.length > 28 ? o.owner.slice(0, 26) + "…" : o.owner),
     type: "bar",
     orientation: "h",
     marker: { color: list.map(o => o.ticker ? "#1A3A6B" : "#94a3b8") },
-    customdata: list.map(o => [o.tankers, o.ticker || "private", JSON.stringify(o.subclass_mix || {}), o.sum_gt]),
-    hovertemplate: useSubclassCount
-      ? "<b>%{y}</b><br>" +
-        `${filter} 선박: %{x}척<br>` +
-        "총 선박: %{customdata[0]}척<br>" +
-        "Sum GT (전체): %{customdata[3]:,.0f}<br>" +
-        "Listed: %{customdata[1]}<extra></extra>"
-      : "<b>%{y}</b><br>" +
-        "Sum GT: %{x:,.0f}<br>" +
-        "Tankers: %{customdata[0]}<br>" +
-        "Listed: %{customdata[1]}<extra></extra>",
+    customdata: list.map(o => [
+      o.vessels,                                      // total fleet
+      o.ticker || "private",
+      o.vessels_in_cargo ?? o.vessels_in_category,    // cargo/cat slice
+      o.sum_gt_in_category_est ?? 0,
+    ]),
+    hovertemplate,
     text: list.map(o => o.ticker ? o.ticker : ""),
     textposition: "outside",
     textfont: { size: 10, color: "#1A3A6B" },
@@ -697,17 +734,20 @@ function drawTankerOperatorDonut() {
   const filter = tsState.filter;
   let top5, total, unit, totalLabel;
   if (filter === "ALL") {
-    top5 = tsState.tankerTop?.operator_top5_gt || 0;
-    total = tsState.tankerTop?.operator_total_gt || 0;
+    const totals = tsState.cargoBalanceTop?.totals_gt_by_category || {};
+    total = Object.values(totals).reduce((a, b) => a + (b || 0), 0);
+    const agg = _aggregateOperatorsAcrossCats();
+    top5 = agg.slice(0, 5).reduce((a, o) => a + (o.sum_gt_in_cargo_est || 0), 0);
     unit = "GT";
-    totalLabel = `${fmtTon(total)} GT`;
+    totalLabel = `${fmtTon(total)} GT (추정)`;
   } else {
-    const ops = (tsState.tankerTop?.top_operators || [])
-      .map(o => (o.subclass_mix || {})[filter] || 0)
+    // Per-category: prefer vessel-count share (more interpretable than GT proxy)
+    const ops = (tsState.cargoBalanceTop?.top_operators_by_category?.[filter] || [])
+      .map(o => o.vessels_in_category || 0)
       .filter(v => v > 0)
       .sort((a, b) => b - a);
     top5 = ops.slice(0, 5).reduce((a, b) => a + b, 0);
-    const card = (tsState.tankerSubclass?.cards || []).find(c => c.subclass === filter);
+    const card = (tsState.cargoBalance?.cards || []).find(c => c.category === filter);
     total = card?.vessel_count || ops.reduce((a, b) => a + b, 0);
     unit = "척";
     totalLabel = `${total.toLocaleString()}척`;

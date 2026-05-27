@@ -1,0 +1,898 @@
+{
+  "schema_version": 1,
+  "snapshot_month": "2026-05",
+  "top_commodities_by_category": {
+    "Product": [
+      {
+        "name": "CRUDE OIL",
+        "ton_total": 46659564.3,
+        "calls": 1796
+      },
+      {
+        "name": "PERTALITE",
+        "ton_total": 41424277.6,
+        "calls": 19004
+      },
+      {
+        "name": "CPO",
+        "ton_total": 36261032.1,
+        "calls": 8291
+      },
+      {
+        "name": "SOLAR",
+        "ton_total": 32403456.5,
+        "calls": 5174
+      },
+      {
+        "name": "BUCO",
+        "ton_total": 24618922.6,
+        "calls": 487
+      },
+      {
+        "name": "CRUDE PALM OIL",
+        "ton_total": 20402045.3,
+        "calls": 5093
+      },
+      {
+        "name": "BBM",
+        "ton_total": 18162783.8,
+        "calls": 4701
+      },
+      {
+        "name": "BIO SOLAR",
+        "ton_total": 15837020.0,
+        "calls": 16908
+      },
+      {
+        "name": "AVTUR",
+        "ton_total": 14567377.4,
+        "calls": 2538
+      },
+      {
+        "name": "FAME",
+        "ton_total": 13170596.1,
+        "calls": 2787
+      },
+      {
+        "name": "PERTAMAX",
+        "ton_total": 10635671.9,
+        "calls": 6969
+      },
+      {
+        "name": "BIOSOLAR",
+        "ton_total": 10355031.7,
+        "calls": 8177
+      }
+    ],
+    "Bulk Carrier": [
+      {
+        "name": "BATU BARA",
+        "ton_total": 781531819.6,
+        "calls": 12354
+      },
+      {
+        "name": "BATUBARA",
+        "ton_total": 492726128.8,
+        "calls": 8317
+      },
+      {
+        "name": "COAL",
+        "ton_total": 61254635.5,
+        "calls": 1021
+      },
+      {
+        "name": "INDONESIAN STEAM COAL IN BULK",
+        "ton_total": 58603923.9,
+        "calls": 1121
+      },
+      {
+        "name": "NICKEL ORE",
+        "ton_total": 35396182.5,
+        "calls": 645
+      },
+      {
+        "name": "MUAT BATU BARA",
+        "ton_total": 23530349.5,
+        "calls": 323
+      },
+      {
+        "name": "INDONESIAN STEAM COAL",
+        "ton_total": 21287670.6,
+        "calls": 404
+      },
+      {
+        "name": "STEAM COAL",
+        "ton_total": 19834211.2,
+        "calls": 281
+      },
+      {
+        "name": "SEMEN CURAH",
+        "ton_total": 11831768.1,
+        "calls": 2100
+      },
+      {
+        "name": "GANDUM",
+        "ton_total": 11732346.7,
+        "calls": 337
+      },
+      {
+        "name": "CLINKER",
+        "ton_total": 11528312.6,
+        "calls": 360
+      },
+      {
+        "name": "CLINKER IN BULK",
+        "ton_total": 8818740.8,
+        "calls": 224
+      }
+    ],
+    "Other Cargo": [
+      {
+        "name": "NICKEL ORE",
+        "ton_total": 577398958.1,
+        "calls": 50983
+      },
+      {
+        "name": "BATU BARA",
+        "ton_total": 558783627.9,
+        "calls": 63676
+      },
+      {
+        "name": "BATUBARA",
+        "ton_total": 437389596.9,
+        "calls": 49241
+      },
+      {
+        "name": "BATU BARA CURAH KERING",
+        "ton_total": 33883080.4,
+        "calls": 1467
+      },
+      {
+        "name": "BAUXITE",
+        "ton_total": 28714630.2,
+        "calls": 3489
+      },
+      {
+        "name": "LIMESTONE",
+        "ton_total": 24464236.7,
+        "calls": 1875
+      },
+      {
+        "name": "PASIR",
+        "ton_total": 23663029.7,
+        "calls": 6959
+      },
+      {
+        "name": "Nickel Ore",
+        "ton_total": 22347102.1,
+        "calls": 2224
+      },
+      {
+        "name": "INDONESIAN NICKEL ORE",
+        "ton_total": 20765550.2,
+        "calls": 2061
+      },
+      {
+        "name": "NIKEL ORE",
+        "ton_total": 15944171.7,
+        "calls": 881
+      },
+      {
+        "name": "COAL",
+        "ton_total": 15144024.5,
+        "calls": 1972
+      },
+      {
+        "name": "CPO",
+        "ton_total": 15070883.8,
+        "calls": 4444
+      }
+    ],
+    "Chemical": [
+      {
+        "name": "RBD PALM OLEIN",
+        "ton_total": 11134051.9,
+        "calls": 1334
+      },
+      {
+        "name": "RBD PALM OIL",
+        "ton_total": 6391336.8,
+        "calls": 629
+      },
+      {
+        "name": "FAME",
+        "ton_total": 6054383.4,
+        "calls": 611
+      },
+      {
+        "name": "PERTALITE",
+        "ton_total": 4707041.2,
+        "calls": 1952
+      },
+      {
+        "name": "CPO",
+        "ton_total": 3904615.4,
+        "calls": 745
+      },
+      {
+        "name": "AVTUR",
+        "ton_total": 3385392.0,
+        "calls": 705
+      },
+      {
+        "name": "METHANOL",
+        "ton_total": 3124112.5,
+        "calls": 670
+      },
+      {
+        "name": "CRUDE PALM OIL",
+        "ton_total": 3070300.2,
+        "calls": 581
+      },
+      {
+        "name": "BBM",
+        "ton_total": 2787702.4,
+        "calls": 424
+      },
+      {
+        "name": "FATTY ACID METHYL ESTER",
+        "ton_total": 2695217.0,
+        "calls": 356
+      },
+      {
+        "name": "LIQUID CAUSTIC SODA",
+        "ton_total": 2663965.0,
+        "calls": 313
+      },
+      {
+        "name": "NAPHTHA",
+        "ton_total": 2092252.8,
+        "calls": 88
+      }
+    ],
+    "Container": [
+      {
+        "name": "PETIKEMAS 20 FULL",
+        "ton_total": 124792025.2,
+        "calls": 42558
+      },
+      {
+        "name": "PETIKEMAS 40 FULL",
+        "ton_total": 62158695.9,
+        "calls": 35975
+      },
+      {
+        "name": "CONTAINER FULL 20",
+        "ton_total": 32092719.9,
+        "calls": 7356
+      },
+      {
+        "name": "CONTAINER FULL 40",
+        "ton_total": 25599287.6,
+        "calls": 5825
+      },
+      {
+        "name": "PETIKEMAS 20 ISI",
+        "ton_total": 22718099.2,
+        "calls": 7123
+      },
+      {
+        "name": "PETIKEMAS 40 ISI",
+        "ton_total": 21196651.0,
+        "calls": 6616
+      },
+      {
+        "name": "BARANG CAMPURAN",
+        "ton_total": 13493636.1,
+        "calls": 4526
+      },
+      {
+        "name": "GENERAL CARGO",
+        "ton_total": 11907470.4,
+        "calls": 6515
+      },
+      {
+        "name": "PETIKEMAS 20 FL",
+        "ton_total": 8025419.7,
+        "calls": 1261
+      },
+      {
+        "name": "CONTAINER KOSONG",
+        "ton_total": 7436783.5,
+        "calls": 392
+      },
+      {
+        "name": "PETIKEMAS 20 EMPTY",
+        "ton_total": 6080273.0,
+        "calls": 13576
+      },
+      {
+        "name": "KOPRA",
+        "ton_total": 5694680.7,
+        "calls": 1280
+      }
+    ],
+    "LPG": [
+      {
+        "name": "LPG",
+        "ton_total": 26992434.0,
+        "calls": 6679
+      },
+      {
+        "name": "LPG MIX",
+        "ton_total": 4596501.2,
+        "calls": 1094
+      },
+      {
+        "name": "LNG",
+        "ton_total": 2581742.0,
+        "calls": 52
+      },
+      {
+        "name": "PROPANE",
+        "ton_total": 2060538.5,
+        "calls": 562
+      },
+      {
+        "name": "BUTANE",
+        "ton_total": 1910295.7,
+        "calls": 563
+      },
+      {
+        "name": "PROPANE/BUTANE",
+        "ton_total": 1502672.6,
+        "calls": 33
+      },
+      {
+        "name": "AMMONIA",
+        "ton_total": 1453862.1,
+        "calls": 176
+      },
+      {
+        "name": "ETHYLENE",
+        "ton_total": 1389524.9,
+        "calls": 302
+      },
+      {
+        "name": "GAS LPG",
+        "ton_total": 1324187.6,
+        "calls": 633
+      },
+      {
+        "name": "AMONIAK",
+        "ton_total": 1302178.0,
+        "calls": 159
+      },
+      {
+        "name": "FULLY REFRIGERATED PROPANE",
+        "ton_total": 1122230.0,
+        "calls": 61
+      },
+      {
+        "name": "PROPANE & BUTANE",
+        "ton_total": 1121424.1,
+        "calls": 29
+      }
+    ],
+    "General Cargo": [
+      {
+        "name": "GENERAL CARGO",
+        "ton_total": 36678057.5,
+        "calls": 10841
+      },
+      {
+        "name": "SEMEN",
+        "ton_total": 13426353.0,
+        "calls": 12950
+      },
+      {
+        "name": "PUPUK",
+        "ton_total": 12583649.4,
+        "calls": 8060
+      },
+      {
+        "name": "BATU BARA",
+        "ton_total": 12569322.7,
+        "calls": 498
+      },
+      {
+        "name": "PETIKEMAS 20 FULL",
+        "ton_total": 8324307.7,
+        "calls": 5426
+      },
+      {
+        "name": "BATUBARA",
+        "ton_total": 6646641.9,
+        "calls": 354
+      },
+      {
+        "name": "PULP",
+        "ton_total": 4637990.2,
+        "calls": 706
+      },
+      {
+        "name": "FERRO NICKEL",
+        "ton_total": 4009814.1,
+        "calls": 411
+      },
+      {
+        "name": "PALM KERNEL SHELL",
+        "ton_total": 3795331.4,
+        "calls": 355
+      },
+      {
+        "name": "PALM KERNEL",
+        "ton_total": 3606275.7,
+        "calls": 2392
+      },
+      {
+        "name": "WOODPULP",
+        "ton_total": 3375205.0,
+        "calls": 239
+      },
+      {
+        "name": "NICKEL ORE",
+        "ton_total": 3351091.0,
+        "calls": 233
+      }
+    ],
+    "LNG": [
+      {
+        "name": "LNG",
+        "ton_total": 25554029.2,
+        "calls": 593
+      },
+      {
+        "name": "LIQUEFIED NATURAL GAS",
+        "ton_total": 5317986.4,
+        "calls": 107
+      },
+      {
+        "name": "LNG / GAS CAIR",
+        "ton_total": 2994631.0,
+        "calls": 39
+      },
+      {
+        "name": "Liquefied Natural Gas",
+        "ton_total": 2721598.0,
+        "calls": 42
+      },
+      {
+        "name": "LIQUIFEID NATURAL GAS",
+        "ton_total": 2662899.5,
+        "calls": 52
+      },
+      {
+        "name": "LIQUID NATURAL GAS",
+        "ton_total": 309162.0,
+        "calls": 5
+      },
+      {
+        "name": "LNG GAS CAIR",
+        "ton_total": 232180.0,
+        "calls": 4
+      },
+      {
+        "name": "PETIKEMAS FULL",
+        "ton_total": 118143.6,
+        "calls": 11
+      },
+      {
+        "name": "LNG GAS",
+        "ton_total": 99085.0,
+        "calls": 2
+      },
+      {
+        "name": "LIQUEFIED NATURAL GAS (LNG)",
+        "ton_total": 93631.0,
+        "calls": 3
+      },
+      {
+        "name": "PETIKEMAS",
+        "ton_total": 80497.0,
+        "calls": 15
+      },
+      {
+        "name": "LNG/GAS CAIR",
+        "ton_total": 65367.0,
+        "calls": 3
+      }
+    ],
+    "FAME / Vegetable Oil": [
+      {
+        "name": "CPO",
+        "ton_total": 3278481.2,
+        "calls": 879
+      },
+      {
+        "name": "CRUDE PALM OIL",
+        "ton_total": 2379692.8,
+        "calls": 553
+      },
+      {
+        "name": "CRUDE PALM OIL (CPO)",
+        "ton_total": 515621.3,
+        "calls": 52
+      },
+      {
+        "name": "PFAD",
+        "ton_total": 360192.8,
+        "calls": 12
+      },
+      {
+        "name": "RBD PALM OLEIN",
+        "ton_total": 275991.0,
+        "calls": 15
+      },
+      {
+        "name": "FAME",
+        "ton_total": 249707.0,
+        "calls": 54
+      },
+      {
+        "name": "CPKO",
+        "ton_total": 131610.1,
+        "calls": 68
+      },
+      {
+        "name": "RBD OLEIN",
+        "ton_total": 95984.3,
+        "calls": 40
+      },
+      {
+        "name": "CPO ( CRUDE PALM OIL )",
+        "ton_total": 81619.0,
+        "calls": 21
+      },
+      {
+        "name": "BIODIESEL",
+        "ton_total": 75770.0,
+        "calls": 17
+      },
+      {
+        "name": "RBDPL",
+        "ton_total": 66899.0,
+        "calls": 15
+      },
+      {
+        "name": "CRUDE PALM KERNEL OIL",
+        "ton_total": 65708.2,
+        "calls": 24
+      }
+    ]
+  },
+  "top_operators_by_category": {
+    "Container": [
+      {
+        "owner": "PT. TANTO INTIM LINE",
+        "ticker": null,
+        "vessels": 49,
+        "vessels_in_category": 45,
+        "sum_gt": 374684.0,
+        "sum_gt_in_category_est": 344097.6
+      },
+      {
+        "owner": "PT. SALAM PACIFIC INDONESIA LINES",
+        "ticker": null,
+        "vessels": 51,
+        "vessels_in_category": 32,
+        "sum_gt": 347068.0,
+        "sum_gt_in_category_est": 217768.2
+      }
+    ],
+    "Bulk Carrier": [
+      {
+        "owner": "PT. JHONLIN MARINE TRANS",
+        "ticker": null,
+        "vessels": 89,
+        "vessels_in_category": 1,
+        "sum_gt": 350369.0,
+        "sum_gt_in_category_est": 3936.7
+      }
+    ],
+    "General Cargo": [
+      {
+        "owner": "PT. SALAM PACIFIC INDONESIA LINES",
+        "ticker": null,
+        "vessels": 51,
+        "vessels_in_category": 16,
+        "sum_gt": 347068.0,
+        "sum_gt_in_category_est": 108884.1
+      },
+      {
+        "owner": "PT. USDA SEROJA JAYA",
+        "ticker": null,
+        "vessels": 73,
+        "vessels_in_category": 12,
+        "sum_gt": 175387.0,
+        "sum_gt_in_category_est": 28830.7
+      },
+      {
+        "owner": "PT. TANTO INTIM LINE",
+        "ticker": null,
+        "vessels": 49,
+        "vessels_in_category": 4,
+        "sum_gt": 374684.0,
+        "sum_gt_in_category_est": 30586.4
+      },
+      {
+        "owner": "PT. MARITIM BARITO PERKASA",
+        "ticker": null,
+        "vessels": 67,
+        "vessels_in_category": 4,
+        "sum_gt": 330601.0,
+        "sum_gt_in_category_est": 19737.4
+      },
+      {
+        "owner": "PT. PELAYARAN RIMBA MEGAH ARMADA",
+        "ticker": null,
+        "vessels": 62,
+        "vessels_in_category": 3,
+        "sum_gt": 141296.0,
+        "sum_gt_in_category_est": 6836.9
+      },
+      {
+        "owner": "PT. HABCO PRIMATAMA",
+        "ticker": null,
+        "vessels": 80,
+        "vessels_in_category": 1,
+        "sum_gt": 214949.0,
+        "sum_gt_in_category_est": 2686.9
+      }
+    ],
+    "Other Cargo": [
+      {
+        "owner": "PT. DANNY SAMUDERA RAYA LINE",
+        "ticker": null,
+        "vessels": 139,
+        "vessels_in_category": 138,
+        "sum_gt": 488159.0,
+        "sum_gt_in_category_est": 484647.1
+      },
+      {
+        "owner": "PT. PERUSAHAAN PELAYARAN RUSIANTO BERSAUDARA",
+        "ticker": null,
+        "vessels": 113,
+        "vessels_in_category": 113,
+        "sum_gt": 274941.0,
+        "sum_gt_in_category_est": 274941.0
+      },
+      {
+        "owner": "PT. PELAYARAN KARTIKASAMUDRA ADIJAYA",
+        "ticker": null,
+        "vessels": 108,
+        "vessels_in_category": 108,
+        "sum_gt": 364340.0,
+        "sum_gt_in_category_est": 364340.0
+      },
+      {
+        "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
+        "ticker": null,
+        "vessels": 101,
+        "vessels_in_category": 99,
+        "sum_gt": 221347.0,
+        "sum_gt_in_category_est": 216963.9
+      },
+      {
+        "owner": "PT. PELAYARAN MITRA TUJUH SAMUDRA",
+        "ticker": null,
+        "vessels": 98,
+        "vessels_in_category": 98,
+        "sum_gt": 351522.0,
+        "sum_gt_in_category_est": 351522.0
+      },
+      {
+        "owner": "PT. JHONLIN MARINE TRANS",
+        "ticker": null,
+        "vessels": 89,
+        "vessels_in_category": 87,
+        "sum_gt": 350369.0,
+        "sum_gt_in_category_est": 342495.5
+      },
+      {
+        "owner": "PT. HABCO PRIMATAMA",
+        "ticker": null,
+        "vessels": 80,
+        "vessels_in_category": 79,
+        "sum_gt": 214949.0,
+        "sum_gt_in_category_est": 212262.1
+      },
+      {
+        "owner": "PT. PELAYARAN DUTA LINTAS SAMUDERA",
+        "ticker": null,
+        "vessels": 70,
+        "vessels_in_category": 70,
+        "sum_gt": 237057.0,
+        "sum_gt_in_category_est": 237057.0
+      },
+      {
+        "owner": "PT. KARYA PACIFIC SHIPPING",
+        "ticker": null,
+        "vessels": 70,
+        "vessels_in_category": 70,
+        "sum_gt": 235846.0,
+        "sum_gt_in_category_est": 235846.0
+      },
+      {
+        "owner": "PT. LAUTAN LESTARI",
+        "ticker": null,
+        "vessels": 68,
+        "vessels_in_category": 68,
+        "sum_gt": 175244.0,
+        "sum_gt_in_category_est": 175244.0
+      },
+      {
+        "owner": "PT. MARITIM BARITO PERKASA",
+        "ticker": null,
+        "vessels": 67,
+        "vessels_in_category": 63,
+        "sum_gt": 330601.0,
+        "sum_gt_in_category_est": 310863.6
+      },
+      {
+        "owner": "PT. PELAYARAN NASIONAL BAHTERA BESTARI SHIPPING,",
+        "ticker": null,
+        "vessels": 63,
+        "vessels_in_category": 63,
+        "sum_gt": 213238.0,
+        "sum_gt_in_category_est": 213238.0
+      },
+      {
+        "owner": "PT. PELAYARAN RIMBA MEGAH ARMADA",
+        "ticker": null,
+        "vessels": 62,
+        "vessels_in_category": 59,
+        "sum_gt": 141296.0,
+        "sum_gt_in_category_est": 134459.1
+      },
+      {
+        "owner": "PT. PELAYARAN NASIONAL BAHTERA BESTARI SHIPPING",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 57,
+        "sum_gt": 143758.0,
+        "sum_gt_in_category_est": 143758.0
+      },
+      {
+        "owner": "PT. AYU",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 57,
+        "sum_gt": 137567.0,
+        "sum_gt_in_category_est": 137567.0
+      }
+    ],
+    "Product": [
+      {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 50,
+        "sum_gt": 981071.0,
+        "sum_gt_in_category_est": 860588.6
+      },
+      {
+        "owner": "PT. USDA SEROJA JAYA",
+        "ticker": null,
+        "vessels": 73,
+        "vessels_in_category": 15,
+        "sum_gt": 175387.0,
+        "sum_gt_in_category_est": 36038.4
+      },
+      {
+        "owner": "PT. PELAYARAN SAHABAT KAPUAS",
+        "ticker": null,
+        "vessels": 62,
+        "vessels_in_category": 13,
+        "sum_gt": 82892.0,
+        "sum_gt_in_category_est": 17380.6
+      },
+      {
+        "owner": "PT. CITRA MARITIME",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 4,
+        "sum_gt": 216271.0,
+        "sum_gt_in_category_est": 15176.9
+      },
+      {
+        "owner": "PT. PELAYARAN PRIMA SAMUDERA JAYA",
+        "ticker": null,
+        "vessels": 52,
+        "vessels_in_category": 3,
+        "sum_gt": 122903.0,
+        "sum_gt_in_category_est": 7090.6
+      },
+      {
+        "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
+        "ticker": null,
+        "vessels": 101,
+        "vessels_in_category": 2,
+        "sum_gt": 221347.0,
+        "sum_gt_in_category_est": 4383.1
+      },
+      {
+        "owner": "PT. DANNY SAMUDERA RAYA LINE",
+        "ticker": null,
+        "vessels": 139,
+        "vessels_in_category": 1,
+        "sum_gt": 488159.0,
+        "sum_gt_in_category_est": 3511.9
+      },
+      {
+        "owner": "PT. JHONLIN MARINE TRANS",
+        "ticker": null,
+        "vessels": 89,
+        "vessels_in_category": 1,
+        "sum_gt": 350369.0,
+        "sum_gt_in_category_est": 3936.7
+      }
+    ],
+    "Chemical": [
+      {
+        "owner": "PT. USDA SEROJA JAYA",
+        "ticker": null,
+        "vessels": 73,
+        "vessels_in_category": 27,
+        "sum_gt": 175387.0,
+        "sum_gt_in_category_est": 64869.2
+      },
+      {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 1,
+        "sum_gt": 981071.0,
+        "sum_gt_in_category_est": 17211.8
+      }
+    ],
+    "LPG": [
+      {
+        "owner": "PT PERTAMINA PATRA NIAGA",
+        "ticker": null,
+        "vessels": 57,
+        "vessels_in_category": 6,
+        "sum_gt": 981071.0,
+        "sum_gt_in_category_est": 103270.6
+      }
+    ],
+    "LNG": [],
+    "FAME / Vegetable Oil": [
+      {
+        "owner": "PT. PELAYARAN SAHABAT KAPUAS",
+        "ticker": null,
+        "vessels": 62,
+        "vessels_in_category": 6,
+        "sum_gt": 82892.0,
+        "sum_gt_in_category_est": 8021.8
+      }
+    ]
+  },
+  "totals_gt_by_category": {
+    "Container": 561865.7,
+    "Bulk Carrier": 3936.7,
+    "General Cargo": 197562.4,
+    "Other Cargo": 4595301.9,
+    "Product": 948106.8,
+    "Chemical": 82080.9,
+    "LPG": 103270.6,
+    "LNG": 0.0,
+    "FAME / Vegetable Oil": 8021.8
+  },
+  "top5_gt_by_category": {
+    "Container": 561865.7,
+    "Bulk Carrier": 3936.7,
+    "General Cargo": 194875.5,
+    "Other Cargo": 1692414.0,
+    "Product": 936275.1,
+    "Chemical": 82080.9,
+    "LPG": 103270.6,
+    "LNG": 0,
+    "FAME / Vegetable Oil": 8021.8
+  },
+  "_notes": {
+    "commodities_source": "cargo_snapshot.raw_row — JENIS KAPAL × KOMODITI 24M aggregate",
+    "operators_source": "fleet_owners.json — class_mix / tanker_subclass_mix",
+    "sum_gt_in_category_est": "operator's total sum_gt prorated by (vessels_in_category / total_vessels). Approximation — per-class GT not tracked in fleet_owners."
+  }
+}

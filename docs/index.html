@@ -758,13 +758,12 @@
       </div>
     </section>
 
-    <!-- Cycle 1: Tanker Sector → ⚖️ Balance 탭으로 재정의. Demand×Supply
-         교차 매칭이 본 탭의 정체성. 현재는 Tanker Subclass 매칭이 핵심
-         자산. Cycle 3에서 전 sector로 확장 + 톤/GT 비율 + 신규 항로 lag 분석. -->
+    <!-- Cycle 1→2: Balance 탭 — Demand×Supply 교차 매칭. 화물선 전 카테고리
+         (4 vessel class + 5 tanker subclass = 9개) 단위로 톤/GT 매칭. -->
     <section id="tab-tanker-sector" class="tab-panel hidden" role="tabpanel" tabindex="-1">
       <div class="mb-4">
         <h2 class="text-2xl font-bold text-slate-800">⚖️ Balance — 수급 균형</h2>
-        <p class="text-xs text-slate-500 mt-1">수요(LK3 톤)와 공급(선대 GT)이 어디서 어긋나는가. Tanker Subclass 매칭이 현 사이클의 핵심.</p>
+        <p class="text-xs text-slate-500 mt-1">수요(LK3 톤)와 공급(선대 GT)이 어디서 어긋나는가. 화물선 9개 카테고리(4 vessel class + 5 tanker subclass) 단위 매칭.</p>
       </div>
 
       <!-- Cycle 1: scope meta-strip — Balance는 cargo+auxiliary 합산이 기본 -->
@@ -790,12 +789,12 @@
         <span class="text-xs text-slate-500" id="ts-active-filter">전체</span>
       </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8" id="ts-cards"
-           data-source="docs/derived/tanker_subclass.json"></div>
+           data-source="docs/derived/cargo_balance.json"></div>
 
-      <!-- 5.3 Subclass monthly stacked area -->
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_subclass.json">
+      <!-- 5.3 화물별 monthly stacked area -->
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/cargo_balance.json">
         <div class="flex items-baseline justify-between mb-1 flex-wrap gap-2">
-          <h3 class="font-semibold">Subclass 월별 추이 <span class="text-xs text-slate-500 font-normal" id="ts-monthly-period">(loading…)</span></h3>
+          <h3 class="font-semibold">화물별 월별 추이 <span class="text-xs text-slate-500 font-normal" id="ts-monthly-period">(loading…)</span></h3>
           <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="ts-monthly-mode">
             <button data-key="abs" class="px-2 py-1 bg-slate-800 text-white">절대값</button>
             <button data-key="yoy" class="px-2 py-1 bg-white hover:bg-slate-100">YoY %</button>
@@ -805,22 +804,22 @@
       </div>
 
       <!-- 5.4 Top commodities horizontal bars -->
-      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/tanker_top.json">
-        <h3 class="font-semibold mb-2">Top 10 코모디티 <span class="text-xs text-slate-500 font-normal" id="ts-commodity-period">(직전 12개월 ton 기준)</span></h3>
+      <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/cargo_balance_top.json">
+        <h3 class="font-semibold mb-2">Top 코모디티 <span class="text-xs text-slate-500 font-normal" id="ts-commodity-period">(직전 12개월 ton 기준)</span></h3>
         <div id="ts-commodity-bars" style="height:380px"></div>
       </div>
 
       <!-- 5.5 Top operators bars + donut -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2" data-source="docs/derived/tanker_top.json">
-          <h3 class="font-semibold mb-2">Top 15 운영사 (Sum GT)</h3>
+        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2" data-source="docs/derived/cargo_balance_top.json">
+          <h3 class="font-semibold mb-2">Top 15 운영사 <span class="text-xs text-slate-500 font-normal" id="ts-operator-meta"></span></h3>
           <div id="ts-operator-bars" style="height:480px"></div>
         </div>
-        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/tanker_top.json">
+        <div class="bg-white rounded-xl shadow p-4" data-source="docs/derived/cargo_balance_top.json">
           <h3 class="font-semibold mb-2">Top 5 vs 그 외 점유율</h3>
           <div id="ts-operator-donut" style="height:340px"></div>
           <p class="text-[11px] text-slate-400 mt-2 italic">
-            상장 운영사는 ticker 배지로 표시.
+            상장 운영사는 ticker 배지로 표시. 비탱커 카테고리 GT는 운영사 fleet share 비례 추정치.
           </p>
         </div>
       </div>

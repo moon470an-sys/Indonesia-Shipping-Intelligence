@@ -2081,6 +2081,438 @@ def _top_operator_per_subclass(fleet_owners: list[dict]) -> dict[str, dict]:
     return out
 
 
+# ----------------------------------------------------------------------
+# Balance 탭 확장 — Tanker subclass 외 전 cargo vessel_class 까지 커버.
+#
+# tanker_subclass.json / tanker_top.json 의 9-카테고리 일반화 버전:
+#   - 4 vessel classes (non-tanker): Container, Bulk Carrier, General Cargo, Other Cargo
+#   - 5 tanker subclasses:           Product, Chemical, LPG, LNG, FAME / Vegetable Oil
+#
+# Output:
+#   docs/derived/cargo_balance.json     — cards + monthly stacked series
+#   docs/derived/cargo_balance_top.json — top commodities + operators per category
+# ----------------------------------------------------------------------
+CARGO_BALANCE_NONTANKER = ("Container", "Bulk Carrier", "General Cargo", "Other Cargo")
+CARGO_BALANCE_TANKER_SUBS = ("Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil")
+CARGO_BALANCE_PALETTE = {
+    # non-tanker vessel classes
+    "Container":             "#9333ea",   # violet — matches Home map "Container/Gen Cargo"
+    "Bulk Carrier":          "#52525b",   # slate — matches coal
+    "General Cargo":         "#f97316",   # orange-500
+    "Other Cargo":           "#94a3b8",   # slate-400
+    # tanker subclasses (same as SUBCLASS_PALETTE in app.js)
+    "Product":               "#0284c7",
+    "Chemical":              "#059669",
+    "LPG":                   "#d97706",
+    "LNG":                   "#7c3aed",
+    "FAME / Vegetable Oil":  "#65a30d",
+}
+
+
+def build_cargo_fleet_age_stats(snapshot_month: str) -> dict[str, dict]:
+    """GT-weighted age + vessel_count + sum_gt per cargo category.
+
+    Returns {category: {vessel_count, sum_gt, avg_age_gt_weighted, pct_age_25_plus}}.
+    Categories span 4 non-tanker vessel classes + 5 tanker subclasses.
+    """
+    from backend.taxonomy import (
+        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
+        SECTOR_CARGO, classify_tanker_subclass, classify_vessel_type,
+    )
+    visual_map = {
+        CLS_CONTAINER:   "Container",
+        CLS_BULK:        "Bulk Carrier",
+        CLS_GENERAL:     "General Cargo",
+        CLS_OTHER_CARGO: "Other Cargo",
+    }
+    cur_year = datetime.now(timezone.utc).year
+    per_cat: dict[str, dict] = defaultdict(lambda: {
+        "vessel_count": 0, "sum_gt": 0.0, "sum_gt_age": 0.0,
+        "count_age_25_plus": 0, "count_with_age": 0,
+    })
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        cur.execute(
+            """
+            SELECT json_extract(raw_data, '$.JenisDetailKet') AS jenis,
+                   json_extract(raw_data, '$.TahunPembuatan') AS tahun,
+                   gt
+              FROM vessels_snapshot
+             WHERE snapshot_month = ?
+            """,
+            (snapshot_month,),
+        )
+        for jenis, tahun, gt in cur:
+            if not jenis:
+                continue
+            sector, vclass = classify_vessel_type(jenis)
+            if sector != SECTOR_CARGO:
+                continue
+            if vclass == CLS_TANKER:
+                cat = classify_tanker_subclass(jenis)
+                if cat not in CARGO_BALANCE_TANKER_SUBS:
+                    continue  # drop Crude Oil / Water / UNKNOWN — no time-series data
+            else:
+                cat = visual_map.get(vclass)
+                if cat is None:
+                    continue
+            try:
+                gt_v = float(gt) if gt is not None else 0.0
+            except (TypeError, ValueError):
+                gt_v = 0.0
+            try:
+                age = max(0, cur_year - int(tahun)) if tahun is not None else None
+            except (TypeError, ValueError):
+                age = None
+            d = per_cat[cat]
+            d["vessel_count"] += 1
+            d["sum_gt"] += gt_v
+            if age is not None:
+                d["sum_gt_age"] += gt_v * age
+                d["count_with_age"] += 1
+                if age >= 25:
+                    d["count_age_25_plus"] += 1
+    out: dict[str, dict] = {}
+    for cat, d in per_cat.items():
+        avg_age = (d["sum_gt_age"] / d["sum_gt"]) if d["sum_gt"] > 0 else None
+        pct_25 = (d["count_age_25_plus"] / d["vessel_count"] * 100) if d["vessel_count"] else None
+        out[cat] = {
+            "vessel_count": d["vessel_count"],
+            "sum_gt": round(d["sum_gt"], 1),
+            "avg_age_gt_weighted": round(avg_age, 2) if avg_age is not None else None,
+            "pct_age_25_plus": round(pct_25, 2) if pct_25 is not None else None,
+        }
+    return out
+
+
+def _classify_to_cargo_balance_cat(jenis: str | None) -> str | None:
+    """Map JenisDetailKet → one of the 9 cargo-balance categories, or None."""
+    if not jenis:
+        return None
+    from backend.taxonomy import (
+        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
+        SECTOR_CARGO, classify_tanker_subclass, classify_vessel_type,
+    )
+    sector, vclass = classify_vessel_type(jenis)
+    if sector != SECTOR_CARGO:
+        return None
+    if vclass == CLS_TANKER:
+        sub = classify_tanker_subclass(jenis)
+        return sub if sub in CARGO_BALANCE_TANKER_SUBS else None
+    visual = {
+        CLS_CONTAINER: "Container", CLS_BULK: "Bulk Carrier",
+        CLS_GENERAL: "General Cargo", CLS_OTHER_CARGO: "Other Cargo",
+    }
+    return visual.get(vclass)
+
+
+def build_cargo_balance() -> dict:
+    """Balance 탭: 9-카테고리 카드 + 24M monthly stacked + per-year ton.
+
+    Input sources:
+      * docs/data/cargo_sector_monthly.json — monthly per vessel_class + per tanker_subclass
+      * docs/derived/fleet_owners.json     — for HHI + operator_count + top_operator (class_mix/tanker_subclass_mix)
+      * vessels_snapshot DB                — age/GT stats per cargo category
+    """
+    csm = _load_json(DATA / "cargo_sector_monthly.json")
+    snap = csm.get("snapshot_month")
+    rows = csm.get("rows", [])                          # by vessel_class
+    tsub_rows = csm.get("tanker_subclass_rows", [])     # by tanker subclass
+
+    # ---- Aggregate (period, category) → ton_total ----
+    period_cat_ton: dict[tuple[str, str], float] = defaultdict(float)
+    period_cat_calls: dict[tuple[str, str], int] = defaultdict(int)
+    periods_set: set[str] = set()
+    for r in rows:
+        vc = r.get("vessel_class")
+        if vc not in CARGO_BALANCE_NONTANKER:
+            continue
+        p = r.get("period") or ""
+        if not p:
+            continue
+        period_cat_ton[(p, vc)] += float(r.get("ton_total") or 0)
+        period_cat_calls[(p, vc)] += int(r.get("calls") or 0)
+        periods_set.add(p)
+    for r in tsub_rows:
+        sub = r.get("subclass")
+        if sub not in CARGO_BALANCE_TANKER_SUBS:
+            continue
+        p = r.get("period") or ""
+        if not p:
+            continue
+        period_cat_ton[(p, sub)] += float(r.get("ton_total") or 0)
+        period_cat_calls[(p, sub)] += int(r.get("calls") or 0)
+        periods_set.add(p)
+    sorted_periods = sorted(periods_set)
+
+    # ---- Year folding ----
+    year_ton: dict[tuple[str, str], float] = defaultdict(float)
+    year_months: dict[str, set] = defaultdict(set)
+    for (p, cat), v in period_cat_ton.items():
+        if len(p) < 7:
+            continue
+        y = p[:4]
+        year_ton[(cat, y)] += v
+        year_months[y].add(p[:7])
+    months_per_year = {y: len(s) for y, s in year_months.items()}
+
+    def _ton_yoy(cat: str) -> tuple[dict, dict]:
+        years_sorted = sorted({y for (c, y) in year_ton if c == cat})
+        ton = {y: round(year_ton[(cat, y)], 1) for y in years_sorted}
+        yoy: dict[str, float | None] = {}
+        for i, y in enumerate(years_sorted):
+            if i == 0:
+                yoy[y] = None
+            else:
+                prev = ton[years_sorted[i - 1]]
+                yoy[y] = round((ton[y] - prev) / prev * 100, 1) if prev > 0 else None
+        return ton, yoy
+
+    # ---- Rolling 12M + prev 12M (for yoy_pct headline) ----
+    last12 = sorted_periods[-12:]
+    prev12 = sorted_periods[-24:-12]
+
+    # ---- Fleet age stats per category ----
+    age_stats = build_cargo_fleet_age_stats(snap)
+
+    # ---- Owner-based HHI + operator_count + top_operator per category ----
+    fo_payload = _load_json(DERIVED / "fleet_owners.json")
+    fo_list = fo_payload.get("owners", [])
+
+    def _owner_mix(o: dict, cat: str) -> int:
+        if cat in CARGO_BALANCE_TANKER_SUBS:
+            return int((o.get("tanker_subclass_mix") or {}).get(cat, 0))
+        return int((o.get("class_mix") or {}).get(cat, 0))
+
+    hhi_map: dict[str, float | None] = {}
+    op_count_map: dict[str, int] = {}
+    top_op_map: dict[str, dict | None] = {}
+    # Source has many vessels with owner "-" / "" (untracked). They distort the
+    # "top operator" surface (e.g. General Cargo top = "-" with 51 vessels), so
+    # we skip them for the headline pick but keep them in the HHI denominator.
+    _BLANK_OWNERS = {"-", "", None}
+    for cat in (*CARGO_BALANCE_NONTANKER, *CARGO_BALANCE_TANKER_SUBS):
+        counts = [(o["owner"], _owner_mix(o, cat), o.get("sum_gt"))
+                  for o in fo_list if _owner_mix(o, cat) > 0]
+        if not counts:
+            hhi_map[cat] = None
+            op_count_map[cat] = 0
+            top_op_map[cat] = None
+            continue
+        total = sum(c for _, c, _ in counts)
+        shares = [c / total for _, c, _ in counts]
+        hhi_map[cat] = round(sum(s * s for s in shares) * 10000, 1)
+        op_count_map[cat] = len(counts)
+        named_counts = [t for t in counts if (t[0] or "").strip() not in _BLANK_OWNERS]
+        if named_counts:
+            top = max(named_counts, key=lambda t: t[1])
+            top_op_map[cat] = {
+                "owner": top[0],
+                "count_in_category": top[1],
+                "sum_gt": top[2],
+            }
+        else:
+            top_op_map[cat] = None
+
+    # ---- Cards ----
+    cards = []
+    all_cats = (*CARGO_BALANCE_NONTANKER, *CARGO_BALANCE_TANKER_SUBS)
+    for cat in all_cats:
+        ton_last = sum(period_cat_ton.get((p, cat), 0.0) for p in last12)
+        ton_prev = sum(period_cat_ton.get((p, cat), 0.0) for p in prev12)
+        yoy_pct = ((ton_last - ton_prev) / ton_prev * 100) if ton_prev > 0 else None
+        ton_by_year, yoy_by_year = _ton_yoy(cat)
+        age = age_stats.get(cat, {})
+        cards.append({
+            "category": cat,
+            "is_tanker_subclass": cat in CARGO_BALANCE_TANKER_SUBS,
+            "color": CARGO_BALANCE_PALETTE.get(cat, "#64748b"),
+            "ton_last_12m": round(ton_last, 1),
+            "yoy_pct": round(yoy_pct, 1) if yoy_pct is not None else None,
+            "ton_by_year": ton_by_year,
+            "yoy_by_year": yoy_by_year,
+            "avg_age_gt_weighted": age.get("avg_age_gt_weighted"),
+            "operator_count": op_count_map.get(cat, 0),
+            "vessel_count": age.get("vessel_count"),
+            "sum_gt": age.get("sum_gt"),
+            "hhi": hhi_map.get(cat),
+            "top_operator": top_op_map.get(cat),
+            "top_route": None,  # 비탱커는 OD 데이터 없음 — 추후 cargo_routes 확장 시 채움
+        })
+    cards.sort(key=lambda c: c.get("ton_last_12m") or 0, reverse=True)
+
+    # ---- Monthly series (one trace per category, stable card order) ----
+    ordered_cats = [c["category"] for c in cards]
+    series = [
+        {
+            "category": cat,
+            "color": CARGO_BALANCE_PALETTE.get(cat, "#64748b"),
+            "ton_by_period": [round(period_cat_ton.get((p, cat), 0.0), 1) for p in sorted_periods],
+        }
+        for cat in ordered_cats
+    ]
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "cards": cards,
+        "monthly": {"periods": sorted_periods, "series": series},
+        "months_per_year": months_per_year,
+        "_notes": {
+            "scope": "CARGO sector — 4 non-tanker vessel classes + 5 tanker subclasses (9 cats)",
+            "monthly_source": "docs/data/cargo_sector_monthly.json — rows (vessel_class) + tanker_subclass_rows (subclass)",
+            "ton_by_year": "calendar-year sums; yoy_by_year null if prev year missing/zero",
+            "hhi": "Σ(share^2)*10000 over fleet_owners.class_mix (or tanker_subclass_mix). Top-25 owner truncation = small bias for long tail categories.",
+            "top_route": "비탱커 카테고리는 현재 OD 데이터 미산출 (탱커 subclass도 cargo_balance에서는 생략) — 필요 시 cargo_routes 확장",
+        },
+    }
+
+
+def build_cargo_balance_top(top_commodities_per_cat: int = 12,
+                             top_operators_per_cat: int = 15) -> dict:
+    """Per-category top commodities (from cargo_snapshot.raw_row) + top operators
+    (from fleet_owners.class_mix / tanker_subclass_mix). Sourced for the
+    cargo-wide Balance tab filter.
+    """
+    from backend.taxonomy import (
+        CLS_BULK, CLS_CONTAINER, CLS_GENERAL, CLS_OTHER_CARGO, CLS_TANKER,
+        SECTOR_CARGO, classify_tanker_subclass, classify_vessel_type,
+    )
+
+    src_meta = _load_json(DATA / "meta.json")
+    snap = src_meta.get("latest")
+
+    # Pre-build mapping JENIS KAPAL string → category (cache for SQL loop)
+    jenis_cat_cache: dict[str, str | None] = {}
+    def cat_of(jenis: str | None) -> str | None:
+        if not jenis:
+            return None
+        if jenis in jenis_cat_cache:
+            return jenis_cat_cache[jenis]
+        sector, vclass = classify_vessel_type(jenis)
+        if sector != SECTOR_CARGO:
+            jenis_cat_cache[jenis] = None
+            return None
+        if vclass == CLS_TANKER:
+            sub = classify_tanker_subclass(jenis)
+            r = sub if sub in CARGO_BALANCE_TANKER_SUBS else None
+        else:
+            r = {CLS_CONTAINER: "Container", CLS_BULK: "Bulk Carrier",
+                 CLS_GENERAL: "General Cargo", CLS_OTHER_CARGO: "Other Cargo"}.get(vclass)
+        jenis_cat_cache[jenis] = r
+        return r
+
+    # ---- Per-category top commodities — aggregate from cargo_snapshot ----
+    # raw_row keys are stringified Python tuples; reuse the pointer pattern
+    # from build_cargo_category_details.
+    def _p(k: str) -> str:
+        return ('$."' + k + '"').replace("'", "''")
+    P_JENIS = _p("('JENIS KAPAL', 'JENIS KAPAL')")
+    P_KB    = _p("('BONGKAR', 'KOMODITI')")
+    P_TB    = _p("('BONGKAR', 'TON')")
+    P_KM    = _p("('MUAT', 'KOMODITI')")
+    P_TM    = _p("('MUAT', 'TON')")
+    ton_expr = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+
+    cat_kom: dict[str, dict[str, dict]] = defaultdict(lambda: defaultdict(lambda: {"ton": 0.0, "calls": 0}))
+    with sqlite3.connect(DB) as con:
+        cur = con.cursor()
+        for P_K, P_T in ((P_KB, P_TB), (P_KM, P_TM)):
+            cur.execute(
+                f"SELECT json_extract(raw_row, '{P_JENIS}') AS jenis, "
+                f"       json_extract(raw_row, '{P_K}')      AS kom, "
+                f"       SUM({ton_expr(P_T)})                 AS t, "
+                f"       COUNT(*)                              AS calls "
+                f"  FROM cargo_snapshot "
+                f" WHERE snapshot_month = ? "
+                f" GROUP BY jenis, kom HAVING t > 0",
+                (snap,),
+            )
+            for jenis, kom, t, calls in cur:
+                cat = cat_of(jenis)
+                if not cat or not kom:
+                    continue
+                kom_s = str(kom).strip()
+                if not kom_s:
+                    continue
+                d = cat_kom[cat][kom_s]
+                d["ton"] += float(t or 0)
+                d["calls"] += int(calls or 0)
+
+    top_commodities_by_category: dict[str, list[dict]] = {}
+    for cat, koms in cat_kom.items():
+        ranked = sorted(koms.items(), key=lambda kv: -kv[1]["ton"])[:top_commodities_per_cat]
+        top_commodities_by_category[cat] = [
+            {"name": k, "ton_total": round(v["ton"], 1), "calls": v["calls"]}
+            for k, v in ranked
+        ]
+
+    # ---- Per-category top operators — derived from fleet_owners.json ----
+    fo_payload = _load_json(DERIVED / "fleet_owners.json")
+    fo_list = fo_payload.get("owners", [])
+    tk_map = OWNER_TICKER_INITIAL
+    rev = {}
+    for ticker, names in tk_map.items():
+        for n in names:
+            rev[_norm_company(n)] = ticker
+
+    def mix_of(o: dict, cat: str) -> int:
+        if cat in CARGO_BALANCE_TANKER_SUBS:
+            return int((o.get("tanker_subclass_mix") or {}).get(cat, 0))
+        return int((o.get("class_mix") or {}).get(cat, 0))
+
+    # Skip "-" / blank owners from the top-N ranking (they distort with
+    # unattributed vessels). They are still counted into totals_gt for the
+    # share denominator since the ships are real.
+    _BLANK_OWNERS = {"-", "", None}
+    top_operators_by_category: dict[str, list[dict]] = {}
+    totals_gt_by_category: dict[str, float] = {}
+    top5_gt_by_category: dict[str, float] = {}
+    for cat in (*CARGO_BALANCE_NONTANKER, *CARGO_BALANCE_TANKER_SUBS):
+        scored = [(o, mix_of(o, cat)) for o in fo_list
+                  if mix_of(o, cat) > 0 and (o.get("owner") or "").strip() not in _BLANK_OWNERS]
+        scored.sort(key=lambda t: (-t[1], -(t[0].get("sum_gt") or 0)))
+        # GT totals are scoped per-category as best-effort: we don't have
+        # per-class GT breakdown in fleet_owners, so use the operator's TOTAL
+        # sum_gt prorated by category share of their fleet.
+        total_gt = 0.0
+        cat_op_rows = []
+        for o, cnt in scored:
+            share = cnt / max(1, o.get("vessels") or 0)
+            cat_gt = (o.get("sum_gt") or 0) * share
+            total_gt += cat_gt
+            cat_op_rows.append((o, cnt, cat_gt))
+        top_n = cat_op_rows[:top_operators_per_cat]
+        top5 = sum(g for _, _, g in cat_op_rows[:5])
+        totals_gt_by_category[cat] = round(total_gt, 1)
+        top5_gt_by_category[cat] = round(top5, 1)
+        top_operators_by_category[cat] = [
+            {
+                "owner": o["owner"],
+                "ticker": rev.get(_norm_company(o["owner"])),
+                "vessels": o.get("vessels"),
+                "vessels_in_category": cnt,
+                "sum_gt": o.get("sum_gt"),
+                "sum_gt_in_category_est": round(cat_gt, 1),
+            }
+            for o, cnt, cat_gt in top_n
+        ]
+
+    return {
+        "schema_version": 1,
+        "snapshot_month": snap,
+        "top_commodities_by_category": top_commodities_by_category,
+        "top_operators_by_category": top_operators_by_category,
+        "totals_gt_by_category": totals_gt_by_category,
+        "top5_gt_by_category": top5_gt_by_category,
+        "_notes": {
+            "commodities_source": "cargo_snapshot.raw_row — JENIS KAPAL × KOMODITI 24M aggregate",
+            "operators_source": "fleet_owners.json — class_mix / tanker_subclass_mix",
+            "sum_gt_in_category_est": "operator's total sum_gt prorated by (vessels_in_category / total_vessels). Approximation — per-class GT not tracked in fleet_owners.",
+        },
+    }
+
+
 def build_tanker_subclass() -> dict:
     """Renewal v2: 6 subclass cards data + 24M monthly stacked area.
 
@@ -2728,6 +3160,17 @@ def main() -> None:
     bytes_total += _write_json(DERIVED / "tanker_top.json", ttop)
     print(f"  tanker_top.json — {len(ttop['top_commodities'])} commodities + "
           f"{len(ttop['top_operators'])} operators")
+
+    # Balance 탭 cargo-wide 확장 — 4 vessel classes + 5 tanker subclasses
+    cb = build_cargo_balance()
+    bytes_total += _write_json(DERIVED / "cargo_balance.json", cb)
+    print(f"  cargo_balance.json — {len(cb['cards'])} cards + "
+          f"{len(cb['monthly']['periods'])} months stacked")
+
+    cbt = build_cargo_balance_top()
+    bytes_total += _write_json(DERIVED / "cargo_balance_top.json", cbt)
+    print(f"  cargo_balance_top.json — {len(cbt['top_commodities_by_category'])} cats commodities + "
+          f"{len(cbt['top_operators_by_category'])} cats operators")
 
     cf = build_cargo_fleet()
     bytes_total += _write_json(DERIVED / "cargo_fleet.json", cf)
