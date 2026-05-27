@@ -788,6 +788,45 @@
         </div>
         <span class="text-xs text-slate-500" id="ts-active-filter">전체</span>
       </div>
+
+      <!-- 5.1-info: 카테고리 정의 안내 (LK3 선박종류 + 인도네시아 해운 맥락) -->
+      <details class="mb-3 rounded-lg border border-slate-200 bg-white group">
+        <summary class="list-none cursor-pointer flex items-center gap-2 px-3 py-2 text-[11px] text-slate-700 hover:bg-slate-50 transition-colors [&::-webkit-details-marker]:hidden rounded-lg">
+          <span class="text-slate-400">ⓘ</span>
+          <span class="font-semibold">카테고리 정의 — Bulk Carrier vs Other Cargo, Tanker subclass</span>
+          <span class="ml-auto text-[10px] text-slate-400 font-mono group-open:rotate-180 transition-transform">▾</span>
+        </summary>
+        <div class="border-t border-slate-100 px-4 py-3 text-[12px] text-slate-600 leading-relaxed space-y-2.5">
+          <p>LK3 <code class="text-[11px] bg-slate-100 px-1 rounded">JenisDetailKet</code>(선박 종류) 키워드 매칭으로 분류. 같은 화물(예: 석탄)이라도 <strong>선형</strong>에 따라 다른 카테고리로 잡힙니다.</p>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2 text-[11.5px]">
+            <div class="flex gap-2">
+              <span class="inline-block w-1 h-4 rounded-sm" style="background:#9333ea"></span>
+              <div><strong>Container</strong> · 정통 컨테이너선. 페티케마스 적재.</div>
+            </div>
+            <div class="flex gap-2">
+              <span class="inline-block w-1 h-4 rounded-sm" style="background:#52525b"></span>
+              <div><strong>Bulk Carrier</strong> · 외항·대형 벌커 (Bulk Carrier·Cement Carrier·Car Carrier). 1척 ≈ 3M ton/연 — 발전소·해외향 적출항 적재용.</div>
+            </div>
+            <div class="flex gap-2">
+              <span class="inline-block w-1 h-4 rounded-sm" style="background:#f97316"></span>
+              <div><strong>General Cargo</strong> · 일반 화물선. 다종 화물 혼적.</div>
+            </div>
+            <div class="flex gap-2">
+              <span class="inline-block w-1 h-4 rounded-sm" style="background:#94a3b8"></span>
+              <div><strong>Other Cargo</strong> · 대부분 <em>바지선군</em> (Barge 9,400+ · Deck Barge · Landing Craft Tank · Pontoon 등). 터그가 끄는 평저선이며 인도네시아 연안·하천 단거리 수송이 핵심 — 광산→환적 anchorage 석탄 transhipment 구간.</div>
+            </div>
+            <div class="flex gap-2 lg:col-span-2">
+              <span class="inline-block w-1 h-4 rounded-sm" style="background:#0369a1"></span>
+              <div><strong>Tanker</strong> · 액체 화물 전용 선박 통합. 아래 세부 분류 5종(Product · Chemical · LPG · LNG · FAME / Vegetable Oil)으로 분해됨. Pertamina 계열이 우위.</div>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 italic pt-1.5 border-t border-slate-100">
+            ※ Bulk Carrier (~315척) 와 Other Cargo (~13,000척) 의 척당 처리톤 차이(약 30배)는 선박 크기·항해 거리·역할 차이를 반영합니다.
+            BATU BARA 가 양쪽 모두 1위 코모디티인 것은 동일 화물의 <strong>다른 물류 단계</strong>를 양 카테고리가 각각 포착하기 때문.
+          </p>
+        </div>
+      </details>
+
       <div class="bg-white rounded-xl shadow overflow-hidden mb-4" data-source="docs/derived/cargo_balance.json">
         <div class="overflow-x-auto">
           <table class="w-full text-sm" id="ts-table">
