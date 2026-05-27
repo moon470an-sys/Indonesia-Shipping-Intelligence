@@ -76,7 +76,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/lion-shipbrokers-weekly-market-report-week-20-2026/",
         "note": "Lion 보고: BDI 3151p (peak 3195p).",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "BCI (Baltic Capesize Index)",
@@ -88,7 +89,8 @@
         "source_tier": "media",
         "source_url": "https://tradingeconomics.com/commodity/baltic",
         "note": "5월 14일 5,340p, 일간 +5.1%. wow_pct 는 직전 스냅샷(2026-05-08, 4,955) 대비. iter 7 갱신",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "BPI (Baltic Panamax Index)",
@@ -100,7 +102,8 @@
         "source_tier": "media",
         "source_url": "https://tradingeconomics.com/commodity/baltic",
         "note": "5월 14일 2,454p, 일간 +4.0%. wow_pct 는 직전 스냅샷(2026-05-08, 2,233) 대비. iter 7 갱신",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "BSI (Baltic Supramax Index)",
@@ -112,7 +115,8 @@
         "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "평균 일당 $19,468. 2026-W20 roadmap maint 4 갱신 — 직전 1,522 / 2026-05-08 대비",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "Capesize 5TC (C5TC 182, weekly close)",
@@ -123,7 +127,8 @@
         "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "주간 마감 $44,941 (주중 고점 $46,610)",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "Panamax 5TC (P5TC)",
@@ -134,7 +139,8 @@
         "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "주간 $18,490 → $20,099 상승 마감",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "Supramax 5TC",
@@ -145,7 +151,8 @@
         "source_tier": "media",
         "source_url": "https://www.handybulk.com/baltic-dry-index/",
         "note": "BSI 평균 일당 $19,468 기준 (2026-05-11). 천 USD 단위 반올림으로 value 19 유지. roadmap maint 4 갱신",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "SSY Atlantic Capesize Index",
@@ -157,7 +164,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/ssy-atlantic-capesize-index-18-may-2026/",
         "note": "주간 +1,093pt (16,186 → 17,279). 1년 전 +9,201, 4주 전 +3,427. TC Cont/Far East $78,850/day, TC Transatlantic $56,000/day.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "SSY Pacific Capesize Index",
@@ -169,7 +177,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/ssy-pacific-capesize-index-18-may-2026/",
         "note": "주간 +245pt (10,871 → 11,116). 1년 전 +6,006. TC Far East/Cont $21,750/day, TC Transpacific $44,500/day.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Dry Bulk"
       },
       {
         "name": "Breakwave Tanker Futures Index (BWETFF)",
@@ -181,7 +190,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/breakwave-tanker-report-5-19-2026/",
         "note": "30D +3.3%, YTD +309%, YoY +388.5%. 90% VLCC TD3C + 10% Suezmax TD20 가중. Strait of Hormuz 우려 지속, 대서양 베이슨에 VLCC 톤수 누적.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Tanker"
       },
       {
         "name": "BDTI (Baltic Dirty Tanker Index)",
@@ -193,7 +203,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/affinity-tanker-weekly-15-may-2026/",
         "note": "W-o-W softer. VLCC TD3C ME Gulf/China $448,979/day. Hormuz 폐쇄 영향으로 시장 위축.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Tanker"
       },
       {
         "name": "BCTI (Baltic Clean Tanker Index)",
@@ -205,7 +216,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/affinity-tanker-weekly-15-may-2026/",
         "note": "W-o-W softer. MR TC14 NWE → US $WS 155, ARA-WAFR $WS 327.5 (하락).",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Tanker"
       },
       {
         "name": "VLCC TD3C ME Gulf/China TCE",
@@ -217,7 +229,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/affinity-tanker-weekly-15-may-2026/",
         "note": "$448,979/day. 27만 톤 cargo. W-o-W softer. 천 USD 단위 반올림.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Tanker"
       },
       {
         "name": "Suezmax TD15 WAF/China TCE",
@@ -229,7 +242,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/affinity-tanker-weekly-15-may-2026/",
         "note": "$106,207/day. 26만 톤 cargo. W-o-W softer.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Tanker"
       },
       {
         "name": "NCFI (Ningbo Containerized Freight Index)",
@@ -241,7 +255,8 @@
         "source_tier": "media",
         "source_url": "https://www.hellenicshippingnews.com/ningbo-containerized-freight-index-report-15-may-2026/",
         "note": "21개 항로 중 17개 상승. Europe 1,282.9 (+13.3%), Mideast 3,974.6 (+2.3%), W.South America 1,484.9 (+30.2%). 6월 초 추가 운임 인상 예정.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Container"
       },
       {
         "name": "New ConTex (VHBS Container TC Index)",
@@ -253,7 +268,8 @@
         "source_tier": "broker",
         "source_url": "https://www.hellenicshippingnews.com/vhbs-new-contex-container-ship-time-charter-assessment-index-week-20-2/",
         "note": "MoM +1.9%, YoY +5.3%. 1100-6500 TEU 평가. 4250 TEU 12m $53,776, 6500 TEU 12m $69,222. 안정적 시장에서 charterer 장기 계약 증가.",
-        "status": "verified"
+        "status": "verified",
+        "sector": "Container"
       }
     ],
     "scrap_dry_bulk": [

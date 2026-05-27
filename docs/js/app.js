@@ -6145,52 +6145,150 @@ function _mkRefreshSortArrows(tableId, stateKey) {
   });
 }
 
-// ---- Indices: chart + table ----
+// ---- Indices: combined bar chart (color-coded by sector) + 3 sub-tables ----
+const MK_SECTOR_ORDER  = ["Dry Bulk", "Tanker", "Container"];
+const MK_SECTOR_COLORS = { "Dry Bulk": "#0369a1", "Tanker": "#7c3aed", "Container": "#059669" };
+
+function _mkClassifySector(name) {
+  const n = String(name || "").toLowerCase();
+  if (/(ncfi|ningbo|contex|container)/.test(n))                        return "Container";
+  if (/(bdti|bcti|tanker|vlcc|suezmax|aframax|lr1|lr2|\bmr\b)/.test(n)) return "Tanker";
+  return "Dry Bulk";
+}
+
 function _mkRenderIndicesChart(rows) {
   const el = document.getElementById("mk-indices-chart");
   if (!el || !rows.length) return;
-  const sorted = rows.slice().sort((a, b) => (b.wow_pct ?? -999) - (a.wow_pct ?? -999));
+  // Sort within each sector by wow desc, then concat in sector order so the
+  // bar chart visually groups them.
+  const ordered = [];
+  for (const s of MK_SECTOR_ORDER) {
+    const grp = rows.filter(r => (r.sector || _mkClassifySector(r.name)) === s);
+    grp.sort((a, b) => (b.wow_pct ?? -999) - (a.wow_pct ?? -999));
+    ordered.push(...grp);
+  }
   const trace = {
-    type: "bar",
-    orientation: "h",
-    x: sorted.map(r => r.wow_pct ?? 0),
-    y: sorted.map(r => r.name),
-    marker: { color: sorted.map(r => (r.wow_pct ?? 0) >= 0 ? "#0284c7" : "#f43f5e") },
-    text: sorted.map(r => r.wow_pct == null ? "—" : `${r.wow_pct >= 0 ? "+" : ""}${r.wow_pct.toFixed(1)}%`),
+    type: "bar", orientation: "h",
+    x: ordered.map(r => r.wow_pct ?? 0),
+    y: ordered.map(r => r.name),
+    marker: { color: ordered.map(r => MK_SECTOR_COLORS[r.sector || _mkClassifySector(r.name)] || "#475569") },
+    text: ordered.map(r => r.wow_pct == null ? "—" : `${r.wow_pct >= 0 ? "+" : ""}${r.wow_pct.toFixed(1)}%`),
     textposition: "outside",
-    customdata: sorted.map(r => [_fmtNum(r.value), r.unit || ""]),
-    hovertemplate: "<b>%{y}</b><br>Value: %{customdata[0]} %{customdata[1]}<br>W-o-W: %{x:+.1f}%<extra></extra>",
+    customdata: ordered.map(r => [_fmtNum(r.value), r.unit || "", r.sector || _mkClassifySector(r.name)]),
+    hovertemplate: "<b>%{y}</b><br>Sector: %{customdata[2]}<br>Value: %{customdata[0]} %{customdata[1]}<br>W-o-W: %{x:+.1f}%<extra></extra>",
     cliponaxis: false,
   };
+  // Sector divider shapes + labels
+  const shapes = [], annotations = [];
+  let yi = 0;
+  for (const s of MK_SECTOR_ORDER) {
+    const grp = ordered.filter(r => (r.sector || _mkClassifySector(r.name)) === s);
+    if (!grp.length) continue;
+    if (yi > 0) {
+      shapes.push({
+        type: "line", x0: 0, x1: 1, xref: "paper",
+        y0: yi - 0.5, y1: yi - 0.5, yref: "y",
+        line: { color: "#e2e8f0", width: 1, dash: "solid" },
+      });
+    }
+    annotations.push({
+      x: 1, xref: "paper", xanchor: "right",
+      y: yi + grp.length - 0.5, yref: "y", yanchor: "top",
+      text: `<b>${s}</b>`,
+      showarrow: false,
+      font: { size: 10, color: MK_SECTOR_COLORS[s] || "#475569" },
+    });
+    yi += grp.length;
+  }
   Plotly.newPlot("mk-indices-chart", [trace], {
-    margin: { t: 16, l: 240, r: 56, b: 36 },
+    margin: { t: 16, l: 240, r: 64, b: 36 },
     xaxis: { title: "W-o-W %", zeroline: true, zerolinecolor: "#cbd5e1", gridcolor: "#f1f5f9" },
-    yaxis: { automargin: true, tickfont: { size: 11 } },
+    yaxis: { automargin: true, tickfont: { size: 11 }, autorange: "reversed" },
     paper_bgcolor: "white", plot_bgcolor: "white",
     showlegend: false,
+    shapes, annotations,
   }, { displayModeBar: false, responsive: true });
 }
 
-function _mkRenderIndicesTable(rows) {
-  const host = document.getElementById("mk-indices-tbody");
+function _mkRenderIndicesSectors(rows) {
+  const host = document.getElementById("mk-indices-sectors");
   if (!host) return;
-  const data = rows.map(r => ({
-    name: r.name, value: r.value, unit: r.unit, wow: r.wow_pct,
-    as_of: r.as_of, source_name: r.source_name, source_url: r.source_url, _raw: r,
-  }));
-  _mkSortRows(data, mkSort.indices.key, mkSort.indices.dir);
-  host.innerHTML = data.map(r => `<tr class="hover:bg-slate-50">
-    <td class="px-3 py-2.5 font-medium text-slate-800">${_esc(r.name)}</td>
-    <td class="px-3 py-2.5 text-right font-mono font-semibold text-slate-900">${_fmtNum(r.value)}</td>
-    <td class="px-3 py-2.5 text-slate-500 text-[12px]">${_esc(r.unit || "—")}</td>
-    <td class="px-3 py-2.5 text-right">${_fmtPct(r.wow)}</td>
-    <td class="px-3 py-2.5 text-slate-500 font-mono text-[12px]">${_esc(r.as_of || "—")}</td>
-    <td class="px-3 py-2.5 text-[12px] truncate max-w-[28rem]">${_mkSrcLink(r.source_name, r.source_url)}</td>
-  </tr>`).join("");
-  _mkWireSort("mk-indices-table", "indices", () => _mkRenderIndicesTable(rows));
-  _mkRefreshSortArrows("mk-indices-table", "indices");
+  // Group rows by sector
+  const grouped = new Map(MK_SECTOR_ORDER.map(s => [s, []]));
+  for (const r of rows) {
+    const s = r.sector || _mkClassifySector(r.name);
+    if (!grouped.has(s)) grouped.set(s, []);
+    grouped.get(s).push(r);
+  }
+  // Default sort within a sector: value desc
+  const sortDir = mkSort.indices.dir;
+  const sortKey = mkSort.indices.key;
+  for (const arr of grouped.values()) {
+    _mkSortRows(arr, sortKey, sortDir);
+  }
+
+  const renderTbl = (sector, arr) => {
+    const color = MK_SECTOR_COLORS[sector] || "#475569";
+    return `<div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div class="flex items-center gap-2.5 px-4 py-2 bg-slate-50/60 border-b border-slate-200">
+        <span class="inline-block w-1 h-4 rounded-sm" style="background:${color}"></span>
+        <span class="text-[12px] font-semibold text-slate-700">${sector}</span>
+        <span class="text-[11px] text-slate-400 font-mono ml-1">${arr.length} rows</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-[13px]" data-sec-table="${sector}">
+          <thead class="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wide">
+            <tr>
+              <th class="px-3 py-2 text-left font-medium" data-sort="name">Index</th>
+              <th class="px-3 py-2 text-right font-medium" data-sort="value">Value</th>
+              <th class="px-3 py-2 text-left font-medium">Unit</th>
+              <th class="px-3 py-2 text-right font-medium" data-sort="wow_pct">W-o-W</th>
+              <th class="px-3 py-2 text-left font-medium" data-sort="as_of">As of</th>
+              <th class="px-3 py-2 text-left font-medium">Source</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${arr.map(r => `<tr class="hover:bg-slate-50">
+              <td class="px-3 py-2 font-medium text-slate-800">${_esc(r.name)}</td>
+              <td class="px-3 py-2 text-right font-mono font-semibold text-slate-900">${_fmtNum(r.value)}</td>
+              <td class="px-3 py-2 text-slate-500 text-[12px]">${_esc(r.unit || "—")}</td>
+              <td class="px-3 py-2 text-right">${_fmtPct(r.wow_pct)}</td>
+              <td class="px-3 py-2 text-slate-500 font-mono text-[12px]">${_esc(r.as_of || "—")}</td>
+              <td class="px-3 py-2 text-[12px] truncate max-w-[28rem]">${_mkSrcLink(r.source_name, r.source_url)}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  };
+
+  host.innerHTML = MK_SECTOR_ORDER
+    .filter(s => (grouped.get(s) || []).length > 0)
+    .map(s => renderTbl(s, grouped.get(s)))
+    .join("");
+
+  // Wire sort headers on each sub-table; sort applies to all sub-tables.
+  host.querySelectorAll("table[data-sec-table] th[data-sort]").forEach(th => {
+    th.classList.add("cursor-pointer", "select-none", "hover:bg-slate-100");
+    th.addEventListener("click", () => {
+      const k = th.dataset.sort;
+      if (mkSort.indices.key === k) mkSort.indices.dir *= -1;
+      else { mkSort.indices.key = k; mkSort.indices.dir = (k === "name" || k === "as_of") ? 1 : -1; }
+      _mkRenderIndicesSectors(rows);
+      _mkRenderIndicesChart(rows);
+    });
+  });
+  // Visual sort arrows
+  host.querySelectorAll("table[data-sec-table]").forEach(t => {
+    t.querySelectorAll("th[data-sort]").forEach(th => {
+      const base = th.dataset.sortBase || (th.dataset.sortBase = th.innerHTML);
+      th.innerHTML = base + (th.dataset.sort === mkSort.indices.key
+        ? ` <span class="text-slate-400 text-[10px]">${mkSort.indices.dir > 0 ? "▲" : "▼"}</span>` : "");
+    });
+  });
+
   const cnt = document.getElementById("mk-cnt-indices");
-  if (cnt) cnt.textContent = `${rows.length} rows`;
+  if (cnt) cnt.textContent = `${rows.length} rows · ${MK_SECTOR_ORDER.filter(s => (grouped.get(s) || []).length).length} sectors`;
 }
 
 // ---- Scrap matrix: pivot dry+tanker into a single region table ----
@@ -6399,7 +6497,7 @@ async function renderMarket() {
   if (rw)   rw.textContent = m.report_week ? `· ${m.report_week}` : "";
   if (asof) asof.textContent = `as of ${m.checked_date || m.last_updated || "—"}`;
 
-  _mkRenderIndicesTable(m.international_freight?.indices || []);
+  _mkRenderIndicesSectors(m.international_freight?.indices || []);
   _mkRenderIndicesChart(m.international_freight?.indices || []);
   _mkRenderScrapMatrix(m.international_freight?.scrap_dry_bulk, m.international_freight?.scrap_tanker);
   _mkRenderFuelTable(m.domestic_fuel_scrap || {});
