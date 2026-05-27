@@ -1014,7 +1014,7 @@ function renderFinancials() {
     { label: "중앙값 순이익률", value: fnPct(medMargin), sub: `합산 자산 ${fnUSD(totAssets)}` },
   ]);
 
-  // Scatter — x=revenue(log), y=net_margin, size=assets, color=segment group
+  // Scatter — x=revenue(log), y=operating_margin, size=assets, color=segment group
   const groups = {};
   for (const r of yrRows) {
     const g = FN_SEG_GROUP((byTicker[r.ticker] || {}).segment);
@@ -1024,7 +1024,7 @@ function renderFinancials() {
   const traces = Object.entries(groups).map(([g, rs]) => ({
     name: g,
     x: rs.map(r => r.revenue),
-    y: rs.map(r => r.net_margin),
+    y: rs.map(r => r.operating_margin),
     text: rs.map(r => r.ticker),
     customdata: rs.map(r => [(byTicker[r.ticker] || {}).name_short || r.ticker, r.total_assets, r.roe]),
     mode: "markers+text",
@@ -1036,7 +1036,7 @@ function renderFinancials() {
       opacity: 0.78,
       line: { color: "#0f172a", width: 1 },
     },
-    hovertemplate: "<b>%{text}</b> %{customdata[0]}<br>매출 $%{x:,.0f}M · 순이익률 %{y:.1f}%"
+    hovertemplate: "<b>%{text}</b> %{customdata[0]}<br>매출 $%{x:,.0f}M · 영업이익률 %{y:.1f}%"
       + "<br>총자산 $%{customdata[1]:,.0f}M · ROE %{customdata[2]:.1f}%<extra>" + g + "</extra>",
   }));
   const scYr = document.getElementById("fn-scatter-year");
@@ -1044,7 +1044,7 @@ function renderFinancials() {
   Plotly.newPlot("fn-scatter", traces, {
     margin: { t: 10, l: 56, r: 10, b: 46 },
     xaxis: { title: "매출 (USD M, 로그)", type: "log", zeroline: false, gridcolor: "#eef2f7" },
-    yaxis: { title: "순이익률 (%)", zeroline: true, zerolinecolor: "#cbd5e1", gridcolor: "#eef2f7" },
+    yaxis: { title: "영업이익률 (%)", zeroline: true, zerolinecolor: "#cbd5e1", gridcolor: "#eef2f7" },
     legend: { orientation: "h", y: -0.18, font: { size: 10 } },
     hoverlabel: { align: "left" },
   }, { displayModeBar: false, responsive: true });
