@@ -2368,6 +2368,142 @@ def build_cargo_balance() -> dict:
     }
 
 
+# Commodity name normalization — LK3 raw KOMODITI field has many free-text
+# spelling variants (BATUBARA vs BATU BARA, CPO vs CRUDE PALM OIL, 9 variants
+# of LNG). The map below collapses obvious duplicates while leaving meaningful
+# distinctions (e.g. PERTALITE vs PERTAMAX, RBD PALM OIL vs RBD PALM OLEIN).
+# Match runs against an uppercased, whitespace-collapsed, paren-stripped form.
+_KOM_CANON_EXPLICIT: dict[str, str] = {
+    # Coal — BATU BARA family
+    "BATU BARA": "BATU BARA",
+    "BATUBARA": "BATU BARA",
+    "MUAT BATU BARA": "BATU BARA",
+    "BATU BARA CURAH KERING": "BATU BARA",
+    "COAL": "BATU BARA",
+    "COAL IN BULK": "BATU BARA",
+    "STEAM COAL": "BATU BARA",
+    "STEAM COAL IN BULK": "BATU BARA",
+    "INDONESIAN STEAM COAL": "BATU BARA",
+    "INDONESIA STEAM COAL": "BATU BARA",
+    "INDONESIAN STEAM COAL IN BULK": "BATU BARA",
+    "INDONESIA STEAM COAL IN BULK": "BATU BARA",
+    "INDONESIAN STEAM NON COKING COAL IN BULK": "BATU BARA",
+    "INDONESIAN NON COKING COAL IN BULK": "BATU BARA",
+    "NON COKING COAL IN BULK": "BATU BARA",
+    "INDONESIA COAL IN BULK": "BATU BARA",
+    "INDONESIAN COAL IN BULK": "BATU BARA",
+    # Nickel ore (Bahasa "nikel" + "biji nikel" = ore)
+    "NICKEL ORE": "NICKEL ORE",
+    "ORE NICKEL": "NICKEL ORE",
+    "NIKEL ORE": "NICKEL ORE",
+    "ORE NIKEL": "NICKEL ORE",
+    "NIKEL": "NICKEL ORE",
+    "BIJI NIKEL": "NICKEL ORE",
+    "BIJI NIKEL ORE": "NICKEL ORE",
+    "INDONESIAN NICKEL ORE": "NICKEL ORE",
+    "INDONESIA NICKEL ORE": "NICKEL ORE",
+    # Bauxite
+    "BAUXITE": "BAUXITE",
+    "BAUXIT": "BAUXITE",
+    "BIJIH BAUKSIT": "BAUXITE",
+    "BAUKSIT": "BAUXITE",
+    # Wheat (English vs Bahasa)
+    "WHEAT": "GANDUM",
+    "GANDUM": "GANDUM",
+    # Logs / timber
+    "LOGS/KAYU GELONDONGAN": "KAYU LOG",
+    "LOGS KAYU GELONDONGAN": "KAYU LOG",  # post-slash strip
+    "KAYU GELONDONGAN": "KAYU LOG",
+    "KAYU LOG": "KAYU LOG",
+    "LOGS": "KAYU LOG",
+    # Palm oil — CPO family (keep RBD variants separate as refined products)
+    "CPO": "CPO",
+    "CRUDE PALM OIL": "CPO",
+    "CRUDE PALM OIL CPO": "CPO",   # post-paren-strip of "CRUDE PALM OIL (CPO)"
+    "CPO CRUDE PALM OIL": "CPO",   # post-paren-strip of "CPO ( CRUDE PALM OIL )"
+    "CPKO": "CPKO",
+    "CRUDE PALM KERNEL OIL": "CPKO",
+    "RBD PALM OLEIN": "RBD PALM OLEIN",
+    "RBD OLEIN": "RBD PALM OLEIN",
+    "RBDPL": "RBD PALM OLEIN",
+    # LNG family — single canonical
+    "LNG": "LNG",
+    "LIQUEFIED NATURAL GAS": "LNG",
+    "LIQUEFIED NATURAL GAS LNG": "LNG",
+    "LIQUIFEID NATURAL GAS": "LNG",   # source typo
+    "LIQUID NATURAL GAS": "LNG",
+    "LNG GAS": "LNG",
+    "LNG GAS CAIR": "LNG",
+    "LNG / GAS CAIR": "LNG",
+    "LNG/GAS CAIR": "LNG",
+    # LPG / gases
+    "LPG": "LPG",
+    "GAS LPG": "LPG",
+    "LPG MIX": "LPG",
+    "FULLY REFRIGERATED PROPANE": "PROPANE",
+    "PROPANE/BUTANE": "PROPANE/BUTANE",
+    "PROPANE & BUTANE": "PROPANE/BUTANE",
+    "PROPANE AND BUTANE": "PROPANE/BUTANE",
+    "AMMONIA": "AMMONIA",
+    "AMONIAK": "AMMONIA",
+    # Bio diesel — BIO SOLAR variants merge; SOLAR stays separate
+    "BIO SOLAR": "BIO SOLAR",
+    "BIOSOLAR": "BIO SOLAR",
+    "BIODIESEL": "BIO SOLAR",
+    "FAME": "FAME",
+    "FATTY ACID METHYL ESTER": "FAME",
+    # Container — collapse "PETIKEMAS" Indonesian vs "CONTAINER" English; ISI(=full) vs EMPTY
+    "PETIKEMAS 20 FULL": "PETIKEMAS 20 FULL",
+    "PETIKEMAS 20 FL": "PETIKEMAS 20 FULL",
+    "PETIKEMAS 20 ISI": "PETIKEMAS 20 FULL",
+    "CONTAINER FULL 20": "PETIKEMAS 20 FULL",
+    "CONTAINER 20 FULL": "PETIKEMAS 20 FULL",
+    "PETIKEMAS 40 FULL": "PETIKEMAS 40 FULL",
+    "PETIKEMAS 40 FL": "PETIKEMAS 40 FULL",
+    "PETIKEMAS 40 ISI": "PETIKEMAS 40 FULL",
+    "CONTAINER FULL 40": "PETIKEMAS 40 FULL",
+    "CONTAINER 40 FULL": "PETIKEMAS 40 FULL",
+    "PETIKEMAS 20 EMPTY": "PETIKEMAS 20 EMPTY",
+    "PETIKEMAS 20 KOSONG": "PETIKEMAS 20 EMPTY",
+    "CONTAINER 20 EMPTY": "PETIKEMAS 20 EMPTY",
+    "CONTAINER KOSONG 20": "PETIKEMAS 20 EMPTY",
+    "PETIKEMAS 40 EMPTY": "PETIKEMAS 40 EMPTY",
+    "PETIKEMAS 40 KOSONG": "PETIKEMAS 40 EMPTY",
+    "CONTAINER 40 EMPTY": "PETIKEMAS 40 EMPTY",
+    "CONTAINER KOSONG 40": "PETIKEMAS 40 EMPTY",
+    "CONTAINER KOSONG": "CONTAINER KOSONG",   # size unknown — own bucket
+    "PETIKEMAS": "PETIKEMAS",                  # size unknown — own bucket
+    "PETIKEMAS FULL": "PETIKEMAS FULL",        # size unknown
+    # Misc bulk
+    "SEMEN": "SEMEN",
+    "SEMEN CURAH": "SEMEN",
+    "GENERAL CARGO": "GENERAL CARGO",
+    "BARANG CAMPURAN": "BARANG CAMPURAN",
+    "CLINKER": "CLINKER",
+    "CLINKER IN BULK": "CLINKER",
+    "CEMENT CLINKER": "CLINKER",
+    "CEMENT CLINKER IN BULK": "CLINKER",
+}
+
+_PAREN_RE = re.compile(r"[()]")
+_NONWORD_RE = re.compile(r"[^A-Z0-9/&\s]+")
+
+def _canonicalize_commodity(raw: str) -> str:
+    """Normalize a free-text KOMODITI string to a canonical form.
+
+    Steps: uppercase → strip parentheses (keep inner text) → collapse whitespace
+    → lookup explicit map → fallback to the cleaned form.
+    """
+    if not raw:
+        return ""
+    s = str(raw).upper().strip()
+    # Drop parens but keep contents: "CPO ( CRUDE PALM OIL )" → "CPO CRUDE PALM OIL"
+    s = _PAREN_RE.sub(" ", s)
+    s = _NONWORD_RE.sub(" ", s)
+    s = " ".join(s.split())
+    return _KOM_CANON_EXPLICIT.get(s, s)
+
+
 def build_cargo_balance_top(top_commodities_per_cat: int = 12,
                              top_operators_per_cat: int = 15) -> dict:
     """Per-category top commodities (from cargo_snapshot.raw_row) + top operators
@@ -2432,10 +2568,10 @@ def build_cargo_balance_top(top_commodities_per_cat: int = 12,
                 cat = cat_of(jenis)
                 if not cat or not kom:
                     continue
-                kom_s = str(kom).strip()
-                if not kom_s:
+                kom_canon = _canonicalize_commodity(kom)
+                if not kom_canon:
                     continue
-                d = cat_kom[cat][kom_s]
+                d = cat_kom[cat][kom_canon]
                 d["ton"] += float(t or 0)
                 d["calls"] += int(calls or 0)
 

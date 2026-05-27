@@ -389,6 +389,9 @@ function buildTankerYearPills(payload) {
   });
 }
 
+// Persistent column-sort state for the Balance comparison table.
+const tsTableSort = { key: "ton", dir: -1 };
+
 function drawTankerCards() {
   const host = document.getElementById("ts-cards");
   const activeEl = document.getElementById("ts-active-filter");
@@ -398,84 +401,87 @@ function drawTankerCards() {
   for (const s of (tsState.cargoBalance?.monthly?.series || [])) {
     monthlyByCat[s.category] = s.ton_by_period || [];
   }
-  // Year-aware value resolver: if activeYear has ton_by_year, use it;
-  // else fall back to the rolling 12M field.
+  // Year-aware value resolver: if activeYear has ton_by_year, use it; else
+  // fall back to the rolling 12M field. Suppress YoY on partial years.
   const mpy = tsState.cargoBalance?.months_per_year || {};
   const activeYear = tsState.activeYear;
   const yearMonths = activeYear ? (mpy[activeYear] || 0) : 12;
   const yearLabel = activeYear
     ? `${activeYear}년${yearMonths < 12 ? ` (${yearMonths}mo)` : ""}`
     : "12M";
-  host.innerHTML = cards.map(c => {
-    const color = c.color || tsState.colorByCat[c.category] || "#64748b";
+  const yearLabelEl = document.getElementById("ts-table-year");
+  if (yearLabelEl) yearLabelEl.textContent = `(${yearLabel})`;
+
+  // Flatten card → row with the resolved scalar values used for sorting.
+  const rows = cards.map(c => {
     let tonVal = c.ton_last_12m;
     let yoy = c.yoy_pct;
     if (activeYear && c.ton_by_year && activeYear in c.ton_by_year) {
       tonVal = c.ton_by_year[activeYear];
       yoy = yearMonths === 12 ? (c.yoy_by_year || {})[activeYear] : null;
     }
-    const tonStr = fmtTon(tonVal);
-    const trend = yoy == null
-      ? `<span class="text-slate-400 text-sm">YoY —</span>`
-      : `<span class="${yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} text-base font-semibold">${yoy >= 0 ? "↑" : "↓"} ${Math.abs(yoy).toFixed(1)}%</span>`;
-    const ageTxt = c.avg_age_gt_weighted == null ? "—" : `${c.avg_age_gt_weighted.toFixed(1)}년`;
-    const hhiTxt = c.hhi == null ? "—" : Math.round(c.hhi).toLocaleString();
-    const isActive = tsState.filter !== "ALL" && tsState.filter === c.category;
-    const ringCls = isActive ? "ring-2 ring-slate-800" : "";
-    const subBadge = c.is_tanker_subclass
-      ? `<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 ml-1.5 align-middle">Tanker</span>`
+    return {
+      category: c.category,
+      color: c.color || tsState.colorByCat[c.category] || "#64748b",
+      isTankerSub: !!c.is_tanker_subclass,
+      ton: tonVal ?? 0,
+      yoy: yoy,                              // may be null
+      vessels: c.vessel_count ?? 0,
+      ops: c.operator_count ?? 0,
+      age: c.avg_age_gt_weighted,            // may be null
+      hhi: c.hhi,                            // may be null
+      topOp: c.top_operator,
+      monthly: monthlyByCat[c.category] || [],
+    };
+  });
+
+  // Column-sort. nulls always fall to the bottom regardless of direction.
+  const sortKey = tsTableSort.key;
+  const sortDir = tsTableSort.dir;
+  rows.sort((a, b) => {
+    const av = a[sortKey], bv = b[sortKey];
+    if (sortKey === "category") return a.category.localeCompare(b.category) * sortDir;
+    const aNull = av == null, bNull = bv == null;
+    if (aNull && bNull) return 0;
+    if (aNull) return 1;
+    if (bNull) return -1;
+    return (av - bv) * sortDir;
+  });
+
+  host.innerHTML = rows.map(r => {
+    const isActive = tsState.filter !== "ALL" && tsState.filter === r.category;
+    const rowCls = isActive ? "bg-amber-50/70 hover:bg-amber-100/70" : "hover:bg-slate-50";
+    const tagBadge = r.isTankerSub
+      ? `<span class="text-[9px] font-medium px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 ml-1.5 align-middle">Tanker</span>`
       : "";
-    const routeStr = c.top_route
-      ? `${c.top_route.origin} → ${c.top_route.destination}`
+    const tonStr = fmtTon(r.ton);
+    const yoyHtml = r.yoy == null
+      ? `<span class="text-slate-400">—</span>`
+      : `<span class="${r.yoy >= 0 ? "kpi-trend-up" : "kpi-trend-down"} font-semibold">${r.yoy >= 0 ? "↑" : "↓"} ${Math.abs(r.yoy).toFixed(1)}%</span>`;
+    const ageTxt = r.age == null ? '<span class="text-slate-400">—</span>' : `${r.age.toFixed(1)}년`;
+    const hhiTxt = r.hhi == null ? '<span class="text-slate-400">—</span>' : Math.round(r.hhi).toLocaleString();
+    const opName = r.topOp
+      ? (r.topOp.owner.length > 28 ? r.topOp.owner.slice(0, 26) + "…" : r.topOp.owner)
       : '<span class="text-slate-400">—</span>';
-    const routeMeta = c.top_route
-      ? `<span class="text-slate-400 text-[10px]">${fmtTon(c.top_route.ton)} · ${c.top_route.vessels}척</span>`
-      : "";
-    const opStr = c.top_operator
-      ? `${c.top_operator.owner.length > 24 ? c.top_operator.owner.slice(0, 22) + "…" : c.top_operator.owner}`
-      : '<span class="text-slate-400">—</span>';
-    const opCount = c.top_operator
-      ? (c.top_operator.count_in_category ?? c.top_operator.count_in_subclass)
-      : null;
+    const opCount = r.topOp ? (r.topOp.count_in_category ?? r.topOp.count_in_subclass) : null;
     const opMeta = opCount != null
-      ? `<span class="text-slate-400 text-[10px]">${opCount}척</span>`
+      ? `<span class="text-slate-400 text-[10px] ml-1">${opCount}척</span>`
       : "";
-    return `<div class="card-interactive bg-white rounded-xl shadow p-4 border-l-4 cursor-pointer ${ringCls}"
-                 style="border-color:${color}" data-cat="${c.category}"
-                 role="button" tabindex="0" aria-pressed="${isActive}"
-                 aria-label="${c.category} 필터 토글">
-      <div class="flex items-baseline justify-between mb-2">
-        <h4 class="font-semibold text-slate-700">${c.category}${subBadge}</h4>
-        <span class="text-[10.5px] text-slate-400">${(c.vessel_count || 0).toLocaleString()}척</span>
-      </div>
-      <div class="flex items-end justify-between gap-2 mb-2">
-        <div class="flex items-baseline gap-2">
-          <span class="text-2xl font-bold text-slate-900">${tonStr}</span>
-          <span class="text-xs text-slate-500">tons (${yearLabel})</span>
-        </div>
-        <div title="24M monthly ton trend">${sparkline(monthlyByCat[c.category] || [], { color, width: 80, height: 24 })}</div>
-      </div>
-      <div class="mb-3">${trend}</div>
-      <dl class="text-xs space-y-1.5 text-slate-600 mb-3">
-        <div class="flex justify-between"><dt>평균 선령 (GT 가중)</dt><dd class="font-mono">${ageTxt}</dd></div>
-        <div class="flex justify-between"><dt>운영사 수</dt><dd class="font-mono">${c.operator_count ?? "—"}</dd></div>
-        <div class="flex justify-between"><dt>HHI</dt><dd class="font-mono">${hhiTxt}</dd></div>
-      </dl>
-      <div class="border-t border-slate-100 pt-2.5 space-y-1.5 text-[11px] text-slate-600">
-        <div>
-          <div class="text-slate-400 text-[10px] uppercase tracking-wide mb-0.5">최대 항로</div>
-          <div class="flex items-baseline justify-between gap-2">
-            <span class="truncate">${routeStr}</span>${routeMeta}
-          </div>
-        </div>
-        <div>
-          <div class="text-slate-400 text-[10px] uppercase tracking-wide mb-0.5">최대 운영사</div>
-          <div class="flex items-baseline justify-between gap-2">
-            <span class="truncate">${opStr}</span>${opMeta}
-          </div>
-        </div>
-      </div>
-    </div>`;
+    return `<tr class="cursor-pointer ${rowCls}" data-cat="${r.category}"
+                role="button" tabindex="0" aria-pressed="${isActive}"
+                aria-label="${r.category} 필터 토글">
+      <td class="px-3 py-2.5 align-middle">
+        <span class="inline-block w-1 h-4 rounded-sm align-middle mr-2" style="background:${r.color}"></span><span class="font-medium text-slate-800">${r.category}</span>${tagBadge}
+      </td>
+      <td class="px-3 py-2.5 text-right font-mono font-semibold text-slate-900">${tonStr}</td>
+      <td class="px-3 py-2.5 text-right">${yoyHtml}</td>
+      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${(r.vessels || 0).toLocaleString()}</td>
+      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${ageTxt}</td>
+      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${r.ops ?? "—"}</td>
+      <td class="px-3 py-2.5 text-right font-mono text-slate-700">${hhiTxt}</td>
+      <td class="px-3 py-2.5 align-middle truncate max-w-[18rem]"><span class="text-slate-700">${opName}</span>${opMeta}</td>
+      <td class="px-3 py-2.5 text-right" title="24M monthly ton">${sparkline(r.monthly, { color: r.color, width: 80, height: 22 })}</td>
+    </tr>`;
   }).join("");
 
   const applyFilter = (cat) => {
@@ -487,7 +493,7 @@ function drawTankerCards() {
     drawTankerOperatorBars();
     drawTankerOperatorDonut();
   };
-  host.querySelectorAll("[data-cat]").forEach(el => {
+  host.querySelectorAll("tr[data-cat]").forEach(el => {
     el.addEventListener("click", () => applyFilter(el.dataset.cat));
     el.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -497,9 +503,35 @@ function drawTankerCards() {
     });
   });
 
+  // One-time wire-up of sortable column headers.
+  const tableEl = document.getElementById("ts-table");
+  if (tableEl && !tableEl.dataset.sortWired) {
+    tableEl.dataset.sortWired = "1";
+    tableEl.querySelectorAll("th[data-sort]").forEach(th => {
+      th.classList.add("cursor-pointer", "select-none", "hover:bg-slate-100");
+      th.addEventListener("click", () => {
+        const k = th.dataset.sort;
+        if (tsTableSort.key === k) tsTableSort.dir *= -1;
+        else { tsTableSort.key = k; tsTableSort.dir = (k === "category") ? 1 : -1; }
+        drawTankerCards();
+      });
+    });
+  }
+  // Visual sort indicator on the active column header.
+  if (tableEl) {
+    tableEl.querySelectorAll("th[data-sort]").forEach(th => {
+      const base = th.dataset.sortBase || (th.dataset.sortBase = th.innerHTML);
+      const arrow = (th.dataset.sort === tsTableSort.key)
+        ? (tsTableSort.dir > 0 ? " <span class='text-slate-400 text-[10px]'>▲</span>"
+                               : " <span class='text-slate-400 text-[10px]'>▼</span>")
+        : "";
+      th.innerHTML = base + arrow;
+    });
+  }
+
   if (activeEl) {
     if (tsState.filter === "ALL") {
-      activeEl.textContent = "전체 화물 — 카드를 클릭하여 필터링";
+      activeEl.textContent = "전체 화물 — 표 행을 클릭하여 필터링";
       activeEl.className = "text-xs text-slate-500";
     } else {
       activeEl.innerHTML = `<span class="active-filter-pill">필터: ${tsState.filter}<button type="button" id="ts-filter-clear" aria-label="필터 해제">×</button></span>`;

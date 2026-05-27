@@ -788,8 +788,26 @@
         </div>
         <span class="text-xs text-slate-500" id="ts-active-filter">전체</span>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8" id="ts-cards"
-           data-source="docs/derived/cargo_balance.json"></div>
+      <div class="bg-white rounded-xl shadow overflow-hidden mb-8" data-source="docs/derived/cargo_balance.json">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="ts-table">
+            <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+              <tr>
+                <th class="px-3 py-2.5 text-left font-semibold" data-sort="category">화물</th>
+                <th class="px-3 py-2.5 text-right font-semibold" data-sort="ton">톤 <span class="font-normal text-[10px] text-slate-400" id="ts-table-year">(12M)</span></th>
+                <th class="px-3 py-2.5 text-right font-semibold" data-sort="yoy">YoY</th>
+                <th class="px-3 py-2.5 text-right font-semibold" data-sort="vessels">선박 수</th>
+                <th class="px-3 py-2.5 text-right font-semibold" data-sort="age">평균 선령</th>
+                <th class="px-3 py-2.5 text-right font-semibold" data-sort="ops">운영사</th>
+                <th class="px-3 py-2.5 text-right font-semibold" data-sort="hhi">HHI</th>
+                <th class="px-3 py-2.5 text-left font-semibold">최대 운영사</th>
+                <th class="px-3 py-2.5 text-right font-semibold w-24">24M 추이</th>
+              </tr>
+            </thead>
+            <tbody id="ts-cards" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- 5.3 화물별 monthly stacked area -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/derived/cargo_balance.json">
