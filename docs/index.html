@@ -94,7 +94,14 @@
            Cycle 6: 보조 문구 삭제 + 차트 오른쪽에 카테고리 상세 화물 박스. -->
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/data/cargo_sector_monthly.json">
         <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
-          <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량</h3>
+          <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량
+            <span class="text-xs text-slate-500 font-normal" id="home-ts-mode-label">(선적 + 하역 합계)</span>
+          </h3>
+          <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="home-ts-direction">
+            <button data-dir="total"   class="px-2.5 py-1 bg-slate-800 text-white">합계</button>
+            <button data-dir="muat"    class="px-2.5 py-1 bg-white hover:bg-slate-100">선적 (MUAT)</button>
+            <button data-dir="bongkar" class="px-2.5 py-1 bg-white hover:bg-slate-100">하역 (BONGKAR)</button>
+          </div>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch" style="min-height:520px">
           <!-- 좌측 2/3: stacked bar 차트 (오른쪽 상세 박스 높이에 맞춰 늘어남) -->

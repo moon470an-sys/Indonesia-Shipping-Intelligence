@@ -662,18 +662,22 @@ def cargo_sector_monthly_payload(month: str) -> dict:
     mappable: set[str] = set(_FLOW_PORT_COORDS.keys())
 
     cat_bucket: dict = collections.defaultdict(
-        lambda: {"ton": 0.0, "calls": 0}
+        lambda: {"ton_b": 0.0, "ton_m": 0.0}
     )
-    for kr in (kom_rows_b, kom_rows_m):
-        for yr, mo, kind, code, kom, ton in kr:
-            if code not in mappable:
-                continue
-            cat = classify_commodity_category(kom)
-            period = f"{int(yr)}-{int(mo):02d}"
-            cb = cat_bucket[(period, kind, cat)]
-            cb["ton"] += float(ton or 0)
-            # calls는 합칠 의미가 크지 않아 0으로 둠 (BONGKAR/MUAT 합산 시
-            # 중복 카운트되므로). 필요시 후속에서 별도 SQL 로 보강.
+    # BONGKAR rows
+    for yr, mo, kind, code, kom, ton in kom_rows_b:
+        if code not in mappable:
+            continue
+        cat = classify_commodity_category(kom)
+        period = f"{int(yr)}-{int(mo):02d}"
+        cat_bucket[(period, kind, cat)]["ton_b"] += float(ton or 0)
+    # MUAT rows
+    for yr, mo, kind, code, kom, ton in kom_rows_m:
+        if code not in mappable:
+            continue
+        cat = classify_commodity_category(kom)
+        period = f"{int(yr)}-{int(mo):02d}"
+        cat_bucket[(period, kind, cat)]["ton_m"] += float(ton or 0)
 
     sector_rows = [
         {
@@ -698,13 +702,15 @@ def cargo_sector_monthly_payload(month: str) -> dict:
     cargo_category_rows = [
         {
             "period": p, "kind": k, "category": cat,
-            "ton_total": round(v["ton"], 1),
+            "ton_bongkar": round(v["ton_b"], 1),
+            "ton_muat":    round(v["ton_m"], 1),
+            "ton_total":   round(v["ton_b"] + v["ton_m"], 1),
         }
         for (p, k, cat), v in sorted(cat_bucket.items())
     ]
     return {
         "snapshot_month": month,
-        "schema_version": 2,
+        "schema_version": 3,
         "rows": sector_rows,
         "tanker_subclass_rows": tanker_rows,
         "cargo_category_rows": cargo_category_rows,

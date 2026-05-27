@@ -1712,8 +1712,11 @@ function renderHomeKpi(payload, mapPayload) {
 // 기존: sector(PASSENGER/CARGO/FISHING 등) stacked. 본 사이트 Demand 탭은
 // 화물(LK3) 분석이므로 CARGO sector만 표시하고 그 안에서 vessel_class /
 // tanker subclass 단위로 다시 분해해 카테고리별 색상을 분리한다.
-// 데이터: cargo_sector_monthly.json (rows + tanker_subclass_rows).
-const homeTsState = { mode: "abs", payload: null };
+// 데이터: cargo_sector_monthly.json (rows + tanker_subclass_rows + cargo_category_rows).
+// direction: "total" | "muat" | "bongkar" — 합계 / 선적 / 하역
+const homeTsState = { mode: "abs", payload: null, direction: "total" };
+const HOME_TS_FIELD = { total: "ton_total", muat: "ton_muat", bongkar: "ton_bongkar" };
+const HOME_TS_LABEL = { total: "(선적 + 하역 합계)", muat: "(선적 MUAT)", bongkar: "(하역 BONGKAR)" };
 
 // Cycle 7+: Tier-2 commodity-category palette. backend/commodity_taxonomy.py
 // 의 CATEGORY_COLORS 와 동기화. cv-app(Tier-1 bucket)/cat-details(Tier-2
@@ -1767,8 +1770,12 @@ function renderHomeTimeseries(payload) {
 // 출력: { periods, series:[{ name, color, y }] }
 function _buildCargoCategorySeries(cm) {
   if (!cm) return null;
-  // 우선 경로: 신규 cargo_category_rows
+  const field = HOME_TS_FIELD[homeTsState.direction] || "ton_total";
+  // 우선 경로: 신규 cargo_category_rows (선적/하역/합계 모두 지원, schema v3+)
   if (Array.isArray(cm.cargo_category_rows) && cm.cargo_category_rows.length) {
+    const sample = cm.cargo_category_rows[0];
+    // schema v2 (legacy) 는 ton_total 만 갖고 있어 muat/bongkar 토글이 무력 — 그땐 ton_total 로 폴백.
+    const useField = (field in sample) ? field : "ton_total";
     const periodSet = new Set();
     const byCat = {};
     for (const r of cm.cargo_category_rows) {
@@ -1776,7 +1783,7 @@ function _buildCargoCategorySeries(cm) {
       if (!cat) continue;
       periodSet.add(r.period);
       if (!byCat[cat]) byCat[cat] = {};
-      byCat[cat][r.period] = (byCat[cat][r.period] || 0) + (Number(r.ton_total) || 0);
+      byCat[cat][r.period] = (byCat[cat][r.period] || 0) + (Number(r[useField]) || 0);
     }
     const periods = [...periodSet].sort();
     const knownOrder = CARGO_CATEGORY_ORDER.filter(k => byCat[k]);
@@ -1789,7 +1796,7 @@ function _buildCargoCategorySeries(cm) {
     }));
     return { periods, series };
   }
-  // 폴백: 구 vessel-class 시계열
+  // 폴백: 구 vessel-class 시계열 (rows + tanker_subclass_rows)
   if (!cm.rows) return null;
   const periodSet = new Set();
   const byCat = {};
@@ -1799,13 +1806,13 @@ function _buildCargoCategorySeries(cm) {
     periodSet.add(r.period);
     const key = r.vessel_class;
     if (!byCat[key]) byCat[key] = {};
-    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r.ton_total) || 0);
+    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r[field]) || 0);
   }
   for (const r of (cm.tanker_subclass_rows || [])) {
     periodSet.add(r.period);
     const key = r.subclass;
     if (!byCat[key]) byCat[key] = {};
-    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r.ton_total) || 0);
+    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r[field]) || 0);
   }
   const periods = [...periodSet].sort();
   const ordered = Object.keys(byCat);
@@ -1817,8 +1824,32 @@ function _buildCargoCategorySeries(cm) {
   return { periods, series };
 }
 
+// One-time wire-up of the 합계/MUAT/BONGKAR pill toggle.
+function _wireHomeTsDirection() {
+  const host = document.getElementById("home-ts-direction");
+  if (!host || host.dataset.wired) return;
+  host.dataset.wired = "1";
+  host.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-dir]");
+    if (!btn) return;
+    homeTsState.direction = btn.dataset.dir;
+    host.querySelectorAll("button").forEach(b => {
+      const active = b.dataset.dir === homeTsState.direction;
+      b.classList.toggle("bg-slate-800", active);
+      b.classList.toggle("text-white", active);
+      b.classList.toggle("bg-white", !active);
+      b.classList.toggle("hover:bg-slate-100", !active);
+    });
+    const lbl = document.getElementById("home-ts-mode-label");
+    if (lbl) lbl.textContent = HOME_TS_LABEL[homeTsState.direction] || "";
+    drawHomeTimeseries();
+  });
+}
+
 // Cycle 5: stacked area → 월별 stacked bar (절대값만). YoY 토글 제거.
+// Cycle 8: 선적/하역/합계 토글 (homeTsState.direction).
 function drawHomeTimeseries() {
+  _wireHomeTsDirection();
   const cm = homeState && homeState.cargoMonthly;
   const built = _buildCargoCategorySeries(cm);
   let periods, series;
