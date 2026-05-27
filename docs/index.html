@@ -49,7 +49,6 @@
         <button data-tab="tanker-sector" class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-tanker-sector" title="수급 균형 — Demand × Supply 교차">⚖️ Balance</button>
         <button data-tab="market"        class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-market"        title="Market — 주간 시장·뉴스·이벤트 (외부 정보)">📊 Market</button>
         <button data-tab="financials"    class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-financials"    title="상장 해운사 재무 — IDX XBRL 감사 재무제표">💼 Financials</button>
-        <button data-tab="explorer"      class="tab px-3 py-1.5 rounded hover:bg-slate-700" role="tab" aria-selected="false" aria-controls="tab-explorer"      title="원천 데이터 탐색">🔎 Explorer</button>
       </nav>
     </div>
   </header>
@@ -1074,96 +1073,6 @@
     <!-- Cycle 1: 🔎 Explorer — 원천 데이터 탐색 (Demand 지도 / Supply 필터의 raw 버전).
          Cycle 2-4에서 구체 위젯(항로 테이블, 항구 톤수 상세, 코모디티 상세,
          결측 키 추적, 변경 이력 검색)이 채워질 placeholder 패널. -->
-    <section id="tab-explorer" class="tab-panel hidden" role="tabpanel" tabindex="-1">
-      <div class="mb-4">
-        <h2 class="text-2xl font-bold text-slate-800">🔎 Explorer — 원천 데이터 탐색</h2>
-        <p class="text-xs text-slate-500 mt-1">Demand·Supply·Balance에서 본 패턴을 raw 단위로 검증. 화물선 + 보조선(Tug) 기본. 토글로 전체 raw 접근.</p>
-      </div>
-
-      <!-- Cycle 1: scope meta-strip + 전체 raw 토글 -->
-      <div class="scope-strip flex flex-wrap items-center gap-2 mb-3 text-[11px]" data-source="docs/derived/scope_audit.json">
-        <span class="scope-chip scope-cargo">화물선 <strong id="ex-scope-cargo">—</strong>척</span>
-        <span class="scope-chip scope-aux">보조선 (Tug) <strong id="ex-scope-aux">—</strong>척</span>
-        <span class="scope-chip scope-excluded">제외 <strong id="ex-scope-excl">—</strong>척</span>
-        <span class="scope-chip scope-unclassified">분류 미정 <strong id="ex-scope-unc">—</strong>척</span>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
-        <div class="bg-white rounded-xl shadow p-4">
-          <h3 class="font-semibold mb-2 text-sm">🚢 화물선 목록 — raw</h3>
-          <p class="text-[11px] text-slate-500 mb-2">Supply 탭 필터·검색의 raw 버전. scope=cargo + auxiliary 기본.</p>
-          <a href="#" data-tab="fleet" class="ex-jumplink text-[12px] text-blue-600 hover:underline">→ Supply 탭으로 이동</a>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
-          <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-            <h3 class="font-semibold text-sm">🗺️ 항로 테이블 — Origin → Destination (Top 30, 24M)</h3>
-            <input id="ex-route-search" type="text" placeholder="항구·카테고리 검색…" class="px-2 py-0.5 text-[11px] border border-slate-200 rounded w-44">
-          </div>
-          <p class="text-[11px] text-slate-500 mb-2">Demand 흐름 지도와 동일한 raw 항로. 헤더 클릭 시 정렬.</p>
-          <div class="overflow-auto max-h-[420px] border border-slate-100 rounded">
-            <table id="ex-routes-tbl" class="min-w-full text-[11px]">
-              <thead class="bg-slate-50 sticky top-0">
-                <tr>
-                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="origin">Origin</th>
-                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="destination">Destination</th>
-                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="category">Category</th>
-                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="ton_24m">Ton (24M)</th>
-                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="calls">Calls</th>
-                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="vessels">Vessels</th>
-                </tr>
-              </thead>
-              <tbody id="ex-routes-tbody"><tr><td colspan="6" class="px-2 py-3 text-center text-slate-400">로딩…</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
-          <div class="flex items-baseline justify-between mb-2 flex-wrap gap-2">
-            <h3 class="font-semibold text-sm">⚓ 항구별 톤수 상세 (24M 누계)</h3>
-            <input id="ex-port-search" type="text" placeholder="항구 검색…" class="px-2 py-0.5 text-[11px] border border-slate-200 rounded w-44">
-          </div>
-          <p class="text-[11px] text-slate-500 mb-2">map_flow.json의 ports raw — 24개월 누계 톤. 헤더 클릭 시 정렬.</p>
-          <div class="overflow-auto max-h-[420px] border border-slate-100 rounded">
-            <table id="ex-ports-tbl" class="min-w-full text-[11px]">
-              <thead class="bg-slate-50 sticky top-0">
-                <tr>
-                  <th class="px-2 py-1 text-left cursor-pointer select-none" data-col="name">항구</th>
-                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="lat">Lat</th>
-                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="lon">Lon</th>
-                  <th class="px-2 py-1 text-right cursor-pointer select-none" data-col="ton_24m">Ton (24M)</th>
-                </tr>
-              </thead>
-              <tbody id="ex-ports-tbody"><tr><td colspan="4" class="px-2 py-3 text-center text-slate-400">로딩…</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
-          <h3 class="font-semibold mb-2 text-sm">📦 자동 인사이트 (map_flow.json)</h3>
-          <p class="text-[11px] text-slate-500 mb-2">Demand 지도 빌더가 자동 산출한 사실 5건. 외부 해석·추정 미포함.</p>
-          <ul id="ex-insights" class="text-[11px] text-slate-700 space-y-1 list-disc list-inside">
-            <li class="text-slate-400">로딩…</li>
-          </ul>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h3 class="font-semibold mb-2 text-sm">🚫 결측 키 추적 (port × period × kind)</h3>
-          <p class="text-[11px] text-slate-500 mb-2">LK3 신고 누락 후보 — '데이터 없음' 0 처리 금지 원칙 점검용.</p>
-          <div id="ex-missing-placeholder" class="text-[11px] text-slate-400">데이터 없음 — Cycle 3에서 구현.</div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <h3 class="font-semibold mb-2 text-sm">📜 변경 이력 검색</h3>
-          <p class="text-[11px] text-slate-500 mb-2">vessels_changes / cargo_changes 직전 24개월 검색.</p>
-          <div id="ex-changes-placeholder" class="text-[11px] text-slate-400">데이터 없음 — Cycle 3에서 구현.</div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4 lg:col-span-2">
-          <h3 class="font-semibold mb-2 text-sm">🔧 Scope 제외 데이터 보기 (Passenger / Fishing / Patrol / Yacht 등)</h3>
-          <p class="text-[11px] text-slate-500 mb-2">메인 차트에 노출되지 않는 선종. 본 토글로만 접근 가능.</p>
-          <label class="inline-flex items-center gap-2 text-[11px] text-slate-700 cursor-pointer">
-            <input id="ex-show-excluded" type="checkbox" class="accent-slate-700">
-            <span>제외 선종 raw 표시</span>
-          </label>
-          <div id="ex-excluded-host" class="hidden mt-3 text-[11px] text-slate-400">Cycle 2-3에서 구현 — 현재는 Supply 탭의 "제외 선종도 표시" 토글로 우회 접근 가능.</div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer id="global-footer" class="bg-slate-100 border-t border-slate-200 mt-12 py-6">

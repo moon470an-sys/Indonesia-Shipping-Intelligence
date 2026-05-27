@@ -1192,7 +1192,6 @@ const TAB_TITLES = {
   "overview":      "Demand",
   "fleet":         "Supply",
   "tanker-sector": "Balance",
-  "explorer":      "Explorer",
   "financials":    "Financials",
   // legacy ids — accessible via deep-link only, hidden from nav
   "cargo":         "Cargo (legacy)",
@@ -1268,10 +1267,6 @@ async function ensureLoaded(tab) {
       renderFinancials();
       state.loaded.add("financials");
     }
-    if (tab === "explorer" && !state.loaded.has("explorer")) {
-      renderExplorer();
-      state.loaded.add("explorer");
-    }
     if (tab === "market" && !state.loaded.has("market")) {
       await renderMarket();
       state.loaded.add("market");
@@ -1282,170 +1277,7 @@ async function ensureLoaded(tab) {
   }
 }
 
-// Cycle 1-2: Explorer tab.
-//   - Cross-tab jump links + show-excluded toggle (Cycle 1)
-//   - Origin→Destination route table + port volume table from map_flow.json (Cycle 2)
-//   - Auto-insights surfaced from the builder (Cycle 2)
-const exState = {
-  routes: null,
-  ports: null,
-  insights: null,
-  routeSort: { col: "ton_24m", dir: "desc" },
-  portSort:  { col: "ton_24m", dir: "desc" },
-  routeQ: "",
-  portQ:  "",
-};
 
-async function renderExplorer() {
-  document.querySelectorAll("#tab-explorer .ex-jumplink").forEach(a => {
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      const dst = a.dataset.tab;
-      if (dst) showTab(dst);
-    });
-  });
-  const tog = document.getElementById("ex-show-excluded");
-  const host = document.getElementById("ex-excluded-host");
-  if (tog && host) {
-    tog.addEventListener("change", () => {
-      host.classList.toggle("hidden", !tog.checked);
-    });
-  }
-
-  // Cycle 2: load map_flow.json for the Explorer routes / ports / insights.
-  // Reused from Demand renderer cache when available.
-  try {
-    const m = (homeState && homeState.mapData) ? homeState.mapData : await loadDerived("map_flow.json");
-    exState.routes   = (m.routes_top30 || []).slice();
-    exState.ports    = (m.ports || []).slice();
-    exState.insights = (m.insights || []);
-  } catch (e) {
-    console.error("Explorer map_flow load:", e);
-    exState.routes = []; exState.ports = []; exState.insights = [];
-  }
-
-  // Search inputs
-  const rq = document.getElementById("ex-route-search");
-  if (rq && !rq.dataset.wired) {
-    rq.dataset.wired = "1";
-    rq.addEventListener("input", () => { exState.routeQ = rq.value || ""; _drawExRoutes(); });
-  }
-  const pq = document.getElementById("ex-port-search");
-  if (pq && !pq.dataset.wired) {
-    pq.dataset.wired = "1";
-    pq.addEventListener("input", () => { exState.portQ = pq.value || ""; _drawExPorts(); });
-  }
-  // Sortable headers
-  document.querySelectorAll("#ex-routes-tbl thead th[data-col]").forEach(th => {
-    if (th.dataset.wired) return;
-    th.dataset.wired = "1";
-    th.addEventListener("click", () => {
-      const c = th.dataset.col;
-      if (exState.routeSort.col === c) {
-        exState.routeSort.dir = exState.routeSort.dir === "asc" ? "desc" : "asc";
-      } else { exState.routeSort = { col: c, dir: "asc" }; }
-      _drawExRoutes();
-    });
-  });
-  document.querySelectorAll("#ex-ports-tbl thead th[data-col]").forEach(th => {
-    if (th.dataset.wired) return;
-    th.dataset.wired = "1";
-    th.addEventListener("click", () => {
-      const c = th.dataset.col;
-      if (exState.portSort.col === c) {
-        exState.portSort.dir = exState.portSort.dir === "asc" ? "desc" : "asc";
-      } else { exState.portSort = { col: c, dir: "asc" }; }
-      _drawExPorts();
-    });
-  });
-
-  _drawExRoutes();
-  _drawExPorts();
-  _drawExInsights();
-}
-
-function _sortRows(rows, col, dir) {
-  const out = rows.slice();
-  const k = dir === "asc" ? 1 : -1;
-  out.sort((a, b) => {
-    const av = a[col], bv = b[col];
-    if (av == null && bv == null) return 0;
-    if (av == null) return 1;
-    if (bv == null) return -1;
-    if (typeof av === "number" && typeof bv === "number") return (av - bv) * k;
-    return String(av).localeCompare(String(bv), "ko") * k;
-  });
-  return out;
-}
-
-function _drawExRoutes() {
-  const tbody = document.getElementById("ex-routes-tbody");
-  if (!tbody) return;
-  let rows = exState.routes || [];
-  const q = exState.routeQ.toUpperCase();
-  if (q) {
-    rows = rows.filter(r =>
-      (r.origin || "").toUpperCase().includes(q) ||
-      (r.destination || "").toUpperCase().includes(q) ||
-      (r.category || "").toUpperCase().includes(q));
-  }
-  rows = _sortRows(rows, exState.routeSort.col, exState.routeSort.dir);
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="px-2 py-3 text-center text-slate-400">매치 없음</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = rows.map(r => `<tr class="hover:bg-slate-50">
-    <td class="px-2 py-1 font-mono">${_esc(r.origin || "")}</td>
-    <td class="px-2 py-1 font-mono">${_esc(r.destination || "")}</td>
-    <td class="px-2 py-1 text-slate-600">${_esc(r.category || "")}</td>
-    <td class="px-2 py-1 text-right font-mono">${fmtTon(r.ton_24m)}</td>
-    <td class="px-2 py-1 text-right font-mono">${fmtCount(r.calls)}</td>
-    <td class="px-2 py-1 text-right font-mono">${fmtCount(r.vessels)}</td>
-  </tr>`).join("");
-  _updateSortMarkers("#ex-routes-tbl", exState.routeSort);
-}
-
-function _drawExPorts() {
-  const tbody = document.getElementById("ex-ports-tbody");
-  if (!tbody) return;
-  let rows = exState.ports || [];
-  const q = exState.portQ.toUpperCase();
-  if (q) {
-    rows = rows.filter(p => (p.name || "").toUpperCase().includes(q));
-  }
-  rows = _sortRows(rows, exState.portSort.col, exState.portSort.dir);
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="4" class="px-2 py-3 text-center text-slate-400">매치 없음</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = rows.map(p => `<tr class="hover:bg-slate-50">
-    <td class="px-2 py-1 font-mono">${_esc(p.name || "")}</td>
-    <td class="px-2 py-1 text-right font-mono">${p.lat == null ? "—" : p.lat.toFixed(2)}</td>
-    <td class="px-2 py-1 text-right font-mono">${p.lon == null ? "—" : p.lon.toFixed(2)}</td>
-    <td class="px-2 py-1 text-right font-mono">${fmtTon(p.ton_24m)}</td>
-  </tr>`).join("");
-  _updateSortMarkers("#ex-ports-tbl", exState.portSort);
-}
-
-function _drawExInsights() {
-  const ul = document.getElementById("ex-insights");
-  if (!ul) return;
-  const list = exState.insights || [];
-  if (!list.length) {
-    ul.innerHTML = `<li class="text-slate-400">데이터 없음</li>`;
-    return;
-  }
-  ul.innerHTML = list.map(t => `<li>${_esc(String(t))}</li>`).join("");
-}
-
-function _updateSortMarkers(sel, st) {
-  document.querySelectorAll(`${sel} thead th[data-col]`).forEach(th => {
-    const c = th.dataset.col;
-    const m = c === st.col ? (st.dir === "asc" ? " ▲" : " ▼") : "";
-    const label = th.textContent.replace(/[▲▼]\s*$/, "").trimEnd();
-    th.textContent = label + m;
-  });
-}
 
 // ---------- Boot ----------
 async function boot() {
@@ -1469,7 +1301,7 @@ async function boot() {
     const h = window.location.hash || "";
     const qIdx = h.indexOf("?");
     const tab = (qIdx >= 0 ? h.substring(1, qIdx) : h.substring(1)) || "";
-    return ["overview", "fleet", "tanker-sector", "market", "explorer", "financials"].includes(tab) ? tab : "overview";
+    return ["overview", "fleet", "tanker-sector", "market", "financials"].includes(tab) ? tab : "overview";
   })();
   showTab(initialTab);
   loadGlobalFooter();
