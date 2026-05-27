@@ -1110,10 +1110,10 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
             for code, kom, yr, t, calls in cur:
                 if code not in port_coords:
                     continue  # 같은 mappable-port scope 만 집계
-                if not kom:
-                    kom_s = ""
-                else:
-                    kom_s = str(kom).strip()
+                # Canonicalize commodity name (BATU BARA / BATUBARA / Batu Bara
+                # → BATU BARA, CRUDE PALM OIL → CPO, LNG 9가지 표기 → LNG, etc.)
+                # so the per-category top-N list merges spelling variants.
+                kom_s = _canonicalize_commodity(kom) if kom else ""
                 raw_rows.append((code, kom_s, str(yr), float(t or 0), int(calls or 0)))
 
     # Bucket each (komoditi, year) into a Tier-2 category.
@@ -2395,10 +2395,13 @@ _KOM_CANON_EXPLICIT: dict[str, str] = {
     # Coal — BATU BARA family
     "BATU BARA": "BATU BARA",
     "BATUBARA": "BATU BARA",
+    "BARU BARA": "BATU BARA",            # common typo
     "MUAT BATU BARA": "BATU BARA",
     "BATU BARA CURAH KERING": "BATU BARA",
     "COAL": "BATU BARA",
     "COAL IN BULK": "BATU BARA",
+    "INDONESIA COAL": "BATU BARA",
+    "INDONESIAN COAL": "BATU BARA",
     "STEAM COAL": "BATU BARA",
     "STEAM COAL IN BULK": "BATU BARA",
     "INDONESIAN STEAM COAL": "BATU BARA",
@@ -2410,9 +2413,25 @@ _KOM_CANON_EXPLICIT: dict[str, str] = {
     "NON COKING COAL IN BULK": "BATU BARA",
     "INDONESIA COAL IN BULK": "BATU BARA",
     "INDONESIAN COAL IN BULK": "BATU BARA",
+    "INDONESIAN LIGNITE COAL IN BULK": "BATU BARA",
+    "LIGNITE COAL": "BATU BARA",
+    "LIGNITE COAL IN BULK": "BATU BARA",
+    "ENVIROCOAL": "BATU BARA",
+    "ENVIROCOAL IN BULK": "BATU BARA",
+    "STEAM NON COKING COAL IN BULK OF INDONESIAN ORIG": "BATU BARA",
+    "STEAM NON COKING COAL IN BULK OF INDONESIAN ORIGIN": "BATU BARA",
+    "BATU BARA CRUSHER": "BATU BARA",
+    # Petroleum / refinery products (Crude Oil category typos)
+    "NAPHTHA": "NAPHTHA",
+    "NAPTHA": "NAPHTHA",   # common typo
+    "CRUDE OIL": "CRUDE OIL",
+    "CRUDE OIL PIPA TERPADU": "CRUDE OIL",
+    "CRUDE OIL TERPADU": "CRUDE OIL",
     # Nickel ore (Bahasa "nikel" + "biji nikel" = ore)
     "NICKEL ORE": "NICKEL ORE",
     "ORE NICKEL": "NICKEL ORE",
+    "NICKLE ORE": "NICKEL ORE",          # common typo
+    "NICKEL ORE IN BULK": "NICKEL ORE",
     "NIKEL ORE": "NICKEL ORE",
     "ORE NIKEL": "NICKEL ORE",
     "NIKEL": "NICKEL ORE",
@@ -2492,9 +2511,15 @@ _KOM_CANON_EXPLICIT: dict[str, str] = {
     "CONTAINER KOSONG": "CONTAINER KOSONG",   # size unknown — own bucket
     "PETIKEMAS": "PETIKEMAS",                  # size unknown — own bucket
     "PETIKEMAS FULL": "PETIKEMAS FULL",        # size unknown
-    # Misc bulk
+    # Misc bulk (SEMEN/CEMENT are Bahasa/English for the same product)
     "SEMEN": "SEMEN",
     "SEMEN CURAH": "SEMEN",
+    "SEMEN IN BAG": "SEMEN",
+    "SEMEN JUMBO": "SEMEN",
+    "CEMENT": "SEMEN",
+    "CEMENT IN BAG": "SEMEN",
+    "CEMENT IN BULK": "SEMEN",
+    "PORTLAND COMPOSITE CEMENT BULK": "SEMEN",
     "GENERAL CARGO": "GENERAL CARGO",
     "BARANG CAMPURAN": "BARANG CAMPURAN",
     "CLINKER": "CLINKER",
