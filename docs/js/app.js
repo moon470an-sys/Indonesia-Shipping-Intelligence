@@ -6301,7 +6301,7 @@ async function renderMarket() {
     const dry = (intF.scrap_dry_bulk || []).map(o => ({ ...o, _label: "Dry — " + (o.region || o.size || "—") }));
     const tnk = (intF.scrap_tanker   || []).map(o => ({ ...o, _label: "Tanker — " + (o.region || o.size || "—") }));
     const arr = [...dry, ...tnk];
-    scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired", "PDF p.1 placeholder (Allied weekly)");
+    scrapHost.innerHTML = arr.length ? arr.map(o => _mkScrapCard(o)).join("") : emptyMsg("스크랩 가격 — No data acquired", "웹 출처 추가 시 표시");
   }
   const spHost = document.getElementById("mk-int-sp");
   if (spHost) {
@@ -6309,7 +6309,7 @@ async function renderMarket() {
     const visible = arr.filter(o => o.vessel_name || o.price_musd != null);
     spHost.innerHTML = visible.length
       ? visible.map(o => _mkSpCard(o)).join("")
-      : emptyMsg("S&P 활동 — No data acquired", "PDF p.1 placeholder (Allied weekly)");
+      : emptyMsg("S&P 활동 — No data acquired", "웹 출처 추가 시 표시");
   }
 
   // Commodity News (Coal / Nickel / CPO / Power / Shipping) — Cycle 7 styling
@@ -6422,44 +6422,9 @@ function _mkOverviewCard(o) {
     </div>`;
 }
 
-// roadmap iter 11: source-composition meter. Shows how much of the vessel-pricing
-// matrix is backed by a web/SNS source vs PDF-only (SBS Weekly) — makes the
-// "PDF 의존 → 웹 검색 기반" transition progress visible at a glance.
-// Recomputed live from market.json each render, so it never goes stale.
-function _mkSourceCoverage(markets) {
-  if (!markets || !markets.length) return "";
-  const isPdf = (name) => /PDF|SBS Weekly/i.test(String(name || ""));
-  let total = 0, web = 0, pdfOnly = 0;
-  for (const mk of markets) {
-    for (const c of mk.categories || []) {
-      for (const r of c.rows || []) {
-        total++;
-        const srcs = r.sources || [];
-        if (!srcs.length) { pdfOnly++; continue; }
-        if (srcs.some(s => !isPdf(s.name))) web++;
-        else pdfOnly++;
-      }
-    }
-  }
-  if (!total) return "";
-  const webPct = Math.round((web / total) * 100);
-  const pdfPct = 100 - webPct;
-  return `
-    <div class="mb-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <div class="flex items-center gap-2 flex-wrap text-[10px] font-mono mb-1.5">
-        <span class="uppercase tracking-wider text-slate-500 font-semibold">출처 구성</span>
-        <span class="text-slate-400">PDF 의존 → 웹 검색 기반 전환 진행률</span>
-        <span class="ml-auto text-slate-600"><strong class="text-emerald-700">${web}</strong> 웹·SNS · <strong class="text-slate-700">${pdfOnly}</strong> PDF 단독 · 총 ${total} rows</span>
-      </div>
-      <div class="h-2 rounded-full overflow-hidden bg-slate-100 flex" role="img" aria-label="웹·SNS 출처 ${webPct}%, PDF 단독 ${pdfPct}%">
-        <div class="bg-emerald-500" style="width:${webPct}%"></div>
-        <div class="bg-slate-300" style="width:${pdfPct}%"></div>
-      </div>
-      <div class="flex items-center gap-3 mt-1 text-[9px] font-mono text-slate-500">
-        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-emerald-500"></span>웹·SNS 출처 ${webPct}%</span>
-        <span class="inline-flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-slate-300"></span>PDF(SBS Weekly) 단독 ${pdfPct}%</span>
-      </div>
-    </div>`;
+// 출처 구성 미터 — SBS PDF 제거 이후 100% 웹 상태이므로 별도 표시 생략.
+function _mkSourceCoverage(_markets) {
+  return "";
 }
 
 // Cycle 11: Auto-insight strip derived from the vessel-pricing markets.
@@ -6557,7 +6522,7 @@ function _mkInsightStrip(markets, asOf) {
   ].filter(Boolean).join("");
   const alert = incomplete.length
     ? `<div class="mt-1 px-2 py-1 rounded bg-rose-50 border border-rose-200 text-[10px] text-rose-700 font-mono">
-         ⚠ 결측 마켓: ${incomplete.map(_esc).join(" · ")} — 다음 PDF 갱신에 보강 필요
+         ⚠ 결측 마켓: ${incomplete.map(_esc).join(" · ")} — 추가 웹 출처 확보 필요
        </div>` : "";
   // Cycle 40: count seeded rows to show how many data points drive the insights
   let seededRows = 0;
@@ -6692,7 +6657,7 @@ function _mkMarketBlock(mk, isOpen = true) {
          <span class="text-slate-400 text-[14px] leading-none mt-px">◌</span>
          <div>
            <div class="text-slate-700">차트 데이터 미수집 — No quotes available</div>
-           <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em>. PDF p.2 placeholder.</div>
+           <div class="text-[10px] text-slate-400 mt-0.5">모든 row 가 <em>No data acquired</em> — 웹 출처 확보 시 갱신.</div>
          </div>
        </div>`;
   // Cycle 22: chart/table view toggle — Cycle 24: a11y — Cycle 26: CSV export button
