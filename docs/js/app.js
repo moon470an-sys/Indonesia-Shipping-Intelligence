@@ -1837,6 +1837,7 @@ const HOME_BALANCE_FALLBACK = {
   order: ["Other Cargo", "Bulk Carrier", "Tanker", "Container", "General Cargo",
           "Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil"],
   subs: new Set(["Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil"]),
+  aggs: new Set(["Tanker"]),
   color: {
     "Other Cargo": "#94a3b8", "Bulk Carrier": "#52525b", "Tanker": "#0369a1",
     "Container": "#9333ea", "General Cargo": "#f97316",
@@ -1851,8 +1852,10 @@ function _homeBalanceMeta() {
   if (Array.isArray(cards) && cards.length) {
     const order = cards.map(c => c.category);
     const subs = new Set(cards.filter(c => c.is_tanker_subclass).map(c => c.category));
+    // aggs = 합산 카드(Tanker). 세부 보기에서는 집계 대신 5개 subclass 로 분해한다.
+    const aggs = new Set(cards.filter(c => c.is_tanker_aggregate).map(c => c.category));
     const color = Object.fromEntries(cards.map(c => [c.category, c.color]));
-    return { order, subs, color };
+    return { order, subs, aggs, color };
   }
   return HOME_BALANCE_FALLBACK;
 }
@@ -1921,9 +1924,14 @@ function _buildCargoCategorySeries(cm) {
   const meta = _homeBalanceMeta();
   const tankerRows = cm.tanker_subclass_rows || [];
 
-  // 표시할 그룹 결정 (Balance 규칙)
+  // 표시할 그룹 결정.
+  //   - ALL    → 세부 9개 카테고리(비탱커 4 + 탱커 subclass 5). Tanker 집계
+  //              카드는 분해해서 각 세부 화물을 개별 색으로 표시.
+  //   - Tanker → 5개 subclass
+  //   - 단일   → 그 하나만
+  const aggs = meta.aggs || new Set();
   let groups;
-  if (filter === "ALL")          groups = meta.order.filter(c => !meta.subs.has(c));
+  if (filter === "ALL")          groups = meta.order.filter(c => !aggs.has(c));
   else if (filter === "Tanker")  groups = meta.order.filter(c => meta.subs.has(c));
   else                           groups = meta.order.includes(filter) ? [filter] : [];
   if (!groups.length) return { periods: [], series: [] };
@@ -2054,14 +2062,29 @@ function drawHomeTimeseries() {
       .map(s => ({ name: "CARGO", color: "#1A3A6B", y: (s.ton_by_period || []).slice() }));
   }
 
+  // 월별 총합 (호버에 표시할 "합계").
+  const totals = periods.map((_, i) => series.reduce((acc, s) => acc + (s.y[i] || 0), 0));
+
   const traces = series.map(s => ({
     x: periods,
     y: s.y.slice(),
     name: s.name,
     type: "bar",
     marker: { color: s.color, line: { width: 0 } },
-    hovertemplate: `<b>%{x}</b><br>${s.name}: %{y:,.0f} tons<extra></extra>`,
+    // x unified 호버: 색 스와치 + "카테고리: 값" 으로 세부 내역을 한 번에 표시.
+    hovertemplate: `${s.name}: %{y:,.0f} t<extra></extra>`,
   }));
+  // 투명 라인 트레이스로 "합계"를 호버 툴팁에 추가 (stack 최상단과 동일 y, 비표시).
+  traces.push({
+    x: periods,
+    y: totals,
+    name: "합계",
+    type: "scatter",
+    mode: "lines",
+    line: { width: 0, color: "rgba(0,0,0,0)" },
+    hovertemplate: `<b>합계: %{y:,.0f} t</b><extra></extra>`,
+    showlegend: false,
+  });
 
   Plotly.newPlot("home-timeseries", traces, {
     barmode: "stack",
