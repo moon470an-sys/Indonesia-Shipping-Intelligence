@@ -657,25 +657,19 @@ def cargo_sector_monthly_payload(month: str) -> dict:
             tanker_bucket[sub_key]["ton_m"] += float(tm or 0)
             tanker_bucket[sub_key]["calls"] += int(n or 0)
 
-    # Mappable-port filter for commodity-category bucketing — same set as
-    # cv-app (cargo_ports_periods) so totals reconcile.
-    from backend.build_static import _FLOW_PORT_COORDS  # self-import OK at runtime  # noqa: F811
-    mappable: set[str] = set(_FLOW_PORT_COORDS.keys())
-
+    # Commodity-category bucketing across ALL ports (full scope) so the
+    # Demand 월별 차트의 세부 화물 stack 이 KPI(전체 화물 물동량)와 합이 맞는다.
+    # (이전엔 cv-app mappable 항만만 집계해 ~72%만 잡혀 차트 합이 작았음.)
     cat_bucket: dict = collections.defaultdict(
         lambda: {"ton_b": 0.0, "ton_m": 0.0}
     )
     # BONGKAR rows
     for yr, mo, kind, code, kom, ton in kom_rows_b:
-        if code not in mappable:
-            continue
         cat = classify_commodity_category(kom)
         period = f"{int(yr)}-{int(mo):02d}"
         cat_bucket[(period, kind, cat)]["ton_b"] += float(ton or 0)
     # MUAT rows
     for yr, mo, kind, code, kom, ton in kom_rows_m:
-        if code not in mappable:
-            continue
         cat = classify_commodity_category(kom)
         period = f"{int(yr)}-{int(mo):02d}"
         cat_bucket[(period, kind, cat)]["ton_m"] += float(ton or 0)
@@ -719,8 +713,8 @@ def cargo_sector_monthly_payload(month: str) -> dict:
             "rows": "vessel-class breakdown (legacy — kept for back-compat)",
             "cargo_category_rows": (
                 "Tier-2 commodity category from backend.commodity_taxonomy. "
-                "Mappable-port scoped — totals reconcile with "
-                "cargo_ports_periods and cargo_category_details."
+                "Full-scope (all ports) — totals reconcile with the vessel-class "
+                "rows / KPIs. Demand 월별 차트의 세부 화물 stack 데이터."
             ),
         },
     }

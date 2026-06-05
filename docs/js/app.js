@@ -1916,32 +1916,77 @@ function renderHomeTimeseries(payload) {
 //   - filter "ALL"    → 5 mains (Other Cargo·Bulk Carrier·Tanker·Container·General Cargo)
 //   - filter "Tanker" → 5 tanker subclasses (Product·Chemical·LPG·LNG·FAME)
 //   - filter 단일     → 그 하나만
+// 화물 그룹(Balance 9분류) → 세부 commodity 카테고리(들) 역매핑.
+// 그룹 칩 필터를 누르면 그 그룹에 속한 세부 화물만 stack 한다.
+function _homeCommoditiesFor(filter) {
+  if (!filter || filter === "ALL") return null;   // null = 전체 세부 화물
+  const byKey = Object.fromEntries(HOME_CATDETAIL_GROUPS.map(g => [g.key, g.members]));
+  if (byKey[filter]) return new Set(byKey[filter]);
+  if (filter === "Tanker") {   // 탱커 집계 = 5개 subclass 그룹의 세부 화물 합
+    const s = new Set();
+    for (const k of ["Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil"]) {
+      (byKey[k] || []).forEach(m => s.add(m));
+    }
+    return s;
+  }
+  return null;
+}
+
+// Demand 월별 차트 stack 데이터.
+// 기본: cargo_sector_monthly.cargo_category_rows(세부 commodity 21종, full-scope)을
+//   세부 화물별 개별 색으로 stack. 화물 그룹 칩 선택 시 그 그룹의 세부 화물만.
+//   trade(외항/내항) · direction(선적/하역/합계) 필터 동시 적용.
+// 폴백: cargo_category_rows 가 없으면 vessel-class Balance 그룹(_buildVesselClassSeries).
 function _buildCargoCategorySeries(cm) {
-  if (!cm || !cm.rows) return null;
+  const ccr = cm && cm.cargo_category_rows;
+  if (!Array.isArray(ccr) || !ccr.length) return _buildVesselClassSeries(cm);
+
   const field = HOME_TS_FIELD[homeTsState.direction] || "ton_total";
   const trade = homeTsState.trade || "all";        // all | ln | dn
+  const allowed = _homeCommoditiesFor(homeTsState.filter || "ALL");
+
+  const periods = [...new Set(ccr.map(r => r.period))].sort();  // x축 고정
+  const byCat = {};
+  for (const r of ccr) {
+    const cat = r.category;
+    if (!cat) continue;
+    if (allowed && !allowed.has(cat)) continue;
+    if (trade !== "all" && r.kind !== trade) continue;
+    const useField = (field in r) ? field : "ton_total";
+    if (!byCat[cat]) byCat[cat] = {};
+    byCat[cat][r.period] = (byCat[cat][r.period] || 0) + (Number(r[useField]) || 0);
+  }
+  const present = Object.keys(byCat);
+  const ordered = [
+    ...CARGO_CATEGORY_ORDER.filter(k => byCat[k]),
+    ...present.filter(k => !CARGO_CATEGORY_ORDER.includes(k)),
+  ];
+  const series = ordered.map(name => ({
+    name,
+    color: CARGO_CATEGORY_PALETTE[name] || "#cbd5e1",
+    y: periods.map(p => byCat[name][p] || 0),
+  }));
+  return { periods, series };
+}
+
+// 폴백: vessel-class(Balance) 그룹 stack — cargo_category_rows 부재 시.
+function _buildVesselClassSeries(cm) {
+  if (!cm || !cm.rows) return null;
+  const field = HOME_TS_FIELD[homeTsState.direction] || "ton_total";
+  const trade = homeTsState.trade || "all";
   const filter = homeTsState.filter || "ALL";
   const meta = _homeBalanceMeta();
   const tankerRows = cm.tanker_subclass_rows || [];
-
-  // 표시할 그룹 결정.
-  //   - ALL    → 세부 9개 카테고리(비탱커 4 + 탱커 subclass 5). Tanker 집계
-  //              카드는 분해해서 각 세부 화물을 개별 색으로 표시.
-  //   - Tanker → 5개 subclass
-  //   - 단일   → 그 하나만
   const aggs = meta.aggs || new Set();
   let groups;
   if (filter === "ALL")          groups = meta.order.filter(c => !aggs.has(c));
   else if (filter === "Tanker")  groups = meta.order.filter(c => meta.subs.has(c));
   else                           groups = meta.order.includes(filter) ? [filter] : [];
   if (!groups.length) return { periods: [], series: [] };
-
-  // x축 기간은 필터와 무관하게 전체 CARGO 기간 기준으로 고정 (빈 달도 0으로 표시)
   const periods = [...new Set([
     ...cm.rows.filter(r => r.sector === "CARGO").map(r => r.period),
     ...tankerRows.map(r => r.period),
   ])].sort();
-
   const byCat = {};
   for (const g of groups) byCat[g] = {};
   for (const g of groups) {
