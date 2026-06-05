@@ -5326,14 +5326,9 @@ async function renderCargo() {
       selPort: null,
       map: null,
       circles: [],
-      lines: [],
-      showLines: true,
-      // Cycle 4: 기간 필터 + 흐름 입자 애니메이션
+      // Cycle 4: 기간 필터
       period: activePeriod,
       PERIODS: periodsPayload ? periodsPayload.periods : null,
-      flowCanvas: null,
-      flowRaf: null,
-      flowParticles: null,   // [{routeIdx, t}]
       COMMS,
       DATA: allPorts,
       ROUTES: routesPayload.routes_top30 || [],
@@ -5352,7 +5347,6 @@ async function renderCargo() {
   _cvBuildCommodityList();
   _cvWireControls();
   _cvRebuild();
-  _cvStartFlowAnimation();
 }
 
 // Cycle 4: 기간 필터 (연도별 only) 빌드 + 이벤트.
@@ -5410,106 +5404,6 @@ function _cvBuildPeriodPills() {
       _cvRebuild();
     });
   });
-}
-
-// Cycle 4: Leaflet 위에 오버레이된 Canvas에 입자(particle) 애니메이션을
-// 그린다. 각 프레임마다 routes_top30 24M 항로 위에 origin→destination 방향
-// 으로 흐르는 작은 점을 그려, "물류 흐름이 흐르는" 인상을 준다. 카테고리
-// 색상은 _cvCatColor 를 따른다.
-const _CV_FLOW_PARTICLES_PER_ROUTE = 3;
-const _CV_FLOW_SPEED = 0.00045;   // t 증가량 per ms (≈ 한 항로를 2.2초에 통과)
-
-function _cvStartFlowAnimation() {
-  if (!_cvState || !_cvState.map) return;
-  const mapEl = _cvState.map.getContainer();
-  if (!mapEl) return;
-  // Create or reuse canvas overlay
-  let canvas = _cvState.flowCanvas;
-  if (!canvas) {
-    canvas = document.createElement("canvas");
-    canvas.className = "cv-flow-canvas";
-    canvas.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;z-index:399";
-    mapEl.appendChild(canvas);
-    _cvState.flowCanvas = canvas;
-    // Re-size on Leaflet's container changes
-    const _resize = () => {
-      const sz = _cvState.map.getSize();
-      canvas.width = sz.x;
-      canvas.height = sz.y;
-    };
-    _resize();
-    _cvState.map.on("resize zoom move", _resize);
-  }
-  // Initialize particles (per-route phase)
-  if (!_cvState.flowParticles || _cvState.flowParticles.length === 0) {
-    _cvState.flowParticles = [];
-    const n = (_cvState.ROUTES || []).length;
-    for (let r = 0; r < n; r++) {
-      for (let i = 0; i < _CV_FLOW_PARTICLES_PER_ROUTE; i++) {
-        _cvState.flowParticles.push({
-          routeIdx: r,
-          t: i / _CV_FLOW_PARTICLES_PER_ROUTE,
-        });
-      }
-    }
-  }
-  if (_cvState.flowRaf) cancelAnimationFrame(_cvState.flowRaf);
-  let last = performance.now();
-  const loop = (now) => {
-    const dt = Math.min(now - last, 60);
-    last = now;
-    _cvDrawFlowFrame(dt);
-    _cvState.flowRaf = requestAnimationFrame(loop);
-  };
-  _cvState.flowRaf = requestAnimationFrame(loop);
-}
-
-function _cvDrawFlowFrame(dtMs) {
-  const canvas = _cvState.flowCanvas;
-  if (!canvas || !_cvState.map) return;
-  const ctx = canvas.getContext("2d");
-  const w = canvas.width, h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-  if (!_cvState.showLines) return;
-  const routes = _cvState.ROUTES || [];
-  if (!routes.length) return;
-  const maxV = Math.max(...routes.map(r => r.ton_24m || 0), 1);
-  for (const part of _cvState.flowParticles) {
-    const r = routes[part.routeIdx];
-    if (!r || r.origin === r.destination) continue;
-    part.t = (part.t + dtMs * _CV_FLOW_SPEED) % 1;
-    // Cycle 5: 입자 위치도 quadratic Bezier 곡선 위에서 보간.
-    const headLatLon = _cvBezierAt(r, part.t);
-    if (!headLatLon) continue;
-    const tailT = Math.max(0, part.t - 0.06);
-    const tailLatLon = _cvBezierAt(r, tailT);
-    const head = _cvState.map.latLngToContainerPoint([headLatLon.lat, headLatLon.lon]);
-    const tail = _cvState.map.latLngToContainerPoint([tailLatLon.lat, tailLatLon.lon]);
-    const color = _cvCatColor(r.category);
-    const v = r.ton_24m || 0;
-    const radius = 1.8 + Math.sqrt(v / maxV) * 2.6;
-    // Trail (back-tail along the curve)
-    const grd = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
-    grd.addColorStop(0, color + "00");
-    grd.addColorStop(1, color + "cc");
-    ctx.strokeStyle = grd;
-    ctx.lineWidth = radius * 0.9;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(tail.x, tail.y);
-    ctx.lineTo(head.x, head.y);
-    ctx.stroke();
-    // Bright head dot
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, radius, 0, Math.PI * 2);
-    ctx.fill();
-    // White inner highlight
-    ctx.fillStyle = "rgba(255,255,255,0.85)";
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, radius * 0.35, 0, Math.PI * 2);
-    ctx.fill();
-  }
 }
 
 function _cvInitMap() {
@@ -5782,13 +5676,6 @@ function _cvWireControls() {
   if (og) og.addEventListener("click", _cvToggleOG);
   const all = document.getElementById("cv-all-btn");
   if (all) all.addEventListener("click", _cvToggleAll);
-  // Line toggle (해상 물류 연결선)
-  const lt = document.getElementById("cv-line-toggle");
-  if (lt) lt.addEventListener("click", () => {
-    _cvState.showLines = !_cvState.showLines;
-    document.getElementById("cv-line-track").classList.toggle("on", _cvState.showLines);
-    _cvRenderLines();
-  });
 }
 
 function _cvToggleOG() {
@@ -6040,47 +5927,12 @@ function _cvBezierAt(r, t) {
   };
 }
 
-function _cvRenderLines() {
-  for (const l of _cvState.lines) l.remove();
-  _cvState.lines = [];
-  if (!_cvState.map || !_cvState.showLines) return;
-  const routes = _cvState.ROUTES || [];
-  if (!routes.length) return;
-  const maxV = Math.max(...routes.map(r => r.ton_24m || 0), 1);
-  [...routes].sort((a, b) => (a.ton_24m || 0) - (b.ton_24m || 0)).forEach(r => {
-    const v = r.ton_24m || 0;
-    if (v <= 0) return;
-    const w = 0.5 + Math.sqrt(v / maxV) * 3.5;
-    const color = _cvCatColor(r.category);
-    if (r.origin === r.destination) {
-      // STS 자기루프 — 점선 동심원
-      const m = L.circleMarker([r.lat_o, r.lon_o], {
-        radius: Math.max(4, w * 1.4), fillColor: color, color: color,
-        weight: 1.0, opacity: 0.5, fillOpacity: 0,
-        dashArray: "3,3",
-      });
-      m.bindTooltip(_cvRouteTooltip(r), { className: "cv-tt", sticky: true, opacity: 1 });
-      m.addTo(_cvState.map);
-      _cvState.lines.push(m);
-      return;
-    }
-    const curve = _cvComputeRouteCurve(r);
-    const line = L.polyline(curve.points, {
-      color, weight: w, opacity: 0.22, lineCap: "round", smoothFactor: 1.0,
-    });
-    line.bindTooltip(_cvRouteTooltip(r), { className: "cv-tt", sticky: true, opacity: 1 });
-    line.addTo(_cvState.map);
-    _cvState.lines.push(line);
-  });
-}
-
 function _cvRebuild() {
   const keys = [..._cvState.selComms];
   const PORTS = _cvBuildPorts(keys);
   // Leaflet inside a hidden tab can mis-size — force invalidate when shown.
   if (_cvState.map) setTimeout(() => _cvState.map.invalidateSize(), 0);
   _cvUpdateStats(PORTS);
-  _cvRenderLines();
   _cvRenderCircles(PORTS);
   _cvRenderSidebar(PORTS);
 }
