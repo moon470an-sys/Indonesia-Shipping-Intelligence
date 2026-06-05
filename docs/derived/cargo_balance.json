@@ -23,11 +23,11 @@
       "operator_count": 23,
       "vessel_count": 13202,
       "sum_gt": 28227974.6,
-      "hhi": 538.9,
+      "hhi": 539.4,
       "top_operator": {
         "owner": "PT. DANNY SAMUDERA RAYA LINE",
-        "count_in_category": 138,
-        "sum_gt": 488159.0
+        "count_in_category": 139,
+        "sum_gt": 492198.0
       },
       "top_route": null
     },
@@ -49,10 +49,10 @@
         "2026": -61.8
       },
       "avg_age_gt_weighted": 20.44,
-      "operator_count": 1,
+      "operator_count": 2,
       "vessel_count": 327,
       "sum_gt": 7169808.0,
-      "hhi": 10000.0,
+      "hhi": 5000.0,
       "top_operator": {
         "owner": "PT. JHONLIN MARINE TRANS",
         "count_in_category": 1,
@@ -81,11 +81,11 @@
       "operator_count": 8,
       "vessel_count": 2514,
       "sum_gt": 9707953.6,
-      "hhi": 3248.0,
+      "hhi": 3270.2,
       "top_operator": {
         "owner": "PT PERTAMINA PATRA NIAGA",
-        "count_in_category": 57,
-        "sum_gt": 981071.0
+        "count_in_category": 58,
+        "sum_gt": 985001.0
       },
       "top_route": null
     },
@@ -110,11 +110,11 @@
       "operator_count": 8,
       "vessel_count": 2024,
       "sum_gt": 6055616.6,
-      "hhi": 3692.7,
+      "hhi": 3539.1,
       "top_operator": {
         "owner": "PT PERTAMINA PATRA NIAGA",
         "count_in_category": 50,
-        "sum_gt": 981071.0
+        "sum_gt": 985001.0
       },
       "top_route": null
     },
@@ -168,7 +168,7 @@
       "operator_count": 7,
       "vessel_count": 15636,
       "sum_gt": 5767936.4,
-      "hhi": 3674.7,
+      "hhi": 3632.1,
       "top_operator": {
         "owner": "PT. SALAM PACIFIC INDONESIA LINES",
         "count_in_category": 16,
@@ -201,7 +201,7 @@
       "top_operator": {
         "owner": "PT. USDA SEROJA JAYA",
         "count_in_category": 27,
-        "sum_gt": 175387.0
+        "sum_gt": 183233.0
       },
       "top_route": null
     },
@@ -229,8 +229,8 @@
       "hhi": 10000.0,
       "top_operator": {
         "owner": "PT PERTAMINA PATRA NIAGA",
-        "count_in_category": 6,
-        "sum_gt": 981071.0
+        "count_in_category": 7,
+        "sum_gt": 985001.0
       },
       "top_route": null
     },

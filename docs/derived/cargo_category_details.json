@@ -675,9 +675,9 @@
     },
     "Other Dry Bulk": {
       "color": "#a1a1aa",
-      "ton_total_24m": 144839063.0,
-      "calls_total_24m": 37621,
-      "commodity_count": 1180,
+      "ton_total_24m": 144839024.0,
+      "calls_total_24m": 37619,
+      "commodity_count": 1178,
       "top_commodities": [
         {
           "name": "LIMESTONE",
@@ -833,9 +833,9 @@
           ]
         },
         "2025": {
-          "ton_total": 78224347.0,
-          "calls_total": 18785,
-          "commodity_count": 669,
+          "ton_total": 78224308.0,
+          "calls_total": 18783,
+          "commodity_count": 667,
           "top_commodities": [
             {
               "name": "LIMESTONE",
@@ -994,9 +994,9 @@
     },
     "Wood / Timber": {
       "color": "#a16207",
-      "ton_total_24m": 81219743.8,
-      "calls_total_24m": 27318,
-      "commodity_count": 773,
+      "ton_total_24m": 81211823.8,
+      "calls_total_24m": 27312,
+      "commodity_count": 768,
       "top_commodities": [
         {
           "name": "KAYU LOG",
@@ -1013,7 +1013,7 @@
         {
           "name": "KAYU",
           "ton_24m": 7004728.4,
-          "pct": 8.62,
+          "pct": 8.63,
           "calls_24m": 3013
         },
         {
@@ -1073,9 +1073,9 @@
       ],
       "by_year": {
         "2024": {
-          "ton_total": 22299171.7,
-          "calls_total": 7311,
-          "commodity_count": 264,
+          "ton_total": 22299131.7,
+          "calls_total": 7310,
+          "commodity_count": 263,
           "top_commodities": [
             {
               "name": "KAYU LOG",
@@ -1152,9 +1152,9 @@
           ]
         },
         "2025": {
-          "ton_total": 42532137.8,
-          "calls_total": 14210,
-          "commodity_count": 476,
+          "ton_total": 42526377.8,
+          "calls_total": 14206,
+          "commodity_count": 473,
           "top_commodities": [
             {
               "name": "KAYU LOG",
@@ -1231,14 +1231,14 @@
           ]
         },
         "2026": {
-          "ton_total": 16388434.4,
-          "calls_total": 5797,
-          "commodity_count": 265,
+          "ton_total": 16386314.4,
+          "calls_total": 5796,
+          "commodity_count": 264,
           "top_commodities": [
             {
               "name": "KAYU LOG",
               "ton_year": 6555955.4,
-              "pct": 40.0,
+              "pct": 40.01,
               "calls_year": 2160
             },
             {
@@ -1250,7 +1250,7 @@
             {
               "name": "KAYU AKASIA",
               "ton_year": 1285652.5,
-              "pct": 7.84,
+              "pct": 7.85,
               "calls_year": 910
             },
             {
@@ -1313,9 +1313,9 @@
     },
     "Cement": {
       "color": "#94a3b8",
-      "ton_total_24m": 62901560.4,
-      "calls_total_24m": 25191,
-      "commodity_count": 1176,
+      "ton_total_24m": 62901456.0,
+      "calls_total_24m": 25188,
+      "commodity_count": 1173,
       "top_commodities": [
         {
           "name": "SEMEN",
@@ -1471,9 +1471,9 @@
           ]
         },
         "2025": {
-          "ton_total": 31470882.6,
-          "calls_total": 12761,
-          "commodity_count": 646,
+          "ton_total": 31470803.6,
+          "calls_total": 12760,
+          "commodity_count": 645,
           "top_commodities": [
             {
               "name": "SEMEN",
@@ -1490,7 +1490,7 @@
             {
               "name": "KLINKER",
               "ton_year": 479930.0,
-              "pct": 1.52,
+              "pct": 1.53,
               "calls_year": 20
             },
             {
@@ -1550,9 +1550,9 @@
           ]
         },
         "2026": {
-          "ton_total": 13327360.4,
-          "calls_total": 5164,
-          "commodity_count": 356,
+          "ton_total": 13327335.0,
+          "calls_total": 5162,
+          "commodity_count": 354,
           "top_commodities": [
             {
               "name": "SEMEN",
@@ -1632,9 +1632,9 @@
     },
     "Fertilizer": {
       "color": "#84cc16",
-      "ton_total_24m": 32894810.4,
-      "calls_total_24m": 14852,
-      "commodity_count": 686,
+      "ton_total_24m": 32894141.4,
+      "calls_total_24m": 14850,
+      "commodity_count": 684,
       "top_commodities": [
         {
           "name": "PUPUK",
@@ -1711,14 +1711,14 @@
       ],
       "by_year": {
         "2024": {
-          "ton_total": 8611946.0,
-          "calls_total": 3704,
-          "commodity_count": 226,
+          "ton_total": 8611357.0,
+          "calls_total": 3703,
+          "commodity_count": 225,
           "top_commodities": [
             {
               "name": "PUPUK",
               "ton_year": 4577403.6,
-              "pct": 53.15,
+              "pct": 53.16,
               "calls_year": 2548
             },
             {
@@ -1790,9 +1790,9 @@
           ]
         },
         "2025": {
-          "ton_total": 17040837.3,
-          "calls_total": 7805,
-          "commodity_count": 390,
+          "ton_total": 17040757.3,
+          "calls_total": 7804,
+          "commodity_count": 389,
           "top_commodities": [
             {
               "name": "PUPUK",
@@ -1951,38 +1951,38 @@
     },
     "Grain / Food": {
       "color": "#f59e0b",
-      "ton_total_24m": 72708508.8,
-      "calls_total_24m": 28550,
-      "commodity_count": 1404,
+      "ton_total_24m": 72637941.0,
+      "calls_total_24m": 28378,
+      "commodity_count": 1314,
       "top_commodities": [
         {
           "name": "GANDUM",
           "ton_24m": 19007825.0,
-          "pct": 26.14,
+          "pct": 26.17,
           "calls_24m": 584
         },
         {
           "name": "BERAS",
           "ton_24m": 6835001.2,
-          "pct": 9.4,
+          "pct": 9.41,
           "calls_24m": 13115
         },
         {
           "name": "SOYABEAN MEAL",
           "ton_24m": 5861614.6,
-          "pct": 8.06,
+          "pct": 8.07,
           "calls_24m": 170
         },
         {
           "name": "BUNGKIL",
           "ton_24m": 5798140.9,
-          "pct": 7.97,
+          "pct": 7.98,
           "calls_24m": 848
         },
         {
           "name": "RAW SUGAR",
           "ton_24m": 4711342.0,
-          "pct": 6.48,
+          "pct": 6.49,
           "calls_24m": 126
         },
         {
@@ -1994,7 +1994,7 @@
         {
           "name": "JAGUNG",
           "ton_24m": 2525725.1,
-          "pct": 3.47,
+          "pct": 3.48,
           "calls_24m": 2648
         },
         {
@@ -2006,7 +2006,7 @@
         {
           "name": "GULA PASIR",
           "ton_24m": 1850113.6,
-          "pct": 2.54,
+          "pct": 2.55,
           "calls_24m": 1449
         },
         {
@@ -2030,9 +2030,9 @@
       ],
       "by_year": {
         "2024": {
-          "ton_total": 19763175.3,
-          "calls_total": 6815,
-          "commodity_count": 384,
+          "ton_total": 19762877.5,
+          "calls_total": 6803,
+          "commodity_count": 373,
           "top_commodities": [
             {
               "name": "GANDUM",
@@ -2109,62 +2109,62 @@
           ]
         },
         "2025": {
-          "ton_total": 36385582.0,
-          "calls_total": 15301,
-          "commodity_count": 909,
+          "ton_total": 36322619.3,
+          "calls_total": 15197,
+          "commodity_count": 837,
           "top_commodities": [
             {
               "name": "GANDUM",
               "ton_year": 10192391.0,
-              "pct": 28.01,
+              "pct": 28.06,
               "calls_year": 310
             },
             {
               "name": "BUNGKIL",
               "ton_year": 3250560.1,
-              "pct": 8.93,
+              "pct": 8.95,
               "calls_year": 430
             },
             {
               "name": "SOYABEAN MEAL",
               "ton_year": 2933993.6,
-              "pct": 8.06,
+              "pct": 8.08,
               "calls_year": 84
             },
             {
               "name": "RAW SUGAR",
               "ton_year": 2238638.0,
-              "pct": 6.15,
+              "pct": 6.16,
               "calls_year": 57
             },
             {
               "name": "BERAS",
               "ton_year": 1897398.7,
-              "pct": 5.21,
+              "pct": 5.22,
               "calls_year": 7030
             },
             {
               "name": "SOYBEAN MEAL",
               "ton_year": 1320804.3,
-              "pct": 3.63,
+              "pct": 3.64,
               "calls_year": 59
             },
             {
               "name": "JAGUNG",
               "ton_year": 1306669.7,
-              "pct": 3.59,
+              "pct": 3.6,
               "calls_year": 1415
             },
             {
               "name": "WHEAT IN BULK",
               "ton_year": 1063819.3,
-              "pct": 2.92,
+              "pct": 2.93,
               "calls_year": 27
             },
             {
               "name": "BUNGKIL SAWIT PKE",
               "ton_year": 885566.9,
-              "pct": 2.43,
+              "pct": 2.44,
               "calls_year": 58
             },
             {
@@ -2188,14 +2188,14 @@
           ]
         },
         "2026": {
-          "ton_total": 16559751.5,
-          "calls_total": 6434,
-          "commodity_count": 400,
+          "ton_total": 16552444.2,
+          "calls_total": 6378,
+          "commodity_count": 384,
           "top_commodities": [
             {
               "name": "GANDUM",
               "ton_year": 4235789.0,
-              "pct": 25.58,
+              "pct": 25.59,
               "calls_year": 127
             },
             {
@@ -2207,19 +2207,19 @@
             {
               "name": "SOYABEAN MEAL",
               "ton_year": 1217772.0,
-              "pct": 7.35,
+              "pct": 7.36,
               "calls_year": 37
             },
             {
               "name": "RAW SUGAR",
               "ton_year": 1095191.0,
-              "pct": 6.61,
+              "pct": 6.62,
               "calls_year": 29
             },
             {
               "name": "BUNGKIL",
               "ton_year": 960906.4,
-              "pct": 5.8,
+              "pct": 5.81,
               "calls_year": 169
             },
             {
@@ -2589,318 +2589,318 @@
     },
     "Petroleum Product": {
       "color": "#0284c7",
-      "ton_total_24m": 273940349.4,
-      "calls_total_24m": 93358,
-      "commodity_count": 992,
+      "ton_total_24m": 297920867.1,
+      "calls_total_24m": 96966,
+      "commodity_count": 1397,
       "top_commodities": [
         {
           "name": "PERTALITE",
           "ton_24m": 46913713.5,
-          "pct": 17.13,
+          "pct": 15.75,
           "calls_24m": 18537
         },
         {
           "name": "SOLAR",
           "ton_24m": 36999664.7,
-          "pct": 13.51,
+          "pct": 12.42,
           "calls_24m": 6642
         },
         {
           "name": "BIO SOLAR",
           "ton_24m": 35333051.7,
-          "pct": 12.9,
+          "pct": 11.86,
           "calls_24m": 27041
         },
         {
           "name": "BUCO",
           "ton_24m": 23479659.6,
-          "pct": 8.57,
+          "pct": 7.88,
           "calls_24m": 454
         },
         {
           "name": "BBM",
           "ton_24m": 20047749.2,
-          "pct": 7.32,
+          "pct": 6.73,
           "calls_24m": 4573
         },
         {
           "name": "AVTUR",
           "ton_24m": 18855542.1,
-          "pct": 6.88,
+          "pct": 6.33,
           "calls_24m": 3286
         },
         {
           "name": "PERTAMAX",
           "ton_24m": 12582042.5,
-          "pct": 4.59,
+          "pct": 4.22,
           "calls_24m": 7095
         },
         {
           "name": "FUEL OIL",
           "ton_24m": 6481250.2,
-          "pct": 2.37,
+          "pct": 2.18,
           "calls_24m": 88
         },
         {
           "name": "MFO",
           "ton_24m": 6259275.3,
-          "pct": 2.28,
+          "pct": 2.1,
           "calls_24m": 1918
         },
         {
           "name": "GASOLINE 90 RON UNLEADED",
           "ton_24m": 6008527.7,
-          "pct": 2.19,
+          "pct": 2.02,
           "calls_24m": 245
         },
         {
           "name": "BBM/CURA CAIR",
           "ton_24m": 4928208.6,
-          "pct": 1.8,
+          "pct": 1.65,
           "calls_24m": 141
         },
         {
           "name": "GASOLINE",
           "ton_24m": 4506668.4,
-          "pct": 1.65,
+          "pct": 1.51,
           "calls_24m": 340
         }
       ],
       "by_year": {
         "2024": {
-          "ton_total": 73159379.7,
-          "calls_total": 23489,
-          "commodity_count": 390,
+          "ton_total": 77993325.0,
+          "calls_total": 24423,
+          "commodity_count": 530,
           "top_commodities": [
             {
               "name": "PERTALITE",
               "ton_year": 12438826.7,
-              "pct": 17.0,
+              "pct": 15.95,
               "calls_year": 4614
             },
             {
               "name": "BIO SOLAR",
               "ton_year": 9693328.8,
-              "pct": 13.25,
+              "pct": 12.43,
               "calls_year": 7454
             },
             {
               "name": "SOLAR",
               "ton_year": 9410492.7,
-              "pct": 12.86,
+              "pct": 12.07,
               "calls_year": 1469
             },
             {
               "name": "BUCO",
               "ton_year": 7205271.0,
-              "pct": 9.85,
+              "pct": 9.24,
               "calls_year": 151
             },
             {
               "name": "BBM",
               "ton_year": 6688066.5,
-              "pct": 9.14,
+              "pct": 8.58,
               "calls_year": 1298
             },
             {
               "name": "AVTUR",
               "ton_year": 4581581.0,
-              "pct": 6.26,
+              "pct": 5.87,
               "calls_year": 762
             },
             {
               "name": "PERTAMAX",
               "ton_year": 2807787.1,
-              "pct": 3.84,
+              "pct": 3.6,
               "calls_year": 1666
             },
             {
               "name": "GASOLINE 90 RON UNLEADED",
               "ton_year": 1837211.9,
-              "pct": 2.51,
+              "pct": 2.36,
               "calls_year": 71
             },
             {
               "name": "FUEL OIL",
               "ton_year": 1404355.4,
-              "pct": 1.92,
+              "pct": 1.8,
               "calls_year": 25
             },
             {
               "name": "MFO",
               "ton_year": 1332055.2,
-              "pct": 1.82,
+              "pct": 1.71,
               "calls_year": 480
             },
             {
               "name": "GASOLINE",
               "ton_year": 1158374.2,
-              "pct": 1.58,
+              "pct": 1.49,
               "calls_year": 69
             },
             {
               "name": "MINYAK BBM",
               "ton_year": 833064.2,
-              "pct": 1.14,
+              "pct": 1.07,
               "calls_year": 50
             }
           ]
         },
         "2025": {
-          "ton_total": 141157075.4,
-          "calls_total": 48887,
-          "commodity_count": 607,
+          "ton_total": 153674883.8,
+          "calls_total": 50741,
+          "commodity_count": 867,
           "top_commodities": [
             {
               "name": "PERTALITE",
               "ton_year": 24139033.7,
-              "pct": 17.1,
+              "pct": 15.71,
               "calls_year": 9754
             },
             {
               "name": "SOLAR",
               "ton_year": 19032827.7,
-              "pct": 13.48,
+              "pct": 12.39,
               "calls_year": 3586
             },
             {
               "name": "BIO SOLAR",
               "ton_year": 17969658.7,
-              "pct": 12.73,
+              "pct": 11.69,
               "calls_year": 14035
             },
             {
               "name": "BUCO",
               "ton_year": 12646165.0,
-              "pct": 8.96,
+              "pct": 8.23,
               "calls_year": 239
             },
             {
               "name": "BBM",
               "ton_year": 9652450.1,
-              "pct": 6.84,
+              "pct": 6.28,
               "calls_year": 2264
             },
             {
               "name": "AVTUR",
               "ton_year": 9479573.8,
-              "pct": 6.72,
+              "pct": 6.17,
               "calls_year": 1751
             },
             {
               "name": "PERTAMAX",
               "ton_year": 6372989.4,
-              "pct": 4.51,
+              "pct": 4.15,
               "calls_year": 3710
             },
             {
               "name": "FUEL OIL",
               "ton_year": 3979721.4,
-              "pct": 2.82,
+              "pct": 2.59,
               "calls_year": 46
             },
             {
               "name": "MFO",
               "ton_year": 3462962.8,
-              "pct": 2.45,
+              "pct": 2.25,
               "calls_year": 989
             },
             {
               "name": "BBM/CURA CAIR",
               "ton_year": 3348600.1,
-              "pct": 2.37,
+              "pct": 2.18,
               "calls_year": 76
             },
             {
               "name": "GASOLINE 90 RON UNLEADED",
               "ton_year": 2916981.4,
-              "pct": 2.07,
+              "pct": 1.9,
               "calls_year": 126
             },
             {
               "name": "GASOLINE",
               "ton_year": 2298785.7,
-              "pct": 1.63,
+              "pct": 1.5,
               "calls_year": 176
             }
           ]
         },
         "2026": {
-          "ton_total": 59623894.3,
-          "calls_total": 20982,
-          "commodity_count": 452,
+          "ton_total": 66252658.3,
+          "calls_total": 21802,
+          "commodity_count": 608,
           "top_commodities": [
             {
               "name": "PERTALITE",
               "ton_year": 10335853.1,
-              "pct": 17.34,
+              "pct": 15.6,
               "calls_year": 4169
             },
             {
               "name": "SOLAR",
               "ton_year": 8556344.2,
-              "pct": 14.35,
+              "pct": 12.91,
               "calls_year": 1587
             },
             {
               "name": "BIO SOLAR",
               "ton_year": 7670064.1,
-              "pct": 12.86,
+              "pct": 11.58,
               "calls_year": 5552
             },
             {
               "name": "AVTUR",
               "ton_year": 4794387.3,
-              "pct": 8.04,
+              "pct": 7.24,
               "calls_year": 773
             },
             {
               "name": "BBM",
               "ton_year": 3707232.6,
-              "pct": 6.22,
+              "pct": 5.6,
               "calls_year": 1011
             },
             {
               "name": "BUCO",
               "ton_year": 3628223.6,
-              "pct": 6.09,
+              "pct": 5.48,
               "calls_year": 64
             },
             {
               "name": "PERTAMAX",
               "ton_year": 3401266.0,
-              "pct": 5.7,
+              "pct": 5.13,
               "calls_year": 1719
+            },
+            {
+              "name": "GASOIL",
+              "ton_year": 1788137.7,
+              "pct": 2.7,
+              "calls_year": 56
             },
             {
               "name": "MFO",
               "ton_year": 1464257.3,
-              "pct": 2.46,
+              "pct": 2.21,
               "calls_year": 449
             },
             {
               "name": "GASOLINE 90 RON UNLEADED",
               "ton_year": 1254334.5,
-              "pct": 2.1,
+              "pct": 1.89,
               "calls_year": 48
             },
             {
               "name": "BBM/CURA CAIR",
               "ton_year": 1137213.2,
-              "pct": 1.91,
+              "pct": 1.72,
               "calls_year": 28
             },
             {
               "name": "FUEL OIL",
               "ton_year": 1097173.4,
-              "pct": 1.84,
+              "pct": 1.66,
               "calls_year": 17
-            },
-            {
-              "name": "GASOLINE",
-              "ton_year": 1049508.6,
-              "pct": 1.76,
-              "calls_year": 95
             }
           ]
         }
@@ -2908,9 +2908,9 @@
     },
     "LPG / Gas": {
       "color": "#d97706",
-      "ton_total_24m": 46505077.4,
-      "calls_total_24m": 19824,
-      "commodity_count": 533,
+      "ton_total_24m": 46505069.5,
+      "calls_total_24m": 19822,
+      "commodity_count": 531,
       "top_commodities": [
         {
           "name": "LPG",
@@ -3066,9 +3066,9 @@
           ]
         },
         "2025": {
-          "ton_total": 24366694.6,
-          "calls_total": 10692,
-          "commodity_count": 317,
+          "ton_total": 24366691.6,
+          "calls_total": 10691,
+          "commodity_count": 316,
           "top_commodities": [
             {
               "name": "LPG",
@@ -3145,9 +3145,9 @@
           ]
         },
         "2026": {
-          "ton_total": 10573186.0,
-          "calls_total": 4277,
-          "commodity_count": 224,
+          "ton_total": 10573181.1,
+          "calls_total": 4276,
+          "commodity_count": 223,
           "top_commodities": [
             {
               "name": "LPG",
@@ -3492,318 +3492,318 @@
     },
     "Chemical": {
       "color": "#059669",
-      "ton_total_24m": 32523084.1,
-      "calls_total_24m": 5725,
-      "commodity_count": 483,
+      "ton_total_24m": 35987903.4,
+      "calls_total_24m": 6831,
+      "commodity_count": 526,
       "top_commodities": [
         {
           "name": "SULPHUR",
           "ton_24m": 5109694.0,
-          "pct": 15.71,
+          "pct": 14.2,
           "calls_24m": 163
         },
         {
           "name": "METHANOL",
           "ton_24m": 4408274.6,
-          "pct": 13.55,
+          "pct": 12.25,
           "calls_24m": 1040
         },
         {
           "name": "AMMONIA",
           "ton_24m": 2996730.3,
-          "pct": 9.21,
+          "pct": 8.33,
           "calls_24m": 355
+        },
+        {
+          "name": "PARAXYLENE",
+          "ton_24m": 2518699.6,
+          "pct": 7.0,
+          "calls_24m": 361
         },
         {
           "name": "LIQUID CAUSTIC SODA",
           "ton_24m": 2126132.6,
-          "pct": 6.54,
+          "pct": 5.91,
           "calls_24m": 202
         },
         {
           "name": "CAUSTIC SODA",
           "ton_24m": 2007776.7,
-          "pct": 6.17,
+          "pct": 5.58,
           "calls_24m": 320
         },
         {
           "name": "SULPHURIC ACID",
           "ton_24m": 1506767.0,
-          "pct": 4.63,
+          "pct": 4.19,
           "calls_24m": 163
+        },
+        {
+          "name": "BENZENE",
+          "ton_24m": 1103835.4,
+          "pct": 3.07,
+          "calls_24m": 216
         },
         {
           "name": "ELEMENTAL SOLID SULPHUR",
           "ton_24m": 888109.0,
-          "pct": 2.73,
+          "pct": 2.47,
           "calls_24m": 23
         },
         {
           "name": "FATTY ACID",
           "ton_24m": 750343.0,
-          "pct": 2.31,
+          "pct": 2.08,
           "calls_24m": 162
         },
         {
           "name": "CAUSTIC SODA LIQUID",
           "ton_24m": 630554.2,
-          "pct": 1.94,
+          "pct": 1.75,
           "calls_24m": 92
-        },
-        {
-          "name": "ADF AUTOMOTIVE DIESEL FUEL 0 25 PCT SULPHUR",
-          "ton_24m": 593524.0,
-          "pct": 1.82,
-          "calls_24m": 58
         },
         {
           "name": "FULLY REFRIGERATED ANHYDROUS AMMONIA",
           "ton_24m": 561019.4,
-          "pct": 1.72,
+          "pct": 1.56,
           "calls_24m": 24
-        },
-        {
-          "name": "DISTILLED FATTY ACID",
-          "ton_24m": 539149.2,
-          "pct": 1.66,
-          "calls_24m": 130
         }
       ],
       "by_year": {
         "2024": {
-          "ton_total": 8618568.9,
-          "calls_total": 1556,
-          "commodity_count": 197,
+          "ton_total": 10083894.7,
+          "calls_total": 1886,
+          "commodity_count": 223,
           "top_commodities": [
             {
               "name": "SULPHUR",
               "ton_year": 1387466.0,
-              "pct": 16.1,
+              "pct": 13.76,
               "calls_year": 43
+            },
+            {
+              "name": "PARAXYLENE",
+              "ton_year": 1139012.6,
+              "pct": 11.3,
+              "calls_year": 134
             },
             {
               "name": "METHANOL",
               "ton_year": 1067518.8,
-              "pct": 12.39,
+              "pct": 10.59,
               "calls_year": 251
             },
             {
               "name": "CAUSTIC SODA",
               "ton_year": 593461.0,
-              "pct": 6.89,
+              "pct": 5.89,
               "calls_year": 91
             },
             {
               "name": "LIQUID CAUSTIC SODA",
               "ton_year": 558770.5,
-              "pct": 6.48,
+              "pct": 5.54,
               "calls_year": 53
             },
             {
               "name": "AMMONIA",
               "ton_year": 507967.8,
-              "pct": 5.89,
+              "pct": 5.04,
               "calls_year": 82
             },
             {
               "name": "BELERANG",
               "ton_year": 382049.0,
-              "pct": 4.43,
+              "pct": 3.79,
               "calls_year": 1
             },
             {
               "name": "FULLY REFRIGERATED ANHYDROUS AMMONIA",
               "ton_year": 348330.0,
-              "pct": 4.04,
+              "pct": 3.45,
               "calls_year": 14
             },
             {
               "name": "SULPHURIC ACID",
               "ton_year": 312098.0,
-              "pct": 3.62,
+              "pct": 3.1,
               "calls_year": 40
+            },
+            {
+              "name": "BENZENE",
+              "ton_year": 303840.0,
+              "pct": 3.01,
+              "calls_year": 59
             },
             {
               "name": "MINERAL ASAM",
               "ton_year": 190762.0,
-              "pct": 2.21,
+              "pct": 1.89,
               "calls_year": 16
             },
             {
               "name": "FATTY ACID",
               "ton_year": 178243.0,
-              "pct": 2.07,
+              "pct": 1.77,
               "calls_year": 34
-            },
-            {
-              "name": "GRANULAR SULPHUR",
-              "ton_year": 141500.0,
-              "pct": 1.64,
-              "calls_year": 4
-            },
-            {
-              "name": "AMONIA",
-              "ton_year": 136412.8,
-              "pct": 1.58,
-              "calls_year": 10
             }
           ]
         },
         "2025": {
-          "ton_total": 17372316.9,
-          "calls_total": 3017,
-          "commodity_count": 318,
+          "ton_total": 18906024.8,
+          "calls_total": 3579,
+          "commodity_count": 351,
           "top_commodities": [
             {
               "name": "SULPHUR",
               "ton_year": 2863374.5,
-              "pct": 16.48,
+              "pct": 15.15,
               "calls_year": 91
             },
             {
               "name": "METHANOL",
               "ton_year": 2404332.8,
-              "pct": 13.84,
+              "pct": 12.72,
               "calls_year": 573
             },
             {
               "name": "AMMONIA",
               "ton_year": 1660975.4,
-              "pct": 9.56,
+              "pct": 8.79,
               "calls_year": 183
             },
             {
               "name": "LIQUID CAUSTIC SODA",
               "ton_year": 1105077.1,
-              "pct": 6.36,
+              "pct": 5.85,
               "calls_year": 98
             },
             {
               "name": "CAUSTIC SODA",
               "ton_year": 1041014.0,
-              "pct": 5.99,
+              "pct": 5.51,
               "calls_year": 173
+            },
+            {
+              "name": "PARAXYLENE",
+              "ton_year": 1001875.0,
+              "pct": 5.3,
+              "calls_year": 165
             },
             {
               "name": "SULPHURIC ACID",
               "ton_year": 855800.0,
-              "pct": 4.93,
+              "pct": 4.53,
               "calls_year": 101
             },
             {
               "name": "ELEMENTAL SOLID SULPHUR",
               "ton_year": 750556.0,
-              "pct": 4.32,
+              "pct": 3.97,
               "calls_year": 18
+            },
+            {
+              "name": "BENZENE",
+              "ton_year": 580665.9,
+              "pct": 3.07,
+              "calls_year": 108
             },
             {
               "name": "CAUSTIC SODA LIQUID",
               "ton_year": 466459.0,
-              "pct": 2.69,
+              "pct": 2.47,
               "calls_year": 63
             },
             {
               "name": "FATTY ACID",
               "ton_year": 362834.0,
-              "pct": 2.09,
+              "pct": 1.92,
               "calls_year": 88
-            },
-            {
-              "name": "ADF AUTOMOTIVE DIESEL FUEL 0 25 PCT SULPHUR",
-              "ton_year": 309665.0,
-              "pct": 1.78,
-              "calls_year": 25
             },
             {
               "name": "DISTILLED FATTY ACID",
               "ton_year": 291546.0,
-              "pct": 1.68,
-              "calls_year": 70
-            },
-            {
-              "name": "GRANULAR SULPHUR",
-              "ton_year": 268136.0,
               "pct": 1.54,
-              "calls_year": 7
+              "calls_year": 70
             }
           ]
         },
         "2026": {
-          "ton_total": 6532198.3,
-          "calls_total": 1152,
-          "commodity_count": 186,
+          "ton_total": 6997983.9,
+          "calls_total": 1366,
+          "commodity_count": 217,
           "top_commodities": [
             {
               "name": "METHANOL",
               "ton_year": 936423.0,
-              "pct": 14.34,
+              "pct": 13.38,
               "calls_year": 216
             },
             {
               "name": "SULPHUR",
               "ton_year": 858853.5,
-              "pct": 13.15,
+              "pct": 12.27,
               "calls_year": 29
             },
             {
               "name": "AMMONIA",
               "ton_year": 827787.1,
-              "pct": 12.67,
+              "pct": 11.83,
               "calls_year": 90
             },
             {
               "name": "LIQUID CAUSTIC SODA",
               "ton_year": 462285.0,
-              "pct": 7.08,
+              "pct": 6.61,
               "calls_year": 51
+            },
+            {
+              "name": "PARAXYLENE",
+              "ton_year": 377812.0,
+              "pct": 5.4,
+              "calls_year": 62
             },
             {
               "name": "CAUSTIC SODA",
               "ton_year": 373301.7,
-              "pct": 5.71,
+              "pct": 5.33,
               "calls_year": 56
             },
             {
               "name": "SULPHURIC ACID",
               "ton_year": 338869.0,
-              "pct": 5.19,
+              "pct": 4.84,
               "calls_year": 22
+            },
+            {
+              "name": "BENZENE",
+              "ton_year": 219329.5,
+              "pct": 3.13,
+              "calls_year": 49
             },
             {
               "name": "FATTY ACID",
               "ton_year": 209266.0,
-              "pct": 3.2,
+              "pct": 2.99,
               "calls_year": 40
-            },
-            {
-              "name": "ADF AUTOMOTIVE DIESEL FUEL 0 25 PCT SULPHUR",
-              "ton_year": 201339.0,
-              "pct": 3.08,
-              "calls_year": 18
             },
             {
               "name": "SHULPHURIC ACID",
               "ton_year": 128095.0,
-              "pct": 1.96,
+              "pct": 1.83,
               "calls_year": 7
             },
             {
               "name": "METHANOL IN BULK",
               "ton_year": 117041.2,
-              "pct": 1.79,
+              "pct": 1.67,
               "calls_year": 23
             },
             {
               "name": "DISTILLED FATTY ACID",
               "ton_year": 111729.2,
-              "pct": 1.71,
+              "pct": 1.6,
               "calls_year": 21
-            },
-            {
-              "name": "GRANULAR SULPHUR",
-              "ton_year": 98743.0,
-              "pct": 1.51,
-              "calls_year": 6
             }
           ]
         }
@@ -3811,317 +3811,317 @@
     },
     "Palm Oil": {
       "color": "#16a34a",
-      "ton_total_24m": 199099275.5,
-      "calls_total_24m": 42549,
-      "commodity_count": 873,
+      "ton_total_24m": 201886968.4,
+      "calls_total_24m": 46791,
+      "commodity_count": 1120,
       "top_commodities": [
         {
           "name": "CPO",
           "ton_24m": 96214643.2,
-          "pct": 48.32,
+          "pct": 47.66,
           "calls_24m": 22208
         },
         {
           "name": "RBD PALM OLEIN",
           "ton_24m": 19436872.5,
-          "pct": 9.76,
+          "pct": 9.63,
           "calls_24m": 2665
         },
         {
           "name": "CPKO",
           "ton_24m": 9952056.2,
-          "pct": 5.0,
+          "pct": 4.93,
           "calls_24m": 2660
         },
         {
           "name": "RBD PALM OIL",
           "ton_24m": 8714424.9,
-          "pct": 4.38,
+          "pct": 4.32,
           "calls_24m": 891
         },
         {
           "name": "PALM KERNEL SHELL",
           "ton_24m": 5589596.7,
-          "pct": 2.81,
+          "pct": 2.77,
           "calls_24m": 563
         },
         {
           "name": "RBD PALM STEARIN",
           "ton_24m": 5133939.5,
-          "pct": 2.58,
+          "pct": 2.54,
           "calls_24m": 1112
         },
         {
           "name": "CANGKANG",
           "ton_24m": 4368591.8,
-          "pct": 2.19,
+          "pct": 2.16,
           "calls_24m": 747
         },
         {
           "name": "PALM KERNEL EXPELLER",
           "ton_24m": 4319939.3,
-          "pct": 2.17,
+          "pct": 2.14,
           "calls_24m": 842
         },
         {
           "name": "PALM KERNEL",
           "ton_24m": 4318230.4,
-          "pct": 2.17,
+          "pct": 2.14,
           "calls_24m": 2451
         },
         {
           "name": "BIJI SAWIT",
           "ton_24m": 4052727.7,
-          "pct": 2.04,
+          "pct": 2.01,
           "calls_24m": 233
         },
         {
           "name": "CPO PIPA TERPADU",
           "ton_24m": 2286228.9,
-          "pct": 1.15,
+          "pct": 1.13,
           "calls_24m": 589
         },
         {
           "name": "RBD PALM OIL PO",
           "ton_24m": 2135990.7,
-          "pct": 1.07,
+          "pct": 1.06,
           "calls_24m": 96
         }
       ],
       "by_year": {
         "2024": {
-          "ton_total": 55736050.7,
-          "calls_total": 11082,
-          "commodity_count": 358,
+          "ton_total": 56514510.1,
+          "calls_total": 12097,
+          "commodity_count": 423,
           "top_commodities": [
             {
               "name": "CPO",
               "ton_year": 27475998.0,
-              "pct": 49.3,
+              "pct": 48.62,
               "calls_year": 5884
             },
             {
               "name": "RBD PALM OLEIN",
               "ton_year": 5684548.6,
-              "pct": 10.2,
+              "pct": 10.06,
               "calls_year": 754
             },
             {
               "name": "RBD PALM OIL",
               "ton_year": 3175714.9,
-              "pct": 5.7,
+              "pct": 5.62,
               "calls_year": 248
             },
             {
               "name": "CPKO",
               "ton_year": 3026080.5,
-              "pct": 5.43,
+              "pct": 5.35,
               "calls_year": 702
             },
             {
               "name": "PALM KERNEL SHELL",
               "ton_year": 1438971.2,
-              "pct": 2.58,
+              "pct": 2.55,
               "calls_year": 142
             },
             {
               "name": "RBD PALM STEARIN",
               "ton_year": 1378100.2,
-              "pct": 2.47,
+              "pct": 2.44,
               "calls_year": 294
             },
             {
               "name": "PALM KERNEL EXPELLER",
               "ton_year": 1250009.8,
-              "pct": 2.24,
+              "pct": 2.21,
               "calls_year": 240
             },
             {
               "name": "PALM KERNEL",
               "ton_year": 1132481.7,
-              "pct": 2.03,
+              "pct": 2.0,
               "calls_year": 589
             },
             {
               "name": "CANGKANG",
               "ton_year": 1107553.6,
-              "pct": 1.99,
+              "pct": 1.96,
               "calls_year": 198
             },
             {
               "name": "BIJI SAWIT",
               "ton_year": 905585.5,
-              "pct": 1.62,
+              "pct": 1.6,
               "calls_year": 59
             },
             {
               "name": "PFAD",
               "ton_year": 895751.6,
-              "pct": 1.61,
+              "pct": 1.58,
               "calls_year": 67
             },
             {
               "name": "CPO PIPA TERPADU",
               "ton_year": 808806.0,
-              "pct": 1.45,
+              "pct": 1.43,
               "calls_year": 201
             }
           ]
         },
         "2025": {
-          "ton_total": 101491925.8,
-          "calls_total": 22382,
-          "commodity_count": 609,
+          "ton_total": 103010084.4,
+          "calls_total": 24656,
+          "commodity_count": 767,
           "top_commodities": [
             {
               "name": "CPO",
               "ton_year": 48124768.5,
-              "pct": 47.42,
+              "pct": 46.72,
               "calls_year": 11636
             },
             {
               "name": "RBD PALM OLEIN",
               "ton_year": 10121747.6,
-              "pct": 9.97,
+              "pct": 9.83,
               "calls_year": 1403
             },
             {
               "name": "CPKO",
               "ton_year": 4824162.8,
-              "pct": 4.75,
+              "pct": 4.68,
               "calls_year": 1378
             },
             {
               "name": "RBD PALM OIL",
               "ton_year": 4432222.1,
-              "pct": 4.37,
+              "pct": 4.3,
               "calls_year": 471
             },
             {
               "name": "RBD PALM STEARIN",
               "ton_year": 2980922.2,
-              "pct": 2.94,
+              "pct": 2.89,
               "calls_year": 624
             },
             {
               "name": "PALM KERNEL SHELL",
               "ton_year": 2859047.2,
-              "pct": 2.82,
+              "pct": 2.78,
               "calls_year": 279
             },
             {
               "name": "CANGKANG",
               "ton_year": 2286702.2,
-              "pct": 2.25,
+              "pct": 2.22,
               "calls_year": 392
             },
             {
               "name": "PALM KERNEL",
               "ton_year": 2223828.5,
-              "pct": 2.19,
+              "pct": 2.16,
               "calls_year": 1267
             },
             {
               "name": "PALM KERNEL EXPELLER",
               "ton_year": 2167259.2,
-              "pct": 2.14,
+              "pct": 2.1,
               "calls_year": 439
             },
             {
               "name": "BIJI SAWIT",
               "ton_year": 2061190.8,
-              "pct": 2.03,
+              "pct": 2.0,
               "calls_year": 122
             },
             {
               "name": "CPO PIPA TERPADU",
               "ton_year": 1145378.9,
-              "pct": 1.13,
+              "pct": 1.11,
               "calls_year": 296
             },
             {
               "name": "RBD PALM OIL PO",
               "ton_year": 970534.1,
-              "pct": 0.96,
+              "pct": 0.94,
               "calls_year": 49
             }
           ]
         },
         "2026": {
-          "ton_total": 41871299.0,
-          "calls_total": 9085,
-          "commodity_count": 337,
+          "ton_total": 42362373.9,
+          "calls_total": 10038,
+          "commodity_count": 417,
           "top_commodities": [
             {
               "name": "CPO",
               "ton_year": 20613876.8,
-              "pct": 49.23,
+              "pct": 48.66,
               "calls_year": 4688
             },
             {
               "name": "RBD PALM OLEIN",
               "ton_year": 3630576.3,
-              "pct": 8.67,
+              "pct": 8.57,
               "calls_year": 508
             },
             {
               "name": "CPKO",
               "ton_year": 2101813.0,
-              "pct": 5.02,
+              "pct": 4.96,
               "calls_year": 580
             },
             {
               "name": "PALM KERNEL SHELL",
               "ton_year": 1291578.2,
-              "pct": 3.08,
+              "pct": 3.05,
               "calls_year": 142
             },
             {
               "name": "RBD PALM OIL",
               "ton_year": 1106487.9,
-              "pct": 2.64,
+              "pct": 2.61,
               "calls_year": 172
             },
             {
               "name": "BIJI SAWIT",
               "ton_year": 1085951.5,
-              "pct": 2.59,
+              "pct": 2.56,
               "calls_year": 52
             },
             {
               "name": "CANGKANG",
               "ton_year": 974335.9,
-              "pct": 2.33,
+              "pct": 2.3,
               "calls_year": 157
             },
             {
               "name": "PALM KERNEL",
               "ton_year": 961920.1,
-              "pct": 2.3,
+              "pct": 2.27,
               "calls_year": 595
             },
             {
               "name": "PALM KERNEL EXPELLER",
               "ton_year": 902670.4,
-              "pct": 2.16,
+              "pct": 2.13,
               "calls_year": 163
             },
             {
               "name": "RBD PALM STEARIN",
               "ton_year": 774917.1,
-              "pct": 1.85,
+              "pct": 1.83,
               "calls_year": 194
             },
             {
               "name": "PALM OIL PRODUCT",
               "ton_year": 712393.6,
-              "pct": 1.7,
+              "pct": 1.68,
               "calls_year": 42
             },
             {
               "name": "CANGKANG SAWIT",
               "ton_year": 617830.9,
-              "pct": 1.48,
+              "pct": 1.46,
               "calls_year": 54
             }
           ]
@@ -4130,141 +4130,153 @@
     },
     "Biodiesel (FAME)": {
       "color": "#65a30d",
-      "ton_total_24m": 33175429.7,
-      "calls_total_24m": 6374,
-      "commodity_count": 99,
+      "ton_total_24m": 35135706.4,
+      "calls_total_24m": 7719,
+      "commodity_count": 108,
       "top_commodities": [
         {
           "name": "FAME",
           "ton_24m": 29435681.4,
-          "pct": 88.73,
+          "pct": 83.78,
           "calls_24m": 5451
+        },
+        {
+          "name": "BIO DIESEL BBM",
+          "ton_24m": 1097468.0,
+          "pct": 3.12,
+          "calls_24m": 832
         },
         {
           "name": "FAME IN BULK",
           "ton_24m": 942834.0,
-          "pct": 2.84,
+          "pct": 2.68,
           "calls_24m": 144
+        },
+        {
+          "name": "BIO DIESEL",
+          "ton_24m": 815057.3,
+          "pct": 2.32,
+          "calls_24m": 471
         },
         {
           "name": "BIODIESEL BBM",
           "ton_24m": 538132.0,
-          "pct": 1.62,
+          "pct": 1.53,
           "calls_24m": 126
         },
         {
           "name": "METHYL ESTER",
           "ton_24m": 379138.0,
-          "pct": 1.14,
+          "pct": 1.08,
           "calls_24m": 74
         },
         {
           "name": "FAME/BIODIESEL",
           "ton_24m": 322653.9,
-          "pct": 0.97,
+          "pct": 0.92,
           "calls_24m": 63
         },
         {
           "name": "FAME / BIODIESEL",
           "ton_24m": 310997.0,
-          "pct": 0.94,
+          "pct": 0.89,
           "calls_24m": 83
         },
         {
           "name": "ROL BIODIESEL SPEC",
           "ton_24m": 211405.5,
-          "pct": 0.64,
+          "pct": 0.6,
           "calls_24m": 45
         },
         {
           "name": "AKRA SOL FAME 40",
           "ton_24m": 101987.0,
-          "pct": 0.31,
+          "pct": 0.29,
           "calls_24m": 42
         },
         {
           "name": "AKRA SOL FAME 35",
           "ton_24m": 73712.1,
-          "pct": 0.22,
+          "pct": 0.21,
           "calls_24m": 22
         },
         {
           "name": "FATTY ACID METHYL ESTER FAME",
           "ton_24m": 68468.9,
-          "pct": 0.21,
+          "pct": 0.19,
           "calls_24m": 9
-        },
-        {
-          "name": "FAME BIODIESEL",
-          "ton_24m": 66754.0,
-          "pct": 0.2,
-          "calls_24m": 15
-        },
-        {
-          "name": "FATTY ACID METHYL ESTER / FAME BIODIESEL",
-          "ton_24m": 44730.0,
-          "pct": 0.13,
-          "calls_24m": 13
         }
       ],
       "by_year": {
         "2024": {
-          "ton_total": 7866724.0,
-          "calls_total": 1559,
-          "commodity_count": 21,
+          "ton_total": 8271616.3,
+          "calls_total": 1898,
+          "commodity_count": 25,
           "top_commodities": [
             {
               "name": "FAME",
               "ton_year": 7254096.2,
-              "pct": 92.21,
+              "pct": 87.7,
               "calls_year": 1401
+            },
+            {
+              "name": "BIO DIESEL BBM",
+              "ton_year": 288010.0,
+              "pct": 3.48,
+              "calls_year": 216
             },
             {
               "name": "BIODIESEL BBM",
               "ton_year": 159250.0,
-              "pct": 2.02,
+              "pct": 1.93,
               "calls_year": 46
             },
             {
               "name": "FAME IN BULK",
               "ton_year": 114762.2,
-              "pct": 1.46,
+              "pct": 1.39,
               "calls_year": 21
+            },
+            {
+              "name": "BIO DIESEL",
+              "ton_year": 110762.3,
+              "pct": 1.34,
+              "calls_year": 106
             },
             {
               "name": "METHYL ESTER",
               "ton_year": 106784.0,
-              "pct": 1.36,
+              "pct": 1.29,
               "calls_year": 20
             },
             {
               "name": "AKRA SOL FAME 35",
               "ton_year": 51419.3,
-              "pct": 0.65,
+              "pct": 0.62,
               "calls_year": 14
             },
             {
               "name": "ROL BIODIESEL SPEC",
               "ton_year": 48005.0,
-              "pct": 0.61,
+              "pct": 0.58,
               "calls_year": 10
             },
             {
               "name": "BIODIESEL B35",
               "ton_year": 27662.8,
-              "pct": 0.35,
+              "pct": 0.33,
               "calls_year": 22
             },
             {
               "name": "FAME / BIODIESEL",
               "ton_year": 22181.0,
-              "pct": 0.28,
+              "pct": 0.27,
               "calls_year": 5
             },
             {
               "name": "FAME/BIODIESEL",
               "ton_year": 16851.9,
-              "pct": 0.21,
+              "pct": 0.2,
               "calls_year": 5
             },
             {
@@ -4272,176 +4284,164 @@
               "ton_year": 12000.0,
               "pct": 0.15,
               "calls_year": 3
-            },
-            {
-              "name": "BIO FAME",
-              "ton_year": 8738.0,
-              "pct": 0.11,
-              "calls_year": 1
-            },
-            {
-              "name": "PALM METHYL ESTER",
-              "ton_year": 7450.0,
-              "pct": 0.09,
-              "calls_year": 1
             }
           ]
         },
         "2025": {
-          "ton_total": 17956235.9,
-          "calls_total": 3309,
-          "commodity_count": 69,
+          "ton_total": 19136215.4,
+          "calls_total": 4080,
+          "commodity_count": 78,
           "top_commodities": [
             {
               "name": "FAME",
               "ton_year": 15667618.8,
-              "pct": 87.25,
+              "pct": 81.87,
               "calls_year": 2737
             },
             {
               "name": "FAME IN BULK",
               "ton_year": 778077.3,
-              "pct": 4.33,
+              "pct": 4.07,
               "calls_year": 114
+            },
+            {
+              "name": "BIO DIESEL BBM",
+              "ton_year": 584886.0,
+              "pct": 3.06,
+              "calls_year": 437
+            },
+            {
+              "name": "BIO DIESEL",
+              "ton_year": 560039.1,
+              "pct": 2.93,
+              "calls_year": 312
             },
             {
               "name": "BIODIESEL BBM",
               "ton_year": 329882.0,
-              "pct": 1.84,
+              "pct": 1.72,
               "calls_year": 70
             },
             {
               "name": "METHYL ESTER",
               "ton_year": 207600.0,
-              "pct": 1.16,
+              "pct": 1.08,
               "calls_year": 44
             },
             {
               "name": "FAME / BIODIESEL",
               "ton_year": 199100.0,
-              "pct": 1.11,
+              "pct": 1.04,
               "calls_year": 55
             },
             {
               "name": "FAME/BIODIESEL",
               "ton_year": 124755.0,
-              "pct": 0.69,
+              "pct": 0.65,
               "calls_year": 28
             },
             {
               "name": "ROL BIODIESEL SPEC",
               "ton_year": 97198.5,
-              "pct": 0.54,
+              "pct": 0.51,
               "calls_year": 20
             },
             {
               "name": "AKRA SOL FAME 40",
               "ton_year": 84227.0,
-              "pct": 0.47,
+              "pct": 0.44,
               "calls_year": 27
             },
             {
               "name": "FAME BIODIESEL",
               "ton_year": 59750.0,
-              "pct": 0.33,
+              "pct": 0.31,
               "calls_year": 13
             },
             {
               "name": "FATTY ACID METHYL ESTER / FAME BIODIESEL",
               "ton_year": 29170.0,
-              "pct": 0.16,
+              "pct": 0.15,
               "calls_year": 9
-            },
-            {
-              "name": "SOLAR & FAME",
-              "ton_year": 25098.0,
-              "pct": 0.14,
-              "calls_year": 1
-            },
-            {
-              "name": "BIODIESEL B40",
-              "ton_year": 24984.6,
-              "pct": 0.14,
-              "calls_year": 36
             }
           ]
         },
         "2026": {
-          "ton_total": 7352469.7,
-          "calls_total": 1506,
-          "commodity_count": 52,
+          "ton_total": 7727874.6,
+          "calls_total": 1741,
+          "commodity_count": 56,
           "top_commodities": [
             {
               "name": "FAME",
               "ton_year": 6513966.4,
-              "pct": 88.6,
+              "pct": 84.29,
               "calls_year": 1313
+            },
+            {
+              "name": "BIO DIESEL BBM",
+              "ton_year": 224572.0,
+              "pct": 2.91,
+              "calls_year": 179
             },
             {
               "name": "FAME/BIODIESEL",
               "ton_year": 181047.0,
-              "pct": 2.46,
+              "pct": 2.34,
               "calls_year": 30
+            },
+            {
+              "name": "BIO DIESEL",
+              "ton_year": 144255.9,
+              "pct": 1.87,
+              "calls_year": 53
             },
             {
               "name": "FAME / BIODIESEL",
               "ton_year": 89716.0,
-              "pct": 1.22,
+              "pct": 1.16,
               "calls_year": 23
             },
             {
               "name": "ROL BIODIESEL SPEC",
               "ton_year": 66201.9,
-              "pct": 0.9,
+              "pct": 0.86,
               "calls_year": 15
             },
             {
               "name": "METHYL ESTER",
               "ton_year": 64754.0,
-              "pct": 0.88,
+              "pct": 0.84,
               "calls_year": 10
             },
             {
               "name": "FATTY ACID METHYL ESTER FAME",
               "ton_year": 60971.9,
-              "pct": 0.83,
+              "pct": 0.79,
               "calls_year": 7
             },
             {
               "name": "FAME IN BULK",
               "ton_year": 49994.5,
-              "pct": 0.68,
+              "pct": 0.65,
               "calls_year": 9
             },
             {
               "name": "BIODIESEL BBM",
               "ton_year": 49000.0,
-              "pct": 0.67,
+              "pct": 0.63,
               "calls_year": 10
             },
             {
               "name": "BIODIESEL SPEC",
               "ton_year": 28102.0,
-              "pct": 0.38,
+              "pct": 0.36,
               "calls_year": 8
             },
             {
               "name": "BIOSOLAR FAME",
               "ton_year": 22578.0,
-              "pct": 0.31,
+              "pct": 0.29,
               "calls_year": 1
-            },
-            {
-              "name": "AKRA SOL FAME 40",
-              "ton_year": 17760.0,
-              "pct": 0.24,
-              "calls_year": 15
-            },
-            {
-              "name": "FATTY ACID METHYL ESTER / FAME BIODIESEL",
-              "ton_year": 15560.0,
-              "pct": 0.21,
-              "calls_year": 4
             }
           ]
         }
@@ -4919,9 +4919,9 @@
     },
     "Container": {
       "color": "#9333ea",
-      "ton_total_24m": 393131627.9,
-      "calls_total_24m": 250960,
-      "commodity_count": 1921,
+      "ton_total_24m": 393131422.9,
+      "calls_total_24m": 250956,
+      "commodity_count": 1918,
       "top_commodities": [
         {
           "name": "PETIKEMAS 20 FULL",
@@ -4998,9 +4998,9 @@
       ],
       "by_year": {
         "2024": {
-          "ton_total": 98258810.8,
-          "calls_total": 67277,
-          "commodity_count": 599,
+          "ton_total": 98258800.8,
+          "calls_total": 67275,
+          "commodity_count": 598,
           "top_commodities": [
             {
               "name": "PETIKEMAS 20 FULL",
@@ -5077,9 +5077,9 @@
           ]
         },
         "2025": {
-          "ton_total": 212094866.7,
-          "calls_total": 130681,
-          "commodity_count": 1007,
+          "ton_total": 212094671.7,
+          "calls_total": 130679,
+          "commodity_count": 1005,
           "top_commodities": [
             {
               "name": "PETIKEMAS 20 FULL",
@@ -5238,9 +5238,9 @@
     },
     "General Cargo": {
       "color": "#f97316",
-      "ton_total_24m": 57759884.1,
-      "calls_total_24m": 101215,
-      "commodity_count": 2598,
+      "ton_total_24m": 57758680.0,
+      "calls_total_24m": 101173,
+      "commodity_count": 2590,
       "top_commodities": [
         {
           "name": "GENERAL CARGO",
@@ -5317,9 +5317,9 @@
       ],
       "by_year": {
         "2024": {
-          "ton_total": 16237666.6,
-          "calls_total": 25049,
-          "commodity_count": 730,
+          "ton_total": 16237526.0,
+          "calls_total": 25044,
+          "commodity_count": 727,
           "top_commodities": [
             {
               "name": "GENERAL CARGO",
@@ -5396,9 +5396,9 @@
           ]
         },
         "2025": {
-          "ton_total": 29362876.2,
-          "calls_total": 53512,
-          "commodity_count": 1543,
+          "ton_total": 29362317.7,
+          "calls_total": 53490,
+          "commodity_count": 1537,
           "top_commodities": [
             {
               "name": "GENERAL CARGO",
@@ -5475,9 +5475,9 @@
           ]
         },
         "2026": {
-          "ton_total": 12159341.3,
-          "calls_total": 22654,
-          "commodity_count": 947,
+          "ton_total": 12158836.3,
+          "calls_total": 22639,
+          "commodity_count": 946,
           "top_commodities": [
             {
               "name": "GENERAL CARGO",
@@ -5557,318 +5557,318 @@
     },
     "Vehicles": {
       "color": "#ef4444",
-      "ton_total_24m": 51108651.9,
-      "calls_total_24m": 232862,
-      "commodity_count": 5872,
+      "ton_total_24m": 49821126.6,
+      "calls_total_24m": 232274,
+      "commodity_count": 5786,
       "top_commodities": [
         {
           "name": "MOBIL",
           "ton_24m": 10373736.2,
-          "pct": 20.3,
+          "pct": 20.82,
           "calls_24m": 26818
         },
         {
           "name": "MATERIAL",
           "ton_24m": 7254398.2,
-          "pct": 14.19,
+          "pct": 14.56,
           "calls_24m": 1401
         },
         {
           "name": "ALAT BERAT",
           "ton_24m": 6599625.2,
-          "pct": 12.91,
+          "pct": 13.25,
           "calls_24m": 8563
         },
         {
           "name": "TRUCK BESAR",
           "ton_24m": 4271668.8,
-          "pct": 8.36,
+          "pct": 8.57,
           "calls_24m": 14906
         },
         {
           "name": "GOL VI BRG TRUK BESAR",
           "ton_24m": 3193753.0,
-          "pct": 6.25,
+          "pct": 6.41,
           "calls_24m": 3185
         },
         {
           "name": "TRUK BESAR",
           "ton_24m": 1367855.1,
-          "pct": 2.68,
+          "pct": 2.75,
           "calls_24m": 7763
         },
         {
           "name": "GOL VII TRUK TRAILER PANJANG 12 M",
           "ton_24m": 1333095.6,
-          "pct": 2.61,
+          "pct": 2.68,
           "calls_24m": 2311
         },
         {
           "name": "KENDARAAN",
           "ton_24m": 1052012.6,
-          "pct": 2.06,
+          "pct": 2.11,
           "calls_24m": 3417
         },
         {
           "name": "TRUCK SEDANG",
           "ton_24m": 1009668.1,
-          "pct": 1.98,
+          "pct": 2.03,
           "calls_24m": 13386
         },
         {
           "name": "MATERIAL PROJECT",
           "ton_24m": 756076.1,
-          "pct": 1.48,
+          "pct": 1.52,
           "calls_24m": 514
-        },
-        {
-          "name": "MOBIL DIESEL OIL B40",
-          "ton_24m": 733886.1,
-          "pct": 1.44,
-          "calls_24m": 272
         },
         {
           "name": "GOL V BRG TRUK SEDANG",
           "ton_24m": 723777.0,
-          "pct": 1.42,
+          "pct": 1.45,
           "calls_24m": 2140
+        },
+        {
+          "name": "TRUCK KECIL",
+          "ton_24m": 658668.0,
+          "pct": 1.32,
+          "calls_24m": 4283
         }
       ],
       "by_year": {
         "2024": {
-          "ton_total": 21703106.5,
-          "calls_total": 48641,
-          "commodity_count": 1397,
+          "ton_total": 21323767.1,
+          "calls_total": 48480,
+          "commodity_count": 1372,
           "top_commodities": [
             {
               "name": "MOBIL",
               "ton_year": 8606599.6,
-              "pct": 39.66,
+              "pct": 40.36,
               "calls_year": 5672
             },
             {
               "name": "ALAT BERAT",
               "ton_year": 3855868.6,
-              "pct": 17.77,
+              "pct": 18.08,
               "calls_year": 2338
             },
             {
               "name": "TRUCK BESAR",
               "ton_year": 1309033.0,
-              "pct": 6.03,
+              "pct": 6.14,
               "calls_year": 3115
             },
             {
               "name": "GOL VI BRG TRUK BESAR",
               "ton_year": 967870.0,
-              "pct": 4.46,
+              "pct": 4.54,
               "calls_year": 950
             },
             {
               "name": "MATERIAL",
               "ton_year": 604144.7,
-              "pct": 2.78,
+              "pct": 2.83,
               "calls_year": 394
             },
             {
               "name": "TRUCK KECIL",
               "ton_year": 546280.0,
-              "pct": 2.52,
+              "pct": 2.56,
               "calls_year": 1091
             },
             {
               "name": "DUMP TRUCK",
               "ton_year": 506043.0,
-              "pct": 2.33,
+              "pct": 2.37,
               "calls_year": 210
             },
             {
               "name": "TRUCK SEDANG",
               "ton_year": 427886.0,
-              "pct": 1.97,
+              "pct": 2.01,
               "calls_year": 2330
-            },
-            {
-              "name": "MOBIL DIESEL OIL B35",
-              "ton_year": 338147.0,
-              "pct": 1.56,
-              "calls_year": 107
             },
             {
               "name": "MATERIAL PROJECT",
               "ton_year": 317273.0,
-              "pct": 1.46,
+              "pct": 1.49,
               "calls_year": 188
             },
             {
               "name": "TRUK BESAR",
               "ton_year": 292474.0,
-              "pct": 1.35,
+              "pct": 1.37,
               "calls_year": 1447
             },
             {
               "name": "GOL VII TRUK TRAILER PANJANG 12 M",
               "ton_year": 280855.0,
-              "pct": 1.29,
+              "pct": 1.32,
               "calls_year": 627
+            },
+            {
+              "name": "TRUCK",
+              "ton_year": 261335.2,
+              "pct": 1.23,
+              "calls_year": 161
             }
           ]
         },
         "2025": {
-          "ton_total": 22038186.7,
-          "calls_total": 108390,
-          "commodity_count": 3167,
+          "ton_total": 21428770.9,
+          "calls_total": 108088,
+          "commodity_count": 3109,
           "top_commodities": [
             {
               "name": "MATERIAL",
               "ton_year": 6498650.8,
-              "pct": 29.49,
+              "pct": 30.33,
               "calls_year": 705
             },
             {
               "name": "ALAT BERAT",
               "ton_year": 1956770.8,
-              "pct": 8.88,
+              "pct": 9.13,
               "calls_year": 4517
             },
             {
               "name": "TRUCK BESAR",
               "ton_year": 1837970.2,
-              "pct": 8.34,
+              "pct": 8.58,
               "calls_year": 6992
             },
             {
               "name": "GOL VI BRG TRUK BESAR",
               "ton_year": 1744339.0,
-              "pct": 7.92,
+              "pct": 8.14,
               "calls_year": 1712
             },
             {
               "name": "MOBIL",
               "ton_year": 1270732.4,
-              "pct": 5.77,
+              "pct": 5.93,
               "calls_year": 12465
             },
             {
               "name": "GOL VII TRUK TRAILER PANJANG 12 M",
               "ton_year": 772259.7,
-              "pct": 3.5,
+              "pct": 3.6,
               "calls_year": 1204
             },
             {
               "name": "TRUK BESAR",
               "ton_year": 638266.1,
-              "pct": 2.9,
+              "pct": 2.98,
               "calls_year": 2805
             },
             {
               "name": "KENDARAAN",
               "ton_year": 535192.9,
-              "pct": 2.43,
+              "pct": 2.5,
               "calls_year": 1769
-            },
-            {
-              "name": "MOBIL DIESEL OIL B40",
-              "ton_year": 444662.0,
-              "pct": 2.02,
-              "calls_year": 168
             },
             {
               "name": "MATERIAL PROJECT",
               "ton_year": 411823.1,
-              "pct": 1.87,
+              "pct": 1.92,
               "calls_year": 269
             },
             {
               "name": "GOL V BRG TRUK SEDANG",
               "ton_year": 393728.0,
-              "pct": 1.79,
+              "pct": 1.84,
               "calls_year": 1102
             },
             {
               "name": "TRUCK SEDANG",
               "ton_year": 342808.8,
-              "pct": 1.56,
+              "pct": 1.6,
               "calls_year": 6441
+            },
+            {
+              "name": "KENDARAAN GOLONGAN V",
+              "ton_year": 312404.5,
+              "pct": 1.46,
+              "calls_year": 1861
             }
           ]
         },
         "2026": {
-          "ton_total": 7367358.7,
-          "calls_total": 75831,
-          "commodity_count": 2194,
+          "ton_total": 7068588.6,
+          "calls_total": 75706,
+          "commodity_count": 2177,
           "top_commodities": [
             {
               "name": "TRUCK BESAR",
               "ton_year": 1124665.6,
-              "pct": 15.27,
+              "pct": 15.91,
               "calls_year": 4799
             },
             {
               "name": "ALAT BERAT",
               "ton_year": 786985.8,
-              "pct": 10.68,
+              "pct": 11.13,
               "calls_year": 1708
             },
             {
               "name": "MOBIL",
               "ton_year": 496404.2,
-              "pct": 6.74,
+              "pct": 7.02,
               "calls_year": 8681
             },
             {
               "name": "GOL VI BRG TRUK BESAR",
               "ton_year": 481544.0,
-              "pct": 6.54,
+              "pct": 6.81,
               "calls_year": 523
             },
             {
               "name": "TRUK BESAR",
               "ton_year": 437115.0,
-              "pct": 5.93,
+              "pct": 6.18,
               "calls_year": 3511
             },
             {
               "name": "TRUCK LASING",
               "ton_year": 345338.0,
-              "pct": 4.69,
+              "pct": 4.89,
               "calls_year": 912
-            },
-            {
-              "name": "MOBIL DIESEL OIL B40",
-              "ton_year": 289224.1,
-              "pct": 3.93,
-              "calls_year": 104
             },
             {
               "name": "GOL VII TRUK TRAILER PANJANG 12 M",
               "ton_year": 279981.0,
-              "pct": 3.8,
+              "pct": 3.96,
               "calls_year": 480
             },
             {
               "name": "KENDARAAN",
               "ton_year": 270554.5,
-              "pct": 3.67,
+              "pct": 3.83,
               "calls_year": 1159
             },
             {
               "name": "TRUK SEDANG",
               "ton_year": 245993.0,
-              "pct": 3.34,
+              "pct": 3.48,
               "calls_year": 4936
             },
             {
               "name": "TRUCK SEDANG",
               "ton_year": 238973.3,
-              "pct": 3.24,
+              "pct": 3.38,
               "calls_year": 4615
             },
             {
               "name": "GOL V BRG TRUK SEDANG",
               "ton_year": 153440.0,
-              "pct": 2.08,
+              "pct": 2.17,
               "calls_year": 437
+            },
+            {
+              "name": "MATERIAL",
+              "ton_year": 151602.7,
+              "pct": 2.14,
+              "calls_year": 302
             }
           ]
         }
@@ -5876,9 +5876,9 @@
     },
     "Fish & Livestock": {
       "color": "#06b6d4",
-      "ton_total_24m": 6245516.1,
-      "calls_total_24m": 20941,
-      "commodity_count": 670,
+      "ton_total_24m": 6245468.1,
+      "calls_total_24m": 20939,
+      "commodity_count": 669,
       "top_commodities": [
         {
           "name": "IKAN BEKU R TRANSPORT",
@@ -6034,9 +6034,9 @@
           ]
         },
         "2025": {
-          "ton_total": 2785170.0,
-          "calls_total": 11254,
-          "commodity_count": 369,
+          "ton_total": 2785122.0,
+          "calls_total": 11252,
+          "commodity_count": 368,
           "top_commodities": [
             {
               "name": "IKAN BEKU R TRANSPORT",
@@ -6195,318 +6195,318 @@
     },
     "Other": {
       "color": "#cbd5e1",
-      "ton_total_24m": 382197693.6,
-      "calls_total_24m": 1001724,
-      "commodity_count": 50233,
+      "ton_total_24m": 351372677.5,
+      "calls_total_24m": 992246,
+      "commodity_count": 49731,
       "top_commodities": [
         {
           "name": "(empty)",
           "ton_24m": 10591667.0,
-          "pct": 2.77,
+          "pct": 3.01,
           "calls_24m": 572972
-        },
-        {
-          "name": "ADO",
-          "ton_24m": 3986868.7,
-          "pct": 1.04,
-          "calls_24m": 325
         },
         {
           "name": "SIRTU",
           "ton_24m": 3829659.8,
-          "pct": 1.0,
+          "pct": 1.09,
           "calls_24m": 1539
         },
         {
           "name": "BRAZILIAN BLEND FINES BRBF",
           "ton_24m": 3787801.0,
-          "pct": 0.99,
+          "pct": 1.08,
           "calls_24m": 37
-        },
-        {
-          "name": "GASOIL",
-          "ton_24m": 3783629.0,
-          "pct": 0.99,
-          "calls_24m": 155
         },
         {
           "name": "SPARE PARTS",
           "ton_24m": 3563861.8,
-          "pct": 0.93,
+          "pct": 1.01,
           "calls_24m": 1741
-        },
-        {
-          "name": "MINYAK BAKAR / B B M",
-          "ton_24m": 3379879.0,
-          "pct": 0.88,
-          "calls_24m": 333
         },
         {
           "name": "BESI TUA",
           "ton_24m": 3366117.2,
-          "pct": 0.88,
+          "pct": 0.96,
           "calls_24m": 1912
         },
         {
           "name": "CURAH KERING",
           "ton_24m": 3355185.3,
-          "pct": 0.88,
+          "pct": 0.95,
           "calls_24m": 240
         },
         {
           "name": "MAKANAN",
           "ton_24m": 3154119.6,
-          "pct": 0.83,
+          "pct": 0.9,
           "calls_24m": 3899
         },
         {
           "name": "EQUIPMENT",
           "ton_24m": 3146903.4,
-          "pct": 0.82,
+          "pct": 0.9,
           "calls_24m": 802
         },
         {
           "name": "STEEL SLAB",
           "ton_24m": 3046944.0,
-          "pct": 0.8,
+          "pct": 0.87,
           "calls_24m": 112
+        },
+        {
+          "name": "SUPER SPECIAL FINE",
+          "ton_24m": 2994510.0,
+          "pct": 0.85,
+          "calls_24m": 27
+        },
+        {
+          "name": "IRON BRIDGE CONCENTRATE",
+          "ton_24m": 2959762.0,
+          "pct": 0.84,
+          "calls_24m": 31
+        },
+        {
+          "name": "FN",
+          "ton_24m": 2955115.6,
+          "pct": 0.84,
+          "calls_24m": 229
         }
       ],
       "by_year": {
         "2024": {
-          "ton_total": 99728889.6,
-          "calls_total": 198682,
-          "commodity_count": 14063,
+          "ton_total": 92626683.7,
+          "calls_total": 196246,
+          "commodity_count": 13870,
           "top_commodities": [
             {
               "name": "(empty)",
               "ton_year": 3252543.2,
-              "pct": 3.26,
+              "pct": 3.51,
               "calls_year": 97810
             },
             {
               "name": "SIRTU",
               "ton_year": 1460354.7,
-              "pct": 1.46,
+              "pct": 1.58,
               "calls_year": 574
-            },
-            {
-              "name": "PARAXYLENE",
-              "ton_year": 1139012.6,
-              "pct": 1.14,
-              "calls_year": 134
             },
             {
               "name": "MAKANAN",
               "ton_year": 1138023.4,
-              "pct": 1.14,
+              "pct": 1.23,
               "calls_year": 1168
             },
             {
               "name": "SAGU",
               "ton_year": 1108217.0,
-              "pct": 1.11,
+              "pct": 1.2,
               "calls_year": 221
             },
             {
               "name": "WOODCHIPS",
               "ton_year": 1037061.3,
-              "pct": 1.04,
+              "pct": 1.12,
               "calls_year": 72
             },
             {
               "name": "SUPER SPECIAL FINE",
               "ton_year": 1017530.0,
-              "pct": 1.02,
+              "pct": 1.1,
               "calls_year": 11
             },
             {
               "name": "CRUDE GLYCERINE",
               "ton_year": 992585.8,
-              "pct": 1.0,
+              "pct": 1.07,
               "calls_year": 130
             },
             {
               "name": "BESI TUA",
               "ton_year": 908434.3,
-              "pct": 0.91,
+              "pct": 0.98,
               "calls_year": 495
             },
             {
               "name": "BUAH BUAHAN",
               "ton_year": 878980.2,
-              "pct": 0.88,
+              "pct": 0.95,
               "calls_year": 1290
             },
             {
               "name": "BRAZILIAN BLEND FINES BRBF",
               "ton_year": 861476.0,
-              "pct": 0.86,
+              "pct": 0.93,
               "calls_year": 9
             },
             {
               "name": "COPPER CONCENTRATE",
               "ton_year": 815106.0,
-              "pct": 0.82,
+              "pct": 0.88,
               "calls_year": 35
+            },
+            {
+              "name": "STEEL",
+              "ton_year": 759104.0,
+              "pct": 0.82,
+              "calls_year": 59
             }
           ]
         },
         "2025": {
-          "ton_total": 189693023.1,
-          "calls_total": 555816,
-          "commodity_count": 29888,
+          "ton_total": 173622509.8,
+          "calls_total": 550796,
+          "commodity_count": 29575,
           "top_commodities": [
             {
               "name": "(empty)",
               "ton_year": 6104244.8,
-              "pct": 3.22,
+              "pct": 3.52,
               "calls_year": 336768
             },
             {
               "name": "BESI TUA",
               "ton_year": 2315953.9,
-              "pct": 1.22,
+              "pct": 1.33,
               "calls_year": 989
-            },
-            {
-              "name": "ADO",
-              "ton_year": 2201204.8,
-              "pct": 1.16,
-              "calls_year": 168
             },
             {
               "name": "SIRTU",
               "ton_year": 1951404.7,
-              "pct": 1.03,
+              "pct": 1.12,
               "calls_year": 770
             },
             {
               "name": "SPARE PARTS",
               "ton_year": 1934224.2,
-              "pct": 1.02,
+              "pct": 1.11,
               "calls_year": 919
             },
             {
               "name": "BRAZILIAN BLEND FINES BRBF",
               "ton_year": 1864054.0,
-              "pct": 0.98,
+              "pct": 1.07,
               "calls_year": 20
             },
             {
               "name": "EQUIPMENT",
               "ton_year": 1818258.5,
-              "pct": 0.96,
+              "pct": 1.05,
               "calls_year": 420
             },
             {
               "name": "DEDAK",
               "ton_year": 1740650.2,
-              "pct": 0.92,
+              "pct": 1.0,
               "calls_year": 568
             },
             {
               "name": "STEEL SLAB",
               "ton_year": 1715361.4,
-              "pct": 0.9,
+              "pct": 0.99,
               "calls_year": 66
             },
             {
               "name": "PALAWIJA",
               "ton_year": 1711998.6,
-              "pct": 0.9,
+              "pct": 0.99,
               "calls_year": 561
             },
             {
               "name": "IRON BRIDGE CONCENTRATE",
               "ton_year": 1675059.0,
-              "pct": 0.88,
+              "pct": 0.96,
               "calls_year": 17
             },
             {
-              "name": "MINYAK BAKAR / B B M",
-              "ton_year": 1652409.0,
-              "pct": 0.87,
-              "calls_year": 154
+              "name": "FN",
+              "ton_year": 1589513.7,
+              "pct": 0.92,
+              "calls_year": 131
+            },
+            {
+              "name": "STEEL COILS",
+              "ton_year": 1530613.1,
+              "pct": 0.88,
+              "calls_year": 143
             }
           ]
         },
         "2026": {
-          "ton_total": 92775780.9,
-          "calls_total": 247226,
-          "commodity_count": 17586,
+          "ton_total": 85123484.1,
+          "calls_total": 245204,
+          "commodity_count": 17353,
           "top_commodities": [
-            {
-              "name": "GASOIL",
-              "ton_year": 1788137.7,
-              "pct": 1.93,
-              "calls_year": 56
-            },
             {
               "name": "(empty)",
               "ton_year": 1234879.1,
-              "pct": 1.33,
+              "pct": 1.45,
               "calls_year": 138394
             },
             {
               "name": "SPARE PARTS",
               "ton_year": 1210092.6,
-              "pct": 1.3,
+              "pct": 1.42,
               "calls_year": 416
             },
             {
               "name": "CURAH KERING",
               "ton_year": 1095981.3,
-              "pct": 1.18,
+              "pct": 1.29,
               "calls_year": 98
             },
             {
               "name": "PRODUK HASIL TEMBAKAU",
               "ton_year": 1082305.1,
-              "pct": 1.17,
+              "pct": 1.27,
               "calls_year": 52
             },
             {
               "name": "STEEL SLAB",
               "ton_year": 1070755.6,
-              "pct": 1.15,
+              "pct": 1.26,
               "calls_year": 33
-            },
-            {
-              "name": "MINYAK BAKAR / B B M",
-              "ton_year": 1065620.0,
-              "pct": 1.15,
-              "calls_year": 85
             },
             {
               "name": "BRAZILIAN BLEND FINES BRBF",
               "ton_year": 1062271.0,
-              "pct": 1.14,
+              "pct": 1.25,
               "calls_year": 8
             },
             {
               "name": "SPLIT",
               "ton_year": 1046547.9,
-              "pct": 1.13,
+              "pct": 1.23,
               "calls_year": 27
-            },
-            {
-              "name": "ADO",
-              "ton_year": 983284.0,
-              "pct": 1.06,
-              "calls_year": 74
             },
             {
               "name": "BATU BOLDER",
               "ton_year": 951037.0,
-              "pct": 1.03,
+              "pct": 1.12,
               "calls_year": 57
             },
             {
               "name": "FN",
               "ton_year": 857501.2,
-              "pct": 0.92,
+              "pct": 1.01,
               "calls_year": 54
+            },
+            {
+              "name": "PALAWIJA",
+              "ton_year": 816467.4,
+              "pct": 0.96,
+              "calls_year": 231
+            },
+            {
+              "name": "SUPER SPECIAL FINE",
+              "ton_year": 814744.0,
+              "pct": 0.96,
+              "calls_year": 5
+            },
+            {
+              "name": "STEEL COIL",
+              "ton_year": 702936.1,
+              "pct": 0.83,
+              "calls_year": 66
             }
           ]
         }

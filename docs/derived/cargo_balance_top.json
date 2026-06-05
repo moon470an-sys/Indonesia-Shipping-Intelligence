@@ -630,6 +630,14 @@
         "vessels_in_category": 1,
         "sum_gt": 350369.0,
         "sum_gt_in_category_est": 3936.7
+      },
+      {
+        "owner": "PT. CAKRAWALA NUSA BAHARI",
+        "ticker": null,
+        "vessels": 49,
+        "vessels_in_category": 1,
+        "sum_gt": 209274.0,
+        "sum_gt_in_category_est": 4270.9
       }
     ],
     "General Cargo": [
@@ -644,10 +652,10 @@
       {
         "owner": "PT. USDA SEROJA JAYA",
         "ticker": null,
-        "vessels": 73,
+        "vessels": 77,
         "vessels_in_category": 12,
-        "sum_gt": 175387.0,
-        "sum_gt_in_category_est": 28830.7
+        "sum_gt": 183233.0,
+        "sum_gt_in_category_est": 28555.8
       },
       {
         "owner": "PT. TANTO INTIM LINE",
@@ -686,18 +694,18 @@
       {
         "owner": "PT. DANNY SAMUDERA RAYA LINE",
         "ticker": null,
-        "vessels": 139,
-        "vessels_in_category": 138,
-        "sum_gt": 488159.0,
-        "sum_gt_in_category_est": 484647.1
+        "vessels": 140,
+        "vessels_in_category": 139,
+        "sum_gt": 492198.0,
+        "sum_gt_in_category_est": 488682.3
       },
       {
         "owner": "PT. PERUSAHAAN PELAYARAN RUSIANTO BERSAUDARA",
         "ticker": null,
-        "vessels": 113,
-        "vessels_in_category": 113,
-        "sum_gt": 274941.0,
-        "sum_gt_in_category_est": 274941.0
+        "vessels": 112,
+        "vessels_in_category": 112,
+        "sum_gt": 273671.0,
+        "sum_gt_in_category_est": 273671.0
       },
       {
         "owner": "PT. PELAYARAN KARTIKASAMUDRA ADIJAYA",
@@ -710,18 +718,18 @@
       {
         "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
         "ticker": null,
-        "vessels": 101,
-        "vessels_in_category": 99,
-        "sum_gt": 221347.0,
-        "sum_gt_in_category_est": 216963.9
+        "vessels": 102,
+        "vessels_in_category": 100,
+        "sum_gt": 222308.0,
+        "sum_gt_in_category_est": 217949.0
       },
       {
         "owner": "PT. PELAYARAN MITRA TUJUH SAMUDRA",
         "ticker": null,
-        "vessels": 98,
-        "vessels_in_category": 98,
-        "sum_gt": 351522.0,
-        "sum_gt_in_category_est": 351522.0
+        "vessels": 99,
+        "vessels_in_category": 99,
+        "sum_gt": 356238.0,
+        "sum_gt_in_category_est": 356238.0
       },
       {
         "owner": "PT. JHONLIN MARINE TRANS",
@@ -780,20 +788,20 @@
         "sum_gt_in_category_est": 213238.0
       },
       {
+        "owner": "PT. PELAYARAN NASIONAL BAHTERA BESTARI SHIPPING",
+        "ticker": null,
+        "vessels": 60,
+        "vessels_in_category": 60,
+        "sum_gt": 154548.0,
+        "sum_gt_in_category_est": 154548.0
+      },
+      {
         "owner": "PT. PELAYARAN RIMBA MEGAH ARMADA",
         "ticker": null,
         "vessels": 62,
         "vessels_in_category": 59,
         "sum_gt": 141296.0,
         "sum_gt_in_category_est": 134459.1
-      },
-      {
-        "owner": "PT. PELAYARAN NASIONAL BAHTERA BESTARI SHIPPING",
-        "ticker": null,
-        "vessels": 57,
-        "vessels_in_category": 57,
-        "sum_gt": 143758.0,
-        "sum_gt_in_category_est": 143758.0
       },
       {
         "owner": "PT. AYU",
@@ -808,18 +816,18 @@
       {
         "owner": "PT PERTAMINA PATRA NIAGA",
         "ticker": null,
-        "vessels": 57,
-        "vessels_in_category": 57,
-        "sum_gt": 981071.0,
-        "sum_gt_in_category_est": 981071.0
+        "vessels": 58,
+        "vessels_in_category": 58,
+        "sum_gt": 985001.0,
+        "sum_gt_in_category_est": 985001.0
       },
       {
         "owner": "PT. USDA SEROJA JAYA",
         "ticker": null,
-        "vessels": 73,
-        "vessels_in_category": 42,
-        "sum_gt": 175387.0,
-        "sum_gt_in_category_est": 100907.6
+        "vessels": 77,
+        "vessels_in_category": 46,
+        "sum_gt": 183233.0,
+        "sum_gt_in_category_est": 109463.9
       },
       {
         "owner": "PT. PELAYARAN SAHABAT KAPUAS",
@@ -848,18 +856,18 @@
       {
         "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
         "ticker": null,
-        "vessels": 101,
+        "vessels": 102,
         "vessels_in_category": 2,
-        "sum_gt": 221347.0,
-        "sum_gt_in_category_est": 4383.1
+        "sum_gt": 222308.0,
+        "sum_gt_in_category_est": 4359.0
       },
       {
         "owner": "PT. DANNY SAMUDERA RAYA LINE",
         "ticker": null,
-        "vessels": 139,
+        "vessels": 140,
         "vessels_in_category": 1,
-        "sum_gt": 488159.0,
-        "sum_gt_in_category_est": 3511.9
+        "sum_gt": 492198.0,
+        "sum_gt_in_category_est": 3515.7
       },
       {
         "owner": "PT. JHONLIN MARINE TRANS",
@@ -874,18 +882,18 @@
       {
         "owner": "PT PERTAMINA PATRA NIAGA",
         "ticker": null,
-        "vessels": 57,
+        "vessels": 58,
         "vessels_in_category": 50,
-        "sum_gt": 981071.0,
-        "sum_gt_in_category_est": 860588.6
+        "sum_gt": 985001.0,
+        "sum_gt_in_category_est": 849138.8
       },
       {
         "owner": "PT. USDA SEROJA JAYA",
         "ticker": null,
-        "vessels": 73,
-        "vessels_in_category": 15,
-        "sum_gt": 175387.0,
-        "sum_gt_in_category_est": 36038.4
+        "vessels": 77,
+        "vessels_in_category": 19,
+        "sum_gt": 183233.0,
+        "sum_gt_in_category_est": 45213.3
       },
       {
         "owner": "PT. PELAYARAN SAHABAT KAPUAS",
@@ -914,18 +922,18 @@
       {
         "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
         "ticker": null,
-        "vessels": 101,
+        "vessels": 102,
         "vessels_in_category": 2,
-        "sum_gt": 221347.0,
-        "sum_gt_in_category_est": 4383.1
+        "sum_gt": 222308.0,
+        "sum_gt_in_category_est": 4359.0
       },
       {
         "owner": "PT. DANNY SAMUDERA RAYA LINE",
         "ticker": null,
-        "vessels": 139,
+        "vessels": 140,
         "vessels_in_category": 1,
-        "sum_gt": 488159.0,
-        "sum_gt_in_category_est": 3511.9
+        "sum_gt": 492198.0,
+        "sum_gt_in_category_est": 3515.7
       },
       {
         "owner": "PT. JHONLIN MARINE TRANS",
@@ -940,28 +948,28 @@
       {
         "owner": "PT. USDA SEROJA JAYA",
         "ticker": null,
-        "vessels": 73,
+        "vessels": 77,
         "vessels_in_category": 27,
-        "sum_gt": 175387.0,
-        "sum_gt_in_category_est": 64869.2
+        "sum_gt": 183233.0,
+        "sum_gt_in_category_est": 64250.5
       },
       {
         "owner": "PT PERTAMINA PATRA NIAGA",
         "ticker": null,
-        "vessels": 57,
+        "vessels": 58,
         "vessels_in_category": 1,
-        "sum_gt": 981071.0,
-        "sum_gt_in_category_est": 17211.8
+        "sum_gt": 985001.0,
+        "sum_gt_in_category_est": 16982.8
       }
     ],
     "LPG": [
       {
         "owner": "PT PERTAMINA PATRA NIAGA",
         "ticker": null,
-        "vessels": 57,
-        "vessels_in_category": 6,
-        "sum_gt": 981071.0,
-        "sum_gt_in_category_est": 103270.6
+        "vessels": 58,
+        "vessels_in_category": 7,
+        "sum_gt": 985001.0,
+        "sum_gt_in_category_est": 118879.4
       }
     ],
     "LNG": [],
@@ -978,25 +986,25 @@
   },
   "totals_gt_by_category": {
     "Container": 561865.7,
-    "Bulk Carrier": 3936.7,
-    "General Cargo": 197562.4,
-    "Other Cargo": 4595301.9,
-    "Tanker": 1141480.2,
-    "Product": 948106.8,
-    "Chemical": 82080.9,
-    "LPG": 103270.6,
+    "Bulk Carrier": 8207.6,
+    "General Cargo": 197287.5,
+    "Other Cargo": 4670731.1,
+    "Tanker": 1153946.1,
+    "Product": 945811.6,
+    "Chemical": 81233.3,
+    "LPG": 118879.4,
     "LNG": 0.0,
     "FAME / Vegetable Oil": 8021.8
   },
   "top5_gt_by_category": {
     "Container": 561865.7,
-    "Bulk Carrier": 3936.7,
-    "General Cargo": 194875.5,
-    "Other Cargo": 1692414.0,
-    "Tanker": 1129648.4,
-    "Product": 936275.1,
-    "Chemical": 82080.9,
-    "LPG": 103270.6,
+    "Bulk Carrier": 8207.6,
+    "General Cargo": 194600.6,
+    "Other Cargo": 1700880.3,
+    "Tanker": 1142134.7,
+    "Product": 934000.2,
+    "Chemical": 81233.3,
+    "LPG": 118879.4,
     "LNG": 0,
     "FAME / Vegetable Oil": 8021.8
   },

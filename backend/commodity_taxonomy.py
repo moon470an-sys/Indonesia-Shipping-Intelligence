@@ -43,7 +43,7 @@ COMMODITY_BUCKETS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("CONDENSATE",           ("CONDENSATE", "NAPHTHA", "NAFTA", "NAPTHA")),
     # --- Palm-oil family (BEFORE the refined-product branch so CRUDE PALM
     #     OIL etc. never falls into a generic "OIL" bucket) -----------------
-    ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN")),
+    ("RBD PALM OLEIN",       ("RBD PALM OLEIN", "RBD OLEIN", "RBD OLIEN", "OLIEN")),
     ("RBD PALM OIL",         ("RBD PALM OIL", "RBD OIL")),
     ("PFAD",                 ("PFAD", "PALM FATTY ACID")),
     ("PKO/CPKO",             ("CPKO", "PALM KERNEL OIL", "PKO")),
@@ -51,21 +51,27 @@ COMMODITY_BUCKETS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("OLEIN",                ("OLEIN",)),
     ("PALM KERNEL",          ("PALM KERNEL", "CANGKANG", "BIJI SAWIT",
                                 "TANDAN KOSONG", "KERNEL SHELL")),
-    ("CPO",                  ("CPO", "CRUDE PALM OIL", "PALM OIL", "MINYAK SAWIT")),
+    ("CPO",                  ("CPO", "CRUDE PALM OIL", "PALM OIL", "MINYAK SAWIT",
+                                "KELAPA SAWIT", "MINYAK GORENG", "COOKING OIL",
+                                "MINYAK NABATI", "VEGETABLE OIL")),
     # --- Biodiesel ----------------------------------------------------------
-    ("FAME",                 ("FAME", "BIODIESEL", "METIL ESTER", "METHYL ESTER")),
+    ("FAME",                 ("FAME", "BIODIESEL", "BIO DIESEL", "METIL ESTER", "METHYL ESTER")),
     # --- Other vegetable oils ----------------------------------------------
     ("COCONUT OIL",          ("CNO", "COCONUT OIL", "KOPRA", "COPRA")),
     # --- Refined petroleum products ----------------------------------------
     ("PERTALITE",            ("PERTALITE",)),
     ("PERTAMAX",             ("PERTAMAX", "PERTADEX")),
     ("AVTUR",                ("AVTUR", "JET A", "JET FUEL")),
-    ("HSD",                  ("HSD", "HIGH SPEED DIESEL")),
+    ("HSD",                  ("HSD", "HIGH SPEED DIESEL", "GASOIL", "GAS OIL",
+                                "ADO", "AUTOMOTIVE DIESEL", "MARINE DIESEL", "DIESEL")),
     ("SOLAR",                ("BIO SOLAR", "BIOSOLAR", "SOLAR")),
-    ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL", "MARINE FUEL")),
+    ("MFO/HSFO",             ("MFO", "HSFO", "FUEL OIL", "MARINE FUEL",
+                                "MINYAK BAKAR", "LSWR", "DECANT OIL", "LUBE",
+                                "BASE OIL", "PELUMAS", "RESIDUAL FUEL")),
     ("KEROSENE",             ("KEROSENE", "KEROSEN", "MINYAK TANAH")),
     ("ASPAL/BITUMEN",        ("ASPAL", "BITUMEN", "ASPHALT")),
-    ("BBM (기타)",            ("BBM", "BUCO", "GASOLINE", "PREMIUM", "MOGAS", "AVGAS")),
+    ("BBM (기타)",            ("BBM", "B.B.M", "BAHAN BAKAR MINYAK", "BUCO", "GASOLINE",
+                                "PREMIUM", "MOGAS", "AVGAS")),
     # --- Gases --------------------------------------------------------------
     ("LPG",                  ("LPG", "ELPIJI", "LIQUEFIED PETROLEUM",
                                 "PROPANE", "BUTANE", "PROPYLENE", "ETHYLENE")),
@@ -76,7 +82,9 @@ COMMODITY_BUCKETS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("AMMONIA",              ("AMMONIA", "AMONIA")),
     ("SULFUR",               ("SULFUR", "BELERANG", "SULPHUR")),
     ("CHEMICAL (기타)",       ("CHEMICAL", "KIMIA", "ACID", "ASAM",
-                                "ETHANOL", "CAUSTIC", "LATEX")),
+                                "ETHANOL", "CAUSTIC", "LATEX",
+                                "PARAXYLENE", "XYLENE", "BENZENE", "TOLUENE",
+                                "STYRENE", "AROMATIC")),
     # --- Dry bulk ----------------------------------------------------------
     ("BATU BARA",            ("BATU BARA", "BATUBARA", "STEAM COAL", "COAL",
                                 "BARU BARA", "BATU  BARA", "COKE", "KOKAS")),
