@@ -11,26 +11,26 @@
     {
       "name": "PERTALITE",
       "subclass": "Product",
-      "ton_total": 43178363.7,
-      "calls": 19146
-    },
-    {
-      "name": "CPO",
-      "subclass": "Product",
-      "ton_total": 38148063.4,
-      "calls": 8776
+      "ton_total": 42183696.7,
+      "calls": 19123
     },
     {
       "name": "SOLAR",
       "subclass": "Product",
-      "ton_total": 33493312.4,
-      "calls": 5566
+      "ton_total": 33408517.1,
+      "calls": 5537
+    },
+    {
+      "name": "CPO",
+      "subclass": "Product",
+      "ton_total": 28537106.6,
+      "calls": 8462
     },
     {
       "name": "LPG",
       "subclass": "LPG",
-      "ton_total": 27847786.0,
-      "calls": 6932
+      "ton_total": 27666657.0,
+      "calls": 6930
     },
     {
       "name": "LNG",
@@ -47,20 +47,20 @@
     {
       "name": "CRUDE PALM OIL",
       "subclass": "Product",
-      "ton_total": 21381915.0,
-      "calls": 5291
+      "ton_total": 19952796.7,
+      "calls": 5188
     },
     {
       "name": "BBM",
       "subclass": "Product",
-      "ton_total": 18012072.2,
-      "calls": 4701
+      "ton_total": 17932292.2,
+      "calls": 4683
     },
     {
       "name": "BIO SOLAR",
       "subclass": "Product",
-      "ton_total": 17324495.6,
-      "calls": 17388
+      "ton_total": 16414245.9,
+      "calls": 17262
     }
   ],
   "top_operators": [

@@ -40,6 +40,9 @@ DB = ROOT / "data" / "shipping_bi.db"
 # from the repo root (PR-C: tanker fleet age aggregation).
 sys.path.insert(0, str(ROOT))
 
+# Shared GT-based cargo outlier guard (drops physically-impossible rows).
+from backend.cargo_quality import capped_ton_sql
+
 # Manual seed map per INSTRUCTIONS.md §3. owner_ticker_map.json is the
 # stable, hand-curated ticker → company-name list. The build copies it
 # into docs/derived/ for static serving.
@@ -772,7 +775,7 @@ def build_cargo_ports() -> dict:
     P_TB = _p("('BONGKAR', 'TON')")
     P_KM = _p("('MUAT', 'KOMODITI')")
     P_TM = _p("('MUAT', 'TON')")
-    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+    ton = lambda p: capped_ton_sql(p)
 
     # We aggregate per (kode_pelabuhan, kind, komoditi) — one row per
     # (port, dn/ln, raw komoditi) summing BONGKAR ton AND MUAT ton.
@@ -893,7 +896,7 @@ def build_cargo_ports_periods() -> dict:
     P_TB = _p("('BONGKAR', 'TON')")
     P_KM = _p("('MUAT', 'KOMODITI')")
     P_TM = _p("('MUAT', 'TON')")
-    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+    ton = lambda p: capped_ton_sql(p)
 
     # SQL aggregation keyed on (year, month) so we can bin into periods.
     rows: list[tuple] = []  # (code, kind, k, which, year, month, t)
@@ -1069,7 +1072,7 @@ def build_cargo_category_details(top_n: int = 12) -> dict:
     P_TB = _p("('BONGKAR', 'TON')")
     P_KM = _p("('MUAT', 'KOMODITI')")
     P_TM = _p("('MUAT', 'TON')")
-    ton_expr = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+    ton_expr = lambda p: capped_ton_sql(p)
 
     # Aggregate (kode_pelabuhan, komoditi, data_year, side) → ton + calls.
     # We keep kode_pelabuhan so we can filter to the same mappable-port set
@@ -1318,7 +1321,7 @@ def build_cargo_routes() -> dict:
     P_TB   = _p("('BONGKAR', 'TON')")
     P_KM   = _p("('MUAT', 'KOMODITI')")
     P_TM   = _p("('MUAT', 'TON')")
-    ton_x = lambda p: f"CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL)"
+    ton_x = lambda p: capped_ton_sql(p, coalesce=False)
 
     # key = (origin_code, dest_code, kind, side, bucket)
     comm_totals: dict[tuple[str, str, str, str, str], float] = {}
@@ -1450,7 +1453,7 @@ def build_cargo_yearly() -> dict:
     P_K_M = _path("('MUAT', 'KOMODITI')")
     P_ORIG = _path("('TIBA', 'DARI')")
     P_DEST = _path("('BERANGKAT', 'KE')")
-    ton = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+    ton = lambda p: capped_ton_sql(p)
 
     # ---- Port-coord lookup from previously-built map_flow.json --------------
     # We re-use the 60 normalized ports + lat/lon already produced by the
@@ -2597,7 +2600,7 @@ def build_cargo_balance_top(top_commodities_per_cat: int = 12,
     P_TB    = _p("('BONGKAR', 'TON')")
     P_KM    = _p("('MUAT', 'KOMODITI')")
     P_TM    = _p("('MUAT', 'TON')")
-    ton_expr = lambda p: f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{p}'), '-') AS REAL), 0)"
+    ton_expr = lambda p: capped_ton_sql(p)
 
     cat_kom: dict[str, dict[str, dict]] = defaultdict(lambda: defaultdict(lambda: {"ton": 0.0, "calls": 0}))
     with sqlite3.connect(DB) as con:

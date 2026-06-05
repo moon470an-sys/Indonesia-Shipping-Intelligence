@@ -4,37 +4,37 @@
   "treemap_categories": [
     {
       "category": "Curah Kering",
-      "ton_total": 4390353534.0,
+      "ton_total": 3958298459.0,
       "calls": 396893
     },
     {
       "category": "Curah Cair",
-      "ton_total": 838998942.8,
+      "ton_total": 796785345.8,
       "calls": 230339
     },
     {
       "category": "Petikemas Antar Pulau",
-      "ton_total": 349197688.5,
+      "ton_total": 277939853.7,
       "calls": 457664
     },
     {
-      "category": "Unitized",
-      "ton_total": 248937646.6,
-      "calls": 746830
-    },
-    {
       "category": "Break Bulk",
-      "ton_total": 247017065.7,
+      "ton_total": 236976650.5,
       "calls": 91155
     },
     {
       "category": "Petikemas Internasional",
-      "ton_total": 237797875.6,
+      "ton_total": 199716962.6,
       "calls": 105725
     },
     {
+      "category": "Unitized",
+      "ton_total": 191656119.3,
+      "calls": 746830
+    },
+    {
       "category": "Bag Cargo",
-      "ton_total": 117542413.0,
+      "ton_total": 82274347.6,
       "calls": 332153
     },
     {
@@ -51,43 +51,43 @@
   "top_commodities": [
     {
       "name": "BATU BARA",
-      "ton_total": 1421306072.1
+      "ton_total": 1302233124.0
     },
     {
       "name": "BATUBARA",
-      "ton_total": 1341202417.4
+      "ton_total": 1244050544.4
     },
     {
       "name": "NICKEL ORE",
-      "ton_total": 624606829.4
+      "ton_total": 527257950.1
     },
     {
       "name": "PETIKEMAS 20 FULL",
-      "ton_total": 138769297.9
+      "ton_total": 133903068.8
     },
     {
       "name": "COAL",
-      "ton_total": 77145947.4
+      "ton_total": 73351885.4
     },
     {
       "name": "PETIKEMAS 40 FULL",
-      "ton_total": 68338620.7
-    },
-    {
-      "name": "CPO",
-      "ton_total": 65869743.3
+      "ton_total": 66067453.3
     },
     {
       "name": "INDONESIAN STEAM COAL IN BULK",
-      "ton_total": 61912288.0
+      "ton_total": 58809502.9
     },
     {
-      "name": "GENERAL CARGO",
-      "ton_total": 58232484.5
+      "name": "CPO",
+      "ton_total": 49416011.4
     },
     {
       "name": "PERTALITE",
-      "ton_total": 49120431.6
+      "ton_total": 48114484.6
+    },
+    {
+      "name": "CRUDE OIL",
+      "ton_total": 47150591.5
     }
   ],
   "class_counts": [

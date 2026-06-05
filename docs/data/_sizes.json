@@ -3,12 +3,12 @@
   "overview.json": 5239,
   "fleet.json": 12874,
   "vessels_search.json": 17186377,
-  "cargo.json": 592625,
+  "cargo.json": 592514,
   "changes.json": 3328748,
   "sector_taxonomy.json": 776,
-  "cargo_sector_monthly.json": 244122,
-  "kpi_summary.json": 1761,
-  "tanker_focus.json": 204539,
+  "cargo_sector_monthly.json": 243752,
+  "kpi_summary.json": 1760,
+  "tanker_focus.json": 204456,
   "tanker_flow_map.json": 2332755,
   "companies_financials.json": 129370
 }

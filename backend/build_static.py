@@ -17,6 +17,7 @@ import pandas as pd
 from sqlalchemy import text
 
 from backend.config import PROJECT_ROOT, build_logger
+from backend.cargo_quality import capped_ton_sql
 from backend.db.database import engine
 
 log = build_logger("build_static")
@@ -257,7 +258,7 @@ def cargo_payload(month: str) -> dict:
     P_K_M = _sql_path("('MUAT', 'KOMODITI')")
 
     def _ton_expr(path: str) -> str:
-        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+        return capped_ton_sql(path)
 
     KINDS = ("dn", "ln")
     _zero_f = lambda: {"dn": 0.0, "ln": 0.0}
@@ -600,7 +601,7 @@ def cargo_sector_monthly_payload(month: str) -> dict:
     P_K_M = _sql_path("('MUAT', 'KOMODITI')")
 
     def _ton_expr(path: str) -> str:
-        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+        return capped_ton_sql(path)
 
     with engine.connect() as conn:
         log.info("sector: by (period, kind, JENIS_KAPAL)")
@@ -748,7 +749,7 @@ def kpi_summary_payload(month: str, change_month: str | None) -> dict:
     P_T_M = _sql_path("('MUAT', 'TON')")
 
     def _ton_expr(path: str) -> str:
-        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+        return capped_ton_sql(path)
 
     with engine.connect() as conn:
         fleet_total = conn.execute(text(
@@ -909,7 +910,7 @@ def tanker_focus_payload(month: str) -> dict:
     P_K_M = _sql_path("('MUAT', 'KOMODITI')")
 
     def _ton_expr(path: str) -> str:
-        return f"COALESCE(CAST(NULLIF(json_extract(raw_row, '{path}'), '-') AS REAL), 0)"
+        return capped_ton_sql(path)
 
     def _is_tanker(jk: str) -> bool:
         sector, vclass = classify_vessel_type(jk)
