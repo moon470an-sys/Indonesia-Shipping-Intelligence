@@ -74,6 +74,21 @@
         </div>
         <span class="text-[11px] text-slate-500" id="home-year-banner"></span>
       </div>
+      <!-- 공유 물동량 필터: KPI 카드 + 월별 차트에 동시 적용 (외항/내항 · 하역/선적) -->
+      <div class="flex flex-wrap items-center gap-3 mb-5">
+        <span class="text-xs font-semibold text-slate-600">물동량 기준</span>
+        <div class="flex rounded border border-slate-200 overflow-hidden text-xs bg-white" id="home-ts-trade" role="tablist" aria-label="외항/내항 구분">
+          <button data-trade="all" class="px-2.5 py-1 bg-slate-800 text-white">전체</button>
+          <button data-trade="ln"  class="px-2.5 py-1 bg-white hover:bg-slate-100">외항 (LN)</button>
+          <button data-trade="dn"  class="px-2.5 py-1 bg-white hover:bg-slate-100">내항 (DN)</button>
+        </div>
+        <div class="flex rounded border border-slate-200 overflow-hidden text-xs bg-white" id="home-ts-direction" role="tablist" aria-label="하역/선적 구분">
+          <button data-dir="total"   class="px-2.5 py-1 bg-slate-800 text-white">합계</button>
+          <button data-dir="muat"    class="px-2.5 py-1 bg-white hover:bg-slate-100">선적 (MUAT)</button>
+          <button data-dir="bongkar" class="px-2.5 py-1 bg-white hover:bg-slate-100">하역 (BONGKAR)</button>
+        </div>
+        <span class="text-[11px] text-slate-500" id="home-ts-mode-label">(선적 + 하역 합계)</span>
+      </div>
       <!-- Cycle 3: KPI 정비. "선박 등록 척수"는 Supply 영역이므로 제거.
            Demand 탭은 화물(LK3) KPI 한정으로 구성. 3 카드 (총 화물 / 탱커 /
            국내·국제 비중) + 데이터 기준일. -->
@@ -94,22 +109,8 @@
       <div class="bg-white rounded-xl shadow p-4 mb-8" data-source="docs/data/cargo_sector_monthly.json">
         <div class="flex items-baseline justify-between mb-3 flex-wrap gap-2">
           <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량
-            <span class="text-xs text-slate-500 font-normal" id="home-ts-mode-label">(선적 + 하역 합계)</span>
+            <span class="text-xs text-slate-500 font-normal">(상단 ‘물동량 기준’ 필터 적용)</span>
           </h3>
-          <div class="flex items-center gap-2 flex-wrap">
-            <!-- 외항(ln) / 내항(dn) 무역 구분 필터 -->
-            <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="home-ts-trade" role="tablist" aria-label="외항/내항 구분">
-              <button data-trade="all" class="px-2.5 py-1 bg-slate-800 text-white">전체</button>
-              <button data-trade="ln"  class="px-2.5 py-1 bg-white hover:bg-slate-100">외항 (LN)</button>
-              <button data-trade="dn"  class="px-2.5 py-1 bg-white hover:bg-slate-100">내항 (DN)</button>
-            </div>
-            <!-- 하역(BONGKAR) / 선적(MUAT) 구분 필터 -->
-            <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="home-ts-direction" role="tablist" aria-label="하역/선적 구분">
-              <button data-dir="total"   class="px-2.5 py-1 bg-slate-800 text-white">합계</button>
-              <button data-dir="muat"    class="px-2.5 py-1 bg-white hover:bg-slate-100">선적 (MUAT)</button>
-              <button data-dir="bongkar" class="px-2.5 py-1 bg-white hover:bg-slate-100">하역 (BONGKAR)</button>
-            </div>
-          </div>
         </div>
         <!-- 화물 그룹 필터 (Balance 탭과 동일한 분류) -->
         <div class="flex flex-wrap gap-1 mb-3 text-xs" id="home-ts-cargo" role="tablist" aria-label="화물 그룹 선택">
@@ -943,6 +944,6 @@
     </div>
   </footer>
 
-  <script src="./js/app.js?v=20260605a" type="module"></script>
+  <script src="./js/app.js?v=20260605b" type="module"></script>
 </body>
 </html>

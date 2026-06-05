@@ -1377,6 +1377,68 @@ async function renderHome() {
 // 의 선택 연도에 맞춰 톤·코모디티 리스트가 동기화된다.
 const catDetailState = { payload: null, active: null };
 
+// 21개 세부 카테고리를 Balance 9 대분류로 묶는 매핑 (월별 차트·항만 지도와 동일 분류).
+const HOME_CATDETAIL_GROUPS = [
+  { key: "Other Cargo",          members: ["Water", "Other"] },
+  { key: "Bulk Carrier",         members: ["Coal", "Mineral Ore", "Other Dry Bulk", "Wood / Timber", "Cement", "Fertilizer", "Grain / Food"] },
+  { key: "Container",            members: ["Container"] },
+  { key: "General Cargo",        members: ["General Cargo", "Vehicles", "Fish & Livestock"] },
+  { key: "Product",              members: ["Crude Oil", "Petroleum Product"] },
+  { key: "Chemical",             members: ["Chemical"] },
+  { key: "LPG",                  members: ["LPG / Gas"] },
+  { key: "LNG",                  members: ["LNG"] },
+  { key: "FAME / Vegetable Oil", members: ["Palm Oil", "Biodiesel (FAME)", "Other Vegetable Oil"] },
+];
+
+// 세부 카테고리 payload → 9 대분류로 병합. 출력 shape 은 원본과 동일하므로
+// _catWindowFor / _drawCategoryDetailList 가 변경 없이 동작한다.
+function _buildGroupedCategoryDetails(payload) {
+  const meta = _homeBalanceMeta();
+  const topN = payload.top_n_per_cat || 12;
+  const years = payload.years || [];
+  // commodity 리스트 병합 (이름 기준 ton/calls 합산 후 pct 재계산·정렬·상위 N)
+  const merge = (lists, tonKey, callKey) => {
+    const byName = new Map();
+    for (const lst of lists) for (const it of (lst || [])) {
+      const cur = byName.get(it.name) || { name: it.name, ton: 0, calls: 0 };
+      cur.ton += Number(it[tonKey] || 0);
+      cur.calls += Number(it[callKey] || 0);
+      byName.set(it.name, cur);
+    }
+    const arr = [...byName.values()];
+    const tot = arr.reduce((s, x) => s + x.ton, 0) || 1;
+    arr.sort((a, b) => b.ton - a.ton);
+    return { arr: arr.slice(0, topN), tot };
+  };
+  const order = HOME_CATDETAIL_GROUPS.map(g => g.key);
+  const categories = {};
+  for (const g of HOME_CATDETAIL_GROUPS) {
+    const mems = g.members.map(m => payload.categories[m]).filter(Boolean);
+    const m24 = merge(mems.map(c => c.top_commodities), "ton_24m", "calls_24m");
+    const top24 = m24.arr.map(x => ({ name: x.name, ton_24m: x.ton, pct: x.ton / m24.tot * 100, calls_24m: x.calls }));
+    const by_year = {};
+    for (const y of years) {
+      const yw = mems.map(c => (c.by_year || {})[y]).filter(Boolean);
+      const my = merge(yw.map(w => w.top_commodities), "ton_year", "calls_year");
+      by_year[y] = {
+        ton_total: yw.reduce((s, w) => s + (w.ton_total || 0), 0),
+        calls_total: yw.reduce((s, w) => s + (w.calls_total || 0), 0),
+        commodity_count: yw.reduce((s, w) => s + (w.commodity_count || 0), 0),
+        top_commodities: my.arr.map(x => ({ name: x.name, ton_year: x.ton, pct: x.ton / my.tot * 100, calls_year: x.calls })),
+      };
+    }
+    categories[g.key] = {
+      color: meta.color[g.key] || "#94a3b8",
+      ton_total_24m: mems.reduce((s, c) => s + (c.ton_total_24m || 0), 0),
+      calls_total_24m: mems.reduce((s, c) => s + (c.calls_total_24m || 0), 0),
+      commodity_count: mems.reduce((s, c) => s + (c.commodity_count || 0), 0),
+      top_commodities: top24,
+      by_year,
+    };
+  }
+  return { ...payload, order, categories, _grouped: true };
+}
+
 // 현재 활성 연도(home-kpi.dataset.activeYear) → 윈도우 헬퍼.
 // 반환: { ton_total, calls_total, commodity_count, top_commodities, scope, year }
 //   scope = "year" | "24m"   (year 가 없거나 매칭 안되면 24m fallback)
@@ -1419,7 +1481,11 @@ function _catWindowFor(cat) {
 async function renderCategoryDetails() {
   // Reuse cached payload (year-pill 클릭 시 재호출되는 케이스).
   if (!catDetailState.payload) {
-    try { catDetailState.payload = await loadDerived("cargo_category_details.json"); }
+    try {
+      const raw = await loadDerived("cargo_category_details.json");
+      // 21 세부 카테고리 → Balance 9 대분류로 정리해서 표시.
+      catDetailState.payload = _buildGroupedCategoryDetails(raw);
+    }
     catch (e) {
       const list = document.getElementById("cat-detail-list");
       if (list) list.innerHTML = `<div class="text-slate-400">cargo_category_details.json 로드 실패: ${e.message}</div>`;
@@ -1470,7 +1536,7 @@ function _drawCategoryDetailList() {
     host.innerHTML = `<div class="text-slate-400">데이터 없음</div>`;
     return;
   }
-  const color = CARGO_CATEGORY_PALETTE[catDetailState.active] || "#94a3b8";
+  const color = (cat && cat.color) || CARGO_CATEGORY_PALETTE[catDetailState.active] || "#94a3b8";
   const items = w.top_commodities || [];
   if (!items.length) {
     host.innerHTML = `<div class="text-slate-400">상세 코모디티 없음</div>`;
@@ -1574,9 +1640,54 @@ function _buildHomeYearPills(payload, activeYear) {
   }
 }
 
+// ── KPI 필터 집계 (외항/내항 · 선적/하역) ──────────────────────────
+// home_kpi.json 은 연도별 합계만 갖고 kind/방향 분해가 없으므로, 차트와
+// 동일하게 cargo_sector_monthly.rows 에서 직접 (year × trade × field) 집계한다.
+// vesselClass 가 주어지면 그 선종만(예: Tanker), 없으면 전체 CARGO.
+function _homeKpiSum(year, trade, field, vesselClass) {
+  const cm = homeState && homeState.cargoMonthly;
+  if (!cm || !cm.rows) return { ton: 0, months: new Set() };
+  let ton = 0; const months = new Set();
+  for (const r of cm.rows) {
+    if (r.sector !== "CARGO") continue;
+    if (vesselClass && r.vessel_class !== vesselClass) continue;
+    if (!r.period || r.period.slice(0, 4) !== year) continue;
+    if (trade !== "all" && r.kind !== trade) continue;
+    const f = (field in r) ? field : "ton_total";
+    ton += Number(r[f]) || 0;
+    months.add(r.period.slice(5, 7));
+  }
+  return { ton, months };
+}
+// 부분 연도를 감안한 YoY: 전년 동월(현재 연도에 존재하는 달)만 합산해 비교.
+function _homeKpiYoY(year, trade, field, vesselClass) {
+  const cur = _homeKpiSum(year, trade, field, vesselClass);
+  const prevY = String(Number(year) - 1);
+  const cm = homeState && homeState.cargoMonthly;
+  let prevTon = 0;
+  for (const r of ((cm && cm.rows) || [])) {
+    if (r.sector !== "CARGO") continue;
+    if (vesselClass && r.vessel_class !== vesselClass) continue;
+    if (!r.period || r.period.slice(0, 4) !== prevY) continue;
+    if (!cur.months.has(r.period.slice(5, 7))) continue;
+    if (trade !== "all" && r.kind !== trade) continue;
+    const f = (field in r) ? field : "ton_total";
+    prevTon += Number(r[f]) || 0;
+  }
+  const yoy = prevTon > 0 ? ((cur.ton - prevTon) / prevTon * 100) : null;
+  return { ton: cur.ton, yoy, months: cur.months.size };
+}
+// 토글 변경 시 KPI 카드만 다시 그림 (payload 는 최초 로드분 재사용).
+function _refreshHomeKpi() {
+  if (homeState && homeState.homeKpiPayload) {
+    renderHomeKpi(homeState.homeKpiPayload, homeState.mapData);
+  }
+}
+
 function renderHomeKpi(payload, mapPayload) {
   const host = document.getElementById("home-kpi");
   if (!host || !payload) return;
+  homeState.homeKpiPayload = payload;   // 토글 재렌더용 캐시
 
   // Resolve active year (URL state wins, else default = most-recent full year).
   let activeYear = host.dataset.activeYear;
@@ -1614,12 +1725,20 @@ function renderHomeKpi(payload, mapPayload) {
   // 탭에서 제외. 대체로 "국내 vs 국제 화물 비중" 카드(domestic_intl_split)
   // 를 map_flow.json.totals로부터 합성. KPI 순서: 총 화물 / 탱커 화물 /
   // 국내·국제 / 데이터 기준일.
+  // 공유 물동량 필터 (외항/내항 · 선적/하역) — 상단 필터바 + 차트와 동일 상태.
+  const trade = (homeTsState && homeTsState.trade) || "all";
+  const field = HOME_TS_FIELD[(homeTsState && homeTsState.direction) || "total"] || "ton_total";
+  const hasCM = !!(homeState && homeState.cargoMonthly && homeState.cargoMonthly.rows);
+  const tradeTxt = trade === "ln" ? "외항" : trade === "dn" ? "내항" : "전체";
+  const dirTxt = field === "ton_muat" ? "선적" : field === "ton_bongkar" ? "하역" : "합계";
+  const filterTag = `<span class="text-[10px] text-sky-600 font-normal">· ${tradeTxt}·${dirTxt}</span>`;
+
   const cards = payload.kpis.map(k => {
     if (k.id === "total_12m_ton") {
-      const v = yearValue(k);
+      const v = hasCM ? _homeKpiYoY(activeYear, trade, field, null) : yearValue(k);
       const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">${yearLabel} 총 화물 물동량 (LK3)</div>
+        <div class="kpi-label">${yearLabel} 총 화물 물동량 (LK3) ${filterTag}</div>
         <div>
           <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
           <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
@@ -1627,10 +1746,10 @@ function renderHomeKpi(payload, mapPayload) {
       </div>`;
     }
     if (k.id === "tanker_12m_ton") {
-      const v = yearValue(k);
+      const v = hasCM ? _homeKpiYoY(activeYear, trade, field, "Tanker") : yearValue(k);
       const partial = v.months < 12 ? `<span class="text-amber-600 text-xs">부분 ${v.months}mo</span>` : "";
       return `<div class="kpi-card-large">
-        <div class="kpi-label">${yearLabel} 탱커 화물 물동량</div>
+        <div class="kpi-label">${yearLabel} 탱커 화물 물동량 ${filterTag}</div>
         <div>
           <div class="kpi-value-large">${fmtTon(v.ton)}<span class="text-base text-slate-400 ml-1">tons</span></div>
           <div class="kpi-sub-large">${trend(v.yoy)} ${partial}</div>
@@ -1638,32 +1757,34 @@ function renderHomeKpi(payload, mapPayload) {
       </div>`;
     }
     if (k.id === "tanker_fleet") {
-      // Cycle 3: Supply 영역이므로 카드 위치만 차지 → "국내 vs 국제" 합성.
-      // PR-now: 연도 선택(activeYear)에 따라 cargo_ports_periods.json의 해당
-      //   기간 ports(dU/dS/iU/iS)를 합산해 dn/intl 비중을 재계산. 해당 기간
-      //   데이터가 없으면 map_flow.totals(24M)로 폴백.
-      let dn = null, ln = null, scopeLabel = "24M", scopeMonths = null;
-      const cpp = homeState.cargoPortsPeriods;
-      const yearPeriod = (cpp && activeYear && cpp.periods && cpp.periods[activeYear]) || null;
-      if (yearPeriod) {
-        let dnSum = 0, lnSum = 0;
-        for (const code in (yearPeriod.ports || {})) {
-          const pp = yearPeriod.ports[code];
-          dnSum += Number(pp.dU || 0) + Number(pp.dS || 0);
-          lnSum += Number(pp.iU || 0) + Number(pp.iS || 0);
-        }
-        dn = dnSum; ln = lnSum;
-        scopeMonths = yearPeriod.months || null;
-        scopeLabel = `${activeYear}년${(scopeMonths && scopeMonths < 12) ? ` (${scopeMonths}mo)` : ""}`;
-      } else if (mapPayload && mapPayload.totals) {
-        dn = Number(mapPayload.totals.domestic_ton || 0);
-        ln = Number(mapPayload.totals.intl_ton || 0);
+      // "국내(내항) vs 국제(외항)" 비중. cargo_sector_monthly 에서 연도+선적/하역
+      // 필터를 반영해 dn/ln 합산. trade 필터가 걸리면 반대편은 0 (필터 충실 반영).
+      // cargoMonthly 미로딩 시 cargo_ports_periods / map_flow.totals 로 폴백.
+      let dn = null, ln = null, scopeLabel = activeYear ? `${activeYear}년` : "24M";
+      if (hasCM && activeYear) {
+        dn = trade === "ln" ? 0 : _homeKpiSum(activeYear, "dn", field, null).ton;
+        ln = trade === "dn" ? 0 : _homeKpiSum(activeYear, "ln", field, null).ton;
       } else {
-        return `<div class="kpi-card-large">
-          <div class="kpi-label">국내 vs 국제 비중</div>
-          <div><div class="kpi-value-large">—</div>
-          <div class="kpi-sub-large text-slate-400">데이터 없음</div></div>
-        </div>`;
+        const cpp = homeState.cargoPortsPeriods;
+        const yearPeriod = (cpp && activeYear && cpp.periods && cpp.periods[activeYear]) || null;
+        if (yearPeriod) {
+          let dnSum = 0, lnSum = 0;
+          for (const code in (yearPeriod.ports || {})) {
+            const pp = yearPeriod.ports[code];
+            dnSum += Number(pp.dU || 0) + Number(pp.dS || 0);
+            lnSum += Number(pp.iU || 0) + Number(pp.iS || 0);
+          }
+          dn = dnSum; ln = lnSum;
+        } else if (mapPayload && mapPayload.totals) {
+          dn = Number(mapPayload.totals.domestic_ton || 0);
+          ln = Number(mapPayload.totals.intl_ton || 0);
+        } else {
+          return `<div class="kpi-card-large">
+            <div class="kpi-label">국내 vs 국제 비중</div>
+            <div><div class="kpi-value-large">—</div>
+            <div class="kpi-sub-large text-slate-400">데이터 없음</div></div>
+          </div>`;
+        }
       }
       const totSum = dn + ln;
       const dnPct = totSum > 0 ? (dn / totSum * 100) : null;
@@ -1671,14 +1792,14 @@ function renderHomeKpi(payload, mapPayload) {
       const dnPctTxt = dnPct == null ? "—" : `${dnPct.toFixed(1)}%`;
       const lnPctTxt = lnPct == null ? "—" : `${lnPct.toFixed(1)}%`;
       return `<div class="kpi-card-large" title="Source: monitoring-inaportnet.dephub.go.id (LK3)">
-        <div class="kpi-label">국내 vs 국제 화물 비중 <span class="text-[10px] text-slate-400 font-normal">(${scopeLabel})</span></div>
+        <div class="kpi-label">국내(내항) vs 국제(외항) 비중 <span class="text-[10px] text-slate-400 font-normal">(${scopeLabel}·${dirTxt})</span></div>
         <div>
           <div class="kpi-value-large" style="font-size:clamp(22px,3vw,30px)">
             <span class="text-blue-700">${dnPctTxt}</span>
             <span class="text-slate-400 mx-1">/</span>
             <span class="text-sky-600">${lnPctTxt}</span>
           </div>
-          <div class="kpi-sub-large"><span class="text-slate-600">국내</span> ${fmtTon(dn)} <span class="text-slate-400">·</span> <span class="text-slate-600">국제</span> ${fmtTon(ln)} tons</div>
+          <div class="kpi-sub-large"><span class="text-slate-600">내항</span> ${fmtTon(dn)} <span class="text-slate-400">·</span> <span class="text-slate-600">외항</span> ${fmtTon(ln)} tons</div>
         </div>
       </div>`;
     }
@@ -1853,6 +1974,7 @@ function _wireHomeTsDirection() {
     const lbl = document.getElementById("home-ts-mode-label");
     if (lbl) lbl.textContent = HOME_TS_LABEL[homeTsState.direction] || "";
     drawHomeTimeseries();
+    _refreshHomeKpi();   // KPI 카드도 선적/하역 필터 반영
   });
 }
 
@@ -1873,6 +1995,7 @@ function _wireHomeTsTrade() {
       b.classList.toggle("hover:bg-slate-100", !active);
     });
     drawHomeTimeseries();
+    _refreshHomeKpi();   // KPI 카드도 외항/내항 필터 반영
   });
 }
 
@@ -5550,24 +5673,26 @@ function _cvRefreshCommUI() {
   });
 }
 
+// cv-app 마크업은 Demand 탭(#tab-overview)에 있다. 과거 #tab-cargo 스코프로
+// 쿼리하던 탓에 표시 기준(mode/sub) 버튼이 wiring/하이라이트되지 않던 버그 수정.
 function _cvSetMode(m) {
   _cvState.mode = m;
-  document.querySelectorAll('#tab-cargo .cv-rbtn[data-mode]').forEach(b => {
+  document.querySelectorAll('#tab-overview .cv-rbtn[data-mode]').forEach(b => {
     b.classList.toggle("on-t", b.dataset.mode === m);
   });
   _cvRebuild();
 }
 function _cvSetSub(s) {
   _cvState.sub = s;
-  document.querySelectorAll('#tab-cargo .cv-rbtn[data-sub]').forEach(b => {
+  document.querySelectorAll('#tab-overview .cv-rbtn[data-sub]').forEach(b => {
     b.classList.toggle("on-s", b.dataset.sub === s);
   });
   _cvRebuild();
 }
 
 function _cvWireControls() {
-  const tab = document.getElementById("tab-cargo");
-  if (tab.dataset.cvWired) return;
+  const tab = document.getElementById("tab-overview");
+  if (!tab || tab.dataset.cvWired) return;
   tab.dataset.cvWired = "1";
   // Mode + Sub buttons
   tab.querySelectorAll('.cv-rbtn[data-mode]').forEach(b => {
