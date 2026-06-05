@@ -195,6 +195,30 @@ def phase_report(snapshot_month: str) -> dict:
     return out
 
 
+def phase_build(snapshot_month: str) -> dict:
+    """Rebuild the published site JSON (docs/data + docs/derived) from the DB.
+
+    Runs build_static then build_derived. The GT-based cargo outlier guard in
+    backend.cargo_quality is applied inside these builds, so every monthly
+    update automatically drops physically-impossible cargo rows (ton > GT×3)
+    — no manual rebuild needed. Keeps the dashboard in sync with the new
+    snapshot in one orchestrated run.
+    """
+    started = datetime.utcnow()
+    log.info("Phase build: rebuilding docs/ static JSON (outlier guard applied)")
+    from backend.build_static import main as build_static_main
+    from scripts.build_derived import main as build_derived_main
+    rc = build_static_main()
+    if rc not in (0, None):
+        raise RuntimeError(f"build_static returned {rc}")
+    build_derived_main()
+    finished = datetime.utcnow()
+    _record_run(snapshot_month, "build_site", "success", started, finished,
+                0, 0, 0, {"built": "docs/data + docs/derived"})
+    log.info("Phase build done in %s", finished - started)
+    return {"ok": True}
+
+
 def write_summary(month: str, started: datetime, finished: datetime,
                   fleet: dict, cargo: dict, diffs: dict, report: dict) -> Path:
     elapsed = finished - started
@@ -297,9 +321,12 @@ def run_monthly_auto(skip_sample: bool = False, resume: bool = False,
             phase_validate_cargo(month)
         diffs = phase_diff(month)
         report = phase_report(month)
+        # Rebuild the published site JSON so the dashboard reflects the new
+        # snapshot, with the cargo outlier guard applied automatically.
+        phase_build(month)
     except Exception as exc:
         finished = datetime.utcnow()
-        write_failure_report("ingest/diff/report", exc, started, finished,
+        write_failure_report("ingest/diff/report/build", exc, started, finished,
                              {"fleet": fleet_summary, "cargo": cargo_summary})
         log.exception("Monthly run aborted")
         return 3
@@ -460,7 +487,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="backend.main")
     parser.add_argument("command", choices=[
         "test-fleet", "test-cargo", "run-fleet", "run-cargo", "run-all",
-        "diff", "changes", "report", "monthly", "status", "schedule",
+        "diff", "changes", "report", "build", "monthly", "status", "schedule",
         "audit-taxonomy", "validate-fleet", "validate-cargo",
     ])
     parser.add_argument("--month")
@@ -499,6 +526,10 @@ def main() -> int:
     if args.command == "report":
         month = args.month or current_snapshot_month()
         phase_report(month)
+        return 0
+    if args.command == "build":
+        month = args.month or current_snapshot_month()
+        phase_build(month)
         return 0
     if args.command == "monthly":
         return run_monthly_auto(resume=args.resume, validate=not args.no_validate)

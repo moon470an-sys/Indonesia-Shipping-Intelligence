@@ -55,10 +55,11 @@ python -m backend.scheduler   # 매월 1일 03:00 KST
 | `python -m backend.main run-cargo`   | 물동량 전수 수집 |
 | `python -m backend.main diff --month YYYY-MM` | 변경 탐지 |
 | `python -m backend.main report --month YYYY-MM --html` | 리포트 |
-| `python -m backend.main monthly --auto` | 전체 무인 실행 |
+| `python -m backend.main monthly --auto` | 전체 무인 실행 (수집→diff→리포트→**사이트 빌드**) |
 | `python -m backend.main monthly --resume` | 누락분만 보충 |
+| `python -m backend.main build` | 사이트 JSON 재빌드 (build_static + build_derived) |
 | `python -m backend.resume_run` | 코드 단위 누락 + diff + 리포트 |
-| `python -m backend.build_static` | 정적 사이트 JSON 빌드 |
+| `python -m backend.build_static` | 정적 사이트 JSON 빌드 (docs/data) |
 | `python scripts/fetch_idx_financials.py` | IDX XBRL 해운사 재무 수집 (💼 Financials 탭) |
 | `python -m backend.scheduler` | APScheduler 실행 |
 
@@ -67,6 +68,15 @@ python -m backend.scheduler   # 매월 1일 03:00 KST
 - **ADDED / REMOVED**: 새로 등록되거나 사라진 선박/항구-월 키
 - **MODIFIED**: 동일 선박 키의 필드가 바뀜 (선명/선사/GT/선종 등)
 - **REVISED**: 동일 항구·월·구분의 LK3 행수·총합 변동 (delta % 임계 초과)
+
+## 화물 데이터 품질 가드
+
+LK3 원천에는 단일 항차 화물량이 선박 적재능력을 초과하는 입력 오류가
+존재합니다(전체의 ~10–12%). `backend/cargo_quality.capped_ton_sql` 가
+`ton > GT × 3`(선박 GT 기준 물리적 상한, 보수적) 인 행을 0 처리하며,
+`build_static`·`build_derived` 의 모든 화물 톤 집계에 적용됩니다. 따라서
+`monthly` 실행이 끝나면 **사이트 빌드 단계에서 자동으로** 이상치가 제거된
+수치가 생성됩니다 — 별도 수동 보정 불필요.
 
 ## 💼 Financials 탭 — 상장 해운사 재무 (IDX XBRL)
 
