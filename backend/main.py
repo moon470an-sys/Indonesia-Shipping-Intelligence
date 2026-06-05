@@ -219,6 +219,46 @@ def phase_build(snapshot_month: str) -> dict:
     return {"ok": True}
 
 
+def phase_deploy(snapshot_month: str) -> dict:
+    """Commit the rebuilt docs/ and push so GitHub Pages redeploys the live site.
+
+    Best-effort and narrowly scoped: only ``docs/`` (the published static site)
+    is staged, so unrelated working-tree changes are never swept in. No-op when
+    docs/ is unchanged. Requires git push credentials on the host — the monthly
+    run is operator-launched, so the operator's existing git auth is used.
+    """
+    import subprocess
+    started = datetime.utcnow()
+    repo = str(PROJECT_ROOT)
+
+    def _git(*args, check=False):
+        r = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True)
+        if check and r.returncode != 0:
+            raise RuntimeError(f"git {' '.join(args)} failed: {r.stderr.strip()}")
+        return r
+
+    _git("add", "docs", check=True)
+    if _git("diff", "--cached", "--quiet").returncode == 0:
+        log.info("Phase deploy: docs/ unchanged — nothing to publish")
+        return {"committed": False}
+
+    msg = (f"Monthly data update {snapshot_month} (auto-deploy)\n\n"
+           f"Rebuilt docs/ from the {snapshot_month} snapshot via "
+           f"`backend.main monthly`. Cargo outlier guard (ton>GT*3) applied.")
+    _git("commit", "-m", msg, check=True)
+    push = _git("push", "origin", "HEAD")
+    finished = datetime.utcnow()
+    if push.returncode != 0:
+        log.warning("Phase deploy: committed but PUSH FAILED — %s", push.stderr.strip())
+        _record_run(snapshot_month, "deploy", "push_failed", started, finished,
+                    0, 0, 1, {"error": push.stderr.strip()[:300]})
+        return {"committed": True, "pushed": False}
+    log.info("Phase deploy: docs/ committed + pushed (GitHub Pages will redeploy)")
+    _record_run(snapshot_month, "deploy", "success", started, finished,
+                0, 0, 0, {"pushed": True})
+    return {"committed": True, "pushed": True}
+
+
 def write_summary(month: str, started: datetime, finished: datetime,
                   fleet: dict, cargo: dict, diffs: dict, report: dict) -> Path:
     elapsed = finished - started
@@ -289,7 +329,7 @@ def write_failure_report(stage: str, exc: Exception | None, started: datetime,
 
 def run_monthly_auto(skip_sample: bool = False, resume: bool = False,
                      fleet: bool = True, cargo: bool = True,
-                     validate: bool = True) -> int:
+                     validate: bool = True, deploy: bool = True) -> int:
     init_db()
     started = datetime.utcnow()
     month = current_snapshot_month()
@@ -334,6 +374,13 @@ def run_monthly_auto(skip_sample: bool = False, resume: bool = False,
     finished = datetime.utcnow()
     write_summary(month, started, finished, fleet_summary, cargo_summary, diffs, report)
     log.info("=== Monthly run done in %s ===", finished - started)
+    # Auto-publish: commit the rebuilt docs/ and push so GitHub Pages redeploys.
+    # Best-effort — a deploy failure must not discard the successful ingest+build.
+    if deploy:
+        try:
+            phase_deploy(month)
+        except Exception:
+            log.exception("Auto-deploy failed (data + build OK; publish docs/ manually)")
     return 0
 
 
@@ -487,7 +534,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="backend.main")
     parser.add_argument("command", choices=[
         "test-fleet", "test-cargo", "run-fleet", "run-cargo", "run-all",
-        "diff", "changes", "report", "build", "monthly", "status", "schedule",
+        "diff", "changes", "report", "build", "deploy", "monthly", "status", "schedule",
         "audit-taxonomy", "validate-fleet", "validate-cargo",
     ])
     parser.add_argument("--month")
@@ -496,6 +543,8 @@ def main() -> int:
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--no-validate", action="store_true",
                         help="monthly: skip the fleet re-validation phase")
+    parser.add_argument("--no-deploy", action="store_true",
+                        help="monthly: skip the auto commit+push of docs/ to GitHub Pages")
     args = parser.parse_args()
 
     init_db()
@@ -531,8 +580,13 @@ def main() -> int:
         month = args.month or current_snapshot_month()
         phase_build(month)
         return 0
+    if args.command == "deploy":
+        month = args.month or current_snapshot_month()
+        phase_deploy(month)
+        return 0
     if args.command == "monthly":
-        return run_monthly_auto(resume=args.resume, validate=not args.no_validate)
+        return run_monthly_auto(resume=args.resume, validate=not args.no_validate,
+                                deploy=not args.no_deploy)
     if args.command == "validate-fleet":
         month = args.month or current_snapshot_month()
         phase_validate(month)

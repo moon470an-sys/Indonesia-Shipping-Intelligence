@@ -55,9 +55,11 @@ python -m backend.scheduler   # 매월 1일 03:00 KST
 | `python -m backend.main run-cargo`   | 물동량 전수 수집 |
 | `python -m backend.main diff --month YYYY-MM` | 변경 탐지 |
 | `python -m backend.main report --month YYYY-MM --html` | 리포트 |
-| `python -m backend.main monthly --auto` | 전체 무인 실행 (수집→diff→리포트→**사이트 빌드**) |
+| `python -m backend.main monthly --auto` | 전체 무인 실행 (수집→diff→리포트→**빌드→배포**) |
 | `python -m backend.main monthly --resume` | 누락분만 보충 |
+| `python -m backend.main monthly --no-deploy` | 빌드까지만, 자동 커밋·푸시 생략 |
 | `python -m backend.main build` | 사이트 JSON 재빌드 (build_static + build_derived) |
+| `python -m backend.main deploy` | docs/ 변경분만 커밋·푸시 → GitHub Pages 배포 |
 | `python -m backend.resume_run` | 코드 단위 누락 + diff + 리포트 |
 | `python -m backend.build_static` | 정적 사이트 JSON 빌드 (docs/data) |
 | `python scripts/fetch_idx_financials.py` | IDX XBRL 해운사 재무 수집 (💼 Financials 탭) |
