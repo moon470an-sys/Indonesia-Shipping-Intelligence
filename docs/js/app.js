@@ -1355,6 +1355,10 @@ async function renderHome() {
   // 못 받으면 timeseries는 폴백(전체 sector)으로 동작.
   try { homeState.cargoMonthly = await loadJson("cargo_sector_monthly.json"); }
   catch (e) { homeState.cargoMonthly = null; }
+  // Cycle: Demand 차트·필터를 Balance 탭과 동일 분류로 묶기 위해 cargo_balance
+  // 의 cards(카테고리·색·순서)를 로드. 못 받으면 내장 폴백 메타로 동작.
+  try { homeState.cargoBalance = await loadDerived("cargo_balance.json"); }
+  catch (e) { homeState.cargoBalance = null; }
   // Year-aware domestic/intl split — sourced from cargo_ports_periods.json
   // (per-period ports with dU/dS/iU/iS). Falls back to map_flow.totals (24M).
   try { homeState.cargoPortsPeriods = await loadDerived("cargo_ports_periods.json"); }
@@ -1699,9 +1703,38 @@ function renderHomeKpi(payload, mapPayload) {
 // tanker subclass 단위로 다시 분해해 카테고리별 색상을 분리한다.
 // 데이터: cargo_sector_monthly.json (rows + tanker_subclass_rows + cargo_category_rows).
 // direction: "total" | "muat" | "bongkar" — 합계 / 선적 / 하역
-const homeTsState = { mode: "abs", payload: null, direction: "total" };
+// direction: 합계/선적/하역 · trade: 전체/외항(ln)/내항(dn) · filter: 화물 그룹(Balance 분류)
+const homeTsState = { mode: "abs", payload: null, direction: "total", trade: "all", filter: "ALL" };
 const HOME_TS_FIELD = { total: "ton_total", muat: "ton_muat", bongkar: "ton_bongkar" };
 const HOME_TS_LABEL = { total: "(선적 + 하역 합계)", muat: "(선적 MUAT)", bongkar: "(하역 BONGKAR)" };
+
+// Balance 탭과 동일한 화물 분류 메타. cargo_balance.cards 가 있으면 그것을
+// 우선 사용(색·순서까지 동일), 없으면 아래 내장 폴백을 쓴다.
+// mains  = cargo_sector_monthly.rows 의 vessel_class 와 1:1 (sector=CARGO)
+// subs   = cargo_sector_monthly.tanker_subclass_rows 의 subclass 와 1:1
+const HOME_BALANCE_FALLBACK = {
+  order: ["Other Cargo", "Bulk Carrier", "Tanker", "Container", "General Cargo",
+          "Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil"],
+  subs: new Set(["Product", "Chemical", "LPG", "LNG", "FAME / Vegetable Oil"]),
+  color: {
+    "Other Cargo": "#94a3b8", "Bulk Carrier": "#52525b", "Tanker": "#0369a1",
+    "Container": "#9333ea", "General Cargo": "#f97316",
+    "Product": "#0284c7", "Chemical": "#059669", "LPG": "#d97706",
+    "LNG": "#7c3aed", "FAME / Vegetable Oil": "#65a30d",
+  },
+};
+
+// Resolve the active Balance-style grouping (from loaded cargo_balance or fallback).
+function _homeBalanceMeta() {
+  const cards = homeState?.cargoBalance?.cards;
+  if (Array.isArray(cards) && cards.length) {
+    const order = cards.map(c => c.category);
+    const subs = new Set(cards.filter(c => c.is_tanker_subclass).map(c => c.category));
+    const color = Object.fromEntries(cards.map(c => [c.category, c.color]));
+    return { order, subs, color };
+  }
+  return HOME_BALANCE_FALLBACK;
+}
 
 // Cycle 7+: Tier-2 commodity-category palette. backend/commodity_taxonomy.py
 // 의 CATEGORY_COLORS 와 동기화. cv-app(Tier-1 bucket)/cat-details(Tier-2
@@ -1753,57 +1786,49 @@ function renderHomeTimeseries(payload) {
 //   2) (legacy fallback) cargo_sector_monthly.rows + tanker_subclass_rows
 //      — vessel-class 기반 (구 분류). schema v1 데이터일 때만 사용.
 // 출력: { periods, series:[{ name, color, y }] }
+// Balance 분류(mains=vessel_class · subs=tanker subclass)로 stacked series 생성.
+// 필터 3종 동시 적용: trade(kind dn/ln) · direction(ton_muat/bongkar/total) · 화물 그룹.
+// Balance drawTankerMonthly 규칙을 그대로 복제:
+//   - filter "ALL"    → 5 mains (Other Cargo·Bulk Carrier·Tanker·Container·General Cargo)
+//   - filter "Tanker" → 5 tanker subclasses (Product·Chemical·LPG·LNG·FAME)
+//   - filter 단일     → 그 하나만
 function _buildCargoCategorySeries(cm) {
-  if (!cm) return null;
+  if (!cm || !cm.rows) return null;
   const field = HOME_TS_FIELD[homeTsState.direction] || "ton_total";
-  // 우선 경로: 신규 cargo_category_rows (선적/하역/합계 모두 지원, schema v3+)
-  if (Array.isArray(cm.cargo_category_rows) && cm.cargo_category_rows.length) {
-    const sample = cm.cargo_category_rows[0];
-    // schema v2 (legacy) 는 ton_total 만 갖고 있어 muat/bongkar 토글이 무력 — 그땐 ton_total 로 폴백.
-    const useField = (field in sample) ? field : "ton_total";
-    const periodSet = new Set();
-    const byCat = {};
-    for (const r of cm.cargo_category_rows) {
-      const cat = r.category;
-      if (!cat) continue;
-      periodSet.add(r.period);
-      if (!byCat[cat]) byCat[cat] = {};
-      byCat[cat][r.period] = (byCat[cat][r.period] || 0) + (Number(r[useField]) || 0);
-    }
-    const periods = [...periodSet].sort();
-    const knownOrder = CARGO_CATEGORY_ORDER.filter(k => byCat[k]);
-    const unknownCats = Object.keys(byCat).filter(k => !CARGO_CATEGORY_ORDER.includes(k));
-    const ordered = [...knownOrder, ...unknownCats];
-    const series = ordered.map(name => ({
-      name,
-      color: CARGO_CATEGORY_PALETTE[name] || "#cbd5e1",
-      y: periods.map(p => byCat[name][p] || 0),
-    }));
-    return { periods, series };
-  }
-  // 폴백: 구 vessel-class 시계열 (rows + tanker_subclass_rows)
-  if (!cm.rows) return null;
-  const periodSet = new Set();
+  const trade = homeTsState.trade || "all";        // all | ln | dn
+  const filter = homeTsState.filter || "ALL";
+  const meta = _homeBalanceMeta();
+  const tankerRows = cm.tanker_subclass_rows || [];
+
+  // 표시할 그룹 결정 (Balance 규칙)
+  let groups;
+  if (filter === "ALL")          groups = meta.order.filter(c => !meta.subs.has(c));
+  else if (filter === "Tanker")  groups = meta.order.filter(c => meta.subs.has(c));
+  else                           groups = meta.order.includes(filter) ? [filter] : [];
+  if (!groups.length) return { periods: [], series: [] };
+
+  // x축 기간은 필터와 무관하게 전체 CARGO 기간 기준으로 고정 (빈 달도 0으로 표시)
+  const periods = [...new Set([
+    ...cm.rows.filter(r => r.sector === "CARGO").map(r => r.period),
+    ...tankerRows.map(r => r.period),
+  ])].sort();
+
   const byCat = {};
-  for (const r of cm.rows) {
-    if (r.sector !== "CARGO") continue;
-    if (r.vessel_class === "Tanker") continue;
-    periodSet.add(r.period);
-    const key = r.vessel_class;
-    if (!byCat[key]) byCat[key] = {};
-    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r[field]) || 0);
+  for (const g of groups) byCat[g] = {};
+  for (const g of groups) {
+    const isSub = meta.subs.has(g);
+    const src = isSub ? tankerRows : cm.rows;
+    for (const r of src) {
+      if (isSub) { if (r.subclass !== g) continue; }
+      else { if (r.sector !== "CARGO" || r.vessel_class !== g) continue; }
+      if (trade !== "all" && r.kind !== trade) continue;
+      const useField = (field in r) ? field : "ton_total";
+      byCat[g][r.period] = (byCat[g][r.period] || 0) + (Number(r[useField]) || 0);
+    }
   }
-  for (const r of (cm.tanker_subclass_rows || [])) {
-    periodSet.add(r.period);
-    const key = r.subclass;
-    if (!byCat[key]) byCat[key] = {};
-    byCat[key][r.period] = (byCat[key][r.period] || 0) + (Number(r[field]) || 0);
-  }
-  const periods = [...periodSet].sort();
-  const ordered = Object.keys(byCat);
-  const series = ordered.map(name => ({
+  const series = groups.map(name => ({
     name,
-    color: CARGO_CATEGORY_PALETTE[name] || "#cbd5e1",
+    color: meta.color[name] || "#94a3b8",
     y: periods.map(p => byCat[name][p] || 0),
   }));
   return { periods, series };
@@ -1831,10 +1856,66 @@ function _wireHomeTsDirection() {
   });
 }
 
+// One-time wire-up of the 전체/외항(ln)/내항(dn) trade toggle.
+function _wireHomeTsTrade() {
+  const host = document.getElementById("home-ts-trade");
+  if (!host || host.dataset.wired) return;
+  host.dataset.wired = "1";
+  host.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-trade]");
+    if (!btn) return;
+    homeTsState.trade = btn.dataset.trade;
+    host.querySelectorAll("button").forEach(b => {
+      const active = b.dataset.trade === homeTsState.trade;
+      b.classList.toggle("bg-slate-800", active);
+      b.classList.toggle("text-white", active);
+      b.classList.toggle("bg-white", !active);
+      b.classList.toggle("hover:bg-slate-100", !active);
+    });
+    drawHomeTimeseries();
+  });
+}
+
+// 화물 그룹 칩(Balance 분류) 렌더 + 클릭 핸들러. Balance buildTankerCargoPills 와
+// 동일한 동작: 전체 + 각 카테고리. Tanker 선택 시 차트가 5개 서브클래스로 분해됨.
+function _buildHomeCargoPills() {
+  const host = document.getElementById("home-ts-cargo");
+  if (!host) return;
+  const meta = _homeBalanceMeta();
+  if (!meta.order.length) {
+    host.innerHTML = `<button class="px-2 py-1 bg-slate-100 text-slate-400" disabled>데이터 없음</button>`;
+    return;
+  }
+  const active = homeTsState.filter || "ALL";
+  const items = [{ key: "ALL", label: "전체" }, ...meta.order.map(c => ({ key: c, label: c }))];
+  host.innerHTML = items.map(it => {
+    const isActive = it.key === active;
+    const dot = it.key === "ALL" ? ""
+      : `<span class="inline-block w-2 h-2 rounded-sm mr-1 align-middle" style="background:${meta.color[it.key] || "#94a3b8"}"></span>`;
+    const cls = isActive
+      ? "px-2 py-1 bg-slate-800 text-white"
+      : "px-2 py-1 bg-white hover:bg-slate-100 border border-slate-200";
+    return `<button data-cargo="${it.key}" class="${cls} rounded" role="tab" aria-selected="${isActive}">${dot}${it.label}</button>`;
+  }).join("");
+  if (!host.dataset.wired) {
+    host.dataset.wired = "1";
+    host.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-cargo]");
+      if (!btn) return;
+      homeTsState.filter = btn.dataset.cargo;
+      _buildHomeCargoPills();
+      drawHomeTimeseries();
+    });
+  }
+}
+
 // Cycle 5: stacked area → 월별 stacked bar (절대값만). YoY 토글 제거.
 // Cycle 8: 선적/하역/합계 토글 (homeTsState.direction).
+// Cycle(now): 외항/내항(trade) + Balance 화물그룹(filter) 필터 추가.
 function drawHomeTimeseries() {
   _wireHomeTsDirection();
+  _wireHomeTsTrade();
+  _buildHomeCargoPills();
   const cm = homeState && homeState.cargoMonthly;
   const built = _buildCargoCategorySeries(cm);
   let periods, series;
@@ -5335,21 +5416,37 @@ function _cvFmtM(n) { return ((n || 0) / 1e6).toFixed(2) + "M"; }
 // Cycle 5: cv-app 코모디티 패널을 카테고리 그룹 드롭다운으로 재구성.
 // 각 카테고리는 헤더 (이름 + 합계 + ▼/▶ 토글) + 펼침 상태의 세부 코모디티
 // 리스트로 구성. 카테고리 토글 상태는 _cvState.openCategories Set 에 보존.
+// 화물 그룹 = Balance 탭과 동일한 분류 (vessel-class / tanker-subclass 기준).
+// 항만 지도의 commodity(Tier-1 bucket)들을 9개 Balance 그룹으로 매핑한다.
+// key/label/color 는 cargo_balance.cards 와 동일하게 맞춤. members 는 48개
+// commodity 키(+레거시 변형) 를 모두 포함.
 const CV_CATEGORY_GROUPS = [
-  { key: "crude",      label: "Crude / 정제유 (BBM)",  members: ["CRUDE OIL","OMAN BLEND CRUDE OIL","CONDENSATE","PERTALITE","PERTAMAX","AVTUR","HSD","BIO SOLAR","MFO/HSFO","METHANOL","ASPAL/BITUMEN"] },
-  { key: "gas",        label: "Gas (LPG·LNG)",         members: ["LPG","LNG"] },
-  { key: "palm",       label: "Palm / 식용유",         members: ["CPO","RBD PALM OIL","RBD PALM OLEIN","OLEIN","PKO","STEARIN","FAME"] },
-  { key: "bulk",       label: "Dry Bulk (광물·곡물·시멘트)", members: ["BATU BARA CURAH KERING","COAL","NICKEL ORE","BAUXITE","IRON ORE","LIMESTONE","WOOD CHIP","SEMEN CURAH","SEMEN","PUPUK","BERAS","SALT","CHEMICAL"] },
-  { key: "container",  label: "Container / General",   members: ["CONTAINER","GENERAL CARGO","BARANG"] },
-  { key: "vehicle",    label: "차량",                  members: ["MOBIL","TRUK","MOTOR"] },
-  { key: "other",      label: "기타 (어획·가축·미분류)",     members: ["IKAN","TERNAK","기타"] },
+  { key: "Other Cargo",   label: "Other Cargo / 기타화물",  color: "#94a3b8",
+    members: ["WATER","기타"] },
+  { key: "Bulk Carrier",  label: "Bulk Carrier / 건화물",   color: "#52525b",
+    members: ["BATU BARA","COAL","BATU BARA CURAH KERING","NICKEL ORE","BAUXITE","IRON ORE","LIMESTONE","GRAIN","BERAS","PUPUK","SEMEN","SEMEN CURAH","WOOD/TIMBER","WOOD CHIP","SALT","SAND/STONE","GYPSUM","SULFUR"] },
+  { key: "Container",     label: "Container / 컨테이너",    color: "#9333ea",
+    members: ["CONTAINER"] },
+  { key: "General Cargo", label: "General Cargo / 일반화물", color: "#f97316",
+    members: ["GENERAL CARGO","BARANG (기타)","BARANG","MOBIL/TRUK/MOTOR","MOBIL","TRUK","MOTOR","IKAN","TERNAK"] },
+  { key: "Product",       label: "Product / 석유제품",      color: "#0284c7",
+    members: ["CRUDE OIL","OMAN BLEND CRUDE OIL","CONDENSATE","BBM (기타)","HSD","SOLAR","BIO SOLAR","PERTALITE","PERTAMAX","AVTUR","KEROSENE","MFO/HSFO","ASPAL/BITUMEN"] },
+  { key: "Chemical",      label: "Chemical / 화학",         color: "#059669",
+    members: ["CHEMICAL (기타)","AMMONIA","METHANOL"] },
+  { key: "LPG",           label: "LPG",                     color: "#d97706",
+    members: ["LPG"] },
+  { key: "LNG",           label: "LNG",                     color: "#7c3aed",
+    members: ["LNG"] },
+  { key: "FAME / Vegetable Oil", label: "FAME / 식용유",    color: "#65a30d",
+    members: ["FAME","CPO","OLEIN","STEARIN","PFAD","PKO/CPKO","PKO","RBD PALM OIL","RBD PALM OLEIN","PALM KERNEL","COCONUT OIL"] },
 ];
+const CV_CATEGORY_COLOR = Object.fromEntries(CV_CATEGORY_GROUPS.map(g => [g.key, g.color]));
 
 function _cvCategoryOf(commKey) {
   for (const g of CV_CATEGORY_GROUPS) {
     if (g.members.includes(commKey)) return g.key;
   }
-  return "other";
+  return "Other Cargo";   // 미분류 commodity 는 Other Cargo 로 흡수
 }
 
 function _cvBuildCommodityList() {
@@ -5385,6 +5482,7 @@ function _cvBuildCommodityList() {
     head.dataset.cat = g.key;
     head.innerHTML =
       `<span class="cv-cat-caret">${caret}</span>` +
+      (g.color ? `<span class="cv-sw" style="background:${g.color}"></span>` : "") +
       `<span class="cv-cat-name">${g.label}</span>` +
       (anySelected ? `<span class="cv-cat-dot" title="이 카테고리 내 선택 중"></span>` : "") +
       `<span class="cv-cat-vol">${(catTon/1e6).toFixed(1)}M</span>`;

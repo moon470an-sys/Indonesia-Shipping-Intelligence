@@ -1,15 +1,15 @@
 {
   "schema_version": 2,
-  "snapshot_month": "2026-05",
+  "snapshot_month": "2026-06",
   "years": [
     "2024",
     "2025",
     "2026"
   ],
   "months_per_year": {
-    "2024": 7,
+    "2024": 6,
     "2025": 12,
-    "2026": 5
+    "2026": 6
   },
   "categories": [
     {
@@ -47,94 +47,94 @@
   ],
   "by_year": {
     "2024": {
-      "total_ton": 1791101602.5,
+      "total_ton": 1685481745.3,
       "treemap_categories": [
         {
           "category": "Curah Kering",
-          "ton_total": 1170617734.0,
-          "calls": 102463
+          "ton_total": 1143467074.0,
+          "calls": 103823
         },
         {
           "category": "Curah Cair",
-          "ton_total": 263477201.1,
-          "calls": 63905
+          "ton_total": 229011436.3,
+          "calls": 56589
         },
         {
           "category": "Petikemas Antar Pulau",
-          "ton_total": 99954414.8,
-          "calls": 135439
-        },
-        {
-          "category": "Break Bulk",
-          "ton_total": 79925154.9,
-          "calls": 26089
+          "ton_total": 90226353.2,
+          "calls": 122418
         },
         {
           "category": "Unitized",
-          "ton_total": 79142315.6,
-          "calls": 117240
+          "ton_total": 70902823.2,
+          "calls": 106935
+        },
+        {
+          "category": "Break Bulk",
+          "ton_total": 70428426.5,
+          "calls": 22501
         },
         {
           "category": "Petikemas Internasional",
-          "ton_total": 64863233.1,
-          "calls": 30209
+          "ton_total": 51666460.4,
+          "calls": 25638
         },
         {
           "category": "Bag Cargo",
-          "ton_total": 29020302.6,
-          "calls": 84006
-        },
-        {
-          "category": "Ekor",
-          "ton_total": 53053.8,
-          "calls": 47
+          "ton_total": 25980024.0,
+          "calls": 74358
         },
         {
           "category": "Tanpa Bongkar Muat",
-          "ton_total": 21809.9,
-          "calls": 74
+          "ton_total": 21451.4,
+          "calls": 60
+        },
+        {
+          "category": "Ekor",
+          "ton_total": 19949.9,
+          "calls": 32
         }
       ],
       "top_commodities": [
         {
           "name": "BATU BARA",
-          "ton_total": 464431656.1
+          "ton_total": 425390309.0
         },
         {
           "name": "BATUBARA",
-          "ton_total": 252136118.4
+          "ton_total": 319296104.4
         },
         {
           "name": "NICKEL ORE",
-          "ton_total": 161453340.9
+          "ton_total": 143852240.7
         },
         {
           "name": "PETIKEMAS 20 FULL",
-          "ton_total": 44957261.4
+          "ton_total": 37369871.6
         },
         {
           "name": "COAL",
-          "ton_total": 23836001.2
+          "ton_total": 20753136.3
         },
         {
           "name": "CPO",
-          "ton_total": 23529846.9
-        },
-        {
-          "name": "PETIKEMAS 40 FULL",
-          "ton_total": 21003871.6
+          "ton_total": 19712976.4
         },
         {
           "name": "INDONESIAN STEAM COAL IN BULK",
-          "ton_total": 19539166.3
+          "ton_total": 17198179.3
+        },
+        {
+          "name": "PETIKEMAS 40 FULL",
+          "ton_total": 16944534.3
         },
         {
           "name": "CRUDE OIL",
-          "ton_total": 18507289.0
+          "ton_total": 15836408.1
         },
         {
           "name": "PERTALITE",
-          "ton_total": 14829286.5
+          "ton_total": 12986748.5
         }
       ],
       "top_routes": [
@@ -145,15 +145,15 @@
           "lon_o": 121.95,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 6339293.8,
-          "calls": 1251,
+          "ton": 5707765.3,
+          "calls": 1111,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 281266.6,
-            "Container / Gen Cargo": 21854.7,
-            "Coal": 689547.0,
-            "Nickel / Mineral Ore": 5346625.5
+            "Product / BBM": 257289.5,
+            "Container / Gen Cargo": 11561.7,
+            "Coal": 626547.0,
+            "Nickel / Mineral Ore": 4812367.0
           }
         },
         {
@@ -163,14 +163,14 @@
           "lon_o": 121.85,
           "lat_d": -3.96,
           "lon_d": 121.95,
-          "ton": 5202516.3,
-          "calls": 1109,
+          "ton": 4439409.7,
+          "calls": 962,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 130027.8,
-            "Coal": 481592.7,
-            "Nickel / Mineral Ore": 4590895.8
+            "Product / BBM": 93350.9,
+            "Coal": 430192.7,
+            "Nickel / Mineral Ore": 3915866.1
           }
         },
         {
@@ -180,28 +180,12 @@
           "lon_o": 107.91,
           "lat_d": 1.06,
           "lon_d": 104.1,
-          "ton": 4741335.0,
-          "calls": 55,
+          "ton": 4161672.5,
+          "calls": 50,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 4741335.0
-          }
-        },
-        {
-          "origin": "TANJUNG PRIOK",
-          "destination": "MAKASSAR",
-          "lat_o": -6.1,
-          "lon_o": 106.88,
-          "lat_d": -5.13,
-          "lon_d": 119.41,
-          "ton": 3396741.9,
-          "calls": 569,
-          "mappable": true,
-          "category": "Container / Gen Cargo",
-          "category_ton": {
-            "Product / BBM": 275592.8,
-            "Container / Gen Cargo": 3121134.1
+            "Product / BBM": 4161672.5
           }
         },
         {
@@ -211,33 +195,31 @@
           "lon_o": 121.85,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 3361012.5,
-          "calls": 316,
+          "ton": 3169118.8,
+          "calls": 291,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 75705.7,
             "Container / Gen Cargo": 78860.9,
-            "Coal": 1466081.0,
-            "Nickel / Mineral Ore": 1740365.0
+            "Coal": 1499795.3,
+            "Nickel / Mineral Ore": 1514756.9
           }
         },
         {
-          "origin": "WEDA",
-          "destination": "OBI ISLAND",
-          "lat_o": 0.36,
-          "lon_o": 127.93,
-          "lat_d": -1.42,
-          "lon_d": 127.85,
-          "ton": 2143894.9,
-          "calls": 219,
+          "origin": "TANJUNG PRIOK",
+          "destination": "MAKASSAR",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -5.13,
+          "lon_d": 119.41,
+          "ton": 2876571.5,
+          "calls": 508,
           "mappable": true,
-          "category": "Nickel / Mineral Ore",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 45400.1,
-            "Coal": 55000.0,
-            "Nickel / Mineral Ore": 2043404.8,
-            "LPG / LNG": 90.0
+            "Product / BBM": 247879.0,
+            "Container / Gen Cargo": 2628692.5
           }
         },
         {
@@ -247,15 +229,15 @@
           "lon_o": 127.93,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 2135579.3,
-          "calls": 222,
+          "ton": 2523027.8,
+          "calls": 209,
           "mappable": true,
-          "category": "Nickel / Mineral Ore",
+          "category": "Coal",
           "category_ton": {
-            "Product / BBM": 161699.6,
-            "Container / Gen Cargo": 38419.2,
-            "Coal": 843665.0,
-            "Nickel / Mineral Ore": 1091795.4
+            "Product / BBM": 158479.6,
+            "Coal": 1303322.0,
+            "Nickel / Mineral Ore": 1026659.9,
+            "Container / Gen Cargo": 34566.2
           }
         },
         {
@@ -265,32 +247,14 @@
           "lon_o": 127.85,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 2065147.4,
-          "calls": 283,
+          "ton": 1938543.3,
+          "calls": 267,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 101562.8,
-            "Coal": 55000.0,
+            "Product / BBM": 99646.8,
             "Container / Gen Cargo": 5584.0,
-            "Nickel / Mineral Ore": 1903000.5
-          }
-        },
-        {
-          "origin": "WEDA",
-          "destination": "MOLAWE",
-          "lat_o": 0.36,
-          "lon_o": 127.93,
-          "lat_d": -3.96,
-          "lon_d": 121.95,
-          "ton": 1777739.3,
-          "calls": 196,
-          "mappable": true,
-          "category": "Nickel / Mineral Ore",
-          "category_ton": {
-            "Coal": 363223.0,
-            "Nickel / Mineral Ore": 1252004.3,
-            "Product / BBM": 162512.0
+            "Nickel / Mineral Ore": 1833312.5
           }
         },
         {
@@ -300,12 +264,29 @@
           "lon_o": 107.91,
           "lat_d": -6.1,
           "lon_d": 106.88,
-          "ton": 1629009.1,
-          "calls": 21,
+          "ton": 1627204.0,
+          "calls": 19,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1629009.1
+            "Product / BBM": 1627204.0
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOLAWE",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 1597997.3,
+          "calls": 181,
+          "mappable": true,
+          "category": "Nickel / Mineral Ore",
+          "category_ton": {
+            "Coal": 415223.0,
+            "Nickel / Mineral Ore": 1121122.3,
+            "Product / BBM": 61652.0
           }
         },
         {
@@ -315,33 +296,33 @@
           "lon_o": 121.95,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 1534668.4,
-          "calls": 243,
+          "ton": 1553497.8,
+          "calls": 226,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 190609.1,
-            "Coal": 157320.0,
+            "Product / BBM": 151113.9,
+            "Coal": 266486.0,
             "Container / Gen Cargo": 6.0,
-            "Nickel / Mineral Ore": 1186733.3
+            "Nickel / Mineral Ore": 1135891.9
           }
         },
         {
-          "origin": "TANJUNG EMAS",
-          "destination": "BANJARMASIN",
-          "lat_o": -6.96,
-          "lon_o": 110.42,
-          "lat_d": -3.32,
-          "lon_d": 114.59,
-          "ton": 1495071.1,
-          "calls": 268,
+          "origin": "WEDA",
+          "destination": "OBI ISLAND",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 1531429.4,
+          "calls": 194,
           "mappable": true,
-          "category": "Container / Gen Cargo",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 153763.2,
-            "Coal": 28583.1,
-            "Container / Gen Cargo": 1303924.9,
-            "FAME / Edible": 8800.0
+            "Product / BBM": 36242.1,
+            "Coal": 122500.0,
+            "Nickel / Mineral Ore": 1372627.2,
+            "LPG / LNG": 60.0
           }
         },
         {
@@ -351,16 +332,16 @@
           "lon_o": 112.74,
           "lat_d": -6.1,
           "lon_d": 106.88,
-          "ton": 1431650.8,
-          "calls": 623,
+          "ton": 1363627.9,
+          "calls": 548,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 124376.4,
-            "Container / Gen Cargo": 1231916.4,
-            "Coal": 220.0,
-            "FAME / Edible": 59549.6,
-            "Crude": 15528.4
+            "Product / BBM": 132690.7,
+            "Coal": 150.0,
+            "Container / Gen Cargo": 1164148.2,
+            "FAME / Edible": 56051.6,
+            "Crude": 10527.4
           }
         },
         {
@@ -370,15 +351,15 @@
           "lon_o": 106.88,
           "lat_d": -7.2,
           "lon_d": 112.74,
-          "ton": 1407393.9,
-          "calls": 641,
+          "ton": 1285548.9,
+          "calls": 628,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 158146.0,
-            "Container / Gen Cargo": 1154865.7,
-            "Coal": 3365.0,
-            "FAME / Edible": 87518.2,
+            "Product / BBM": 151937.0,
+            "Container / Gen Cargo": 1058439.6,
+            "Coal": 3335.0,
+            "FAME / Edible": 68338.3,
             "Crude": 3499.0
           }
         },
@@ -389,15 +370,15 @@
           "lon_o": 112.74,
           "lat_d": 1.44,
           "lon_d": 125.18,
-          "ton": 1346066.8,
-          "calls": 1892,
+          "ton": 1237269.2,
+          "calls": 1667,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 990821.1,
-            "Container / Gen Cargo": 340816.1,
-            "Crude": 7003.0,
-            "FAME / Edible": 7154.9
+            "Product / BBM": 911335.4,
+            "Container / Gen Cargo": 308472.2,
+            "Crude": 10508.0,
+            "FAME / Edible": 6681.8
           }
         },
         {
@@ -407,50 +388,15 @@
           "lon_o": 122.62,
           "lat_d": -7.2,
           "lon_d": 112.74,
-          "ton": 1155503.2,
-          "calls": 492,
+          "ton": 1115816.9,
+          "calls": 444,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 11771.3,
+            "Product / BBM": 10136.6,
             "FAME / Edible": 144.0,
-            "Container / Gen Cargo": 1143503.9,
+            "Container / Gen Cargo": 1105452.3,
             "LPG / LNG": 84.0
-          }
-        },
-        {
-          "origin": "MOLAWE",
-          "destination": "OBI ISLAND",
-          "lat_o": -3.96,
-          "lon_o": 121.95,
-          "lat_d": -1.42,
-          "lon_d": 127.85,
-          "ton": 1130074.1,
-          "calls": 117,
-          "mappable": true,
-          "category": "Coal",
-          "category_ton": {
-            "Product / BBM": 14923.0,
-            "Coal": 590800.0,
-            "Nickel / Mineral Ore": 524351.1
-          }
-        },
-        {
-          "origin": "TUBAN",
-          "destination": "BALIKPAPAN",
-          "lat_o": -6.9,
-          "lon_o": 112.05,
-          "lat_d": -1.27,
-          "lon_d": 116.83,
-          "ton": 1127994.3,
-          "calls": 47,
-          "mappable": true,
-          "category": "Crude",
-          "category_ton": {
-            "Crude": 621777.6,
-            "Product / BBM": 484548.0,
-            "Coal": 15749.7,
-            "FAME / Edible": 5919.0
           }
         },
         {
@@ -460,15 +406,49 @@
           "lon_o": 111.74,
           "lat_d": -2.54,
           "lon_d": 112.94,
-          "ton": 1119952.2,
-          "calls": 156,
+          "ton": 1095946.3,
+          "calls": 139,
           "mappable": true,
           "category": "FAME / Edible",
           "category_ton": {
-            "Product / BBM": 84666.2,
-            "FAME / Edible": 958771.6,
-            "Crude": 69094.0,
-            "Container / Gen Cargo": 7420.4
+            "Product / BBM": 77102.2,
+            "FAME / Edible": 960283.7,
+            "Crude": 51205.0,
+            "Container / Gen Cargo": 7355.4
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "OBI ISLAND",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 1030442.7,
+          "calls": 104,
+          "mappable": true,
+          "category": "Coal",
+          "category_ton": {
+            "Product / BBM": 6313.0,
+            "Coal": 540800.0,
+            "Nickel / Mineral Ore": 483329.7
+          }
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "BALIKPAPAN",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": -1.27,
+          "lon_d": 116.83,
+          "ton": 1009155.3,
+          "calls": 45,
+          "mappable": true,
+          "category": "Crude",
+          "category_ton": {
+            "Crude": 589777.6,
+            "Product / BBM": 403628.0,
+            "Coal": 15749.7
           }
         },
         {
@@ -478,35 +458,17 @@
           "lon_o": 117.15,
           "lat_d": -1.27,
           "lon_d": 116.83,
-          "ton": 1106903.7,
-          "calls": 678,
+          "ton": 995519.5,
+          "calls": 592,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 485328.5,
-            "Coal": 370211.6,
+            "Product / BBM": 414947.2,
+            "Coal": 363087.5,
             "Chemical": 3.0,
-            "FAME / Edible": 54403.5,
+            "FAME / Edible": 48143.5,
             "Crude": 41724.9,
-            "Container / Gen Cargo": 155232.1
-          }
-        },
-        {
-          "origin": "BOOM BARU",
-          "destination": "TANJUNG PRIOK",
-          "lat_o": -2.99,
-          "lon_o": 104.76,
-          "lat_d": -6.1,
-          "lon_d": 106.88,
-          "ton": 1102099.0,
-          "calls": 106,
-          "mappable": true,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Coal": 112264.0,
-            "Container / Gen Cargo": 7150.0,
-            "FAME / Edible": 38888.0,
-            "Product / BBM": 943797.0
+            "Container / Gen Cargo": 127613.4
           }
         },
         {
@@ -516,16 +478,53 @@
           "lon_o": 119.41,
           "lat_d": -7.2,
           "lon_d": 112.74,
-          "ton": 1064164.4,
-          "calls": 1495,
+          "ton": 985200.5,
+          "calls": 1409,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 247390.0,
-            "Container / Gen Cargo": 804407.3,
-            "FAME / Edible": 5793.0,
+            "Product / BBM": 231994.6,
+            "Container / Gen Cargo": 741087.9,
+            "FAME / Edible": 5584.0,
             "Nickel / Mineral Ore": 6248.0,
-            "LPG / LNG": 326.0
+            "LPG / LNG": 286.0
+          }
+        },
+        {
+          "origin": "KABIL",
+          "destination": "BELAWAN",
+          "lat_o": 1.06,
+          "lon_o": 104.1,
+          "lat_d": 3.78,
+          "lon_d": 98.69,
+          "ton": 938712.9,
+          "calls": 65,
+          "mappable": true,
+          "category": "Crude",
+          "category_ton": {
+            "Product / BBM": 17993.7,
+            "Coal": 7855.3,
+            "Container / Gen Cargo": 35100.0,
+            "FAME / Edible": 357936.0,
+            "Crude": 519828.0
+          }
+        },
+        {
+          "origin": "BOOM BARU",
+          "destination": "TANJUNG PRIOK",
+          "lat_o": -2.99,
+          "lon_o": 104.76,
+          "lat_d": -6.1,
+          "lon_d": 106.88,
+          "ton": 921096.0,
+          "calls": 100,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Coal": 112264.0,
+            "Container / Gen Cargo": 7150.0,
+            "FAME / Edible": 36385.0,
+            "Product / BBM": 765297.0
           }
         },
         {
@@ -535,12 +534,12 @@
           "lon_o": 109.02,
           "lat_d": -6.9,
           "lon_d": 112.05,
-          "ton": 1020112.5,
-          "calls": 47,
+          "ton": 908102.5,
+          "calls": 43,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 862037.0,
+            "Product / BBM": 750027.0,
             "Crude": 73475.0,
             "FAME / Edible": 2478.0,
             "Coal": 82122.5
@@ -553,14 +552,14 @@
           "lon_o": 116.83,
           "lat_d": -0.5,
           "lon_d": 117.15,
-          "ton": 984706.5,
-          "calls": 666,
+          "ton": 890601.3,
+          "calls": 591,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 538659.9,
-            "Coal": 298400.5,
-            "Container / Gen Cargo": 128794.0,
+            "Product / BBM": 478334.5,
+            "Coal": 280874.7,
+            "Container / Gen Cargo": 112540.1,
             "FAME / Edible": 12840.0,
             "Crude": 6012.0
           }
@@ -572,49 +571,14 @@
           "lon_o": 112.05,
           "lat_d": -7.73,
           "lon_d": 109.02,
-          "ton": 966812.8,
-          "calls": 42,
+          "ton": 889176.8,
+          "calls": 43,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Crude": 415962.2,
-            "Product / BBM": 550850.6
-          }
-        },
-        {
-          "origin": "KABIL",
-          "destination": "BELAWAN",
-          "lat_o": 1.06,
-          "lon_o": 104.1,
-          "lat_d": 3.78,
-          "lon_d": 98.69,
-          "ton": 954683.9,
-          "calls": 72,
-          "mappable": true,
-          "category": "Crude",
-          "category_ton": {
-            "Product / BBM": 21493.7,
-            "Coal": 15326.3,
-            "Container / Gen Cargo": 35100.0,
-            "FAME / Edible": 362936.0,
-            "Crude": 519828.0
-          }
-        },
-        {
-          "origin": "TUBAN",
-          "destination": "DUMAI",
-          "lat_o": -6.9,
-          "lon_o": 112.05,
-          "lat_d": 1.67,
-          "lon_d": 101.45,
-          "ton": 947747.0,
-          "calls": 39,
-          "mappable": true,
-          "category": "Crude",
-          "category_ton": {
-            "Crude": 473328.0,
-            "Product / BBM": 434545.0,
-            "Container / Gen Cargo": 39874.0
+            "Crude": 321962.2,
+            "Product / BBM": 538825.6,
+            "Coal": 28389.0
           }
         },
         {
@@ -624,16 +588,16 @@
           "lon_o": 114.59,
           "lat_d": -0.5,
           "lon_d": 117.15,
-          "ton": 947662.8,
-          "calls": 208,
+          "ton": 870302.0,
+          "calls": 173,
           "mappable": true,
           "category": "Coal",
           "category_ton": {
-            "Product / BBM": 112333.4,
-            "Coal": 690187.6,
-            "Container / Gen Cargo": 133871.8,
+            "Product / BBM": 86437.4,
+            "Coal": 665638.6,
+            "Container / Gen Cargo": 107206.0,
             "Crude": 7020.0,
-            "FAME / Edible": 4250.0
+            "FAME / Edible": 4000.0
           }
         },
         {
@@ -643,14 +607,14 @@
           "lon_o": 116.83,
           "lat_d": -6.9,
           "lon_d": 112.05,
-          "ton": 922550.9,
-          "calls": 66,
+          "ton": 851546.3,
+          "calls": 61,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 714752.0,
+            "Product / BBM": 673261.3,
             "Crude": 118976.0,
-            "Coal": 88822.9
+            "Coal": 59309.0
           }
         },
         {
@@ -660,215 +624,232 @@
           "lon_o": 127.85,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 879357.9,
-          "calls": 98,
+          "ton": 844081.6,
+          "calls": 85,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 33796.2,
             "Coal": 214002.1,
-            "Nickel / Mineral Ore": 616952.6,
-            "Container / Gen Cargo": 14607.0
+            "Product / BBM": 27441.2,
+            "Nickel / Mineral Ore": 588038.2,
+            "Container / Gen Cargo": 14600.0
+          }
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "DUMAI",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": 1.67,
+          "lon_d": 101.45,
+          "ton": 838080.0,
+          "calls": 35,
+          "mappable": true,
+          "category": "Crude",
+          "category_ton": {
+            "Crude": 407304.0,
+            "Product / BBM": 390902.0,
+            "Container / Gen Cargo": 39874.0
           }
         }
       ],
       "top_sts": [
         {
-          "port": "SAMARINDA",
-          "lat": -0.5,
-          "lon": 117.15,
-          "ton": 47705524.7,
-          "calls": 18944
-        },
-        {
           "port": "BANJARMASIN",
           "lat": -3.32,
           "lon": 114.59,
-          "ton": 45993999.6,
-          "calls": 13052
+          "ton": 52929716.9,
+          "calls": 14561
         },
         {
-          "port": "SINGAPORE",
-          "lat": null,
-          "lon": null,
-          "ton": 35885561.2,
-          "calls": 18959
-        },
-        {
-          "port": "WEDA",
-          "lat": 0.36,
-          "lon": 127.93,
-          "ton": 32577298.4,
-          "calls": 3179
+          "port": "SAMARINDA",
+          "lat": -0.5,
+          "lon": 117.15,
+          "ton": 40891026.2,
+          "calls": 16319
         },
         {
           "port": "BALIKPAPAN",
           "lat": -1.27,
           "lon": 116.83,
-          "ton": 29016380.0,
-          "calls": 12362
+          "ton": 36278376.3,
+          "calls": 14029
+        },
+        {
+          "port": "SINGAPORE",
+          "lat": null,
+          "lon": null,
+          "ton": 30265234.2,
+          "calls": 16402
+        },
+        {
+          "port": "WEDA",
+          "lat": 0.36,
+          "lon": 127.93,
+          "ton": 30219642.0,
+          "calls": 2983
+        },
+        {
+          "port": "KELANIS",
+          "lat": null,
+          "lon": null,
+          "ton": 29067173.0,
+          "calls": 5062
         },
         {
           "port": "MOLAWE",
           "lat": -3.96,
           "lon": 121.95,
-          "ton": 25207586.6,
-          "calls": 5088
+          "ton": 23817570.8,
+          "calls": 4651
         },
         {
           "port": "MOROWALI",
           "lat": -2.85,
           "lon": 121.85,
-          "ton": 23239265.7,
-          "calls": 4729
+          "ton": 20202732.8,
+          "calls": 4214
         },
         {
           "port": "TANJUNG PERAK",
           "lat": -7.2,
           "lon": 112.74,
-          "ton": 19608574.6,
-          "calls": 16332
+          "ton": 20181962.4,
+          "calls": 17678
         },
         {
-          "port": "TANJUNG PRIOK",
-          "lat": -6.1,
-          "lon": 106.88,
-          "ton": 13434631.5,
-          "calls": 14622
-        },
-        {
-          "port": "KOLONODALE",
+          "port": "SUNGAI PUTING",
           "lat": null,
           "lon": null,
-          "ton": 11759950.7,
-          "calls": 2314
+          "ton": 18264498.5,
+          "calls": 5044
         },
         {
           "port": "KUALA SEMBOJA",
           "lat": null,
           "lon": null,
-          "ton": 10076307.2,
-          "calls": 1810
+          "ton": 14854354.9,
+          "calls": 2910
+        },
+        {
+          "port": "TANJUNG PRIOK",
+          "lat": -6.1,
+          "lon": 106.88,
+          "ton": 12644361.7,
+          "calls": 13802
+        },
+        {
+          "port": "RANGGA ILUNG",
+          "lat": null,
+          "lon": null,
+          "ton": 11461888.0,
+          "calls": 3809
+        },
+        {
+          "port": "KOLONODALE",
+          "lat": null,
+          "lon": null,
+          "ton": 10336112.3,
+          "calls": 2065
         },
         {
           "port": "BOOM BARU",
           "lat": -2.99,
           "lon": 104.76,
-          "ton": 8930973.7,
-          "calls": 3119
-        },
-        {
-          "port": "TARAKAN",
-          "lat": null,
-          "lon": null,
-          "ton": 8225912.2,
-          "calls": 10071
-        },
-        {
-          "port": "PONTIANAK",
-          "lat": -0.03,
-          "lon": 109.34,
-          "ton": 7653638.2,
-          "calls": 4457
-        },
-        {
-          "port": "KIJANG",
-          "lat": null,
-          "lon": null,
-          "ton": 7042074.5,
-          "calls": 1807
+          "ton": 7804974.8,
+          "calls": 2746
         }
       ]
     },
     "2025": {
-      "total_ton": 3060908910.7,
+      "total_ton": 3383033693.4,
       "treemap_categories": [
         {
           "category": "Curah Kering",
-          "ton_total": 2038644458.6,
-          "calls": 176070
+          "ton_total": 2324523274.7,
+          "calls": 207431
         },
         {
           "category": "Curah Cair",
-          "ton_total": 416848556.7,
-          "calls": 115093
+          "ton_total": 428237439.7,
+          "calls": 119543
         },
         {
           "category": "Petikemas Antar Pulau",
-          "ton_total": 169280891.6,
-          "calls": 216609
-        },
-        {
-          "category": "Break Bulk",
-          "ton_total": 125499087.0,
-          "calls": 42068
-        },
-        {
-          "category": "Petikemas Internasional",
-          "ton_total": 124587935.7,
-          "calls": 42126
+          "ton_total": 179262759.7,
+          "calls": 238284
         },
         {
           "category": "Unitized",
-          "ton_total": 119930507.3,
-          "calls": 271644
+          "ton_total": 127938344.7,
+          "calls": 369307
+        },
+        {
+          "category": "Break Bulk",
+          "ton_total": 127891638.7,
+          "calls": 45911
+        },
+        {
+          "category": "Petikemas Internasional",
+          "ton_total": 127663648.1,
+          "calls": 50670
         },
         {
           "category": "Bag Cargo",
-          "ton_total": 60473678.4,
-          "calls": 162264
+          "ton_total": 61598548.7,
+          "calls": 168862
         },
         {
           "category": "Tanpa Bongkar Muat",
-          "ton_total": 64855.1,
-          "calls": 110
+          "ton_total": 65895.1,
+          "calls": 113
         },
         {
           "category": "Ekor",
-          "ton_total": 5997.5,
-          "calls": 47
+          "ton_total": 6037.5,
+          "calls": 49
         }
       ],
       "top_commodities": [
         {
           "name": "BATU BARA",
-          "ton_total": 764928292.8
+          "ton_total": 839301935.0
         },
         {
           "name": "BATUBARA",
-          "ton_total": 416907924.5
+          "ton_total": 618904410.6
         },
         {
           "name": "NICKEL ORE",
-          "ton_total": 344799973.4
+          "ton_total": 345039527.7
         },
         {
           "name": "PETIKEMAS 20 FULL",
-          "ton_total": 71160083.8
+          "ton_total": 73439551.7
         },
         {
           "name": "COAL",
-          "ton_total": 37834383.2
+          "ton_total": 38037235.8
         },
         {
           "name": "PETIKEMAS 40 FULL",
-          "ton_total": 35574298.9
-        },
-        {
-          "name": "INDONESIAN STEAM COAL IN BULK",
-          "ton_total": 31472276.9
+          "ton_total": 36155443.3
         },
         {
           "name": "CPO",
-          "ton_total": 30785403.0
+          "ton_total": 32199994.4
+        },
+        {
+          "name": "INDONESIAN STEAM COAL IN BULK",
+          "ton_total": 31485641.9
         },
         {
           "name": "GENERAL CARGO",
-          "ton_total": 29429272.1
+          "ton_total": 31300756.5
         },
         {
           "name": "PERTALITE",
-          "ton_total": 24500525.6
+          "ton_total": 25246664.7
         }
       ],
       "top_routes": [
@@ -879,13 +860,13 @@
           "lon_o": 121.95,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 11080616.7,
-          "calls": 2100,
+          "ton": 11285277.7,
+          "calls": 2105,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 863142.6,
-            "Coal": 1081600.3,
+            "Coal": 1286261.3,
             "Nickel / Mineral Ore": 9122757.3,
             "Container / Gen Cargo": 13116.6
           }
@@ -897,13 +878,13 @@
           "lon_o": 121.85,
           "lat_d": -3.96,
           "lon_d": 121.95,
-          "ton": 9702294.0,
-          "calls": 1991,
+          "ton": 9864403.0,
+          "calls": 1996,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 496209.9,
-            "Coal": 891908.0,
+            "Coal": 1054017.0,
             "Nickel / Mineral Ore": 8286603.1,
             "Container / Gen Cargo": 27573.0
           }
@@ -915,15 +896,15 @@
           "lon_o": 127.93,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 6871315.4,
-          "calls": 774,
+          "ton": 7632694.4,
+          "calls": 787,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 448386.9,
-            "Coal": 1525222.6,
-            "Nickel / Mineral Ore": 4784199.3,
-            "Container / Gen Cargo": 113506.7
+            "Product / BBM": 456336.9,
+            "Coal": 2273318.6,
+            "Nickel / Mineral Ore": 4784532.3,
+            "Container / Gen Cargo": 118506.7
           }
         },
         {
@@ -933,14 +914,14 @@
           "lon_o": 121.85,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 5768916.2,
-          "calls": 697,
+          "ton": 6318972.2,
+          "calls": 704,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 406062.4,
             "Container / Gen Cargo": 191082.5,
-            "Coal": 1691810.0,
+            "Coal": 2241866.0,
             "Nickel / Mineral Ore": 3479961.3
           }
         },
@@ -951,12 +932,12 @@
           "lon_o": 127.85,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 5505092.1,
-          "calls": 502,
+          "ton": 5577592.1,
+          "calls": 503,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Coal": 315200.0,
+            "Coal": 387700.0,
             "Product / BBM": 265484.4,
             "Container / Gen Cargo": 16680.5,
             "Nickel / Mineral Ore": 4907727.2
@@ -969,13 +950,13 @@
           "lon_o": 127.93,
           "lat_d": -1.42,
           "lon_d": 127.85,
-          "ton": 4344222.3,
-          "calls": 521,
+          "ton": 4568812.3,
+          "calls": 525,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 312564.1,
-            "Coal": 260050.0,
+            "Coal": 484640.0,
             "Nickel / Mineral Ore": 3766572.2,
             "Container / Gen Cargo": 5025.0,
             "LPG / LNG": 11.0
@@ -988,13 +969,13 @@
           "lon_o": 127.93,
           "lat_d": -3.96,
           "lon_d": 121.95,
-          "ton": 4261024.8,
-          "calls": 479,
+          "ton": 4528271.8,
+          "calls": 482,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 69890.8,
-            "Coal": 592951.0,
+            "Coal": 860198.0,
             "Nickel / Mineral Ore": 3593973.0,
             "Container / Gen Cargo": 4210.0
           }
@@ -1006,15 +987,50 @@
           "lon_o": 112.74,
           "lat_d": 1.44,
           "lon_d": 125.18,
-          "ton": 3881904.3,
-          "calls": 2860,
+          "ton": 3979779.2,
+          "calls": 3478,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Container / Gen Cargo": 1826469.7,
-            "Product / BBM": 2047111.7,
-            "FAME / Edible": 4818.9,
+            "Container / Gen Cargo": 1834522.7,
+            "Product / BBM": 2136120.6,
+            "FAME / Edible": 5631.9,
             "Crude": 3504.0
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "OBI ISLAND",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": -1.42,
+          "lon_d": 127.85,
+          "ton": 3425058.1,
+          "calls": 394,
+          "mappable": true,
+          "category": "Nickel / Mineral Ore",
+          "category_ton": {
+            "Product / BBM": 700446.9,
+            "Coal": 837924.0,
+            "Nickel / Mineral Ore": 1886687.2
+          }
+        },
+        {
+          "origin": "MOLAWE",
+          "destination": "WEDA",
+          "lat_o": -3.96,
+          "lon_o": 121.95,
+          "lat_d": 0.36,
+          "lon_d": 127.93,
+          "ton": 3336037.5,
+          "calls": 410,
+          "mappable": true,
+          "category": "Nickel / Mineral Ore",
+          "category_ton": {
+            "Product / BBM": 109305.1,
+            "Coal": 715120.0,
+            "Nickel / Mineral Ore": 2511000.0,
+            "Container / Gen Cargo": 612.3
           }
         },
         {
@@ -1024,12 +1040,12 @@
           "lon_o": 109.34,
           "lat_d": -6.1,
           "lon_d": 106.88,
-          "ton": 3292953.6,
-          "calls": 341,
+          "ton": 3299974.6,
+          "calls": 345,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 259663.0,
+            "Product / BBM": 266684.0,
             "Container / Gen Cargo": 2974478.3,
             "FAME / Edible": 42868.3,
             "Crude": 15944.0
@@ -1042,71 +1058,18 @@
           "lon_o": 106.88,
           "lat_d": -7.2,
           "lon_d": 112.74,
-          "ton": 3113328.7,
-          "calls": 1478,
+          "ton": 3225180.9,
+          "calls": 1626,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 478642.2,
-            "Container / Gen Cargo": 2546825.2,
+            "Product / BBM": 516843.7,
+            "Container / Gen Cargo": 2620331.0,
             "Coal": 419.0,
             "Chemical": 6.0,
-            "FAME / Edible": 69845.8,
+            "FAME / Edible": 69990.8,
             "Crude": 17530.5,
             "LPG / LNG": 60.0
-          }
-        },
-        {
-          "origin": "MOLAWE",
-          "destination": "OBI ISLAND",
-          "lat_o": -3.96,
-          "lon_o": 121.95,
-          "lat_d": -1.42,
-          "lon_d": 127.85,
-          "ton": 3052260.1,
-          "calls": 387,
-          "mappable": true,
-          "category": "Nickel / Mineral Ore",
-          "category_ton": {
-            "Product / BBM": 700446.9,
-            "Coal": 465126.0,
-            "Nickel / Mineral Ore": 1886687.2
-          }
-        },
-        {
-          "origin": "MOLAWE",
-          "destination": "WEDA",
-          "lat_o": -3.96,
-          "lon_o": 121.95,
-          "lat_d": 0.36,
-          "lon_d": 127.93,
-          "ton": 3023039.5,
-          "calls": 404,
-          "mappable": true,
-          "category": "Nickel / Mineral Ore",
-          "category_ton": {
-            "Product / BBM": 119807.1,
-            "Coal": 391620.0,
-            "Nickel / Mineral Ore": 2511000.0,
-            "Container / Gen Cargo": 612.3
-          }
-        },
-        {
-          "origin": "OBI ISLAND",
-          "destination": "MOROWALI",
-          "lat_o": -1.42,
-          "lon_o": 127.85,
-          "lat_d": -2.85,
-          "lon_d": 121.85,
-          "ton": 2966687.8,
-          "calls": 387,
-          "mappable": true,
-          "category": "Nickel / Mineral Ore",
-          "category_ton": {
-            "Product / BBM": 255152.1,
-            "Coal": 625554.0,
-            "Nickel / Mineral Ore": 2071717.2,
-            "Container / Gen Cargo": 14264.5
           }
         },
         {
@@ -1116,15 +1079,34 @@
           "lon_o": 121.85,
           "lat_d": -1.42,
           "lon_d": 127.85,
-          "ton": 2858844.0,
-          "calls": 432,
+          "ton": 3215094.0,
+          "calls": 441,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 438775.0,
-            "Coal": 289704.0,
+            "Product / BBM": 442025.0,
+            "Coal": 642704.0,
             "Nickel / Mineral Ore": 2091297.9,
             "Container / Gen Cargo": 39067.0
+          }
+        },
+        {
+          "origin": "OBI ISLAND",
+          "destination": "MOROWALI",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 3109567.7,
+          "calls": 393,
+          "mappable": true,
+          "category": "Nickel / Mineral Ore",
+          "category_ton": {
+            "Product / BBM": 265269.0,
+            "Coal": 754214.0,
+            "Nickel / Mineral Ore": 2071717.2,
+            "FAME / Edible": 4103.0,
+            "Container / Gen Cargo": 14264.5
           }
         },
         {
@@ -1134,16 +1116,16 @@
           "lon_o": 112.74,
           "lat_d": -6.1,
           "lon_d": 106.88,
-          "ton": 2609151.8,
-          "calls": 1356,
+          "ton": 2719906.5,
+          "calls": 1512,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 267135.1,
-            "Container / Gen Cargo": 2261198.8,
+            "Product / BBM": 307084.1,
+            "Container / Gen Cargo": 2326711.9,
             "Nickel / Mineral Ore": 21.8,
             "Coal": 202.0,
-            "FAME / Edible": 63034.2,
+            "FAME / Edible": 68326.8,
             "Crude": 17518.9,
             "LPG / LNG": 36.0
           }
@@ -1155,14 +1137,14 @@
           "lon_o": 121.95,
           "lat_d": -4.18,
           "lon_d": 121.62,
-          "ton": 2548384.3,
+          "ton": 2550584.3,
           "calls": 277,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Product / BBM": 1633600.9,
             "Nickel / Mineral Ore": 906783.4,
-            "Container / Gen Cargo": 8000.0
+            "Container / Gen Cargo": 10200.0
           }
         },
         {
@@ -1172,14 +1154,14 @@
           "lon_o": 122.62,
           "lat_d": -7.2,
           "lon_d": 112.74,
-          "ton": 2527560.8,
-          "calls": 553,
+          "ton": 2528077.1,
+          "calls": 660,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 11723.9,
+            "Product / BBM": 11893.6,
             "FAME / Edible": 1247.7,
-            "Container / Gen Cargo": 2514589.2
+            "Container / Gen Cargo": 2514935.7
           }
         },
         {
@@ -1207,12 +1189,12 @@
           "lon_o": 127.85,
           "lat_d": -3.96,
           "lon_d": 121.95,
-          "ton": 2162873.6,
-          "calls": 287,
+          "ton": 2223073.6,
+          "calls": 290,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Coal": 507144.0,
+            "Coal": 567344.0,
             "Nickel / Mineral Ore": 1620167.9,
             "Container / Gen Cargo": 62.0,
             "Product / BBM": 35499.6
@@ -1241,14 +1223,14 @@
           "lon_o": 117.15,
           "lat_d": -1.27,
           "lon_d": 116.83,
-          "ton": 1669165.6,
-          "calls": 945,
+          "ton": 1736363.5,
+          "calls": 1001,
           "mappable": true,
           "category": "Coal",
           "category_ton": {
-            "Product / BBM": 587344.3,
-            "Coal": 592227.3,
-            "Container / Gen Cargo": 410470.0,
+            "Product / BBM": 593476.3,
+            "Coal": 680866.2,
+            "Container / Gen Cargo": 382897.1,
             "FAME / Edible": 62917.0,
             "Crude": 16207.0
           }
@@ -1260,14 +1242,14 @@
           "lon_o": 117.15,
           "lat_d": -3.32,
           "lon_d": 114.59,
-          "ton": 1544797.5,
-          "calls": 433,
+          "ton": 1593753.5,
+          "calls": 453,
           "mappable": true,
           "category": "Coal",
           "category_ton": {
-            "Product / BBM": 296098.2,
+            "Product / BBM": 296354.2,
             "Container / Gen Cargo": 158292.9,
-            "Coal": 1069864.8,
+            "Coal": 1118564.8,
             "FAME / Edible": 20541.6
           }
         },
@@ -1296,233 +1278,216 @@
           "lon_o": 112.05,
           "lat_d": -1.27,
           "lon_d": 116.83,
-          "ton": 1471847.1,
-          "calls": 81,
+          "ton": 1491321.1,
+          "calls": 87,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
             "Crude": 462013.0,
-            "Product / BBM": 902259.0,
+            "Product / BBM": 909792.0,
             "FAME / Edible": 66659.2,
             "Coal": 39215.9,
-            "LPG / LNG": 1700.0
-          }
-        },
-        {
-          "origin": "MAKASSAR",
-          "destination": "TANJUNG PRIOK",
-          "lat_o": -5.13,
-          "lon_o": 119.41,
-          "lat_d": -6.1,
-          "lon_d": 106.88,
-          "ton": 1354084.6,
-          "calls": 1104,
-          "mappable": true,
-          "category": "Container / Gen Cargo",
-          "category_ton": {
-            "Product / BBM": 99774.0,
-            "Container / Gen Cargo": 1238810.7,
-            "FAME / Edible": 15500.0
+            "LPG / LNG": 13641.0
           }
         }
       ],
       "top_sts": [
         {
+          "port": "BANJARMASIN",
+          "lat": -3.32,
+          "lon": 114.59,
+          "ton": 106753288.2,
+          "calls": 27749
+        },
+        {
           "port": "SAMARINDA",
           "lat": -0.5,
           "lon": 117.15,
-          "ton": 92035440.1,
-          "calls": 34403
+          "ton": 92164655.1,
+          "calls": 34476
         },
         {
           "port": "WEDA",
           "lat": 0.36,
           "lon": 127.93,
-          "ton": 89562299.4,
-          "calls": 7975
-        },
-        {
-          "port": "BANJARMASIN",
-          "lat": -3.32,
-          "lon": 114.59,
-          "ton": 85132005.8,
-          "calls": 22604
-        },
-        {
-          "port": "SINGAPORE",
-          "lat": null,
-          "lon": null,
-          "ton": 65806356.8,
-          "calls": 18159
-        },
-        {
-          "port": "MOROWALI",
-          "lat": -2.85,
-          "lon": 121.85,
-          "ton": 46426495.1,
-          "calls": 8930
-        },
-        {
-          "port": "MOLAWE",
-          "lat": -3.96,
-          "lon": 121.95,
-          "ton": 42072230.5,
-          "calls": 8009
+          "ton": 91703411.8,
+          "calls": 8003
         },
         {
           "port": "BALIKPAPAN",
           "lat": -1.27,
           "lon": 116.83,
-          "ton": 39615416.5,
-          "calls": 16835
+          "ton": 75681348.9,
+          "calls": 26846
         },
         {
-          "port": "TANJUNG PRIOK",
-          "lat": -6.1,
-          "lon": 106.88,
-          "ton": 23710959.0,
-          "calls": 26031
-        },
-        {
-          "port": "TANJUNG PERAK",
-          "lat": -7.2,
-          "lon": 112.74,
-          "ton": 21815882.7,
-          "calls": 26611
-        },
-        {
-          "port": "KOLONODALE",
+          "port": "SINGAPORE",
           "lat": null,
           "lon": null,
-          "ton": 21768389.5,
-          "calls": 4330
+          "ton": 68000378.0,
+          "calls": 46828
+        },
+        {
+          "port": "KELANIS",
+          "lat": null,
+          "lon": null,
+          "ton": 60047636.7,
+          "calls": 9865
+        },
+        {
+          "port": "MOROWALI",
+          "lat": -2.85,
+          "lon": 121.85,
+          "ton": 47562475.1,
+          "calls": 8956
         },
         {
           "port": "KUALA SEMBOJA",
           "lat": null,
           "lon": null,
-          "ton": 21395202.8,
-          "calls": 2966
+          "ton": 43960504.4,
+          "calls": 7196
+        },
+        {
+          "port": "MOLAWE",
+          "lat": -3.96,
+          "lon": 121.95,
+          "ton": 42915995.8,
+          "calls": 8039
+        },
+        {
+          "port": "SUNGAI PUTING",
+          "lat": null,
+          "lon": null,
+          "ton": 30819312.7,
+          "calls": 7544
+        },
+        {
+          "port": "RANGGA ILUNG",
+          "lat": null,
+          "lon": null,
+          "ton": 29578216.3,
+          "calls": 8540
+        },
+        {
+          "port": "TANJUNG PRIOK",
+          "lat": -6.1,
+          "lon": 106.88,
+          "ton": 27174674.3,
+          "calls": 31429
+        },
+        {
+          "port": "TANJUNG PERAK",
+          "lat": -7.2,
+          "lon": 112.74,
+          "ton": 26880904.9,
+          "calls": 34914
+        },
+        {
+          "port": "KOLONODALE",
+          "lat": null,
+          "lon": null,
+          "ton": 22019009.5,
+          "calls": 4336
         },
         {
           "port": "PORT KLANG",
           "lat": null,
           "lon": null,
-          "ton": 21254613.7,
-          "calls": 4357
-        },
-        {
-          "port": "BOOM BARU",
-          "lat": -2.99,
-          "lon": 104.76,
-          "ton": 16852680.2,
-          "calls": 6075
-        },
-        {
-          "port": "PONTIANAK",
-          "lat": -0.03,
-          "lon": 109.34,
-          "ton": 14482418.1,
-          "calls": 7566
-        },
-        {
-          "port": "TARAKAN",
-          "lat": null,
-          "lon": null,
-          "ton": 13914107.8,
-          "calls": 14977
+          "ton": 21187092.4,
+          "calls": 4373
         }
       ]
     },
     "2026": {
-      "total_ton": 1041818065.0,
+      "total_ton": 1372904620.4,
       "treemap_categories": [
         {
           "category": "Curah Kering",
-          "ton_total": 694999982.4,
-          "calls": 59464
+          "ton_total": 922363185.3,
+          "calls": 81760
         },
         {
           "category": "Curah Cair",
-          "ton_total": 142958482.3,
-          "calls": 39757
+          "ton_total": 181750066.8,
+          "calls": 50862
         },
         {
           "category": "Petikemas Antar Pulau",
-          "ton_total": 55055298.2,
-          "calls": 69046
+          "ton_total": 79708587.7,
+          "calls": 95259
         },
         {
           "category": "Petikemas Internasional",
-          "ton_total": 44584978.3,
-          "calls": 15369
-        },
-        {
-          "category": "Break Bulk",
-          "ton_total": 38621644.1,
-          "calls": 13515
+          "ton_total": 58467767.1,
+          "calls": 23404
         },
         {
           "category": "Unitized",
-          "ton_total": 37842205.8,
-          "calls": 148365
+          "ton_total": 50096478.7,
+          "calls": 244163
+        },
+        {
+          "category": "Break Bulk",
+          "ton_total": 48697000.6,
+          "calls": 18926
         },
         {
           "category": "Bag Cargo",
-          "ton_total": 26138704.8,
-          "calls": 61505
+          "ton_total": 29963841.3,
+          "calls": 78241
         },
         {
           "category": "Tanpa Bongkar Muat",
-          "ton_total": 32073.0,
-          "calls": 52
+          "ton_total": 41815.1,
+          "calls": 81
         },
         {
           "category": "Ekor",
-          "ton_total": 5956.9,
-          "calls": 36
+          "ton_total": 6094.9,
+          "calls": 56
         }
       ],
       "top_commodities": [
         {
           "name": "BATUBARA",
-          "ton_total": 275240424.0
+          "ton_total": 403001902.3
         },
         {
           "name": "BATU BARA",
-          "ton_total": 125861687.7
+          "ton_total": 156613828.1
         },
         {
           "name": "NICKEL ORE",
-          "ton_total": 110472847.3
+          "ton_total": 135715060.9
         },
         {
           "name": "PETIKEMAS 20 FULL",
-          "ton_total": 21896005.0
+          "ton_total": 27959874.5
         },
         {
           "name": "COAL",
-          "ton_total": 15337801.6
+          "ton_total": 18355575.4
         },
         {
           "name": "GENERAL CARGO",
-          "ton_total": 14874137.9
+          "ton_total": 17475746.5
         },
         {
           "name": "PETIKEMAS 40 FULL",
-          "ton_total": 11759617.2
+          "ton_total": 15238643.1
         },
         {
           "name": "CPO",
-          "ton_total": 10703742.6
+          "ton_total": 13956772.5
         },
         {
           "name": "INDONESIAN STEAM COAL IN BULK",
-          "ton_total": 10362371.5
+          "ton_total": 13228466.9
         },
         {
           "name": "CRUDE OIL",
-          "ton_total": 9688007.1
+          "ton_total": 11531659.5
         }
       ],
       "top_routes": [
@@ -1533,15 +1498,15 @@
           "lon_o": 127.93,
           "lat_d": -1.42,
           "lon_d": 127.85,
-          "ton": 6516215.5,
-          "calls": 300,
+          "ton": 9541567.3,
+          "calls": 420,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 77567.7,
-            "Coal": 108000.0,
+            "Product / BBM": 103596.1,
+            "Coal": 291186.8,
             "Container / Gen Cargo": 20.0,
-            "Nickel / Mineral Ore": 6330627.8
+            "Nickel / Mineral Ore": 9146764.4
           }
         },
         {
@@ -1551,31 +1516,15 @@
           "lon_o": 121.95,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 3528077.3,
-          "calls": 688,
+          "ton": 4397372.8,
+          "calls": 882,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 152135.9,
-            "Coal": 397954.0,
-            "Nickel / Mineral Ore": 2958843.4,
+            "Product / BBM": 197548.9,
+            "Coal": 427954.0,
+            "Nickel / Mineral Ore": 3752725.8,
             "Container / Gen Cargo": 19144.0
-          }
-        },
-        {
-          "origin": "WEDA",
-          "destination": "MOLAWE",
-          "lat_o": 0.36,
-          "lon_o": 127.93,
-          "lat_d": -3.96,
-          "lon_d": 121.95,
-          "ton": 2780424.3,
-          "calls": 336,
-          "mappable": true,
-          "category": "Nickel / Mineral Ore",
-          "category_ton": {
-            "Product / BBM": 52215.0,
-            "Nickel / Mineral Ore": 2728209.3
           }
         },
         {
@@ -1585,14 +1534,15 @@
           "lon_o": 127.93,
           "lat_d": -2.85,
           "lon_d": 121.85,
-          "ton": 2711353.4,
-          "calls": 275,
+          "ton": 3472330.1,
+          "calls": 340,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 183188.4,
-            "Coal": 597248.0,
-            "Nickel / Mineral Ore": 1911601.0,
+            "Product / BBM": 223777.7,
+            "FAME / Edible": 1000.0,
+            "Coal": 1065380.0,
+            "Nickel / Mineral Ore": 2162856.4,
             "Container / Gen Cargo": 19316.0
           }
         },
@@ -1603,15 +1553,31 @@
           "lon_o": 121.85,
           "lat_d": -3.96,
           "lon_d": 121.95,
-          "ton": 2686500.6,
-          "calls": 551,
+          "ton": 3403258.9,
+          "calls": 687,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Coal": 282520.5,
-            "Product / BBM": 109739.6,
-            "Nickel / Mineral Ore": 2286496.6,
+            "Coal": 388955.5,
+            "Product / BBM": 142907.2,
+            "Nickel / Mineral Ore": 2863652.2,
             "Container / Gen Cargo": 7744.0
+          }
+        },
+        {
+          "origin": "WEDA",
+          "destination": "MOLAWE",
+          "lat_o": 0.36,
+          "lon_o": 127.93,
+          "lat_d": -3.96,
+          "lon_d": 121.95,
+          "ton": 3320331.0,
+          "calls": 404,
+          "mappable": true,
+          "category": "Nickel / Mineral Ore",
+          "category_ton": {
+            "Product / BBM": 57226.0,
+            "Nickel / Mineral Ore": 3263105.0
           }
         },
         {
@@ -1621,14 +1587,14 @@
           "lon_o": 127.85,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 2457466.0,
-          "calls": 297,
+          "ton": 2814785.7,
+          "calls": 335,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
+            "Product / BBM": 51752.3,
             "Coal": 104402.1,
-            "Nickel / Mineral Ore": 2303663.6,
-            "Product / BBM": 44523.3,
+            "Nickel / Mineral Ore": 2653754.4,
             "Container / Gen Cargo": 4877.0
           }
         },
@@ -1639,15 +1605,15 @@
           "lon_o": 121.85,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 2169119.3,
-          "calls": 299,
+          "ton": 2666122.4,
+          "calls": 354,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Coal": 566164.0,
-            "Product / BBM": 120608.1,
-            "Container / Gen Cargo": 54670.9,
-            "Nickel / Mineral Ore": 1427676.3
+            "Coal": 696522.0,
+            "Product / BBM": 138413.2,
+            "Container / Gen Cargo": 70479.9,
+            "Nickel / Mineral Ore": 1760707.2
           }
         },
         {
@@ -1657,16 +1623,34 @@
           "lon_o": 112.74,
           "lat_d": 1.44,
           "lon_d": 125.18,
-          "ton": 2142746.6,
-          "calls": 1043,
+          "ton": 2384184.8,
+          "calls": 1428,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1424974.8,
-            "Container / Gen Cargo": 709040.2,
-            "Crude": 3510.0,
+            "Product / BBM": 1581975.2,
+            "Container / Gen Cargo": 790419.2,
+            "Crude": 5810.0,
             "Nickel / Mineral Ore": 4104.7,
-            "FAME / Edible": 1106.0
+            "FAME / Edible": 1845.0
+          }
+        },
+        {
+          "origin": "TANJUNG PRIOK",
+          "destination": "BELAWAN",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": 3.78,
+          "lon_d": 98.69,
+          "ton": 2202101.5,
+          "calls": 880,
+          "mappable": true,
+          "category": "Container / Gen Cargo",
+          "category_ton": {
+            "Product / BBM": 1084193.8,
+            "Container / Gen Cargo": 1108906.3,
+            "FAME / Edible": 5000.0,
+            "Crude": 4001.3
           }
         },
         {
@@ -1676,16 +1660,17 @@
           "lon_o": 112.74,
           "lat_d": -6.1,
           "lon_d": 106.88,
-          "ton": 1777800.8,
-          "calls": 669,
+          "ton": 2003507.2,
+          "calls": 829,
           "mappable": true,
           "category": "Product / BBM",
           "category_ton": {
-            "Product / BBM": 1057162.1,
-            "Container / Gen Cargo": 665808.5,
+            "Product / BBM": 1079624.1,
+            "Container / Gen Cargo": 858692.9,
             "Coal": 40.0,
-            "FAME / Edible": 36636.0,
-            "Crude": 18154.2
+            "FAME / Edible": 36996.0,
+            "Crude": 18154.2,
+            "LPG / LNG": 10000.0
           }
         },
         {
@@ -1695,32 +1680,14 @@
           "lon_o": 121.95,
           "lat_d": 0.36,
           "lon_d": 127.93,
-          "ton": 1513292.4,
-          "calls": 270,
+          "ton": 1834564.3,
+          "calls": 322,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 32285.7,
-            "Container / Gen Cargo": 7297.8,
-            "Nickel / Mineral Ore": 1473708.9
-          }
-        },
-        {
-          "origin": "SAMARINDA",
-          "destination": "BONTANG",
-          "lat_o": -0.5,
-          "lon_o": 117.15,
-          "lat_d": 0.13,
-          "lon_d": 117.49,
-          "ton": 1361275.4,
-          "calls": 100,
-          "mappable": true,
-          "category": "Coal",
-          "category_ton": {
-            "Product / BBM": 26557.0,
-            "Coal": 1330458.4,
-            "Container / Gen Cargo": 1256.0,
-            "Crude": 3004.0
+            "Product / BBM": 33734.7,
+            "Container / Gen Cargo": 7387.8,
+            "Nickel / Mineral Ore": 1793441.8
           }
         },
         {
@@ -1730,16 +1697,34 @@
           "lon_o": 106.88,
           "lat_d": -7.2,
           "lon_d": 112.74,
-          "ton": 1224651.8,
-          "calls": 649,
+          "ton": 1526312.7,
+          "calls": 839,
           "mappable": true,
           "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 307445.0,
-            "Container / Gen Cargo": 889018.5,
-            "FAME / Edible": 16219.8,
+            "Product / BBM": 425540.7,
+            "Container / Gen Cargo": 1042033.6,
+            "FAME / Edible": 26750.1,
             "Crude": 11733.5,
-            "LPG / LNG": 235.0
+            "LPG / LNG": 20235.0
+          }
+        },
+        {
+          "origin": "SAMARINDA",
+          "destination": "BONTANG",
+          "lat_o": -0.5,
+          "lon_o": 117.15,
+          "lat_d": 0.13,
+          "lon_d": 117.49,
+          "ton": 1487451.7,
+          "calls": 127,
+          "mappable": true,
+          "category": "Coal",
+          "category_ton": {
+            "Product / BBM": 32013.0,
+            "Coal": 1451178.8,
+            "Container / Gen Cargo": 1256.0,
+            "Crude": 3004.0
           }
         },
         {
@@ -1749,32 +1734,31 @@
           "lon_o": 127.85,
           "lat_d": -3.96,
           "lon_d": 121.95,
-          "ton": 1037353.2,
-          "calls": 98,
+          "ton": 1242483.4,
+          "calls": 111,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Coal": 313350.0,
-            "Product / BBM": 59447.6,
-            "Nickel / Mineral Ore": 664555.6
+            "Coal": 466950.0,
+            "Product / BBM": 83463.5,
+            "Nickel / Mineral Ore": 692069.9
           }
         },
         {
-          "origin": "OBI ISLAND",
-          "destination": "MOROWALI",
-          "lat_o": -1.42,
-          "lon_o": 127.85,
-          "lat_d": -2.85,
-          "lon_d": 121.85,
-          "ton": 954319.1,
-          "calls": 134,
+          "origin": "BELAWAN",
+          "destination": "TANJUNG PERAK",
+          "lat_o": 3.78,
+          "lon_o": 98.69,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 1231088.1,
+          "calls": 374,
           "mappable": true,
-          "category": "Nickel / Mineral Ore",
+          "category": "Container / Gen Cargo",
           "category_ton": {
-            "Product / BBM": 48813.9,
-            "Coal": 260100.0,
-            "Nickel / Mineral Ore": 642593.3,
-            "Container / Gen Cargo": 2812.0
+            "Product / BBM": 451207.3,
+            "Container / Gen Cargo": 736030.8,
+            "FAME / Edible": 43850.0
           }
         },
         {
@@ -1784,98 +1768,33 @@
           "lon_o": 121.85,
           "lat_d": -1.42,
           "lon_d": 127.85,
-          "ton": 903971.0,
-          "calls": 140,
+          "ton": 1083203.5,
+          "calls": 176,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
             "Product / BBM": 75998.7,
             "Coal": 102000.0,
-            "Nickel / Mineral Ore": 720632.3,
+            "Nickel / Mineral Ore": 899864.8,
             "Container / Gen Cargo": 5340.0
           }
         },
         {
-          "origin": "MARUNDA",
-          "destination": "SAMARINDA",
-          "lat_o": -6.1,
-          "lon_o": 106.96,
-          "lat_d": -0.5,
-          "lon_d": 117.15,
-          "ton": 848748.0,
-          "calls": 12,
+          "origin": "OBI ISLAND",
+          "destination": "MOROWALI",
+          "lat_o": -1.42,
+          "lon_o": 127.85,
+          "lat_d": -2.85,
+          "lon_d": 121.85,
+          "ton": 1028344.6,
+          "calls": 151,
           "mappable": true,
-          "category": "Product / BBM",
+          "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Product / BBM": 848740.0,
-            "Container / Gen Cargo": 8.0
-          }
-        },
-        {
-          "origin": "BANJARMASIN",
-          "destination": "SAMARINDA",
-          "lat_o": -3.32,
-          "lon_o": 114.59,
-          "lat_d": -0.5,
-          "lon_d": 117.15,
-          "ton": 719451.9,
-          "calls": 64,
-          "mappable": true,
-          "category": "Coal",
-          "category_ton": {
-            "Product / BBM": 35797.2,
-            "Coal": 664020.0,
-            "FAME / Edible": 4000.0,
-            "Container / Gen Cargo": 14634.6,
-            "LPG / LNG": 1000.0
-          }
-        },
-        {
-          "origin": "LHOKSEUMAWE",
-          "destination": "BELAWAN",
-          "lat_o": 5.18,
-          "lon_o": 97.15,
-          "lat_d": 3.78,
-          "lon_d": 98.69,
-          "ton": 677179.6,
-          "calls": 62,
-          "mappable": true,
-          "category": "Product / BBM",
-          "category_ton": {
-            "Product / BBM": 660034.6,
-            "Container / Gen Cargo": 17145.0
-          }
-        },
-        {
-          "origin": "BONTANG",
-          "destination": "TANJUNG BARA",
-          "lat_o": 0.13,
-          "lon_o": 117.49,
-          "lat_d": -0.42,
-          "lon_d": 117.55,
-          "ton": 609112.0,
-          "calls": 9,
-          "mappable": true,
-          "category": "Coal",
-          "category_ton": {
-            "Coal": 609112.0
-          }
-        },
-        {
-          "origin": "TANJUNG PRIOK",
-          "destination": "MAKASSAR",
-          "lat_o": -6.1,
-          "lon_o": 106.88,
-          "lat_d": -5.13,
-          "lon_d": 119.41,
-          "ton": 587025.5,
-          "calls": 234,
-          "mappable": true,
-          "category": "Container / Gen Cargo",
-          "category_ton": {
-            "Product / BBM": 79180.0,
-            "Container / Gen Cargo": 491945.5,
-            "FAME / Edible": 15900.0
+            "Product / BBM": 63186.5,
+            "Coal": 260100.0,
+            "Nickel / Mineral Ore": 702246.1,
+            "Container / Gen Cargo": 2812.0
           }
         },
         {
@@ -1885,32 +1804,117 @@
           "lon_o": 121.95,
           "lat_d": -1.42,
           "lon_d": 127.85,
-          "ton": 558957.3,
-          "calls": 90,
+          "ton": 947007.3,
+          "calls": 120,
           "mappable": true,
           "category": "Nickel / Mineral Ore",
           "category_ton": {
-            "Coal": 119904.0,
-            "Product / BBM": 36565.4,
-            "Nickel / Mineral Ore": 402487.8
+            "Coal": 283554.0,
+            "Product / BBM": 55273.4,
+            "Nickel / Mineral Ore": 608179.9
           }
         },
         {
-          "origin": "SAMARINDA",
-          "destination": "TANAH GROGOT",
-          "lat_o": -0.5,
-          "lon_o": 117.15,
-          "lat_d": -1.91,
-          "lon_d": 116.2,
-          "ton": 525671.1,
-          "calls": 45,
+          "origin": "TANJUNG PRIOK",
+          "destination": "MAKASSAR",
+          "lat_o": -6.1,
+          "lon_o": 106.88,
+          "lat_d": -5.13,
+          "lon_d": 119.41,
+          "ton": 770976.9,
+          "calls": 297,
+          "mappable": true,
+          "category": "Container / Gen Cargo",
+          "category_ton": {
+            "Product / BBM": 124818.0,
+            "Container / Gen Cargo": 630258.9,
+            "FAME / Edible": 15900.0
+          }
+        },
+        {
+          "origin": "BONTANG",
+          "destination": "TANJUNG BARA",
+          "lat_o": 0.13,
+          "lon_o": 117.49,
+          "lat_d": -0.42,
+          "lon_d": 117.55,
+          "ton": 744152.0,
+          "calls": 11,
           "mappable": true,
           "category": "Coal",
           "category_ton": {
-            "Product / BBM": 8320.8,
-            "Coal": 492895.0,
-            "FAME / Edible": 16455.3,
-            "Crude": 8000.0
+            "Coal": 744152.0
+          }
+        },
+        {
+          "origin": "BANJARMASIN",
+          "destination": "SAMARINDA",
+          "lat_o": -3.32,
+          "lon_o": 114.59,
+          "lat_d": -0.5,
+          "lon_d": 117.15,
+          "ton": 734905.2,
+          "calls": 84,
+          "mappable": true,
+          "category": "Coal",
+          "category_ton": {
+            "Product / BBM": 44205.4,
+            "Coal": 664020.0,
+            "Container / Gen Cargo": 21679.8,
+            "FAME / Edible": 4000.0,
+            "LPG / LNG": 1000.0
+          }
+        },
+        {
+          "origin": "MAKASSAR",
+          "destination": "TANJUNG PERAK",
+          "lat_o": -5.13,
+          "lon_o": 119.41,
+          "lat_d": -7.2,
+          "lon_d": 112.74,
+          "ton": 707125.6,
+          "calls": 652,
+          "mappable": true,
+          "category": "Container / Gen Cargo",
+          "category_ton": {
+            "Product / BBM": 179541.0,
+            "LPG / LNG": 50143.0,
+            "Container / Gen Cargo": 453036.5,
+            "Nickel / Mineral Ore": 24015.1,
+            "FAME / Edible": 390.0
+          }
+        },
+        {
+          "origin": "LHOKSEUMAWE",
+          "destination": "BELAWAN",
+          "lat_o": 5.18,
+          "lon_o": 97.15,
+          "lat_d": 3.78,
+          "lon_d": 98.69,
+          "ton": 684507.6,
+          "calls": 68,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Product / BBM": 667362.6,
+            "Container / Gen Cargo": 17145.0
+          }
+        },
+        {
+          "origin": "TUBAN",
+          "destination": "CILACAP",
+          "lat_o": -6.9,
+          "lon_o": 112.05,
+          "lat_d": -7.73,
+          "lon_d": 109.02,
+          "ton": 651219.1,
+          "calls": 34,
+          "mappable": true,
+          "category": "Product / BBM",
+          "category_ton": {
+            "Crude": 285797.6,
+            "Product / BBM": 350136.5,
+            "Coal": 15285.0
           }
         }
       ],
@@ -1919,106 +1923,106 @@
           "port": "SAMARINDA",
           "lat": -0.5,
           "lon": 117.15,
-          "ton": 32750094.8,
-          "calls": 10863
-        },
-        {
-          "port": "WEDA",
-          "lat": 0.36,
-          "lon": 127.93,
-          "ton": 29501346.5,
-          "calls": 2118
+          "ton": 40080412.9,
+          "calls": 13316
         },
         {
           "port": "BANJARMASIN",
           "lat": -3.32,
           "lon": 114.59,
-          "ton": 27934191.9,
-          "calls": 7175
+          "ton": 39971435.7,
+          "calls": 10275
+        },
+        {
+          "port": "WEDA",
+          "lat": 0.36,
+          "lon": 127.93,
+          "ton": 35634809.5,
+          "calls": 2564
         },
         {
           "port": "SINGAPORE",
           "lat": null,
           "lon": null,
-          "ton": 26700768.8,
-          "calls": 7804
+          "ton": 33969446.2,
+          "calls": 19467
         },
         {
           "port": "BALIKPAPAN",
           "lat": -1.27,
           "lon": 116.83,
-          "ton": 25016152.5,
-          "calls": 8210
-        },
-        {
-          "port": "MOROWALI",
-          "lat": -2.85,
-          "lon": 121.85,
-          "ton": 13295351.7,
-          "calls": 2549
-        },
-        {
-          "port": "MOLAWE",
-          "lat": -3.96,
-          "lon": 121.95,
-          "ton": 12410538.4,
-          "calls": 2331
-        },
-        {
-          "port": "KUALA SEMBOJA",
-          "lat": null,
-          "lon": null,
-          "ton": 12131468.2,
-          "calls": 2266
-        },
-        {
-          "port": "PORT KLANG",
-          "lat": null,
-          "lon": null,
-          "ton": 11701776.7,
-          "calls": 1661
-        },
-        {
-          "port": "KOLONODALE",
-          "lat": null,
-          "lon": null,
-          "ton": 8153498.8,
-          "calls": 1632
-        },
-        {
-          "port": "TANJUNG PRIOK",
-          "lat": -6.1,
-          "lon": 106.88,
-          "ton": 6163776.9,
-          "calls": 8517
-        },
-        {
-          "port": "KENDAWANGAN",
-          "lat": null,
-          "lon": null,
-          "ton": 5467876.0,
-          "calls": 772
-        },
-        {
-          "port": "TANJUNG PERAK",
-          "lat": -7.2,
-          "lon": 112.74,
-          "ton": 5233297.0,
-          "calls": 8338
+          "ton": 31349393.4,
+          "calls": 10189
         },
         {
           "port": "KELANIS",
           "lat": null,
           "lon": null,
-          "ton": 4870382.0,
-          "calls": 765
+          "ton": 25128666.6,
+          "calls": 3979
         },
         {
-          "port": "TARAKAN",
+          "port": "MOROWALI",
+          "lat": -2.85,
+          "lon": 121.85,
+          "ton": 16192023.0,
+          "calls": 3023
+        },
+        {
+          "port": "KUALA SEMBOJA",
           "lat": null,
           "lon": null,
-          "ton": 4586185.1,
-          "calls": 6279
+          "ton": 14665797.8,
+          "calls": 2785
+        },
+        {
+          "port": "MOLAWE",
+          "lat": -3.96,
+          "lon": 121.95,
+          "ton": 14356768.3,
+          "calls": 2745
+        },
+        {
+          "port": "TANJUNG PERAK",
+          "lat": -7.2,
+          "lon": 112.74,
+          "ton": 12857224.4,
+          "calls": 14013
+        },
+        {
+          "port": "RANGGA ILUNG",
+          "lat": null,
+          "lon": null,
+          "ton": 12830634.2,
+          "calls": 3561
+        },
+        {
+          "port": "PORT KLANG",
+          "lat": null,
+          "lon": null,
+          "ton": 12488907.9,
+          "calls": 2142
+        },
+        {
+          "port": "KOLONODALE",
+          "lat": null,
+          "lon": null,
+          "ton": 9916001.4,
+          "calls": 1998
+        },
+        {
+          "port": "SUNGAI PUTING",
+          "lat": null,
+          "lon": null,
+          "ton": 9272992.7,
+          "calls": 2314
+        },
+        {
+          "port": "TANJUNG PRIOK",
+          "lat": -6.1,
+          "lon": 106.88,
+          "ton": 9191833.4,
+          "calls": 12782
         }
       ]
     }

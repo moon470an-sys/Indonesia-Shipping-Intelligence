@@ -1,161 +1,161 @@
 {
   "schema_version": 1,
-  "snapshot_month": "2026-05",
+  "snapshot_month": "2026-06",
   "treemap_categories": [
     {
       "category": "Curah Kering",
-      "ton_total": 3904262174.9,
-      "calls": 341823
+      "ton_total": 4390353534.0,
+      "calls": 396893
     },
     {
       "category": "Curah Cair",
-      "ton_total": 823284240.1,
-      "calls": 222089
+      "ton_total": 838998942.8,
+      "calls": 230339
     },
     {
       "category": "Petikemas Antar Pulau",
-      "ton_total": 324290592.7,
-      "calls": 422771
-    },
-    {
-      "category": "Break Bulk",
-      "ton_total": 244045885.9,
-      "calls": 85446
+      "ton_total": 349197688.5,
+      "calls": 457664
     },
     {
       "category": "Unitized",
-      "ton_total": 236915028.7,
-      "calls": 563008
+      "ton_total": 248937646.6,
+      "calls": 746830
+    },
+    {
+      "category": "Break Bulk",
+      "ton_total": 247017065.7,
+      "calls": 91155
     },
     {
       "category": "Petikemas Internasional",
-      "ton_total": 234036147.1,
-      "calls": 94063
+      "ton_total": 237797875.6,
+      "calls": 105725
     },
     {
       "category": "Bag Cargo",
-      "ton_total": 115632684.8,
-      "calls": 318237
+      "ton_total": 117542413.0,
+      "calls": 332153
     },
     {
       "category": "Tanpa Bongkar Muat",
-      "ton_total": 118738.0,
-      "calls": 236
+      "ton_total": 129161.6,
+      "calls": 254
     },
     {
       "category": "Ekor",
-      "ton_total": 65008.2,
-      "calls": 130
+      "ton_total": 32082.3,
+      "calls": 137
     }
   ],
   "top_commodities": [
     {
       "name": "BATU BARA",
-      "ton_total": 1355221636.5
+      "ton_total": 1421306072.1
     },
     {
       "name": "BATUBARA",
-      "ton_total": 944284466.9
+      "ton_total": 1341202417.4
     },
     {
       "name": "NICKEL ORE",
-      "ton_total": 616726161.6
+      "ton_total": 624606829.4
     },
     {
       "name": "PETIKEMAS 20 FULL",
-      "ton_total": 138013350.2
+      "ton_total": 138769297.9
     },
     {
       "name": "COAL",
-      "ton_total": 77008186.0
+      "ton_total": 77145947.4
     },
     {
       "name": "PETIKEMAS 40 FULL",
-      "ton_total": 68337787.7
+      "ton_total": 68338620.7
     },
     {
       "name": "CPO",
-      "ton_total": 65018992.4
+      "ton_total": 65869743.3
     },
     {
       "name": "INDONESIAN STEAM COAL IN BULK",
-      "ton_total": 61373814.7
+      "ton_total": 61912288.0
     },
     {
       "name": "GENERAL CARGO",
-      "ton_total": 54631917.1
+      "ton_total": 58232484.5
     },
     {
-      "name": "CRUDE OIL",
-      "ton_total": 47962407.5
+      "name": "PERTALITE",
+      "ton_total": 49120431.6
     }
   ],
   "class_counts": [
     {
       "class": "Container",
-      "count": 305
+      "count": 307
     },
     {
       "class": "Bulk Carrier",
-      "count": 315
+      "count": 327
     },
     {
       "class": "Tanker",
-      "count": 2415
+      "count": 2514
     },
     {
       "class": "General Cargo",
-      "count": 13478
+      "count": 15636
     },
     {
       "class": "Other Cargo",
-      "count": 13055
+      "count": 13202
     },
     {
       "class": "Other",
-      "count": 62453
+      "count": 69153
     }
   ],
   "age_bins": {
     "bins": [
       {
         "label": "0-4 yr",
-        "count": 9603,
+        "count": 10585,
         "older": false
       },
       {
         "label": "5-9 yr",
-        "count": 14704,
+        "count": 17073,
         "older": false
       },
       {
         "label": "10-14 yr",
-        "count": 16195,
+        "count": 18539,
         "older": false
       },
       {
         "label": "15-19 yr",
-        "count": 14088,
+        "count": 15156,
         "older": false
       },
       {
         "label": "20-24 yr",
-        "count": 10041,
+        "count": 10725,
         "older": false
       },
       {
         "label": "25-29 yr",
-        "count": 8462,
+        "count": 9180,
         "older": true
       },
       {
         "label": "30-34 yr",
-        "count": 6613,
+        "count": 7145,
         "older": true
       },
       {
         "label": "35+ yr",
-        "count": 10296,
+        "count": 10730,
         "older": true
       }
     ],

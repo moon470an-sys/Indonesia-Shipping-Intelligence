@@ -1,14 +1,14 @@
 {
-  "meta.json": 141,
-  "overview.json": 5217,
-  "fleet.json": 12969,
-  "vessels_search.json": 15666414,
-  "cargo.json": 589367,
-  "changes.json": 7603879,
+  "meta.json": 171,
+  "overview.json": 5239,
+  "fleet.json": 12874,
+  "vessels_search.json": 17186377,
+  "cargo.json": 592625,
+  "changes.json": 3328748,
   "sector_taxonomy.json": 776,
-  "cargo_sector_monthly.json": 125781,
-  "kpi_summary.json": 1750,
-  "tanker_focus.json": 203916,
-  "tanker_flow_map.json": 2276695,
-  "companies_financials.json": 13492
+  "cargo_sector_monthly.json": 243999,
+  "kpi_summary.json": 1761,
+  "tanker_focus.json": 204539,
+  "tanker_flow_map.json": 2332755,
+  "companies_financials.json": 129370
 }

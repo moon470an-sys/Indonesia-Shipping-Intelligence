@@ -96,11 +96,24 @@
           <h3 class="font-semibold">인도네시아 화물(Cargo) 월별 물동량
             <span class="text-xs text-slate-500 font-normal" id="home-ts-mode-label">(선적 + 하역 합계)</span>
           </h3>
-          <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="home-ts-direction">
-            <button data-dir="total"   class="px-2.5 py-1 bg-slate-800 text-white">합계</button>
-            <button data-dir="muat"    class="px-2.5 py-1 bg-white hover:bg-slate-100">선적 (MUAT)</button>
-            <button data-dir="bongkar" class="px-2.5 py-1 bg-white hover:bg-slate-100">하역 (BONGKAR)</button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- 외항(ln) / 내항(dn) 무역 구분 필터 -->
+            <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="home-ts-trade" role="tablist" aria-label="외항/내항 구분">
+              <button data-trade="all" class="px-2.5 py-1 bg-slate-800 text-white">전체</button>
+              <button data-trade="ln"  class="px-2.5 py-1 bg-white hover:bg-slate-100">외항 (LN)</button>
+              <button data-trade="dn"  class="px-2.5 py-1 bg-white hover:bg-slate-100">내항 (DN)</button>
+            </div>
+            <!-- 하역(BONGKAR) / 선적(MUAT) 구분 필터 -->
+            <div class="flex rounded border border-slate-200 overflow-hidden text-xs" id="home-ts-direction" role="tablist" aria-label="하역/선적 구분">
+              <button data-dir="total"   class="px-2.5 py-1 bg-slate-800 text-white">합계</button>
+              <button data-dir="muat"    class="px-2.5 py-1 bg-white hover:bg-slate-100">선적 (MUAT)</button>
+              <button data-dir="bongkar" class="px-2.5 py-1 bg-white hover:bg-slate-100">하역 (BONGKAR)</button>
+            </div>
           </div>
+        </div>
+        <!-- 화물 그룹 필터 (Balance 탭과 동일한 분류) -->
+        <div class="flex flex-wrap gap-1 mb-3 text-xs" id="home-ts-cargo" role="tablist" aria-label="화물 그룹 선택">
+          <button class="px-2 py-1 bg-slate-100 text-slate-400" disabled>loading…</button>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch" style="min-height:520px">
           <!-- 좌측 2/3: stacked bar 차트 (오른쪽 상세 박스 높이에 맞춰 늘어남) -->
@@ -142,8 +155,8 @@
             <p>화물 선택에 따라 원 크기 · 순위가 실시간 반영됩니다</p>
           </div>
           <div class="cv-stats">
-            <div><div class="lbl">Domestic</div><div class="val" id="cv-st-dom" style="color:var(--cv-green)">—</div></div>
-            <div><div class="lbl">International</div><div class="val" id="cv-st-intl" style="color:var(--cv-blue)">—</div></div>
+            <div><div class="lbl">내항 (Domestic)</div><div class="val" id="cv-st-dom" style="color:var(--cv-green)">—</div></div>
+            <div><div class="lbl">외항 (Intl)</div><div class="val" id="cv-st-intl" style="color:var(--cv-blue)">—</div></div>
             <div><div class="lbl">표시 항만</div><div class="val" id="cv-st-cnt" style="color:var(--cv-muted)">—</div></div>
           </div>
         </div>
@@ -155,8 +168,8 @@
               <div class="cv-sec-ttl">표시 기준</div>
               <div class="cv-btn-row">
                 <button class="cv-rbtn on-t" data-mode="total">전체</button>
-                <button class="cv-rbtn"      data-mode="domestic">Domestic</button>
-                <button class="cv-rbtn"      data-mode="international">Intl</button>
+                <button class="cv-rbtn"      data-mode="domestic">내항 (DN)</button>
+                <button class="cv-rbtn"      data-mode="international">외항 (LN)</button>
               </div>
               <div class="cv-btn-row">
                 <button class="cv-rbtn on-s" data-sub="both">전체</button>
@@ -186,8 +199,8 @@
             </div>
 
             <div class="cv-legend">
-              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-green)"></span>Domestic</div>
-              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-blue)"></span>International</div>
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-green)"></span>내항 (Domestic)</div>
+              <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-blue)"></span>외항 (Intl)</div>
               <div class="cv-leg"><span class="cv-leg-dot" style="background:var(--cv-purple)"></span>혼합</div>
             </div>
           </div>
@@ -922,19 +935,14 @@
   <footer id="global-footer" class="bg-slate-100 border-t border-slate-200 mt-12 py-6">
     <div class="max-w-7xl mx-auto px-4 text-xs text-slate-600 leading-relaxed">
       <p class="font-medium text-slate-700 mb-1">⚠️ 면책 (Disclaimer)</p>
-      <p class="mb-2">
+      <p>
         본 사이트는 공개 데이터(kapal.dephub.go.id · monitoring-inaportnet.dephub.go.id · IDX 공시)를
         가공한 <strong>정보 레퍼런스</strong>이며, <strong>투자 권유나 자문이 아닙니다</strong>.
         데이터의 정확성·최신성은 보장되지 않습니다.
       </p>
-      <p class="text-slate-500">
-        <span id="footer-freshness">Loading freshness…</span>
-        ·
-        <a href="https://github.com/moon470an-sys/Indonesia-Shipping-Intelligence" class="text-blue-600 hover:underline" target="_blank">Source code</a>
-      </p>
     </div>
   </footer>
 
-  <script src="./js/app.js?v=20260527a" type="module"></script>
+  <script src="./js/app.js?v=20260605a" type="module"></script>
 </body>
 </html>

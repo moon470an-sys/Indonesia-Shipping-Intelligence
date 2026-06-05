@@ -1,518 +1,518 @@
 {
   "schema_version": 1,
-  "snapshot_month": "2026-05",
+  "snapshot_month": "2026-06",
   "top_commodities_by_category": {
     "Product": [
       {
         "name": "CPO",
-        "ton_total": 59489907.6,
-        "calls": 14244
+        "ton_total": 62532307.9,
+        "calls": 14979
       },
       {
         "name": "CRUDE OIL",
-        "ton_total": 57138667.1,
-        "calls": 2091
+        "ton_total": 60899735.3,
+        "calls": 2432
       },
       {
         "name": "PERTALITE",
-        "ton_total": 43967747.3,
-        "calls": 20839
+        "ton_total": 45842228.4,
+        "calls": 21538
       },
       {
         "name": "SOLAR",
-        "ton_total": 33693194.5,
-        "calls": 5336
+        "ton_total": 34724377.4,
+        "calls": 5744
       },
       {
         "name": "BIO SOLAR",
-        "ton_total": 31504352.1,
-        "calls": 27842
+        "ton_total": 33884203.7,
+        "calls": 28755
       },
       {
         "name": "BUCO",
-        "ton_total": 24618949.6,
-        "calls": 488
-      },
-      {
-        "name": "BBM",
-        "ton_total": 18207412.8,
-        "calls": 4706
+        "ton_total": 24033548.7,
+        "calls": 478
       },
       {
         "name": "FAME",
-        "ton_total": 17720601.8,
-        "calls": 3794
+        "ton_total": 19103924.0,
+        "calls": 4114
+      },
+      {
+        "name": "BBM",
+        "ton_total": 18056701.2,
+        "calls": 4710
       },
       {
         "name": "AVTUR",
-        "ton_total": 15991544.4,
-        "calls": 2809
-      },
-      {
-        "name": "PERTAMAX",
-        "ton_total": 11293313.5,
-        "calls": 7908
+        "ton_total": 16026687.4,
+        "calls": 2931
       },
       {
         "name": "NAPHTHA",
-        "ton_total": 8804827.3,
-        "calls": 424
+        "ton_total": 12424176.3,
+        "calls": 658
+      },
+      {
+        "name": "PERTAMAX",
+        "ton_total": 12216497.1,
+        "calls": 8342
       },
       {
         "name": "RBD PALM OLEIN",
-        "ton_total": 8762157.7,
-        "calls": 1366
+        "ton_total": 8550714.7,
+        "calls": 1367
       }
     ],
     "Tanker": [
       {
         "name": "CPO",
-        "ton_total": 73098690.6,
-        "calls": 17184
+        "ton_total": 76742572.3,
+        "calls": 17994
       },
       {
         "name": "CRUDE OIL",
-        "ton_total": 57953908.1,
-        "calls": 2129
+        "ton_total": 61729889.3,
+        "calls": 2471
       },
       {
         "name": "PERTALITE",
-        "ton_total": 48866520.2,
-        "calls": 22883
+        "ton_total": 50781499.3,
+        "calls": 23632
       },
       {
         "name": "LNG",
-        "ton_total": 44511545.1,
-        "calls": 1040
-      },
-      {
-        "name": "SOLAR",
-        "ton_total": 35801667.6,
-        "calls": 5606
+        "ton_total": 44335491.9,
+        "calls": 1043
       },
       {
         "name": "BIO SOLAR",
-        "ton_total": 34928617.0,
-        "calls": 29370
+        "ton_total": 37351611.6,
+        "calls": 30277
+      },
+      {
+        "name": "SOLAR",
+        "ton_total": 36932672.5,
+        "calls": 6034
       },
       {
         "name": "LPG",
-        "ton_total": 33720978.3,
-        "calls": 8814
+        "ton_total": 34864029.4,
+        "calls": 9391
       },
       {
         "name": "FAME",
-        "ton_total": 26794272.8,
-        "calls": 4831
+        "ton_total": 28341395.8,
+        "calls": 5180
       },
       {
         "name": "BUCO",
-        "ton_total": 24811392.6,
-        "calls": 493
+        "ton_total": 24219056.2,
+        "calls": 483
       },
       {
         "name": "BBM",
-        "ton_total": 21002317.2,
-        "calls": 5132
+        "ton_total": 20805672.6,
+        "calls": 5143
       },
       {
         "name": "RBD PALM OLEIN",
-        "ton_total": 20893947.1,
-        "calls": 2835
+        "ton_total": 20303287.9,
+        "calls": 2781
       },
       {
         "name": "AVTUR",
-        "ton_total": 19498225.4,
-        "calls": 3596
+        "ton_total": 19703155.8,
+        "calls": 3811
       }
     ],
     "Bulk Carrier": [
       {
         "name": "BATU BARA",
-        "ton_total": 1505168625.8,
-        "calls": 24606
+        "ton_total": 1568594735.2,
+        "calls": 25728
       },
       {
         "name": "NICKEL ORE",
-        "ton_total": 36027660.2,
-        "calls": 657
+        "ton_total": 37754462.4,
+        "calls": 687
       },
       {
         "name": "CLINKER",
-        "ton_total": 25655250.0,
-        "calls": 706
-      },
-      {
-        "name": "GANDUM",
-        "ton_total": 18822933.7,
-        "calls": 559
+        "ton_total": 25797191.3,
+        "calls": 705
       },
       {
         "name": "SEMEN",
-        "ton_total": 18606369.0,
-        "calls": 3501
+        "ton_total": 22224822.8,
+        "calls": 4197
+      },
+      {
+        "name": "GANDUM",
+        "ton_total": 18264894.7,
+        "calls": 544
       },
       {
         "name": "ALUMINA",
-        "ton_total": 8740698.1,
-        "calls": 272
+        "ton_total": 8935997.2,
+        "calls": 277
       },
       {
         "name": "IRON ORE",
-        "ton_total": 7978409.0,
-        "calls": 54
+        "ton_total": 7947685.0,
+        "calls": 55
       },
       {
         "name": "COPPER CONCENTRATE",
-        "ton_total": 6824713.8,
+        "ton_total": 6856632.0,
         "calls": 329
       },
       {
         "name": "FERRO NICKEL",
-        "ton_total": 5941732.5,
-        "calls": 306
+        "ton_total": 5896541.0,
+        "calls": 301
       },
       {
         "name": "SOYABEAN MEAL",
-        "ton_total": 5874594.6,
-        "calls": 170
+        "ton_total": 5561928.6,
+        "calls": 163
       },
       {
         "name": "SEMI COKE",
-        "ton_total": 5069733.4,
-        "calls": 150
+        "ton_total": 5167347.4,
+        "calls": 154
       },
       {
         "name": "SULPHUR",
-        "ton_total": 4635007.0,
-        "calls": 110
+        "ton_total": 4612442.0,
+        "calls": 111
       }
     ],
     "Other Cargo": [
       {
         "name": "BATU BARA",
-        "ton_total": 1082708513.0,
-        "calls": 120510
+        "ton_total": 1507870303.3,
+        "calls": 168782
       },
       {
         "name": "NICKEL ORE",
-        "ton_total": 680548562.7,
-        "calls": 58974
+        "ton_total": 697763392.7,
+        "calls": 60197
       },
       {
         "name": "BAUXITE",
-        "ton_total": 55558737.9,
-        "calls": 6766
+        "ton_total": 57081620.9,
+        "calls": 7003
       },
       {
         "name": "KAYU LOG",
-        "ton_total": 35227735.3,
-        "calls": 11521
+        "ton_total": 35863910.3,
+        "calls": 11651
       },
       {
         "name": "CPO",
-        "ton_total": 29735340.4,
-        "calls": 8102
+        "ton_total": 30256164.2,
+        "calls": 8206
       },
       {
         "name": "LIMESTONE",
-        "ton_total": 26200159.0,
-        "calls": 1955
+        "ton_total": 26058871.4,
+        "calls": 1948
       },
       {
         "name": "PASIR",
-        "ton_total": 24375683.6,
-        "calls": 7228
+        "ton_total": 24992506.7,
+        "calls": 7365
       },
       {
         "name": "GRANITE",
-        "ton_total": 15905690.6,
-        "calls": 3775
+        "ton_total": 16415307.8,
+        "calls": 3892
       },
       {
         "name": "BATU PECAH",
-        "ton_total": 12104589.5,
-        "calls": 4794
-      },
-      {
-        "name": "KAYU AKASIA",
-        "ton_total": 10811940.2,
-        "calls": 4453
+        "ton_total": 12414005.3,
+        "calls": 4850
       },
       {
         "name": "PETIKEMAS 40 FULL",
-        "ton_total": 10197162.5,
-        "calls": 4762
+        "ton_total": 11752433.2,
+        "calls": 6157
+      },
+      {
+        "name": "KAYU AKASIA",
+        "ton_total": 11025204.1,
+        "calls": 4718
       },
       {
         "name": "PETIKEMAS 20 FULL",
-        "ton_total": 9523931.5,
-        "calls": 5404
+        "ton_total": 10348555.2,
+        "calls": 6852
       }
     ],
     "Chemical": [
       {
         "name": "RBD PALM OLEIN",
-        "ton_total": 11671175.1,
-        "calls": 1396
+        "ton_total": 11309407.2,
+        "calls": 1344
       },
       {
         "name": "FAME",
-        "ton_total": 8779215.1,
-        "calls": 973
+        "ton_total": 8975583.5,
+        "calls": 1007
       },
       {
         "name": "CPO",
-        "ton_total": 7212575.2,
-        "calls": 1397
+        "ton_total": 7257804.6,
+        "calls": 1418
       },
       {
         "name": "RBD PALM OIL",
-        "ton_total": 6403336.2,
-        "calls": 630
+        "ton_total": 6304534.7,
+        "calls": 626
       },
       {
         "name": "PERTALITE",
-        "ton_total": 4885814.2,
-        "calls": 2033
+        "ton_total": 4927312.2,
+        "calls": 2084
       },
       {
         "name": "AVTUR",
-        "ton_total": 3506681.0,
-        "calls": 787
+        "ton_total": 3676468.4,
+        "calls": 880
       },
       {
         "name": "BIO SOLAR",
-        "ton_total": 3341504.9,
-        "calls": 1506
+        "ton_total": 3390313.9,
+        "calls": 1499
       },
       {
         "name": "METHANOL",
-        "ton_total": 3130212.5,
-        "calls": 673
-      },
-      {
-        "name": "BBM",
-        "ton_total": 2787702.4,
-        "calls": 424
+        "ton_total": 3270558.8,
+        "calls": 704
       },
       {
         "name": "LIQUID CAUSTIC SODA",
-        "ton_total": 2686930.0,
-        "calls": 315
+        "ton_total": 2802979.4,
+        "calls": 327
       },
       {
-        "name": "SOLAR",
-        "ton_total": 2101574.1,
-        "calls": 266
+        "name": "BBM",
+        "ton_total": 2737069.4,
+        "calls": 428
       },
       {
         "name": "NAPHTHA",
-        "ton_total": 2092252.8,
-        "calls": 88
+        "ton_total": 2408621.2,
+        "calls": 116
+      },
+      {
+        "name": "SOLAR",
+        "ton_total": 2193674.1,
+        "calls": 283
       }
     ],
     "Container": [
       {
         "name": "PETIKEMAS 20 FULL",
-        "ton_total": 193582664.1,
-        "calls": 59627
+        "ton_total": 195660289.6,
+        "calls": 62878
       },
       {
         "name": "PETIKEMAS 40 FULL",
-        "ton_total": 118363913.0,
-        "calls": 50483
+        "ton_total": 116474320.3,
+        "calls": 53202
       },
       {
         "name": "BARANG CAMPURAN",
-        "ton_total": 13515099.6,
-        "calls": 4556
+        "ton_total": 14071840.4,
+        "calls": 4930
       },
       {
         "name": "GENERAL CARGO",
-        "ton_total": 11923250.7,
-        "calls": 6641
+        "ton_total": 13661256.8,
+        "calls": 7566
       },
       {
         "name": "CONTAINER KOSONG",
-        "ton_total": 7458569.3,
-        "calls": 396
+        "ton_total": 7471754.7,
+        "calls": 392
       },
       {
         "name": "PETIKEMAS 20 EMPTY",
-        "ton_total": 6264093.3,
-        "calls": 16085
+        "ton_total": 6146716.7,
+        "calls": 17142
       },
       {
         "name": "KOPRA",
-        "ton_total": 5704559.1,
-        "calls": 1381
-      },
-      {
-        "name": "BARANG RONGSOKAN",
-        "ton_total": 5404911.2,
-        "calls": 124
+        "ton_total": 5692903.7,
+        "calls": 1425
       },
       {
         "name": "BERAS",
-        "ton_total": 5234773.3,
-        "calls": 3724
+        "ton_total": 5444366.0,
+        "calls": 4233
+      },
+      {
+        "name": "BARANG RONGSOKAN",
+        "ton_total": 5409514.1,
+        "calls": 130
       },
       {
         "name": "BIJI SAWIT",
-        "ton_total": 4010616.3,
-        "calls": 148
+        "ton_total": 4014551.5,
+        "calls": 165
       },
       {
         "name": "PETIKEMAS 40 EMPTY",
-        "ton_total": 3967060.3,
-        "calls": 13589
+        "ton_total": 3830005.0,
+        "calls": 14595
       },
       {
         "name": "IKAN BEKU R TRANSPORT",
-        "ton_total": 3343947.5,
-        "calls": 352
+        "ton_total": 3430222.7,
+        "calls": 388
       }
     ],
     "LPG": [
       {
         "name": "LPG",
-        "ton_total": 32977385.8,
-        "calls": 8435
+        "ton_total": 34132668.9,
+        "calls": 9024
       },
       {
         "name": "LNG",
-        "ton_total": 4457574.0,
-        "calls": 188
+        "ton_total": 4395861.0,
+        "calls": 180
       },
       {
         "name": "PROPANE",
-        "ton_total": 3205723.5,
+        "ton_total": 3175852.5,
         "calls": 632
       },
       {
         "name": "AMMONIA",
-        "ton_total": 2876958.9,
-        "calls": 352
+        "ton_total": 2932371.5,
+        "calls": 353
       },
       {
         "name": "PROPANE/BUTANE",
-        "ton_total": 2624096.7,
-        "calls": 62
+        "ton_total": 2645285.6,
+        "calls": 64
       },
       {
         "name": "BUTANE",
-        "ton_total": 1931848.7,
-        "calls": 572
+        "ton_total": 1957820.7,
+        "calls": 573
       },
       {
         "name": "ETHYLENE",
-        "ton_total": 1389524.9,
-        "calls": 302
+        "ton_total": 1311596.9,
+        "calls": 289
       },
       {
         "name": "FULLY REFRIGERATED BUTANE",
-        "ton_total": 1041031.0,
-        "calls": 59
+        "ton_total": 1006537.0,
+        "calls": 58
       },
       {
         "name": "PROPYLENE",
-        "ton_total": 875937.9,
-        "calls": 391
+        "ton_total": 852974.6,
+        "calls": 384
       },
       {
         "name": "FULLY REFRIGERATED ANHYDROUS AMMONIA",
-        "ton_total": 590287.0,
+        "ton_total": 561019.4,
         "calls": 24
       },
       {
-        "name": "AMONIA",
-        "ton_total": 345104.4,
-        "calls": 23
+        "name": "MIXED LPG",
+        "ton_total": 540515.4,
+        "calls": 428
       },
       {
-        "name": "FULLY REFRIGERATED PROPANE/BUTANE",
-        "ton_total": 255434.0,
-        "calls": 7
+        "name": "AMONIA",
+        "ton_total": 277387.2,
+        "calls": 19
       }
     ],
     "General Cargo": [
       {
         "name": "GENERAL CARGO",
-        "ton_total": 36879021.0,
-        "calls": 11641
-      },
-      {
-        "name": "BATU BARA",
-        "ton_total": 20866482.7,
-        "calls": 954
+        "ton_total": 37327662.8,
+        "calls": 14235
       },
       {
         "name": "SEMEN",
-        "ton_total": 16815916.4,
-        "calls": 15852
+        "ton_total": 23736967.2,
+        "calls": 18468
+      },
+      {
+        "name": "BATU BARA",
+        "ton_total": 21633867.2,
+        "calls": 970
       },
       {
         "name": "PUPUK",
-        "ton_total": 13119106.4,
-        "calls": 8423
+        "ton_total": 13137311.0,
+        "calls": 8714
       },
       {
         "name": "PETIKEMAS 20 FULL",
-        "ton_total": 11347600.9,
-        "calls": 8260
+        "ton_total": 11051043.1,
+        "calls": 8274
       },
       {
         "name": "PULP",
-        "ton_total": 4976650.2,
-        "calls": 723
+        "ton_total": 4895133.3,
+        "calls": 712
       },
       {
         "name": "FERRO NICKEL",
-        "ton_total": 4080233.3,
-        "calls": 419
+        "ton_total": 4149443.9,
+        "calls": 426
       },
       {
         "name": "NICKEL ORE",
-        "ton_total": 3927699.7,
-        "calls": 304
+        "ton_total": 3933405.1,
+        "calls": 306
       },
       {
         "name": "PALM KERNEL SHELL",
-        "ton_total": 3807580.4,
-        "calls": 356
+        "ton_total": 3873170.7,
+        "calls": 363
       },
       {
         "name": "PALM KERNEL",
-        "ton_total": 3643668.9,
-        "calls": 2428
+        "ton_total": 3675392.9,
+        "calls": 2468
       },
       {
         "name": "WOODPULP",
-        "ton_total": 3443081.0,
-        "calls": 242
+        "ton_total": 3408618.0,
+        "calls": 245
       },
       {
         "name": "GENCAR",
-        "ton_total": 3365795.0,
-        "calls": 6445
+        "ton_total": 3203003.8,
+        "calls": 6636
       }
     ],
     "LNG": [
       {
         "name": "LNG",
-        "ton_total": 40050569.1,
-        "calls": 850
+        "ton_total": 39936228.9,
+        "calls": 861
       },
       {
         "name": "PETIKEMAS FULL",
-        "ton_total": 118143.6,
-        "calls": 11
+        "ton_total": 115203.2,
+        "calls": 10
       },
       {
         "name": "PETIKEMAS",
-        "ton_total": 80497.0,
-        "calls": 15
+        "ton_total": 77237.0,
+        "calls": 14
       },
       {
         "name": "TANGGUH LNG",
@@ -520,14 +520,9 @@
         "calls": 2
       },
       {
-        "name": "FULLY REFRIGERATED ANHYDROUS AMMONIA",
-        "ton_total": 39900.0,
-        "calls": 1
-      },
-      {
         "name": "GAS/L P G",
         "ton_total": 21576.0,
-        "calls": 12
+        "calls": 9
       },
       {
         "name": "NATURAL GAS",
@@ -535,50 +530,50 @@
         "calls": 31
       },
       {
-        "name": "HYDROCARBON CONDENSATE",
-        "ton_total": 5500.0,
+        "name": "COMPRESSED NATURAL GAS",
+        "ton_total": 523.0,
         "calls": 1
       },
       {
-        "name": "COMPRESSED NATURAL GAS",
-        "ton_total": 523.0,
+        "name": "OILY WATER",
+        "ton_total": 45.0,
         "calls": 1
       }
     ],
     "FAME / Vegetable Oil": [
       {
         "name": "CPO",
-        "ton_total": 6393206.8,
-        "calls": 1542
+        "ton_total": 6949458.8,
+        "calls": 1596
       },
       {
         "name": "RBD PALM OLEIN",
-        "ton_total": 438874.3,
-        "calls": 70
+        "ton_total": 421425.9,
+        "calls": 67
       },
       {
         "name": "PFAD",
-        "ton_total": 360192.8,
-        "calls": 12
+        "ton_total": 365843.0,
+        "calls": 14
       },
       {
         "name": "FAME",
-        "ton_total": 294455.9,
-        "calls": 64
+        "ton_total": 261888.3,
+        "calls": 59
       },
       {
         "name": "CPKO",
-        "ton_total": 206378.1,
-        "calls": 98
+        "ton_total": 205803.6,
+        "calls": 94
       },
       {
         "name": "CRUDE GLYCERINE",
-        "ton_total": 113002.0,
+        "ton_total": 109005.0,
         "calls": 48
       },
       {
         "name": "BIO SOLAR",
-        "ton_total": 80770.0,
+        "ton_total": 76050.0,
         "calls": 18
       },
       {
@@ -588,23 +583,23 @@
       },
       {
         "name": "HYDROGENATED PALM STEARIN",
-        "ton_total": 40290.0,
+        "ton_total": 41690.0,
+        "calls": 8
+      },
+      {
+        "name": "RBD PALM OLEIN IN BULK",
+        "ton_total": 39499.0,
         "calls": 8
       },
       {
         "name": "CRUDE OIL OF PALM KERNEL",
-        "ton_total": 36482.0,
+        "ton_total": 35984.0,
         "calls": 11
       },
       {
         "name": "CRUDE PALM OIL IN BULK",
         "ton_total": 32015.0,
         "calls": 9
-      },
-      {
-        "name": "RBD PALM OLEIN IN BULK",
-        "ton_total": 27499.0,
-        "calls": 7
       }
     ]
   },

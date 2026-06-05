@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "snapshot_month": "2026-05",
+  "snapshot_month": "2026-06",
   "totals": {
-    "excluded": 50580,
-    "cargo": 29574,
-    "auxiliary": 11561,
-    "unclassified": 92
+    "excluded": 56735,
+    "cargo": 31992,
+    "auxiliary": 12097,
+    "unclassified": 93
   },
-  "all_vessels": 91807,
-  "unclassified_pct": 0.1,
+  "all_vessels": 100917,
+  "unclassified_pct": 0.092,
   "definition": "docs/cargo_scope_definition.md",
   "_notes": {
     "cargo": "메인 차트 노출 — Container/Bulk/Tanker/General Cargo/Other Cargo",

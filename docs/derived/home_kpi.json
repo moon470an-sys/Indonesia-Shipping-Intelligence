@@ -1,34 +1,34 @@
 {
   "schema_version": 1,
-  "snapshot_month": "2026-05",
+  "snapshot_month": "2026-06",
   "sector_breakdown": [
     {
       "sector": "CARGO",
-      "ton": 245110042.5,
-      "pct_ton": 99.38,
+      "ton": 278283722.8,
+      "pct_ton": 99.23,
       "color": "#1A3A6B"
     },
     {
       "sector": "PASSENGER",
-      "ton": 1246389.6,
-      "pct_ton": 0.51,
+      "ton": 1816863.2,
+      "pct_ton": 0.65,
       "color": "#0d9488"
     },
     {
       "sector": "OFFSHORE_SUPPORT",
-      "ton": 237829.0,
-      "pct_ton": 0.1,
+      "ton": 232414.7,
+      "pct_ton": 0.08,
       "color": "#475569"
     },
     {
       "sector": "FISHING",
-      "ton": 35871.8,
+      "ton": 27908.0,
       "pct_ton": 0.01,
       "color": "#d97706"
     },
     {
       "sector": "NON_COMMERCIAL",
-      "ton": 6.0,
+      "ton": 27.0,
       "pct_ton": 0,
       "color": "#6b7280"
     }
@@ -37,69 +37,69 @@
     {
       "id": "total_12m_ton",
       "label": "12M 총 물동량 (인도네시아)",
-      "value_ton": 3093730499.9,
-      "yoy_pct": 12.4,
+      "value_ton": 3427064561.2,
+      "yoy_pct": 14.0,
       "window": [
-        "2025-05",
-        "2026-04"
+        "2025-06",
+        "2026-05"
       ],
       "source": "monitoring-inaportnet.dephub.go.id (LK3)",
       "by_year": {
-        "2024": 1791101602.6,
-        "2025": 3060908910.5,
-        "2026": 994815542.5
+        "2024": 1685481745.2,
+        "2025": 3383033693.5,
+        "2026": 1364459013.0
       },
       "yoy_by_year": {
         "2024": null,
-        "2025": 70.9,
-        "2026": -67.5
+        "2025": 100.7,
+        "2026": -59.7
       },
       "months_per_year": {
-        "2024": 7,
+        "2024": 6,
         "2025": 12,
-        "2026": 4
+        "2026": 5
       }
     },
     {
       "id": "tanker_12m_ton",
       "label": "12M 탱커 물동량",
-      "value_ton": 400741993.6,
-      "yoy_pct": 8.9,
+      "value_ton": 414686562.0,
+      "yoy_pct": 10.9,
       "window": [
-        "2025-05",
-        "2026-04"
+        "2025-06",
+        "2026-05"
       ],
       "source": "monitoring-inaportnet.dephub.go.id (LK3, tanker rows)",
       "by_year": {
-        "2024": 242328185.4,
-        "2025": 396355892.3,
-        "2026": 130196752.7
+        "2024": 210823870.1,
+        "2025": 406395431.1,
+        "2026": 171522438.3
       },
       "yoy_by_year": {
         "2024": null,
-        "2025": 63.6,
-        "2026": -67.2
+        "2025": 92.8,
+        "2026": -57.8
       },
       "months_per_year": {
-        "2024": 7,
+        "2024": 6,
         "2025": 12,
-        "2026": 4
+        "2026": 5
       }
     },
     {
       "id": "tanker_fleet",
       "label": "선박 등록 척수",
-      "value_count": 92021,
-      "cargo_count": 29568,
-      "tanker_count": 2415,
-      "avg_age_gt_weighted": 21.08,
+      "value_count": 101139,
+      "cargo_count": 31986,
+      "tanker_count": 2514,
+      "avg_age_gt_weighted": 21.33,
       "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessel registry)"
     },
     {
       "id": "data_freshness",
       "label": "데이터 기준일",
-      "value_text": "2026-04",
-      "vessel_snapshot": "2026-05",
+      "value_text": "2026-05",
+      "vessel_snapshot": "2026-06",
       "partial_dropped": true,
       "source": "docs/derived/meta.json"
     }

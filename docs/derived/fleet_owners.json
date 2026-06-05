@@ -1,28 +1,28 @@
 {
   "schema_version": 1,
-  "snapshot_month": "2026-05",
+  "snapshot_month": "2026-06",
   "source": "kapal.dephub.go.id/ditkapel_service/data_kapal/ (vessels_snapshot)",
   "totals": {
-    "cargo_vessels": 29568,
-    "total_gt": 50906238.5,
-    "unique_owners": 14482,
+    "cargo_vessels": 31986,
+    "total_gt": 52869042.5,
+    "unique_owners": 15630,
     "class_totals": {
-      "General Cargo": 13478,
-      "Other Cargo": 13055,
-      "Tanker": 2415,
-      "Bulk Carrier": 315,
-      "Container": 305
+      "General Cargo": 15636,
+      "Other Cargo": 13202,
+      "Bulk Carrier": 327,
+      "Tanker": 2514,
+      "Container": 307
     }
   },
   "owners": [
     {
       "owner": "PT. DANNY SAMUDERA RAYA LINE",
-      "vessels": 139,
-      "sum_gt": 488159.0,
+      "vessels": 140,
+      "sum_gt": 492198.0,
       "avg_age_gt_weighted": 6.7,
       "top_flag": "Indonesia",
       "class_mix": {
-        "Other Cargo": 138,
+        "Other Cargo": 139,
         "Tanker": 1
       },
       "tanker_subclass_mix": {
@@ -31,12 +31,12 @@
     },
     {
       "owner": "PT. PERUSAHAAN PELAYARAN RUSIANTO BERSAUDARA",
-      "vessels": 113,
-      "sum_gt": 274941.0,
-      "avg_age_gt_weighted": 16.8,
+      "vessels": 112,
+      "sum_gt": 273671.0,
+      "avg_age_gt_weighted": 16.7,
       "top_flag": "Indonesia",
       "class_mix": {
-        "Other Cargo": 113
+        "Other Cargo": 112
       },
       "tanker_subclass_mix": {}
     },
@@ -53,12 +53,12 @@
     },
     {
       "owner": "PT. PELAYARAN KARYA BINTANG TIMUR",
-      "vessels": 101,
-      "sum_gt": 221347.0,
-      "avg_age_gt_weighted": 7.6,
+      "vessels": 102,
+      "sum_gt": 222308.0,
+      "avg_age_gt_weighted": 7.5,
       "top_flag": "Indonesia",
       "class_mix": {
-        "Other Cargo": 99,
+        "Other Cargo": 100,
         "Tanker": 2
       },
       "tanker_subclass_mix": {
@@ -67,12 +67,12 @@
     },
     {
       "owner": "PT. PELAYARAN MITRA TUJUH SAMUDRA",
-      "vessels": 98,
-      "sum_gt": 351522.0,
+      "vessels": 99,
+      "sum_gt": 356238.0,
       "avg_age_gt_weighted": 4.4,
       "top_flag": "Indonesia",
       "class_mix": {
-        "Other Cargo": 98
+        "Other Cargo": 99
       },
       "tanker_subclass_mix": {}
     },
@@ -105,18 +105,18 @@
     },
     {
       "owner": "PT. USDA SEROJA JAYA",
-      "vessels": 73,
-      "sum_gt": 175387.0,
-      "avg_age_gt_weighted": 14.9,
+      "vessels": 77,
+      "sum_gt": 183233.0,
+      "avg_age_gt_weighted": 15.0,
       "top_flag": "Indonesia",
       "class_mix": {
-        "Tanker": 42,
+        "Tanker": 46,
         "Other Cargo": 19,
         "General Cargo": 12
       },
       "tanker_subclass_mix": {
         "Chemical": 27,
-        "Product": 15
+        "Product": 19
       }
     },
     {
@@ -203,17 +203,28 @@
       }
     },
     {
+      "owner": "PT. PELAYARAN NASIONAL BAHTERA BESTARI SHIPPING",
+      "vessels": 60,
+      "sum_gt": 154548.0,
+      "avg_age_gt_weighted": 7.0,
+      "top_flag": "Indonesia",
+      "class_mix": {
+        "Other Cargo": 60
+      },
+      "tanker_subclass_mix": {}
+    },
+    {
       "owner": "PT PERTAMINA PATRA NIAGA",
-      "vessels": 57,
-      "sum_gt": 981071.0,
+      "vessels": 58,
+      "sum_gt": 985001.0,
       "avg_age_gt_weighted": 21.8,
       "top_flag": "Indonesia",
       "class_mix": {
-        "Tanker": 57
+        "Tanker": 58
       },
       "tanker_subclass_mix": {
         "Product": 50,
-        "LPG": 6,
+        "LPG": 7,
         "Chemical": 1
       }
     },
@@ -232,17 +243,6 @@
       }
     },
     {
-      "owner": "PT. PELAYARAN NASIONAL BAHTERA BESTARI SHIPPING",
-      "vessels": 57,
-      "sum_gt": 143758.0,
-      "avg_age_gt_weighted": 7.5,
-      "top_flag": "Indonesia",
-      "class_mix": {
-        "Other Cargo": 57
-      },
-      "tanker_subclass_mix": {}
-    },
-    {
       "owner": "PT. AYU",
       "vessels": 57,
       "sum_gt": 137567.0,
@@ -254,18 +254,6 @@
       "tanker_subclass_mix": {}
     },
     {
-      "owner": "-",
-      "vessels": 55,
-      "sum_gt": 16312.0,
-      "avg_age_gt_weighted": 29.5,
-      "top_flag": "Indonesia",
-      "class_mix": {
-        "General Cargo": 51,
-        "Other Cargo": 4
-      },
-      "tanker_subclass_mix": {}
-    },
-    {
       "owner": "PT. MASADA JAYA LINES",
       "vessels": 54,
       "sum_gt": 171242.0,
@@ -273,6 +261,18 @@
       "top_flag": "Indonesia",
       "class_mix": {
         "Other Cargo": 54
+      },
+      "tanker_subclass_mix": {}
+    },
+    {
+      "owner": "-",
+      "vessels": 54,
+      "sum_gt": 16278.0,
+      "avg_age_gt_weighted": 29.5,
+      "top_flag": "Indonesia",
+      "class_mix": {
+        "General Cargo": 50,
+        "Other Cargo": 4
       },
       "tanker_subclass_mix": {}
     },
@@ -304,17 +304,6 @@
       "tanker_subclass_mix": {}
     },
     {
-      "owner": "PT. PELAYARAN NIAGA BARU",
-      "vessels": 50,
-      "sum_gt": 148395.0,
-      "avg_age_gt_weighted": 6.2,
-      "top_flag": "Indonesia",
-      "class_mix": {
-        "Other Cargo": 50
-      },
-      "tanker_subclass_mix": {}
-    },
-    {
       "owner": "PT. TANTO INTIM LINE",
       "vessels": 49,
       "sum_gt": 374684.0,
@@ -323,6 +312,18 @@
       "class_mix": {
         "General Cargo": 4,
         "Container": 45
+      },
+      "tanker_subclass_mix": {}
+    },
+    {
+      "owner": "PT. CAKRAWALA NUSA BAHARI",
+      "vessels": 49,
+      "sum_gt": 209274.0,
+      "avg_age_gt_weighted": 6.9,
+      "top_flag": "Indonesia",
+      "class_mix": {
+        "Other Cargo": 48,
+        "Bulk Carrier": 1
       },
       "tanker_subclass_mix": {}
     }
